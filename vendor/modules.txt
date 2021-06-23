@@ -1,0 +1,234 @@
+# git.cs.nctu.edu.tw/calee/sctp v1.1.0
+## explicit
+git.cs.nctu.edu.tw/calee/sctp
+# github.com/aead/cmac v0.0.0-20160719120800-7af84192f0b1
+github.com/aead/cmac
+# github.com/antonfisher/nested-logrus-formatter v1.3.0
+github.com/antonfisher/nested-logrus-formatter
+# github.com/aws/aws-sdk-go v1.36.24
+## explicit
+github.com/aws/aws-sdk-go/aws
+github.com/aws/aws-sdk-go/aws/awserr
+github.com/aws/aws-sdk-go/aws/awsutil
+github.com/aws/aws-sdk-go/aws/client/metadata
+github.com/aws/aws-sdk-go/aws/credentials
+github.com/aws/aws-sdk-go/aws/endpoints
+github.com/aws/aws-sdk-go/aws/request
+github.com/aws/aws-sdk-go/aws/signer/v4
+github.com/aws/aws-sdk-go/internal/context
+github.com/aws/aws-sdk-go/internal/ini
+github.com/aws/aws-sdk-go/internal/sdkio
+github.com/aws/aws-sdk-go/internal/sdkmath
+github.com/aws/aws-sdk-go/internal/shareddefaults
+github.com/aws/aws-sdk-go/internal/strings
+github.com/aws/aws-sdk-go/internal/sync/singleflight
+github.com/aws/aws-sdk-go/private/protocol
+github.com/aws/aws-sdk-go/private/protocol/rest
+# github.com/calee0219/fatal v0.0.1
+## explicit
+github.com/calee0219/fatal
+# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+github.com/dgrijalva/jwt-go
+# github.com/evanphx/json-patch v4.9.0+incompatible
+github.com/evanphx/json-patch
+# github.com/free5gc/CommonConsumerTestData v1.0.0
+## explicit
+github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData
+github.com/free5gc/CommonConsumerTestData/UDR/TestRegistrationProcedure
+# github.com/free5gc/MongoDBLibrary v1.0.0
+## explicit
+github.com/free5gc/MongoDBLibrary
+github.com/free5gc/MongoDBLibrary/logger
+# github.com/free5gc/UeauCommon v1.0.0
+## explicit
+github.com/free5gc/UeauCommon
+# github.com/free5gc/aper v1.0.0
+## explicit
+github.com/free5gc/aper
+github.com/free5gc/aper/logger
+# github.com/free5gc/logger_conf v1.0.0
+github.com/free5gc/logger_conf
+# github.com/free5gc/logger_util v1.0.0
+github.com/free5gc/logger_util
+# github.com/free5gc/milenage v1.0.0
+## explicit
+github.com/free5gc/milenage
+# github.com/free5gc/nas v1.0.0
+## explicit
+github.com/free5gc/nas
+github.com/free5gc/nas/logger
+github.com/free5gc/nas/nasConvert
+github.com/free5gc/nas/nasMessage
+github.com/free5gc/nas/nasTestpacket
+github.com/free5gc/nas/nasType
+github.com/free5gc/nas/security
+github.com/free5gc/nas/security/snow3g
+# github.com/free5gc/ngap v1.0.1
+## explicit
+github.com/free5gc/ngap
+github.com/free5gc/ngap/logger
+github.com/free5gc/ngap/ngapConvert
+github.com/free5gc/ngap/ngapType
+# github.com/free5gc/openapi v1.0.0
+## explicit
+github.com/free5gc/openapi/models
+# github.com/free5gc/path_util v1.0.0
+github.com/free5gc/path_util
+github.com/free5gc/path_util/logger
+# github.com/free5gc/util_3gpp v1.0.0
+github.com/free5gc/util_3gpp
+# github.com/gin-contrib/sse v0.1.0
+github.com/gin-contrib/sse
+# github.com/gin-gonic/gin v1.6.3
+github.com/gin-gonic/gin
+github.com/gin-gonic/gin/binding
+github.com/gin-gonic/gin/internal/bytesconv
+github.com/gin-gonic/gin/internal/json
+github.com/gin-gonic/gin/render
+# github.com/go-playground/locales v0.13.0
+github.com/go-playground/locales
+github.com/go-playground/locales/currency
+# github.com/go-playground/universal-translator v0.17.0
+github.com/go-playground/universal-translator
+# github.com/go-playground/validator/v10 v10.4.1
+github.com/go-playground/validator/v10
+# github.com/go-stack/stack v1.8.0
+github.com/go-stack/stack
+# github.com/golang/protobuf v1.4.3
+github.com/golang/protobuf/proto
+# github.com/golang/snappy v0.0.2
+github.com/golang/snappy
+# github.com/google/go-cmp v0.5.4
+## explicit
+# github.com/jmespath/go-jmespath v0.4.0
+github.com/jmespath/go-jmespath
+# github.com/json-iterator/go v1.1.10
+github.com/json-iterator/go
+# github.com/klauspost/compress v1.11.6
+## explicit
+github.com/klauspost/compress/fse
+github.com/klauspost/compress/huff0
+github.com/klauspost/compress/snappy
+github.com/klauspost/compress/zstd
+github.com/klauspost/compress/zstd/internal/xxhash
+# github.com/kr/text v0.2.0
+## explicit
+# github.com/leodido/go-urn v1.2.1
+## explicit
+github.com/leodido/go-urn
+# github.com/mattn/go-isatty v0.0.12
+github.com/mattn/go-isatty
+# github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
+github.com/modern-go/concurrent
+# github.com/modern-go/reflect2 v1.0.1
+github.com/modern-go/reflect2
+# github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
+## explicit
+github.com/mohae/deepcopy
+# github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e
+## explicit
+# github.com/pkg/errors v0.9.1
+github.com/pkg/errors
+# github.com/sirupsen/logrus v1.7.0
+github.com/sirupsen/logrus
+# github.com/ugorji/go v1.2.3
+## explicit
+# github.com/ugorji/go/codec v1.2.3
+github.com/ugorji/go/codec
+# github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c
+github.com/xdg/scram
+# github.com/xdg/stringprep v0.0.0-20180714160509-73f8eece6fdc
+github.com/xdg/stringprep
+# go.mongodb.org/mongo-driver v1.4.4
+## explicit
+go.mongodb.org/mongo-driver/bson
+go.mongodb.org/mongo-driver/bson/bsoncodec
+go.mongodb.org/mongo-driver/bson/bsonoptions
+go.mongodb.org/mongo-driver/bson/bsonrw
+go.mongodb.org/mongo-driver/bson/bsontype
+go.mongodb.org/mongo-driver/bson/primitive
+go.mongodb.org/mongo-driver/event
+go.mongodb.org/mongo-driver/internal
+go.mongodb.org/mongo-driver/mongo
+go.mongodb.org/mongo-driver/mongo/options
+go.mongodb.org/mongo-driver/mongo/readconcern
+go.mongodb.org/mongo-driver/mongo/readpref
+go.mongodb.org/mongo-driver/mongo/writeconcern
+go.mongodb.org/mongo-driver/tag
+go.mongodb.org/mongo-driver/version
+go.mongodb.org/mongo-driver/x/bsonx
+go.mongodb.org/mongo-driver/x/bsonx/bsoncore
+go.mongodb.org/mongo-driver/x/mongo/driver
+go.mongodb.org/mongo-driver/x/mongo/driver/address
+go.mongodb.org/mongo-driver/x/mongo/driver/auth
+go.mongodb.org/mongo-driver/x/mongo/driver/auth/internal/gssapi
+go.mongodb.org/mongo-driver/x/mongo/driver/connstring
+go.mongodb.org/mongo-driver/x/mongo/driver/description
+go.mongodb.org/mongo-driver/x/mongo/driver/dns
+go.mongodb.org/mongo-driver/x/mongo/driver/mongocrypt
+go.mongodb.org/mongo-driver/x/mongo/driver/mongocrypt/options
+go.mongodb.org/mongo-driver/x/mongo/driver/ocsp
+go.mongodb.org/mongo-driver/x/mongo/driver/operation
+go.mongodb.org/mongo-driver/x/mongo/driver/session
+go.mongodb.org/mongo-driver/x/mongo/driver/topology
+go.mongodb.org/mongo-driver/x/mongo/driver/uuid
+go.mongodb.org/mongo-driver/x/mongo/driver/wiremessage
+# golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
+## explicit
+golang.org/x/crypto/ocsp
+golang.org/x/crypto/pbkdf2
+golang.org/x/crypto/sha3
+# golang.org/x/net v0.0.0-20201224014010-6772e930b67b
+## explicit
+golang.org/x/net/bpf
+golang.org/x/net/icmp
+golang.org/x/net/internal/iana
+golang.org/x/net/internal/socket
+golang.org/x/net/ipv4
+golang.org/x/net/ipv6
+# golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
+golang.org/x/sync/errgroup
+golang.org/x/sync/semaphore
+# golang.org/x/sys v0.0.0-20210112091331-59c308dcf3cc
+## explicit
+golang.org/x/sys/cpu
+golang.org/x/sys/internal/unsafeheader
+golang.org/x/sys/unix
+golang.org/x/sys/windows
+# golang.org/x/text v0.3.5
+## explicit
+golang.org/x/text/transform
+golang.org/x/text/unicode/norm
+# google.golang.org/protobuf v1.25.0
+google.golang.org/protobuf/encoding/prototext
+google.golang.org/protobuf/encoding/protowire
+google.golang.org/protobuf/internal/descfmt
+google.golang.org/protobuf/internal/descopts
+google.golang.org/protobuf/internal/detrand
+google.golang.org/protobuf/internal/encoding/defval
+google.golang.org/protobuf/internal/encoding/messageset
+google.golang.org/protobuf/internal/encoding/tag
+google.golang.org/protobuf/internal/encoding/text
+google.golang.org/protobuf/internal/errors
+google.golang.org/protobuf/internal/fieldsort
+google.golang.org/protobuf/internal/filedesc
+google.golang.org/protobuf/internal/filetype
+google.golang.org/protobuf/internal/flags
+google.golang.org/protobuf/internal/genid
+google.golang.org/protobuf/internal/impl
+google.golang.org/protobuf/internal/mapsort
+google.golang.org/protobuf/internal/pragma
+google.golang.org/protobuf/internal/set
+google.golang.org/protobuf/internal/strs
+google.golang.org/protobuf/internal/version
+google.golang.org/protobuf/proto
+google.golang.org/protobuf/reflect/protoreflect
+google.golang.org/protobuf/reflect/protoregistry
+google.golang.org/protobuf/runtime/protoiface
+google.golang.org/protobuf/runtime/protoimpl
+# gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f
+## explicit
+# gopkg.in/yaml.v2 v2.4.0
+gopkg.in/yaml.v2
+# gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+## explicit

@@ -1,0 +1,11 @@
+This project is fork from ishidawataru sctp project <https://github.com/ishidawataru/sctp>
+
+We have chage to SCTP to nonblocking type
+
+Modify ListenSCTPExtConfig/AcceptSCTP/SCTPRead
+
+-----
+
+This source code includes following third party code
+
+- ipsock_linux.go : licensed by the Go authors, see GO_LICENSE file for the license which applies to the code
