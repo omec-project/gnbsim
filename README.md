@@ -1,3 +1,10 @@
+<!--
+SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
+
+SPDX-License-Identifier: Apache-2.0
+SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+-->
+
 ## How to Use
 1. Clone gnbSim
 2. Create image - sudo make docker-build
