@@ -1,0 +1,294 @@
+ONF Member-Only Software License
+Version 1.0
+June 2020
+
+This ONF Member-Only Software License (this "License") is entered into by and
+between Open Networking Foundation ("ONF") and you and/or the entity on whose
+behalf you are accessing the Works (as defined in Section 1 below) ("you").
+This License forms a legally binding contract between you and ONF in relation
+to your access to and use of the Works. You may not access or use the Works if
+you do not accept this License.
+
+By accessing or using the Works, you hereby agree to the terms of this License.
+You may not use the Works and may not accept this License if you are a person
+barred from receiving the Works under the laws of the United States or other
+countries, including the country from which you access or use the Works. If you
+are agreeing to be bound by this License on behalf of your employer or other
+entity, you represent and warrant that you have full legal authority to bind
+your employer or such entity to this License. If you do not have the requisite
+authority, you may not accept this License or access or use the Works on behalf
+of your employer or any other entity.  You and ONF acknowledge and agree as
+follows:
+
+1. DEFINITIONS.
+
+"Source" form shall mean the preferred form for making modifications, including
+but not limited to software source code, documentation source, and
+configuration files.
+
+"Object" form shall mean any form resulting from mechanical transformation or
+translation of a Source form, including but not limited to compiled object
+code, generated documentation, and conversions to other media types.
+
+"Works" shall mean the works of authorship, whether in Source or Object form,
+made available under this License, as indicated by a copyright notice/header
+file that is included in or attached to the Works.
+
+2. BACKGROUND.
+
+The purpose of this License is to provide ONF member companies in good standing
+("Members") with early access to software projects currently in development by
+ONF prior to their public release, to allow Members to review and test the
+Works internally for the purpose of making further contributions to the
+applicable project.  Members who are Partner-level Members at the time they
+first access the Works are additionally permitted under this License to use the
+Works internally for the purpose of building and developing products and
+services for commercial purposes as defined in Section 4.  However, this
+License does not permit any Member, regardless of Member level, to redistribute
+all or any portion of the Works, except as part of a contribution back to the
+applicable project, in accordance with Section 8 below, or in binary form as
+provided for Partner-level Members in Section 4 below.  You understand and
+agree that ONF has the sole right to sublicense and distribute a public version
+of the final code base for the applicable project to third parties under the
+2.0 version of the Apache License, or other permissive license terms selected
+by ONF in its sole discretion.
+
+The Purpose of this License is to incubate the development of new software
+projects by providing a framework for ONF Members to access and contribute to
+the projects while minimizing the potential for forking or misuse of the
+projects.  Nothing in this Background paragraph, however, shall require ONF to
+take any particular course of action regarding any Works covered by this
+License.
+
+3. LIMITED LICENSE TO ALL MEMBERS IN GOOD STANDING.
+
+Subject to your complete and ongoing compliance with all the terms and
+conditions set forth in this License, including without limitation all license
+limitations and restrictions set forth herein, ONF grants you the following
+limited, non-exclusive, non-transferable, non-sublicensable, revocable license
+to use, and (where applicable) authorize your employees and contractors
+performing work on your behalf (but only if such contractors are themselves
+Members of ONF and accept the terms of this License) to use the Works
+internally solely in connection with (a) reviewing, testing, modifying and
+creating derivatives of the Works for the sole purpose of making contributions
+by you to the code repository for the applicable project maintained by ONF; and
+(b) building, developing and testing your own applications or components that
+may interoperate with or incorporate the Works ("Applications") for the
+purposes of internal evaluation only.
+
+4. ADDITIONAL LICENSE TO PARTNER-LEVEL MEMBERS IN GOOD STANDING.
+
+Each project subject to this License shall be declared by ONF to be in one of
+two phases:  a) Incubation Phase, or b) Partner Commercialization Phase.  Each
+project shall start in the Incubation Phase, and ONF, at its sole discretion,
+shall determine when each project moves into the Partner Commercialization
+Phase.   Each project shall be documented to be in one of these two phases in
+the Project's README documentation and can be confirmed by contacting ONF.
+
+Once any project moves into the Partner Commercialization Phase, if you are a
+Partner-level ONF Member in good standing at the time you first access the
+Works and for the entire period during which you access and use the Works, in
+addition to the rights granted in Section 3, and subject to your complete and
+ongoing compliance with all the terms and conditions set forth in this License,
+including without limitation all license limitations and restrictions set forth
+herein, ONF grants you the limited, non-exclusive, non-transferable,
+non-sublicensable, revocable license to use, and (where applicable) authorize
+your employees and contractors performing work on your behalf (but only if such
+contractors are themselves Members of ONF and accept the terms of this License)
+to use, test, modify and create derivatives of the Works internally for the
+purpose of building, developing, testing, marketing, offering for sale and
+selling commercial products and services to third parties.  Wherever possible,
+you will take reasonable precautions to ensure Works remain accessible only to
+ONF Members, and any commercial product or service requiring redistribution of
+the Works, of modifications of the Works or of derivatives of the Works must be
+made solely in binary machine code form where possible to further this aim.
+
+Partners-level Members gaining additional insights as a result of accessing and
+using the Works for commercial products and services are expected to provide
+feedback to and to make contributions to the project for the benefit of both
+the project and the general membership.
+
+You may verify your company's Partner-level membership status on the ONF
+website at: https://www.opennetworking.org/member-listing/.
+
+4.1 GRACE PERIOD FOR NON-PARTNER-LEVEL MEMBERS
+
+If you are not a Partner-level Member and you wish to benefit from the rights
+granted to ONF Partners in Section 4, you have a 90-day grace period from the
+day you first access the Works to upgrade to a Partner-Level ONF Membership.
+Should you upgrade within this grace period, you will be recognized as if you
+had been a Partner on the day you first accessed the Works for the purpose of
+interpreting your rights under Section 4.
+
+5. RESTRICTIONS.
+
+By accessing or using the Works, you represent, warrant, and covenant that you
+and/or the entity on whose behalf you are accessing the Works is a Member in
+good standing of ONF.
+
+You acknowledge that, except for the limited rights expressly set forth above,
+the foregoing licenses do not include any right to, and you agree not to (i)
+redistribute, sell, lease, license, modify or otherwise create any derivative
+works of any portion of the Works, or (ii) distribute, deploy, or otherwise
+utilize the Works or Applications for any public, production, commercial, or
+other similar purpose other than internal use for evaluation and development of
+contributions to the code repository for the applicable project maintained by
+ONF and non-public, experimental Applications.
+
+Except as expressly provided herein, you may not (w) reproduce, distribute,
+publicly display, or publicly perform any part of the Works, (x) decompile,
+reverse engineer, or otherwise access or attempt to access source code not made
+available to you in source code form, (y) make or attempt to make any
+modification to, or otherwise create any derivative works of, the Works; or (z)
+remove, obscure, interfere with or circumvent any feature of the Works,
+including without limitation any copyright or other intellectual property
+notices, security, or access control mechanism. You agree that you will not use
+the Works to do anything illegal, including facilitating, promoting, or
+otherwise encouraging any illegal activities.
+
+You represent and warrant that the Works will not be shipped, transferred or
+exported into any country or used in any manner prohibited by the United States
+Export Administration Act or any other export laws, restrictions or regulations
+(collectively the "Export Laws"). In addition, if the Works are identified as
+an export controlled item under the Export Laws, you represent and warrant that
+you are not a citizen, or otherwise located within, an embargoed nation
+(including without limitation Crimea, Cuba, Iran, North Korea, Sudan, or Syria)
+and that you are not otherwise prohibited under the Export Laws from receiving
+the Works.
+
+ANY USE IN VIOLATION OF THE FOREGOING LIMITATIONS AND RESTRICTIONS IS STRICTLY
+PROHIBITED, AND UNLICENSED.
+
+6. RESERVATION OF RIGHTS.
+
+The Works are owned by ONF and/or its licensors, and are licensed, not sold, to
+you. The Works are protected by copyright, trade dress, patent, and trademark
+laws of the United States and other jurisdictions, international conventions,
+and all other relevant intellectual property and proprietary rights, and
+applicable laws (collectively, the "Intellectual Property Rights"). You agree
+that ONF or its subsidiaries or affiliated companies and/or its licensors own
+all legal right, title and interest in and to the Works, including any and all
+Intellectual Property Rights. ONF reserves all rights not expressly granted in
+this License. You do not acquire any right, title or interest to the Works,
+whether by implication, estoppel, or otherwise, except for the limited rights
+set forth in this License.
+
+You agree that the form and nature of the Works that ONF provides may change
+without prior notice to you and that future versions of the Works may be
+incompatible with applications developed using previous versions of the Works.
+You agree that ONF may stop (permanently or temporarily) providing the Works
+(or any features within the Works) to you or to users generally at ONF's sole
+discretion, without prior notice to you. Nothing in this License gives you a
+right to use any of ONF's trade names, trademarks, service marks, logos, domain
+names, or other distinctive brand features.
+
+7. PURPOSE AND USE.
+
+You agree that you will not engage in any activity with the Works, including
+the development or distribution of an Application that interferes with,
+disrupts, damages, or accesses in an unauthorized manner the servers, networks,
+or other properties or services of any third party. You agree that you are
+solely responsible for (and that ONF has no responsibility to you or to any
+third party for) any data, content, or resources that you create, transmit or
+display. You agree that you are solely responsible for (and that ONF has no
+responsibility to you or to any third party for) any breach of your obligations
+under this License, any applicable third party contract or terms of service, or
+any applicable law or regulation, and for the consequences (including any loss
+or damage which ONF or any third party may suffer) of any such breach.
+
+8. FEEDBACK; CONTRIBUTIONS.
+
+If you provide ONF with any comments, bug reports, feedback, enhancements, or
+modifications proposed or suggested by you for the Works ("Feedback"), such
+Feedback will be submitted as a Contribution to the applicable project
+maintained by ONF under the terms and conditions of a Contributor License
+Agreement between you and ONF, is provided on a non-confidential basis
+(notwithstanding any notice to the contrary you may include in any accompanying
+communication), and ONF shall have the right to use such Feedback at its
+discretion, including, but not limited to the incorporation of such Feedback
+into the Works and any final code base that may be derived from the Works.
+
+9. TERMINATION OF THIS LICENSE.
+
+This License will continue to apply until terminated by either you or ONF as
+set out below. If you want to terminate this License, you may do so by ceasing
+your use of the Works. If you cease being a Member in good standing of ONF,
+this License will terminate automatically and without further notice to you.
+ONF may at any time terminate this License: (a) if you have breached any
+provision of this License; or (b) at ONF's convenience.  When this License
+comes to an end, except as otherwise set forth in this paragraph 9, all of the
+legal rights, obligations and liabilities that you and ONF have benefited from,
+been subject to (or which have accrued over time while this License has been in
+force) or which are expressed to continue indefinitely, shall be unaffected by
+this cessation, and paragraphs 1, 2 and 5 through 14 shall continue to apply to
+such rights, obligations and liabilities indefinitely.  In addition, unless
+this License is terminated by ONF as a result of your breach of any provision
+of this License, Partner-level Members entitled to the benefits of Section 4 of
+this License shall also retain all rights granted by Section 4 so as long as
+you remain a Partner-level Member in good standing.
+
+10. DISCLAIMER OF WARRANTIES.
+
+YOU EXPRESSLY UNDERSTAND AND AGREE THAT YOUR USE OF THE WORKS IS AT YOUR SOLE
+RISK AND THAT THE WORKS ARE PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT
+WARRANTY OF ANY KIND FROM ONF. YOUR USE OF THE WORKS IS AT YOUR OWN DISCRETION
+AND RISK AND YOU ARE SOLELY RESPONSIBLE FOR ANY DAMAGE TO YOUR COMPUTER SYSTEM
+OR OTHER DEVICE OR LOSS OF DATA THAT RESULTS FROM SUCH USE. ONF FURTHER
+EXPRESSLY DISCLAIMS ALL WARRANTIES AND CONDITIONS OF ANY KIND, WHETHER EXPRESS
+OR IMPLIED, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES AND CONDITIONS
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. ONF
+EXPRESSLY DISCLAIMS ANY WARRANTIES OF ANY KIND WITH RESPECT TO THE ACCURACY OR
+FUNCTIONALITY OF THE WORKS, AND WITH RESPECT TO THE ACCURACY, VALIDITY, OR
+COMPLETENESS OF ANY INFORMATION OR FEATURES AVAILABLE THROUGH THE WORKS, OR THE
+QUALITY OR CONSISTENCY OF THE WORKS OR RESULTS OBTAINED THROUGH THEIR USE.
+
+11. LIMITATION OF LIABILITY.
+
+YOU EXPRESSLY UNDERSTAND AND AGREE THAT ONF, ITS SUBSIDIARIES AND AFFILIATES,
+AND ITS LICENSORS SHALL NOT BE LIABLE TO YOU UNDER ANY THEORY OF LIABILITY FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL OR EXEMPLARY DAMAGES
+THAT MAY BE INCURRED BY YOU, INCLUDING ANY LOSS OF DATA, WHETHER OR NOT ONF OR
+ITS REPRESENTATIVES HAVE BEEN ADVISED OF OR SHOULD HAVE BEEN AWARE OF THE
+POSSIBILITY OF ANY SUCH LOSSES. IN NO EVENT WILL ONF'S AGGREGATE LIABILITY FOR
+DAMAGES ARISING OUT OF THIS LICENSE OR YOUR USE OF THE WORKS EXCEED THE GREATER
+OF AMOUNTS PAID BY YOU FOR THE WORKS, IF ANY.
+
+12. INDEMNIFICATION.
+
+To the maximum extent permitted by law, you agree to defend, indemnify and hold
+harmless ONF, its affiliates and their respective directors, officers,
+employees and agents from and against any and all claims, actions, suits or
+proceedings, as well as any and all losses, liabilities, damages, costs and
+expenses (including reasonable attorneys' fees) arising out of or accruing from
+(a) your use of the Works, (b) any Application or (for Partner-level Members)
+commercial product or service you develop using the Works that infringes any
+copyright, trademark, trade secret, trade dress, patent or other intellectual
+property right of any person, and (c) any non-compliance by you with this
+License or any applicable law or regulation.
+
+13. CHANGES TO THIS LICENSE.
+
+ONF may make changes to this License as it distributes new versions of the
+Works. When these changes are made, ONF will make a new version of this License
+available on the ONF website.
+
+14. MISCELLANEOUS TERMS.
+
+This License constitutes the entire legal agreement between you and ONF with
+regard to your access and use of the Works, and governs your access and use of
+the Works and completely supersedes any prior agreements between you and ONF in
+relation to the Works, except for any Contributor License Agreement you may
+have executed with ONF. You agree that if ONF does not exercise or enforce any
+legal right or remedy which is contained in this License (or which ONF has the
+benefit of under any applicable law), this will not be taken to be a formal
+waiver of ONF's rights and that those rights or remedies will still be
+available to ONF. If any court of law, having the jurisdiction to decide on
+this matter, rules that any provision of this License is invalid, then that
+provision will be removed from this License without affecting the rest of this
+License. The remaining provisions of this License will continue to be valid and
+enforceable so long as this License, as so modified, does not substantially
+impair the respective expectations or reciprocal obligations of the parties.
+The rights granted in this License may not be assigned or transferred by you
+without the prior written approval of ONF. You shall not be permitted to
+delegate your responsibilities or obligations under this License without the
+prior written approval of ONF.
