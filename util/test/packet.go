@@ -6,8 +6,8 @@
 package test
 
 import (
-	"github.com/free5gc/nas"
-	"github.com/free5gc/nas/nasMessage"
+	"github.com/omec-project/nas"
+	"github.com/omec-project/nas/nasMessage"
 	"github.com/free5gc/ngap"
 	// Nausf_UEAU_Client "github.com/free5gc/openapi/Nausf_UEAuthentication"
 	// "github.com/free5gc/openapi/models"

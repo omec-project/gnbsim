@@ -6,7 +6,7 @@
 package test
 
 import (
-	"github.com/free5gc/nas"
+	"github.com/omec-project/nas"
 	"github.com/free5gc/ngap/ngapType"
     "fmt"
 )
