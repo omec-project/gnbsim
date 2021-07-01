@@ -24,6 +24,7 @@ DOCKER_TARGETS           ?= gnbsim
 
 # https://docs.docker.com/engine/reference/commandline/build/#specifying-target-build-stage---target
 docker-build:
+	@go mod vendor
 	for target in $(DOCKER_TARGETS); do \
 		DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build  $(DOCKER_BUILD_ARGS) \
 			--target $$target \
@@ -36,6 +37,7 @@ docker-build:
 			. \
 			|| exit 1; \
 	done
+	sudo rm -rf vendor
 
 docker-push:
 	for target in $(DOCKER_TARGETS); do \

@@ -9,7 +9,7 @@ import (
 	"fmt"
     "gnbsim/util/test" // AJAY - Change required 
 	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
-	"github.com/free5gc/nas/security"
+	"github.com/omec-project/nas/security"
 	"strconv"
 )
 

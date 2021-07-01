@@ -8,9 +8,8 @@ package test
 import (
 	"fmt"
 	"reflect"
-
-	"github.com/free5gc/nas"
-	"github.com/free5gc/nas/security"
+	"github.com/omec-project/nas"
+	"github.com/omec-project/nas/security"
 )
 
 func NASEncode(ue *RanUeContext, msg *nas.Message, securityContextAvailable bool, newSecurityContext bool) (
