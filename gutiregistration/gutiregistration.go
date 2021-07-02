@@ -8,11 +8,11 @@ package gutiregistration
 import (
 	"fmt"
 	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
-	"github.com/free5gc/nas"
-	"github.com/free5gc/nas/nasMessage"
-	"github.com/free5gc/nas/nasTestpacket"
-	"github.com/free5gc/nas/nasType"
-	"github.com/free5gc/nas/security"
+	"github.com/omec-project/nas"
+	"github.com/omec-project/nas/nasMessage"
+	"github.com/omec-project/nas/nasTestpacket"
+	"github.com/omec-project/nas/nasType"
+	"github.com/omec-project/nas/security"
 	"github.com/free5gc/ngap"
 	"github.com/free5gc/ngap/ngapType"
     "gnbsim/util/test" // AJAY - Change required 

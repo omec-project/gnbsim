@@ -16,9 +16,9 @@ import (
 	"github.com/free5gc/CommonConsumerTestData/UDR/TestRegistrationProcedure"
 	"github.com/free5gc/UeauCommon"
 	"github.com/free5gc/milenage"
-	"github.com/free5gc/nas/nasMessage"
-	"github.com/free5gc/nas/nasType"
-	"github.com/free5gc/nas/security"
+	"github.com/omec-project/nas/nasMessage"
+	"github.com/omec-project/nas/nasType"
+	"github.com/omec-project/nas/security"
 	"github.com/free5gc/openapi/models"
 )
 
