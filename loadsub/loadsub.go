@@ -23,8 +23,7 @@ func LoadSubscriberData(num int) {
 		ue := test.NewRanUeContext(supi, 1, security.AlgCiphering128NEA0, security.AlgIntegrity128NIA2)
 		ue.AmfUeNgapId = 1
 		ue.AuthenticationSubs = test.GetAuthSubscription(TestGenAuthData.MilenageTestSet19.K,
-			TestGenAuthData.MilenageTestSet19.OPC,
-			TestGenAuthData.MilenageTestSet19.OP)
+			TestGenAuthData.MilenageTestSet19.OPC, "")
 
 		fmt.Println("Insert Auth Subscription data to MongoDB")
 		test.InsertAuthSubscriptionToMongoDB(ue.Supi, ue.AuthenticationSubs)

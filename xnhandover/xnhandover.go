@@ -99,57 +99,7 @@ func Xnhandover_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr string) {
 	ue := test.NewRanUeContext("imsi-2089300007487", 1, security.AlgCiphering128NEA0, security.AlgIntegrity128NIA2)
 	ue.AmfUeNgapId = 1
 	ue.AuthenticationSubs = test.GetAuthSubscription(TestGenAuthData.MilenageTestSet19.K,
-		TestGenAuthData.MilenageTestSet19.OPC,
-		TestGenAuthData.MilenageTestSet19.OP)
-	// insert UE data to MongoDB
-
-	servingPlmnId := "20893"
-	test.InsertAuthSubscriptionToMongoDB(ue.Supi, ue.AuthenticationSubs)
-	getData := test.GetAuthSubscriptionFromMongoDB(ue.Supi)
-	if getData == nil {
-		return
-	}
-	{
-		amData := test.GetAccessAndMobilitySubscriptionData()
-		test.InsertAccessAndMobilitySubscriptionDataToMongoDB(ue.Supi, amData, servingPlmnId)
-		getData := test.GetAccessAndMobilitySubscriptionDataFromMongoDB(ue.Supi, servingPlmnId)
-		if getData == nil {
-			return
-		}
-	}
-	{
-		smfSelData := test.GetSmfSelectionSubscriptionData()
-		test.InsertSmfSelectionSubscriptionDataToMongoDB(ue.Supi, smfSelData, servingPlmnId)
-		getData := test.GetSmfSelectionSubscriptionDataFromMongoDB(ue.Supi, servingPlmnId)
-		if getData == nil {
-			return
-		}
-	}
-	{
-		smSelData := test.GetSessionManagementSubscriptionData()
-		test.InsertSessionManagementSubscriptionDataToMongoDB(ue.Supi, servingPlmnId, smSelData)
-		getData := test.GetSessionManagementDataFromMongoDB(ue.Supi, servingPlmnId)
-		if getData == nil {
-			return
-		}
-	}
-	{
-		amPolicyData := test.GetAmPolicyData()
-		test.InsertAmPolicyDataToMongoDB(ue.Supi, amPolicyData)
-		getData := test.GetAmPolicyDataFromMongoDB(ue.Supi)
-		if getData == nil {
-			return
-		}
-	}
-	{
-		smPolicyData := test.GetSmPolicyData()
-		test.InsertSmPolicyDataToMongoDB(ue.Supi, smPolicyData)
-		getData := test.GetSmPolicyDataFromMongoDB(ue.Supi)
-		if getData == nil {
-			return
-		}
-	}
-
+		TestGenAuthData.MilenageTestSet19.OPC, "")
 	// send InitialUeMessage(Registration Request)(imsi-2089300007487)
 	mobileIdentity5GS := nasType.MobileIdentity5GS{
 		Len:    12, // suci
@@ -369,10 +319,6 @@ func Xnhandover_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr string) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	// delete test data
-	test.DelAuthSubscriptionToMongoDB(ue.Supi)
-	test.DelAccessAndMobilitySubscriptionDataFromMongoDB(ue.Supi, servingPlmnId)
-	test.DelSmfSelectionSubscriptionDataFromMongoDB(ue.Supi, servingPlmnId)
 
 	time.Sleep(10000 * time.Millisecond)
 	// close Connection
