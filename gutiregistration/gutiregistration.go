@@ -44,38 +44,7 @@ func Gutiregistration_test(ranIpAddr,  amfIpAddr string) {
 	ue := test.NewRanUeContext("imsi-2089300007487", 1, security.AlgCiphering128NEA0, security.AlgIntegrity128NIA2)
 	ue.AmfUeNgapId = 1
 	ue.AuthenticationSubs = test.GetAuthSubscription(TestGenAuthData.MilenageTestSet19.K,
-		TestGenAuthData.MilenageTestSet19.OPC,
-		TestGenAuthData.MilenageTestSet19.OP)
-	// insert UE data to MongoDB
-
-	servingPlmnId := "20893"
-	test.InsertAuthSubscriptionToMongoDB(ue.Supi, ue.AuthenticationSubs)
-	// getData := test.GetAuthSubscriptionFromMongoDB(ue.Supi)
-	{
-		amData := test.GetAccessAndMobilitySubscriptionData()
-		test.InsertAccessAndMobilitySubscriptionDataToMongoDB(ue.Supi, amData, servingPlmnId)
-		//getData := test.GetAccessAndMobilitySubscriptionDataFromMongoDB(ue.Supi, servingPlmnId)
-	}
-	{
-		smfSelData := test.GetSmfSelectionSubscriptionData()
-		test.InsertSmfSelectionSubscriptionDataToMongoDB(ue.Supi, smfSelData, servingPlmnId)
-		//getData := test.GetSmfSelectionSubscriptionDataFromMongoDB(ue.Supi, servingPlmnId)
-	}
-	{
-		smSelData := test.GetSessionManagementSubscriptionData()
-		test.InsertSessionManagementSubscriptionDataToMongoDB(ue.Supi, servingPlmnId, smSelData)
-		//getData := test.GetSessionManagementDataFromMongoDB(ue.Supi, servingPlmnId)
-	}
-	{
-		amPolicyData := test.GetAmPolicyData()
-		test.InsertAmPolicyDataToMongoDB(ue.Supi, amPolicyData)
-		//getData := test.GetAmPolicyDataFromMongoDB(ue.Supi)
-	}
-	{
-		smPolicyData := test.GetSmPolicyData()
-		test.InsertSmPolicyDataToMongoDB(ue.Supi, smPolicyData)
-		//getData := test.GetSmPolicyDataFromMongoDB(ue.Supi)
-	}
+		TestGenAuthData.MilenageTestSet19.OPC, "")
 
 	// send InitialUeMessage(Registration Request)(imsi-2089300007487)
 	SUCI5GS := nasType.MobileIdentity5GS{
@@ -384,11 +353,6 @@ func Gutiregistration_test(ranIpAddr,  amfIpAddr string) {
         return
     }
 	time.Sleep(1000 * time.Millisecond)
-
-	// delete test data
-	test.DelAuthSubscriptionToMongoDB(ue.Supi)
-	test.DelAccessAndMobilitySubscriptionDataFromMongoDB(ue.Supi, servingPlmnId)
-	test.DelSmfSelectionSubscriptionDataFromMongoDB(ue.Supi, servingPlmnId)
 
 	// close Connection
 	amfConn.Close()

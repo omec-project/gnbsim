@@ -45,47 +45,11 @@ func Register_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr string) {
 		fmt.Println("Success - connected to AMF ", amfIpAddr)
 	}
 
-	servingPlmnId := "20893"
 	ue := test.NewRanUeContext("imsi-2089300007487", 1, security.AlgCiphering128NEA0, security.AlgIntegrity128NIA2)
 	ue.AmfUeNgapId = 1
 	ue.AuthenticationSubs = test.GetAuthSubscription(TestGenAuthData.MilenageTestSet19.K,
 		TestGenAuthData.MilenageTestSet19.OPC,
-		TestGenAuthData.MilenageTestSet19.OP)
-
-	fmt.Println("Insert Auth Subscription data to MongoDB")
-	test.InsertAuthSubscriptionToMongoDB(ue.Supi, ue.AuthenticationSubs)
-	//getData := test.GetAuthSubscriptionFromMongoDB(ue.Supi)
-
-	{
-		fmt.Println("Insert Access & Mobility Subscription data to MongoDB")
-		amData := test.GetAccessAndMobilitySubscriptionData()
-		test.InsertAccessAndMobilitySubscriptionDataToMongoDB(ue.Supi, amData, servingPlmnId)
-		//getData := test.GetAccessAndMobilitySubscriptionDataFromMongoDB(ue.Supi, servingPlmnId)
-	}
-	{
-		fmt.Println("Insert SMF Selection Subscription data to MongoDB")
-		smfSelData := test.GetSmfSelectionSubscriptionData()
-		test.InsertSmfSelectionSubscriptionDataToMongoDB(ue.Supi, smfSelData, servingPlmnId)
-		//getData := test.GetSmfSelectionSubscriptionDataFromMongoDB(ue.Supi, servingPlmnId)
-	}
-	{
-		fmt.Println("Insert Session Management Subscription data to MongoDB")
-		smSelData := test.GetSessionManagementSubscriptionData()
-		test.InsertSessionManagementSubscriptionDataToMongoDB(ue.Supi, servingPlmnId, smSelData)
-		//getData := test.GetSessionManagementDataFromMongoDB(ue.Supi, servingPlmnId)
-	}
-	{
-		fmt.Println("Insert Access mobility Policy data to MongoDB")
-		amPolicyData := test.GetAmPolicyData()
-		test.InsertAmPolicyDataToMongoDB(ue.Supi, amPolicyData)
-		//getData := test.GetAmPolicyDataFromMongoDB(ue.Supi)
-	}
-	{
-		fmt.Println("Insert Session Management Policy data to MongoDB")
-		smPolicyData := test.GetSmPolicyData()
-		test.InsertSmPolicyDataToMongoDB(ue.Supi, smPolicyData)
-		//getData := test.GetSmPolicyDataFromMongoDB(ue.Supi)
-	}
+		"")
 
 	// send NGSetupRequest Msg
 	fmt.Println("Send NGSetupRequest Message")
