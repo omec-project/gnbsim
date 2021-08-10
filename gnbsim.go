@@ -7,20 +7,22 @@ package main
 
 import (
 	"fmt"
-	"github.com/free5gc/MongoDBLibrary"
-	"gnbsim/register"
 	"gnbsim/deregister"
 	"gnbsim/duplicateregistration"
+	"gnbsim/gnodeb"
 	"gnbsim/gutiregistration"
 	"gnbsim/loadsub"
 	"gnbsim/n2handover"
 	"gnbsim/paging"
 	"gnbsim/pdusessionrelease"
+	"gnbsim/profile/register"
 	"gnbsim/resynchronisation"
 	"gnbsim/servicereq"
 	"gnbsim/xnhandover"
 	"net"
 	"os"
+
+	"github.com/free5gc/MongoDBLibrary"
 )
 
 func main() {
@@ -35,6 +37,18 @@ func main() {
 
 	ranIpAddr := os.Getenv("POD_IP")
 	fmt.Println("Hello World from RAN - ", ranIpAddr)
+
+	gnbDao := gnodeb.GetGnbDao()
+	err := gnbDao.ParseGnbConfig()
+	if err != nil {
+		fmt.Println("Failed to parse config")
+		return
+	}
+	err = gnbDao.InitializeAllGnbs()
+	if err != nil {
+		fmt.Println("Failed to initialize gNodeBs")
+		return
+	}
 
 	// RAN connect to AMF
 	addrs, err := net.LookupHost("amf")
@@ -68,13 +82,15 @@ func main() {
 	dbUrl := "mongodb://mongodb:27017"
 	MongoDBLibrary.SetMongoDB(dbName, dbUrl)
 	fmt.Println("Connected to MongoDB ")
-    ranUIpAddr := "192.168.251.5"
+	ranUIpAddr := "192.168.251.5"
 
 	switch testcase {
 	case "register":
 		{
 			fmt.Println("test register")
-			register.Register_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr)
+			// TODO which gnb to use should be parsed from the config file
+			gnb := gnbDao.GetGNodeB("gnodeb1")
+			register.Register_test(ranUIpAddr, upfIpAddr, gnb)
 		}
 	case "deregister":
 		{
@@ -126,12 +142,12 @@ func main() {
 			fmt.Println("test xnhandover")
 			xnhandover.Xnhandover_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr)
 		}
-    case "loadsubs":
+	case "loadsubs":
 		{
 			fmt.Println("loading subscribers in DB")
 			loadsub.LoadSubscriberData(10)
 		}
-    }
+	}
 
 	return
 }

@@ -9,6 +9,7 @@ require (
 	github.com/free5gc/CommonConsumerTestData v1.0.0
 	github.com/free5gc/MongoDBLibrary v1.0.0
 	github.com/free5gc/UeauCommon v1.0.0
+	github.com/free5gc/amf v1.3.0
 	github.com/free5gc/aper v1.0.0
 	github.com/free5gc/milenage v1.0.0
 	github.com/free5gc/ngap v1.0.1
