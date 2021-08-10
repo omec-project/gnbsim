@@ -17,6 +17,7 @@ import (
 var MAX_PKT_LEN int = 2048
 
 type transport interface {
+	SendToPeerBlock(amf *GnbAmf, pkt []byte) ([]byte, error)
 	SendToPeer(amf *GnbAmf, pkt []byte) (err error)
 	ReceiveFromPeer(amf *GnbAmf)
 }
@@ -29,32 +30,45 @@ type gnbCTransport struct {
 	gnbInstance *GNodeB
 }
 
+//TODO Should add timeout
+
+// SendToPeer sends an NGAP encoded packet to the specified AMF over the socket
+// connection and waits for the response
+func (cpTprt *gnbCTransport) SendToPeerBlock(amf *GnbAmf, pkt []byte) ([]byte, error) {
+	err := cpTprt.SendToPeer(amf, pkt)
+	if err != nil {
+		fmt.Println("SendToPeer failed with err:", err)
+		return nil, err
+	}
+
+	recvMsg := make([]byte, MAX_PKT_LEN)
+	conn := amf.Conn.(*sctp.SCTPConn)
+	n, _, _, err := conn.SCTPRead(recvMsg)
+	if err != nil {
+		fmt.Println("SCTPRead failed due to error:", err)
+		return nil, err
+	}
+
+	fmt.Printf("Read %v bytes from %v\n", n, conn.RemoteAddr())
+	return recvMsg[:n], nil
+}
+
 // SendToPeer sends an NGAP encoded packet to the specified AMF over the socket
 // connection
-func (cpTprt *gnbCTransport) SendToPeer(amf *GnbAmf, pkt []byte) error {
+func (cpTprt *gnbCTransport) SendToPeer(amf *GnbAmf, pkt []byte) (err error) {
 	fmt.Println("gnbcTransport :: sendToPeer called")
 
 	defer func() {
-		err := recover()
-		if err != nil {
-			fmt.Printf("Recovered panic, error: %+v", err)
+		recerr := recover()
+		if recerr != nil {
+			fmt.Printf("Recovered panic in SendToPeer, error: %+v\n", recerr)
+			err = fmt.Errorf("SendToPeer() panic")
 		}
 	}()
 
-	if amf == nil {
-		return fmt.Errorf("amf is nil")
-	}
-
-	if len(pkt) == 0 {
-		return fmt.Errorf("packet len is 0")
-	}
-
-	if amf.Conn == nil {
-		return fmt.Errorf("amf conn is nil")
-	}
-
-	if amf.Conn.RemoteAddr() == nil {
-		return fmt.Errorf("ran addr is nil")
+	err = checkTransportParam(amf, pkt)
+	if err != nil {
+		return err
 	}
 
 	if n, err := amf.Conn.Write(pkt); err != nil || n != len(pkt) {
@@ -63,7 +77,7 @@ func (cpTprt *gnbCTransport) SendToPeer(amf *GnbAmf, pkt []byte) error {
 		fmt.Printf("Wrote %v bytes\n", n)
 	}
 
-	return nil
+	return
 }
 
 // ReceiveFromPeer continuously waits for an incoming message from the AMF
@@ -100,7 +114,28 @@ func (cpTprt *gnbCTransport) ReceiveFromPeer(amf *GnbAmf) {
 			}
 		}
 
-		fmt.Printf("Read %v bytes from %v", n, conn)
-		cpTprt.gnbInstance.dispatch(conn, recvMsg[:n])
+		fmt.Printf("Read %v bytes from %v\n", n, conn)
+		cpTprt.gnbInstance.dispatch(amf, recvMsg[:n])
 	}
+}
+
+func checkTransportParam(amf *GnbAmf, pkt []byte) error {
+
+	if amf == nil {
+		return fmt.Errorf("amf is nil")
+	}
+
+	if len(pkt) == 0 {
+		return fmt.Errorf("packet len is 0")
+	}
+
+	if amf.Conn == nil {
+		return fmt.Errorf("amf conn is nil")
+	}
+
+	if amf.Conn.RemoteAddr() == nil {
+		return fmt.Errorf("ran addr is nil")
+	}
+
+	return nil
 }

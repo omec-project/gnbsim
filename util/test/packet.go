@@ -6,16 +6,17 @@
 package test
 
 import (
+	"github.com/free5gc/ngap"
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasMessage"
-	"github.com/free5gc/ngap"
+
 	// Nausf_UEAU_Client "github.com/free5gc/openapi/Nausf_UEAuthentication"
 	// "github.com/free5gc/openapi/models"
 
 	"gnbsim/util/ngapTestpacket"
 )
 
-func GetNGSetupRequest(gnbId []byte, bitlength uint64, name string) ([]byte, error) {
+func GetNGSetupRequest(tac, gnbId []byte, bitlength uint64, name string) ([]byte, error) {
 	message := ngapTestpacket.BuildNGSetupRequest()
 	// GlobalRANNodeID
 	ie := message.InitiatingMessage.Value.NGSetupRequest.ProtocolIEs.List[0]
@@ -25,6 +26,9 @@ func GetNGSetupRequest(gnbId []byte, bitlength uint64, name string) ([]byte, err
 	// RANNodeName
 	ie = message.InitiatingMessage.Value.NGSetupRequest.ProtocolIEs.List[1]
 	ie.Value.RANNodeName.Value = name
+	// TAC
+	ie = message.InitiatingMessage.Value.NGSetupRequest.ProtocolIEs.List[2]
+	ie.Value.SupportedTAList.List[0].TAC.Value = tac
 
 	return ngap.Encoder(message)
 }

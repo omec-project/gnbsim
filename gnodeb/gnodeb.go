@@ -8,7 +8,6 @@ package gnodeb
 import (
 	"fmt"
 	"gnbsim/util/test"
-	"net"
 
 	"github.com/free5gc/ngap"
 	"github.com/free5gc/ngap/ngapType"
@@ -22,9 +21,9 @@ type GNodeB struct {
 	GnbPort uint16
 	GnbName string
 	GnbId   []byte
+	Tac     []byte
 	/* Default AMF to connect to */
 	DefaultAmf *GnbAmf
-	Tac        string
 
 	/* Control Plane transport */
 	CpTransport transport
@@ -32,13 +31,28 @@ type GNodeB struct {
 
 // Init initializes the GNodeB struct var and connects to the default AMF
 func (gnb *GNodeB) Init() error {
-	fmt.Printf("Default gNodeB configuration : %#v", *gnb)
+	fmt.Printf("Default gNodeB configuration : %#v\n", *gnb)
 	gnb.CpTransport = &gnbCTransport{gnb}
+
+	if gnb.DefaultAmf == nil {
+		fmt.Println("Default AMF not configured, continuing ...")
+		return nil
+	}
+
 	err := gnb.ConnectToAmf(gnb.DefaultAmf)
 	if err != nil {
 		fmt.Println("failed to connect to amf : ", err)
+		return err
 	}
-	return err
+	successfulOutcome, err := gnb.PerformNgSetup(gnb.DefaultAmf)
+	if !successfulOutcome || err != nil {
+		fmt.Println("failed to perform NG Setup procedure : ", err)
+		return err
+	}
+
+	go gnb.CpTransport.ReceiveFromPeer(gnb.DefaultAmf)
+
+	return nil
 }
 
 //TODO this should be in transport as ConnectToPeer
@@ -53,35 +67,39 @@ func (gnb *GNodeB) ConnectToAmf(amf *GnbAmf) (err error) {
 		return
 	}
 	fmt.Println("Success - connected to AMF ", *amf)
-	go gnb.CpTransport.ReceiveFromPeer(amf)
-	err = gnb.SendNGSetupRequest(gnb.DefaultAmf)
 	return
 }
 
-// SendNGSetupRequest forms and sends an NG Setup Request to the provided AMF
-// instance
-func (gnb *GNodeB) SendNGSetupRequest(amf *GnbAmf) error {
-	fmt.Println("gnodeb: Sending NGSetup Request to Amf:", gnb.DefaultAmf)
+// PerformNGSetup sends the NGSetupRequest to the provided GnbAmf.
+// It waits for the response, process the response and informs whether it was
+// SuccessfulOutcome or UnsuccessfulOutcome
+func (gnb *GNodeB) PerformNgSetup(amf *GnbAmf) (status bool, err error) {
 
 	// Forming NGSetupRequest with configured parameters
-	sendMsg, err := test.GetNGSetupRequest(gnb.GnbId, 24, gnb.GnbName)
+	ngSetupReq, err := test.GetNGSetupRequest(gnb.Tac, gnb.GnbId, 24, gnb.GnbName)
 	if err != nil {
 		fmt.Println("failed to create setupRequest message")
-		return err
+		return
 	}
 
 	// Sending NGSetupRequest to AMF
-	err = gnb.CpTransport.SendToPeer(amf, sendMsg)
+	ngSetupResp, err := gnb.CpTransport.SendToPeerBlock(amf, ngSetupReq)
 	if err != nil {
 		fmt.Println("failed to send NGSetupRequest to AMF, error:", err)
+		return
+	}
+	err = gnb.dispatch(amf, ngSetupResp)
+	if err != nil {
+		fmt.Println("Unexpected erro in NGSetupResponse")
+		return
 	}
 
-	return err
+	return amf.GetNgSetupStatus(), nil
 }
 
 // dispatch decodes an incoming NGAP message and routes it to the corresponding
 // handlers or a GnbCpUe
-func (gnb *GNodeB) dispatch(conn net.Conn, pkt []byte) error {
+func (gnb *GNodeB) dispatch(amf *GnbAmf, pkt []byte) error {
 	// decoding the incoming packet
 	pdu, err := ngap.Decoder(pkt)
 	if err != nil {
@@ -97,10 +115,19 @@ func (gnb *GNodeB) dispatch(conn net.Conn, pkt []byte) error {
 		}
 		switch successfulOutcome.ProcedureCode.Value {
 		case ngapType.ProcedureCodeNGSetup:
-			//TODO : fetch amf from map based on the connection
-			HandleNGSetupResponse(gnb.DefaultAmf, pdu)
+			HandleNgSetupResponse(amf, pdu)
+		}
+	case ngapType.NGAPPDUPresentUnsuccessfulOutcome:
+		unsuccessfulOutcome := pdu.UnsuccessfulOutcome
+		if unsuccessfulOutcome == nil {
+			return fmt.Errorf("UnSuccessful Outcome is nil")
+		}
+		switch unsuccessfulOutcome.ProcedureCode.Value {
+		case ngapType.ProcedureCodeNGSetup:
+			HandleNgSetupFailure(amf, pdu)
 		}
 	}
+
 	return nil
 }
 
