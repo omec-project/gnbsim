@@ -17,9 +17,11 @@ import (
 
 // GnbAmf holds the AMF context
 type GnbAmf struct {
-	AmfIp   string
-	AmfName string
-	AmfPort uint16
+	/* Indicates wether NGSetup was successful or not*/
+	NgSetupStatus bool
+	AmfIp         string
+	AmfName       string
+	AmfPort       uint16
 	/* Relative AMF Capacity */
 	RelCap          int64
 	ServedGuamiList []models.Guami
@@ -28,12 +30,33 @@ type GnbAmf struct {
 	Conn net.Conn
 }
 
+func NewGnbAmf(ip string, port uint16) *GnbAmf {
+	return &GnbAmf{
+		AmfIp:           ip,
+		AmfPort:         port,
+		ServedGuamiList: NewServedGUAMIList(),
+		PlmnSupportList: NewPlmnSupportList(),
+	}
+}
+
 func (amf *GnbAmf) SetAMFName(name string) {
 	amf.AmfName = name
 }
 
 func (amf *GnbAmf) SetRelativeAMFCapacity(cap int64) {
 	amf.RelCap = cap
+}
+
+func (amf *GnbAmf) SetNgSetupStatus(successfulOutcome bool) {
+	// TODO Access to this either should not be concurrent or should be
+	// synchronized
+	amf.NgSetupStatus = successfulOutcome
+}
+
+func (amf *GnbAmf) GetNgSetupStatus() bool {
+	// TODO Access to this either should not be concurrent or should be
+	// synchronized
+	return amf.NgSetupStatus
 }
 
 func NewServedGUAMIList() []models.Guami {

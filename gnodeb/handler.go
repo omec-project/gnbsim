@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/free5gc/amf/context"
+	"github.com/free5gc/aper"
 	"github.com/free5gc/ngap/ngapConvert"
 	"github.com/free5gc/ngap/ngapType"
 	"github.com/free5gc/openapi/models"
@@ -16,8 +17,8 @@ import (
 
 // HandleNGSetupResponse processes the NG Setup Response and updates GnbAmf
 // context
-func HandleNGSetupResponse(amf *GnbAmf, pdu *ngapType.NGAPPDU) {
-	fmt.Printf("decoded NGSETUP RESPONSE: %#v", pdu)
+func HandleNgSetupResponse(amf *GnbAmf, pdu *ngapType.NGAPPDU) {
+	fmt.Printf("decoded NGSETUP RESPONSE: %#v\n", pdu)
 	var amfName *ngapType.AMFName
 	var servedGUAMIList *ngapType.ServedGUAMIList
 	var relativeAMFCapacity *ngapType.RelativeAMFCapacity
@@ -37,15 +38,15 @@ func HandleNGSetupResponse(amf *GnbAmf, pdu *ngapType.NGAPPDU) {
 		fmt.Println("Initiating Message is nil")
 		return
 	}
-	nGSetupResponse := successfulOutcome.Value.NGSetupResponse
-	if nGSetupResponse == nil {
+	ngSetupResponse := successfulOutcome.Value.NGSetupResponse
+	if ngSetupResponse == nil {
 		fmt.Println("NGSetupResponse is nil")
 		return
 	}
 
 	fmt.Println("Handle NG Setup response")
-	for i := 0; i < len(nGSetupResponse.ProtocolIEs.List); i++ {
-		ie := nGSetupResponse.ProtocolIEs.List[i]
+	for i := 0; i < len(ngSetupResponse.ProtocolIEs.List); i++ {
+		ie := ngSetupResponse.ProtocolIEs.List[i]
 		switch ie.Id.Value {
 		case ngapType.ProtocolIEIDAMFName:
 			amfName = ie.Value.AMFName
@@ -81,8 +82,9 @@ func HandleNGSetupResponse(amf *GnbAmf, pdu *ngapType.NGAPPDU) {
 	amf.SetAMFName(amfName.Value)
 	amf.SetRelativeAMFCapacity(relativeAMFCapacity.Value)
 
-	// Clearing any existing contents of ServedGuamiList within GnbAmf
-	if len(amf.ServedGuamiList) != 0 {
+	// Initializing the ServedGuamiList slice in GnbAmf if not already initialized
+	// This will also clear any existing contents of ServedGuamiList within GnbAmf
+	if len(amf.ServedGuamiList) != 0 || cap(amf.ServedGuamiList) == 0 {
 		amf.ServedGuamiList = NewServedGUAMIList()
 	}
 
@@ -115,8 +117,9 @@ func HandleNGSetupResponse(amf *GnbAmf, pdu *ngapType.NGAPPDU) {
 		// TODO: Need to check
 	}
 
-	// Clearing any existing contents of PlmnSupportList within GnbAmf
-	if len(amf.PlmnSupportList) != 0 {
+	// Initializing the PlmnSuportList slice in GnbAmf if not already initialized
+	// This will also clear any existing contents of PlmnSupportList within GnbAmf
+	if len(amf.PlmnSupportList) != 0 || cap(amf.PlmnSupportList) == 0 {
 		amf.PlmnSupportList = NewPlmnSupportList()
 	}
 	capOfPlmnSupportList := cap(amf.PlmnSupportList)
@@ -149,5 +152,72 @@ func HandleNGSetupResponse(amf *GnbAmf, pdu *ngapType.NGAPPDU) {
 		// existing list within gNodeB
 	}
 
+	amf.SetNgSetupStatus(true)
 	fmt.Println("Processed NG Setup Response")
+}
+
+func HandleNgSetupFailure(amf *GnbAmf, pdu *ngapType.NGAPPDU) {
+	var cause *ngapType.Cause
+
+	if amf == nil {
+		fmt.Println("ran is nil")
+		return
+	}
+	if pdu == nil {
+		fmt.Println("NGAP Message is nil")
+		return
+	}
+	UnSuccessfulOutcome := pdu.UnsuccessfulOutcome
+	if UnSuccessfulOutcome == nil {
+		fmt.Println("Initiating Message is nil")
+		return
+	}
+	ngSetupFailure := UnSuccessfulOutcome.Value.NGSetupFailure
+	if ngSetupFailure == nil {
+		fmt.Println("NGSetupResponse is nil")
+		return
+	}
+
+	fmt.Println("Handle NG Setup Failure")
+	for i := 0; i < len(ngSetupFailure.ProtocolIEs.List); i++ {
+		ie := ngSetupFailure.ProtocolIEs.List[i]
+		if ie.Id.Value == ngapType.ProtocolIEIDCause {
+			cause = ie.Value.Cause
+			fmt.Println("Decode IE Cause")
+			if cause == nil {
+				fmt.Println("Cause is nil")
+				return
+			}
+		}
+		// TODO handle TimeToWait IE
+	}
+
+	PrintAndGetCause(cause)
+	amf.SetNgSetupStatus(false)
+
+	fmt.Println("Processed NG Setup Failure")
+}
+
+func PrintAndGetCause(cause *ngapType.Cause) (present int, value aper.Enumerated) {
+	present = cause.Present
+	switch cause.Present {
+	case ngapType.CausePresentRadioNetwork:
+		fmt.Printf("Cause RadioNetwork[%d]\n", cause.RadioNetwork.Value)
+		value = cause.RadioNetwork.Value
+	case ngapType.CausePresentTransport:
+		fmt.Printf("Cause Transport[%d]\n", cause.Transport.Value)
+		value = cause.Transport.Value
+	case ngapType.CausePresentProtocol:
+		fmt.Printf("Cause Protocol[%d]\n", cause.Protocol.Value)
+		value = cause.Protocol.Value
+	case ngapType.CausePresentNas:
+		fmt.Printf("Cause Nas[%d]\n", cause.Nas.Value)
+		value = cause.Nas.Value
+	case ngapType.CausePresentMisc:
+		fmt.Printf("Cause Misc[%d]\n", cause.Misc.Value)
+		value = cause.Misc.Value
+	default:
+		fmt.Printf("Invalid Cause group[%d]\n", cause.Present)
+	}
+	return
 }

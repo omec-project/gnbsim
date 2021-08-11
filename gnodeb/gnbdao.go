@@ -45,7 +45,7 @@ func (gnbdao *GnbDao) ParseGnbConfig() error {
 			ServedGuamiList: NewServedGUAMIList(),
 			PlmnSupportList: NewPlmnSupportList(),
 		},
-		Tac: "\x00\x00\x01",
+		Tac: []byte("\x00\x00\x01"),
 	}
 
 	gnbdao.gnbMap["gnodeb1"] = &gnb
