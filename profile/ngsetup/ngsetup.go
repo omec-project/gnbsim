@@ -8,25 +8,26 @@ package ngsetup
 import (
 	"fmt"
 	"gnbsim/gnodeb"
+	"gnbsim/gnodeb/context"
 	"net"
 )
 
-func NgSetup_test(gnb *gnodeb.GNodeB) {
+func NgSetup_test(gnb *context.GNodeB) {
 	// create amf
 	addrs, err := net.LookupHost("amf")
 	if err != nil {
 		fmt.Println("Failed to resolve amf")
 		return
 	}
-	gnbamf := gnodeb.NewGnbAmf(addrs[0], 38412)
+	gnbamf := context.NewGnbAmf(addrs[0], 38412)
 
-	err = gnb.ConnectToAmf(gnbamf)
+	err = gnodeb.ConnectToAmf(gnb, gnbamf)
 	if err != nil {
 		fmt.Println("ConnectToAmf() failed due to:", err)
 		return
 	}
 
-	successFulOutcome, err := gnb.PerformNgSetup(gnbamf)
+	successFulOutcome, err := gnodeb.PerformNgSetup(gnb, gnbamf)
 	if err != nil {
 		fmt.Println("PerformNGSetup() failed due to:", err)
 	} else if !successFulOutcome {

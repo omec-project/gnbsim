@@ -7,11 +7,10 @@ package main
 
 import (
 	"fmt"
-	"gnbsim/gnodeb"
+	"gnbsim/gnodeb/dao"
 	"gnbsim/loadsub"
 	"gnbsim/profile/ngsetup"
 	"gnbsim/profile/register"
-	"net"
 	"os"
 )
 
@@ -28,7 +27,7 @@ func main() {
 	ranIpAddr := os.Getenv("POD_IP")
 	fmt.Println("Hello World from RAN - ", ranIpAddr)
 
-	gnbDao := gnodeb.GetGnbDao()
+	gnbDao := dao.GetGnbDao()
 	err := gnbDao.ParseGnbConfig()
 	if err != nil {
 		fmt.Println("Failed to parse config")
@@ -40,15 +39,15 @@ func main() {
 		return
 	}
 
-	addrs, err := net.LookupHost("upf")
+	/*addrs, err := net.LookupHost("upf")
 	if err != nil {
 		fmt.Println("Failed to resolve upf")
 		return
 	}
 	upfIpAddr := addrs[0]
-	fmt.Println("UPF address - ", upfIpAddr)
+	fmt.Println("UPF address - ", upfIpAddr)*/
 
-	upfIpAddr = "192.168.252.3"
+	upfIpAddr := "192.168.252.3"
 	fmt.Println("UPF address - ", upfIpAddr)
 	ranUIpAddr := "192.168.251.5"
 
