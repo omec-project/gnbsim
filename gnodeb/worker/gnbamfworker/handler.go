@@ -3,12 +3,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-package gnodeb
+package gnbamfworker
 
 import (
 	"fmt"
+	"log"
 
-	"github.com/free5gc/amf/context"
+	intfc "gnbsim/interfacecommon"
+
+	"gnbsim/gnodeb/context"
+
+	amfctx "github.com/free5gc/amf/context"
 	"github.com/free5gc/aper"
 	"github.com/free5gc/ngap/ngapConvert"
 	"github.com/free5gc/ngap/ngapType"
@@ -17,7 +22,7 @@ import (
 
 // HandleNGSetupResponse processes the NG Setup Response and updates GnbAmf
 // context
-func HandleNgSetupResponse(amf *GnbAmf, pdu *ngapType.NGAPPDU) {
+func HandleNgSetupResponse(amf *context.GnbAmf, pdu *ngapType.NGAPPDU) {
 	fmt.Printf("decoded NGSETUP RESPONSE: %#v\n", pdu)
 	var amfName *ngapType.AMFName
 	var servedGUAMIList *ngapType.ServedGUAMIList
@@ -26,54 +31,54 @@ func HandleNgSetupResponse(amf *GnbAmf, pdu *ngapType.NGAPPDU) {
 	// TODO Process optional IEs
 
 	if amf == nil {
-		fmt.Println("ran is nil")
+		log.Println("ran is nil")
 		return
 	}
 	if pdu == nil {
-		fmt.Println("NGAP Message is nil")
+		log.Println("NGAP Message is nil")
 		return
 	}
 	successfulOutcome := pdu.SuccessfulOutcome
 	if successfulOutcome == nil {
-		fmt.Println("Initiating Message is nil")
+		log.Println("Initiating Message is nil")
 		return
 	}
 	ngSetupResponse := successfulOutcome.Value.NGSetupResponse
 	if ngSetupResponse == nil {
-		fmt.Println("NGSetupResponse is nil")
+		log.Println("NGSetupResponse is nil")
 		return
 	}
 
-	fmt.Println("Handle NG Setup response")
+	log.Println("Handle NG Setup response")
 	for i := 0; i < len(ngSetupResponse.ProtocolIEs.List); i++ {
 		ie := ngSetupResponse.ProtocolIEs.List[i]
 		switch ie.Id.Value {
 		case ngapType.ProtocolIEIDAMFName:
 			amfName = ie.Value.AMFName
-			fmt.Println("Decode IE AMFName")
+			log.Println("Decode IE AMFName")
 			if amfName == nil {
-				fmt.Println("AMFName is nil")
+				log.Println("AMFName is nil")
 				return
 			}
 		case ngapType.ProtocolIEIDServedGUAMIList:
 			servedGUAMIList = ie.Value.ServedGUAMIList
-			fmt.Println("Decode IE ServedGUAMIList")
+			log.Println("Decode IE ServedGUAMIList")
 			if servedGUAMIList == nil {
-				fmt.Println("ServedGUAMIList is nil")
+				log.Println("ServedGUAMIList is nil")
 				return
 			}
 		case ngapType.ProtocolIEIDRelativeAMFCapacity:
 			relativeAMFCapacity = ie.Value.RelativeAMFCapacity
-			fmt.Println("Decode IE RelativeAMFCapacity")
+			log.Println("Decode IE RelativeAMFCapacity")
 			if relativeAMFCapacity == nil {
-				fmt.Println("RelativeAMFCapacity is nil")
+				log.Println("RelativeAMFCapacity is nil")
 				return
 			}
 		case ngapType.ProtocolIEIDPLMNSupportList:
 			plmnSupportList = ie.Value.PLMNSupportList
-			fmt.Println("Decode IE PLMNSupportList")
+			log.Println("Decode IE PLMNSupportList")
 			if plmnSupportList == nil {
-				fmt.Println("PLMNSupportList is nil")
+				log.Println("PLMNSupportList is nil")
 				return
 			}
 		}
@@ -85,7 +90,7 @@ func HandleNgSetupResponse(amf *GnbAmf, pdu *ngapType.NGAPPDU) {
 	// Initializing the ServedGuamiList slice in GnbAmf if not already initialized
 	// This will also clear any existing contents of ServedGuamiList within GnbAmf
 	if len(amf.ServedGuamiList) != 0 || cap(amf.ServedGuamiList) == 0 {
-		amf.ServedGuamiList = NewServedGUAMIList()
+		amf.ServedGuamiList = context.NewServedGUAMIList()
 	}
 
 	capOfGuamiList := cap(amf.ServedGuamiList)
@@ -112,19 +117,19 @@ func HandleNgSetupResponse(amf *GnbAmf, pdu *ngapType.NGAPPDU) {
 	}
 
 	if len(amf.ServedGuamiList) == 0 {
-		fmt.Println("NG Setup Response : Empty ServedGuamiList received")
-	} else {
+		log.Println("NG Setup Response : Empty ServedGuamiList received")
+	} /* else {
 		// TODO: Need to check
-	}
+	}*/
 
 	// Initializing the PlmnSuportList slice in GnbAmf if not already initialized
 	// This will also clear any existing contents of PlmnSupportList within GnbAmf
 	if len(amf.PlmnSupportList) != 0 || cap(amf.PlmnSupportList) == 0 {
-		amf.PlmnSupportList = NewPlmnSupportList()
+		amf.PlmnSupportList = context.NewPlmnSupportList()
 	}
 	capOfPlmnSupportList := cap(amf.PlmnSupportList)
 	for _, plmnSupportItem := range plmnSupportList.List {
-		plmnSI := context.NewPlmnSupportItem()
+		plmnSI := amfctx.NewPlmnSupportItem()
 
 		// Parsing PLMNID into models.Guami
 		plmnSI.PlmnId = ngapConvert.PlmnIdToModels(plmnSupportItem.PLMNIdentity)
@@ -146,46 +151,46 @@ func HandleNgSetupResponse(amf *GnbAmf, pdu *ngapType.NGAPPDU) {
 	}
 
 	if len(amf.PlmnSupportList) == 0 {
-		fmt.Println("NG Setup Response : Empty PLMNSupportList received")
-	} else {
+		log.Println("NG Setup Response : Empty PLMNSupportList received")
+	} /*else {
 		// TODO: Need to check whether it should be compared against some
 		// existing list within gNodeB
-	}
+	}*/
 
 	amf.SetNgSetupStatus(true)
-	fmt.Println("Processed NG Setup Response")
+	log.Println("Processed NG Setup Response")
 }
 
-func HandleNgSetupFailure(amf *GnbAmf, pdu *ngapType.NGAPPDU) {
+func HandleNgSetupFailure(amf *context.GnbAmf, pdu *ngapType.NGAPPDU) {
 	var cause *ngapType.Cause
 
 	if amf == nil {
-		fmt.Println("ran is nil")
+		log.Println("ran is nil")
 		return
 	}
 	if pdu == nil {
-		fmt.Println("NGAP Message is nil")
+		log.Println("NGAP Message is nil")
 		return
 	}
 	UnSuccessfulOutcome := pdu.UnsuccessfulOutcome
 	if UnSuccessfulOutcome == nil {
-		fmt.Println("Initiating Message is nil")
+		log.Println("UnSuccessfulOutcome Message is nil")
 		return
 	}
 	ngSetupFailure := UnSuccessfulOutcome.Value.NGSetupFailure
 	if ngSetupFailure == nil {
-		fmt.Println("NGSetupResponse is nil")
+		log.Println("NGSetupResponse is nil")
 		return
 	}
 
-	fmt.Println("Handle NG Setup Failure")
+	log.Println("Handle NG Setup Failure")
 	for i := 0; i < len(ngSetupFailure.ProtocolIEs.List); i++ {
 		ie := ngSetupFailure.ProtocolIEs.List[i]
 		if ie.Id.Value == ngapType.ProtocolIEIDCause {
 			cause = ie.Value.Cause
-			fmt.Println("Decode IE Cause")
+			log.Println("Decode IE Cause")
 			if cause == nil {
-				fmt.Println("Cause is nil")
+				log.Println("Cause is nil")
 				return
 			}
 		}
@@ -195,7 +200,110 @@ func HandleNgSetupFailure(amf *GnbAmf, pdu *ngapType.NGAPPDU) {
 	PrintAndGetCause(cause)
 	amf.SetNgSetupStatus(false)
 
-	fmt.Println("Processed NG Setup Failure")
+	log.Println("Processed NG Setup Failure")
+}
+
+func HandleDownlinkNasTransport(gnb *context.GNodeB, amf *context.GnbAmf, pdu *ngapType.NGAPPDU) {
+	var gnbUeNgapId *ngapType.RANUENGAPID
+
+	if amf == nil {
+		log.Println("ran is nil")
+		return
+	}
+	if pdu == nil {
+		log.Println("NGAP Message is nil")
+		return
+	}
+	if gnb == nil {
+		log.Println("GNodeB Message is nil")
+		return
+	}
+	initiatingMessage := pdu.InitiatingMessage
+	if initiatingMessage == nil {
+		log.Println("Initiating Message is nil")
+		return
+	}
+	downlinkNasTransport := initiatingMessage.Value.DownlinkNASTransport
+	if downlinkNasTransport == nil {
+		log.Println("DownlinkNASTransport is nil")
+		return
+	}
+
+	log.Println("Handle Downlink NAS Transport")
+	for i := 0; i < len(downlinkNasTransport.ProtocolIEs.List); i++ {
+		ie := downlinkNasTransport.ProtocolIEs.List[i]
+		if ie.Id.Value == ngapType.ProtocolIEIDRANUENGAPID {
+			gnbUeNgapId = ie.Value.RANUENGAPID
+			log.Println("Decode IE RANUENGAPID")
+			if gnbUeNgapId == nil {
+				log.Println("RANUENGAPID is nil")
+				return
+			}
+		}
+	}
+	ngapId := gnbUeNgapId.Value
+	gnbue := gnb.GnbUes.GetGnbUe(ngapId)
+	if gnbue == nil {
+		log.Println("No GnbUe found corresponding to RANUENGAPID:")
+		return
+	}
+
+	amfmsg := intfc.N2Message{}
+	amfmsg.Event = intfc.AMF_DOWNLINK_NAS_TRANSPORT
+	amfmsg.Interface = intfc.N2_INTERFACE
+	amfmsg.NgapPdu = pdu
+	gnbue.ReadChan <- &amfmsg
+}
+
+func HandleInitialContextSetupRequest(gnb *context.GNodeB, amf *context.GnbAmf, pdu *ngapType.NGAPPDU) {
+	var gnbUeNgapId *ngapType.RANUENGAPID
+
+	if amf == nil {
+		log.Println("ran is nil")
+		return
+	}
+	if pdu == nil {
+		log.Println("NGAP Message is nil")
+		return
+	}
+	if gnb == nil {
+		log.Println("GNodeB Message is nil")
+		return
+	}
+	initiatingMessage := pdu.InitiatingMessage
+	if initiatingMessage == nil {
+		log.Println("Initiating Message is nil")
+		return
+	}
+	initialContextSetupRequest := initiatingMessage.Value.InitialContextSetupRequest
+	if initialContextSetupRequest == nil {
+		log.Println("InitialContextSetupRequest is nil")
+		return
+	}
+
+	log.Println("InitialContextSetupRequest")
+	for _, ie := range initialContextSetupRequest.ProtocolIEs.List {
+		if ie.Id.Value == ngapType.ProtocolIEIDRANUENGAPID {
+			gnbUeNgapId = ie.Value.RANUENGAPID
+			log.Println("Decode IE RANUENGAPID")
+			if gnbUeNgapId == nil {
+				log.Println("RANUENGAPID is nil")
+				return
+			}
+		}
+	}
+	ngapId := gnbUeNgapId.Value
+	gnbue := gnb.GnbUes.GetGnbUe(ngapId)
+	if gnbue == nil {
+		log.Println("No GnbUe found corresponding to RANUENGAPID:")
+		return
+	}
+
+	amfmsg := intfc.N2Message{}
+	amfmsg.Event = intfc.AMF_INITIAL_CONTEXT_SETUP_REQUEST
+	amfmsg.Interface = intfc.N2_INTERFACE
+	amfmsg.NgapPdu = pdu
+	gnbue.ReadChan <- &amfmsg
 }
 
 func PrintAndGetCause(cause *ngapType.Cause) (present int, value aper.Enumerated) {

@@ -12,6 +12,7 @@ require (
 	github.com/free5gc/amf v1.3.0
 	github.com/free5gc/aper v1.0.0
 	github.com/free5gc/milenage v1.0.0
+	github.com/free5gc/nas v1.0.0 // indirect
 	github.com/free5gc/ngap v1.0.1
 	github.com/free5gc/openapi v1.0.0
 	github.com/google/go-cmp v0.5.4 // indirect

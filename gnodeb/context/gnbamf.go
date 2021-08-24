@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-package gnodeb
+package context
 
 import (
 	"net"
@@ -37,6 +37,14 @@ func NewGnbAmf(ip string, port uint16) *GnbAmf {
 		ServedGuamiList: NewServedGUAMIList(),
 		PlmnSupportList: NewPlmnSupportList(),
 	}
+}
+
+func (amf *GnbAmf) GetIpAddr() string {
+	return amf.AmfIp
+}
+
+func (amf *GnbAmf) GetPort() uint16 {
+	return amf.AmfPort
 }
 
 func (amf *GnbAmf) SetAMFName(name string) {

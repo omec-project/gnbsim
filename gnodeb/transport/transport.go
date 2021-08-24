@@ -3,11 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-package gnodeb
+package transport
 
 import (
 	"fmt"
+	"gnbsim/gnodeb/context"
+	"gnbsim/gnodeb/worker/gnbamfworker"
+	"gnbsim/transportcommon"
 	"io"
+	"log"
 	"syscall"
 
 	"git.cs.nctu.edu.tw/calee/sctp"
@@ -16,28 +20,23 @@ import (
 // Need to check if NGAP may exceed this limit
 var MAX_PKT_LEN int = 2048
 
-type transport interface {
-	SendToPeerBlock(amf *GnbAmf, pkt []byte) ([]byte, error)
-	SendToPeer(amf *GnbAmf, pkt []byte) (err error)
-	ReceiveFromPeer(amf *GnbAmf)
-}
-
 //TODO: Should have a context variable which when cancelled will result in
 // the termination of the ReceiveFromPeer handler
 
 // gnbCTransport represents the control plane transport of the GNodeB
-type gnbCTransport struct {
-	gnbInstance *GNodeB
+type GnbCTransport struct {
+	GnbInstance *context.GNodeB
 }
 
 //TODO Should add timeout
 
 // SendToPeer sends an NGAP encoded packet to the specified AMF over the socket
 // connection and waits for the response
-func (cpTprt *gnbCTransport) SendToPeerBlock(amf *GnbAmf, pkt []byte) ([]byte, error) {
+func (cpTprt *GnbCTransport) SendToPeerBlock(peer transportcommon.TransportPeer, pkt []byte) ([]byte, error) {
+	amf := peer.(*context.GnbAmf)
 	err := cpTprt.SendToPeer(amf, pkt)
 	if err != nil {
-		fmt.Println("SendToPeer failed with err:", err)
+		log.Println("SendToPeer failed with err:", err)
 		return nil, err
 	}
 
@@ -45,7 +44,7 @@ func (cpTprt *gnbCTransport) SendToPeerBlock(amf *GnbAmf, pkt []byte) ([]byte, e
 	conn := amf.Conn.(*sctp.SCTPConn)
 	n, _, _, err := conn.SCTPRead(recvMsg)
 	if err != nil {
-		fmt.Println("SCTPRead failed due to error:", err)
+		log.Println("SCTPRead failed due to error:", err)
 		return nil, err
 	}
 
@@ -55,8 +54,9 @@ func (cpTprt *gnbCTransport) SendToPeerBlock(amf *GnbAmf, pkt []byte) ([]byte, e
 
 // SendToPeer sends an NGAP encoded packet to the specified AMF over the socket
 // connection
-func (cpTprt *gnbCTransport) SendToPeer(amf *GnbAmf, pkt []byte) (err error) {
-	fmt.Println("gnbcTransport :: sendToPeer called")
+func (cpTprt *GnbCTransport) SendToPeer(peer transportcommon.TransportPeer, pkt []byte) (err error) {
+	amf := peer.(*context.GnbAmf)
+	log.Println("gnbcTransport :: sendToPeer called")
 
 	defer func() {
 		recerr := recover()
@@ -82,12 +82,13 @@ func (cpTprt *gnbCTransport) SendToPeer(amf *GnbAmf, pkt []byte) (err error) {
 
 // ReceiveFromPeer continuously waits for an incoming message from the AMF
 // It then calls dispatch to route the message to the handlers/GnbCpUe
-func (cpTprt *gnbCTransport) ReceiveFromPeer(amf *GnbAmf) {
-	fmt.Println("gnbcTransport :: ReciveFromPeer called")
+func (cpTprt *GnbCTransport) ReceiveFromPeer(peer transportcommon.TransportPeer) {
+	amf := peer.(*context.GnbAmf)
+	log.Println("gnbcTransport :: ReciveFromPeer called")
 
 	defer func() {
 		if err := amf.Conn.Close(); err != nil && err != syscall.EBADF {
-			fmt.Println("close connection error: %+v", err)
+			log.Println("close connection error:", err)
 		}
 
 	}()
@@ -100,26 +101,27 @@ func (cpTprt *gnbCTransport) ReceiveFromPeer(amf *GnbAmf) {
 		if err != nil {
 			switch err {
 			case io.EOF, io.ErrUnexpectedEOF:
-				fmt.Println("Read EOF from client")
+				log.Println("Read EOF from client")
 				return
 			case syscall.EAGAIN:
-				fmt.Println("SCTP read timeout")
+				log.Println("SCTP read timeout")
 				continue
 			case syscall.EINTR:
-				fmt.Println("SCTPRead: %+v", err)
+				log.Printf("SCTPRead: %+v\n", err)
 				continue
 			default:
-				fmt.Println("Handle connection[addr: %+v] error: %+v", amf.Conn.RemoteAddr(), err)
+				log.Printf("Handle connection[addr: %+v] error: %+v\n", amf.Conn.RemoteAddr(), err)
 				return
 			}
 		}
 
 		fmt.Printf("Read %v bytes from %v\n", n, conn)
-		cpTprt.gnbInstance.dispatch(amf, recvMsg[:n])
+		//TODO Post to gnbamfworker channel
+		gnbamfworker.HandleMessage(cpTprt.GnbInstance, amf, recvMsg[:n])
 	}
 }
 
-func checkTransportParam(amf *GnbAmf, pkt []byte) error {
+func checkTransportParam(amf *context.GnbAmf, pkt []byte) error {
 
 	if amf == nil {
 		return fmt.Errorf("amf is nil")
