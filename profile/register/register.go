@@ -9,6 +9,8 @@ import (
 	"gnbsim/gnodeb"
 	"gnbsim/gnodeb/context"
 	intfc "gnbsim/interfacecommon"
+	"gnbsim/simue"
+	simuectx "gnbsim/simue/context"
 	"gnbsim/util/test" // AJAY - Change required
 	"log"
 	"strconv"
@@ -22,6 +24,9 @@ import (
 )
 
 func Register_test(ranUIpAddr, upfIpAddr string, gnb *context.GNodeB) {
+
+	simUe := simuectx.NewSimUe(gnb)
+	simue.Init(simUe)
 
 	gnbUeInboundChan := make(chan *intfc.UuMessage)
 	uemsg := intfc.UuMessage{
