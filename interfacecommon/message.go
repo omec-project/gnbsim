@@ -5,7 +5,10 @@
 
 package interfacecommon
 
-import "github.com/free5gc/ngap/ngapType"
+import (
+	"github.com/free5gc/ngap/ngapType"
+	"github.com/omec-project/nas"
+)
 
 // TODO should be moved out to different package so as to be used by other packages
 type InterfaceMessage interface {
@@ -39,8 +42,9 @@ type UuMessage struct {
 	Interface InterfaceType
 	Supi      string
 	NasPdu    []byte
+	Extras    *EventData
 	//channel to communicate with UE
-	UeChan chan<- *UuMessage
+	UeChan chan *UuMessage
 }
 
 func (msg *UuMessage) GetEventType() EventType {
@@ -49,4 +53,9 @@ func (msg *UuMessage) GetEventType() EventType {
 
 func (msg *UuMessage) GetInterfaceType() InterfaceType {
 	return msg.Interface
+}
+
+type EventData struct {
+	Cause  uint8
+	NasMsg *nas.Message
 }

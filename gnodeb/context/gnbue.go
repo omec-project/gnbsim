@@ -19,7 +19,7 @@ type GnbUe struct {
 	// TODO MME details
 
 	// GnbUe writes messages to UE on this channel
-	WriteUeChan chan<- *intfc.UuMessage
+	WriteUeChan chan *intfc.UuMessage
 
 	// GnbUe reads messages from all other workers and UE on this channel
 	ReadChan chan intfc.InterfaceMessage

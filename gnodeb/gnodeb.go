@@ -91,7 +91,8 @@ func PerformNgSetup(gnb *context.GNodeB, amf *context.GnbAmf) (status bool, err 
 	return amf.GetNgSetupStatus(), nil
 }
 
-func RegisterUe(gnb *context.GNodeB, uemsg *intfc.UuMessage) chan<- intfc.InterfaceMessage {
+// RequestConnection should be called by UE that is willing to connect to this GNodeB
+func RequestConnection(gnb *context.GNodeB, uemsg *intfc.UuMessage) chan intfc.InterfaceMessage {
 	// TODO Get NGAP Id from NGAP ID Pool
 	gnbUe := gnb.GnbUes.GetGnbUe(1)
 	if gnbUe != nil {

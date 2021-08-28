@@ -14,6 +14,11 @@ import (
 	"github.com/free5gc/ngap/ngapType"
 )
 
+func HandleUeConnection(gnbue *context.GnbUe, msg *intfc.UuMessage) {
+	gnbue.Supi = msg.Supi
+	gnbue.WriteUeChan = msg.UeChan
+}
+
 func HandleInitialUEMessage(gnbue *context.GnbUe, msg *intfc.UuMessage) {
 	sendMsg, err := test.GetInitialUEMessage(gnbue.GnbUeNgapId, msg.NasPdu, "")
 	if err != nil {
