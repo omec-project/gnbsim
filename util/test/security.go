@@ -7,12 +7,14 @@ package test
 
 import (
 	"fmt"
+	"gnbsim/realue/context"
 	"reflect"
+
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/security"
 )
 
-func NASEncode(ue *RanUeContext, msg *nas.Message, securityContextAvailable bool, newSecurityContext bool) (
+func NASEncode(ue *context.RealUe, msg *nas.Message, securityContextAvailable bool, newSecurityContext bool) (
 	payload []byte, err error) {
 	var sequenceNumber uint8
 	if ue == nil {
@@ -73,7 +75,7 @@ func NASEncode(ue *RanUeContext, msg *nas.Message, securityContextAvailable bool
 	return payload, err
 }
 
-func NASDecode(ue *RanUeContext, securityHeaderType uint8, payload []byte) (msg *nas.Message, err error) {
+func NASDecode(ue *context.RealUe, securityHeaderType uint8, payload []byte) (msg *nas.Message, err error) {
 	if ue == nil {
 		err = fmt.Errorf("amfUe is nil")
 		return

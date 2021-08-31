@@ -13,6 +13,7 @@ import (
 	// Nausf_UEAU_Client "github.com/free5gc/openapi/Nausf_UEAuthentication"
 	// "github.com/free5gc/openapi/models"
 
+	"gnbsim/realue/context"
 	"gnbsim/util/ngapTestpacket"
 )
 
@@ -59,7 +60,7 @@ func GetPDUSessionResourceSetupResponse(pduSessionId int64, amfUeNgapID int64, r
 	message := ngapTestpacket.BuildPDUSessionResourceSetupResponseForRegistrationTest(pduSessionId, amfUeNgapID, ranUeNgapID, ipv4)
 	return ngap.Encoder(message)
 }
-func EncodeNasPduWithSecurity(ue *RanUeContext, pdu []byte, securityHeaderType uint8,
+func EncodeNasPduWithSecurity(ue *context.RealUe, pdu []byte, securityHeaderType uint8,
 	securityContextAvailable, newSecurityContext bool) ([]byte, error) {
 	m := nas.NewMessage()
 	err := m.PlainNasDecode(&pdu)

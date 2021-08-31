@@ -31,7 +31,9 @@ func HandleMessage(gnbue *context.GnbUe, msg intfc.InterfaceMessage) (err error)
 	case intfc.UU_INTERFACE:
 		uemsg := msg.(*intfc.UuMessage)
 		switch uemsg.GetEventType() {
-		case intfc.UE_REG_REQ:
+		case intfc.UE_CONNECTION_REQ:
+			HandleUeConnection(gnbue, uemsg)
+		case intfc.UE_REG_REQUEST:
 			HandleInitialUEMessage(gnbue, uemsg)
 		case intfc.UE_UPLINK_NAS_TRANSPORT:
 			HandleUplinkNasTransport(gnbue, uemsg)
