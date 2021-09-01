@@ -8,6 +8,7 @@ package dao
 import (
 	"gnbsim/gnodeb"
 	"gnbsim/gnodeb/context"
+	"gnbsim/logger"
 	"log"
 	"net"
 	"os"
@@ -48,6 +49,7 @@ func (gnbdao *GnbDao) ParseGnbConfig() error {
 			PlmnSupportList: context.NewPlmnSupportList(),
 		},
 		Tac: []byte("\x00\x00\x01"),
+		Log: logger.GNodeBLog.WithField(logger.FieldGnb, "gnodeb1"),
 	}
 
 	gnbdao.gnbMap["gnodeb1"] = &gnb

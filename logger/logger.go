@@ -10,20 +10,24 @@ import (
 	"time"
 
 	formatter "github.com/antonfisher/nested-logrus-formatter"
-	"github.com/sirupsen/logrus"
-
 	"github.com/free5gc/logger_util"
+	"github.com/sirupsen/logrus"
 )
 
 var (
-	log       *logrus.Logger
-	AppLog    *logrus.Entry
-	RealUeLog *logrus.Entry
-	SimUeLog  *logrus.Entry
+	log        *logrus.Logger
+	AppLog     *logrus.Entry
+	RealUeLog  *logrus.Entry
+	SimUeLog   *logrus.Entry
+	ProfileLog *logrus.Entry
+	GNodeBLog  *logrus.Entry
 )
 
 const (
-	FieldSupi string = "supi"
+	FieldSupi        string = "supi"
+	FieldProfile     string = "profile"
+	FieldGnb         string = "gnb"
+	FieldGnbUeNgapId string = "ranuengapid"
 )
 
 func init() {
@@ -35,10 +39,12 @@ func init() {
 		TrimMessages:    true,
 		NoFieldsSpace:   true,
 		HideKeys:        true,
-		FieldsOrder:     []string{"component", "category", "subcategory", FieldSupi},
+		FieldsOrder: []string{"component", "category", "subcategory",
+			FieldProfile, FieldSupi, FieldGnb, FieldGnbUeNgapId},
 	}
 
-	selfLogHook, err := logger_util.NewFileHook("gnbsim.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0o666)
+	selfLogHook, err := logger_util.NewFileHook("gnbsim.log",
+		os.O_CREATE|os.O_APPEND|os.O_RDWR, 0o666)
 	if err == nil {
 		log.Hooks.Add(selfLogHook)
 	}
@@ -46,6 +52,10 @@ func init() {
 	AppLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "App"})
 	RealUeLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "RealUe"})
 	SimUeLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "SimUe"})
+	ProfileLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Profile"})
+	GNodeBLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "GNodeB"})
+
+	SetLogLevel(logrus.TraceLevel)
 }
 
 func SetLogLevel(level logrus.Level) {

@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"log"
 
-	intfc "gnbsim/interfacecommon"
+	"gnbsim/common"
 
 	"gnbsim/gnodeb/context"
 
@@ -248,11 +248,7 @@ func HandleDownlinkNasTransport(gnb *context.GNodeB, amf *context.GnbAmf, pdu *n
 		return
 	}
 
-	amfmsg := intfc.N2Message{}
-	amfmsg.Event = intfc.AMF_DOWNLINK_NAS_TRANSPORT
-	amfmsg.Interface = intfc.N2_INTERFACE
-	amfmsg.NgapPdu = pdu
-	gnbue.ReadChan <- &amfmsg
+	SendToGnbUe(gnbue, common.DOWNLINK_NAS_TRANSPORT_EVENT, pdu)
 }
 
 func HandleInitialContextSetupRequest(gnb *context.GNodeB, amf *context.GnbAmf, pdu *ngapType.NGAPPDU) {
@@ -299,11 +295,7 @@ func HandleInitialContextSetupRequest(gnb *context.GNodeB, amf *context.GnbAmf, 
 		return
 	}
 
-	amfmsg := intfc.N2Message{}
-	amfmsg.Event = intfc.AMF_INITIAL_CONTEXT_SETUP_REQUEST
-	amfmsg.Interface = intfc.N2_INTERFACE
-	amfmsg.NgapPdu = pdu
-	gnbue.ReadChan <- &amfmsg
+	SendToGnbUe(gnbue, common.INITIAL_CONTEXT_SETUP_REQUEST_EVENT, pdu)
 }
 
 func PrintAndGetCause(cause *ngapType.Cause) (present int, value aper.Enumerated) {

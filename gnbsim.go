@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"gnbsim/gnodeb/dao"
 	"gnbsim/loadsub"
+	"gnbsim/profile/context"
 	"gnbsim/profile/ngsetup"
 	"gnbsim/profile/register"
 	"os"
@@ -39,18 +40,6 @@ func main() {
 		return
 	}
 
-	/*addrs, err := net.LookupHost("upf")
-	if err != nil {
-		fmt.Println("Failed to resolve upf")
-		return
-	}
-	upfIpAddr := addrs[0]
-	fmt.Println("UPF address - ", upfIpAddr)*/
-
-	upfIpAddr := "192.168.252.3"
-	fmt.Println("UPF address - ", upfIpAddr)
-	ranUIpAddr := "192.168.251.5"
-
 	switch testcase {
 	case "ngsetup":
 		{
@@ -62,9 +51,10 @@ func main() {
 	case "register":
 		{
 			fmt.Println("test register")
-			// TODO which gnb to use should be parsed from the config file
-			gnb := gnbDao.GetGNodeB("gnodeb1")
-			register.Register_test(ranUIpAddr, upfIpAddr, gnb)
+			// TODO parse profile from config file
+			profileCtx := context.NewProfile("register")
+			gnb := gnbDao.GetGNodeB(profileCtx.GnbName)
+			register.Register_test(profileCtx, gnb)
 		}
 	case "deregister":
 		{

@@ -7,6 +7,8 @@ package context
 
 import (
 	transport "gnbsim/transportcommon"
+
+	"github.com/sirupsen/logrus"
 )
 
 // GNodeB holds the context for a gNodeB. It manages the control plane and
@@ -28,6 +30,9 @@ type GNodeB struct {
 
 	/* Control Plane transport */
 	CpTransport transport.Transport
+
+	/* logger */
+	Log *logrus.Entry
 }
 
 func (gnb *GNodeB) GetDefaultAmf() *GnbAmf {

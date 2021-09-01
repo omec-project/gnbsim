@@ -6,7 +6,7 @@
 package realue
 
 import (
-	intfc "gnbsim/interfacecommon"
+	"gnbsim/common"
 	"gnbsim/realue/context"
 	"gnbsim/util/test"
 
@@ -19,8 +19,8 @@ import (
 //TODO Remove the hardcoding
 var snName string = "5G:mnc093.mcc208.3gppnetwork.org"
 
-func HandleRegReqEvent(ue *context.RealUe, msg *intfc.UuMessage) (err error) {
-	ue.Log.Debugln("Handling Registration Request Event")
+func HandleRegReqEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
+	ue.Log.Traceln("Handling Registration Request Event")
 
 	ueSecurityCapability := ue.GetUESecurityCapability()
 	mobileId5GS := nasType.MobileIdentity5GS{
@@ -28,20 +28,20 @@ func HandleRegReqEvent(ue *context.RealUe, msg *intfc.UuMessage) (err error) {
 		Buffer: ue.Suci,
 	}
 
-	ue.Log.Debugln("Generating Registration Request Message")
+	ue.Log.Traceln("Generating Registration Request Message")
 	nasPdu := nasTestpacket.GetRegistrationRequest(nasMessage.RegistrationType5GSInitialRegistration,
 		mobileId5GS, nil, ueSecurityCapability, nil, nil, nil)
 
-	SendToSimUe(ue, intfc.UE_REG_REQUEST, nasPdu, nil)
-	ue.Log.Debugln("Sent Registration Request Message to SimUe")
+	SendToSimUe(ue, common.REG_REQUEST_EVENT, nasPdu, nil)
+	ue.Log.Traceln("Sent Registration Request Message to SimUe")
 	return nil
 }
 
-func HandleAuthResponseEvent(ue *context.RealUe, msg *intfc.UuMessage) (err error) {
-	ue.Log.Debugln("Handling Authentication Response Event")
+func HandleAuthResponseEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
+	ue.Log.Traceln("Handling Authentication Response Event")
 
 	// First process the corresponding Auth Request
-	ue.Log.Debugln("Processing corresponding Authentication Request Message")
+	ue.Log.Traceln("Processing corresponding Authentication Request Message")
 	nasMsg := msg.Extras.NasMsg
 	rand := nasMsg.AuthenticationRequest.GetRANDValue()
 	resStat := ue.DeriveRESstarAndSetKey(ue.AuthenticationSubs, rand[:], snName)
@@ -49,16 +49,16 @@ func HandleAuthResponseEvent(ue *context.RealUe, msg *intfc.UuMessage) (err erro
 	// TODO: Parse Auth Request IEs and update the RealUE Context
 
 	// Now generate NAS Authentication Response
-	ue.Log.Debugln("Generating Authentication Reponse Message")
+	ue.Log.Traceln("Generating Authentication Reponse Message")
 	nasPdu := nasTestpacket.GetAuthenticationResponse(resStat, "")
 
-	SendToSimUe(ue, intfc.UE_AUTH_RESPONSE, nasPdu, nil)
-	ue.Log.Debugln("Sent Authentication Reponse Message to SimUe")
+	SendToSimUe(ue, common.AUTH_RESPONSE_EVENT, nasPdu, nil)
+	ue.Log.Traceln("Sent Authentication Reponse Message to SimUe")
 	return nil
 }
 
-func HandleSecModCompleteEvent(ue *context.RealUe, msg *intfc.UuMessage) (err error) {
-	ue.Log.Debugln("Handling Security Mode Complete Event")
+func HandleSecModCompleteEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
+	ue.Log.Traceln("Handling Security Mode Complete Event")
 
 	//TODO: Process corresponding Security Mode Command first
 
@@ -70,7 +70,7 @@ func HandleSecModCompleteEvent(ue *context.RealUe, msg *intfc.UuMessage) (err er
 		nasMessage.RegistrationType5GSInitialRegistration, mobileId5GS, nil,
 		ue.GetUESecurityCapability(), ue.Get5GMMCapability(), nil, nil)
 
-	ue.Log.Debugln("Generating Security Mode Complete Message")
+	ue.Log.Traceln("Generating Security Mode Complete Message")
 	nasPdu := nasTestpacket.GetSecurityModeComplete(registrationRequestWith5GMM)
 
 	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu,
@@ -81,17 +81,17 @@ func HandleSecModCompleteEvent(ue *context.RealUe, msg *intfc.UuMessage) (err er
 		return err
 	}
 
-	SendToSimUe(ue, intfc.UE_SEC_MOD_COMPLETE, nasPdu, nil)
-	ue.Log.Debugln("Sent Security Mode Complete Message to SimUe")
+	SendToSimUe(ue, common.SEC_MOD_COMPLETE_EVENT, nasPdu, nil)
+	ue.Log.Traceln("Sent Security Mode Complete Message to SimUe")
 	return nil
 }
 
-func HandleRegCompleteEvent(ue *context.RealUe, msg *intfc.UuMessage) (err error) {
-	ue.Log.Debugln("Handling Registration Complete Event")
+func HandleRegCompleteEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
+	ue.Log.Traceln("Handling Registration Complete Event")
 
 	//TODO: Process corresponding Registration Accept first
 
-	ue.Log.Debugln("Generating Registration Complete Message")
+	ue.Log.Traceln("Generating Registration Complete Message")
 	nasPdu := nasTestpacket.GetRegistrationComplete(nil)
 	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
@@ -100,13 +100,13 @@ func HandleRegCompleteEvent(ue *context.RealUe, msg *intfc.UuMessage) (err error
 		return
 	}
 
-	SendToSimUe(ue, intfc.UE_REG_COMPLETE, nasPdu, nil)
-	ue.Log.Debugln("Sent Registration Complete Message to SimUe")
+	SendToSimUe(ue, common.REG_COMPLETE_EVENT, nasPdu, nil)
+	ue.Log.Traceln("Sent Registration Complete Message to SimUe")
 	return nil
 }
 
-func HandleDownlinkNasTransportEvent(ue *context.RealUe, msg *intfc.UuMessage) (err error) {
-	ue.Log.Debugln("Handling Downlink Nas Transport Event")
+func HandleDlInfoTransferEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
+	ue.Log.Traceln("Handling Downlink Nas Transport Event")
 	pdu := msg.NasPdu
 	nasMsg, err := test.NASDecode(ue, nas.GetSecurityHeaderType(pdu), pdu)
 	if err != nil {
@@ -116,7 +116,7 @@ func HandleDownlinkNasTransportEvent(ue *context.RealUe, msg *intfc.UuMessage) (
 	msgType := nasMsg.GmmHeader.GetMessageType()
 	ue.Log.Infoln("Received Message Type:", msgType)
 
-	event := intfc.EventType(msgType)
+	event := common.EventType(msgType)
 
 	// Simply notify SimUe about the received nas message. Later SimUe will
 	// asynchrously send next event to RealUE informing about what to do with
