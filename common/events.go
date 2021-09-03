@@ -1,0 +1,63 @@
+// SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
+//
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+
+package common
+
+type EventType uint8
+
+// Events between Profile and SimUe
+const (
+	PROFILE_START_EVENT EventType = 1 + iota
+	PROFILE_PASS_EVENT
+	PROFILE_FAIL_EVENT
+)
+
+// Events between UE and GNodeB (UU)
+const (
+	CONNECT_REQUEST_EVENT EventType = 1 + iota
+	UL_INFO_TRANSFER_EVENT
+	DL_INFO_TRANSFER_EVENT
+)
+
+// Events betweem UE and AMF (N1)
+
+// Following events are numbered same as the NAS Message types in section 9.7 of
+// 3GPP TS 24.501
+
+// 5GS Mobility Management events.
+const UE_5GS_MOBILITY_MANAGEMENT_EVENTS EventType = 64
+const (
+	_ EventType = UE_5GS_MOBILITY_MANAGEMENT_EVENTS + iota
+
+	REG_REQUEST_EVENT //65
+	REG_ACCEPT_EVENT
+	REG_COMPLETE_EVENT
+	REG_REJECT_EVENT
+	DEREG_REQUEST_UE_ORIG_EVENT
+	DEREG_ACCEPT_UE_ORIG_EVENT
+	DEREG_REQUEST_UE_TERM_EVENT
+	DEREG_ACCEPT_UE_TERM_EVENT //72
+
+	SERVICE_REQUEST_EVENT = UE_5GS_MOBILITY_MANAGEMENT_EVENTS + 3 + iota //76
+	SERVICE_REJECT_EVENT
+	SERVICE_ACCEPT_EVENT //78
+
+	AUTH_REQUEST_EVENT = UE_5GS_MOBILITY_MANAGEMENT_EVENTS + 10 + iota //86
+	AUTH_RESPONSE_EVENT
+	AUTH_REJECT_EVENT
+	AUTH_FAILURE_EVENT
+	AUTH_RESULT_EVENT
+	ID_REQUEST_EVENT
+	ID_RESPONSE_EVENT
+	SEC_MOD_COMMAND_EVENT
+	SEC_MOD_COMPLETE_EVENT
+	SEC_MOD_REJECT_EVENT //95
+)
+
+// Events between GNodeB and AMF (N2)
+const (
+	DOWNLINK_NAS_TRANSPORT_EVENT EventType = 1 + iota
+	INITIAL_CONTEXT_SETUP_REQUEST_EVENT
+)

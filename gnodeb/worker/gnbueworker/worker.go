@@ -6,8 +6,8 @@
 package gnbueworker
 
 import (
+	"gnbsim/common"
 	"gnbsim/gnodeb/context"
-	intfc "gnbsim/interfacecommon"
 	"log"
 )
 
@@ -25,28 +25,38 @@ func Init(gnbue *context.GnbUe) {
 	}
 }
 
-func HandleMessage(gnbue *context.GnbUe, msg intfc.InterfaceMessage) (err error) {
-	log.Println("Recived First Message from UE, YIPPIE")
+func HandleMessage(gnbue *context.GnbUe, msg common.InterfaceMessage) (err error) {
+	gnbue.Log.Infoln("Handling event:", msg.GetEventType(), "from interface:",
+		msg.GetInterfaceType())
 	switch msg.GetInterfaceType() {
-	case intfc.UU_INTERFACE:
-		uemsg := msg.(*intfc.UuMessage)
+	case common.UU_INTERFACE:
+		uemsg := msg.(*common.UuMessage)
 		switch uemsg.GetEventType() {
-		case intfc.UE_CONNECTION_REQ:
-			HandleUeConnection(gnbue, uemsg)
-		case intfc.UE_REG_REQUEST:
+		case common.CONNECT_REQUEST_EVENT:
+			HandleConnectRequest(gnbue, uemsg)
+		case common.REG_REQUEST_EVENT:
 			HandleInitialUEMessage(gnbue, uemsg)
-		case intfc.UE_UPLINK_NAS_TRANSPORT:
-			HandleUplinkNasTransport(gnbue, uemsg)
+		case common.UL_INFO_TRANSFER_EVENT:
+			HandleUlInfoTransfer(gnbue, uemsg)
 		}
 
-	case intfc.N2_INTERFACE:
-		amfmsg := msg.(*intfc.N2Message)
+	case common.N2_INTERFACE:
+		amfmsg := msg.(*common.N2Message)
 		switch msg.GetEventType() {
-		case intfc.AMF_DOWNLINK_NAS_TRANSPORT:
+		case common.DOWNLINK_NAS_TRANSPORT_EVENT:
 			HandleDownlinkNasTransport(gnbue, amfmsg)
-		case intfc.AMF_INITIAL_CONTEXT_SETUP_REQUEST:
+		case common.INITIAL_CONTEXT_SETUP_REQUEST_EVENT:
 			HandleInitialContextSetupRequest(gnbue, amfmsg)
 		}
 	}
 	return nil
+}
+
+func SendToUe(gnbue *context.GnbUe, event common.EventType, nasPdu []byte) {
+	gnbue.Log.Infoln("Sending event", event, "to SimUe")
+	uemsg := common.UuMessage{}
+	uemsg.Event = event
+	uemsg.Interface = common.UU_INTERFACE
+	uemsg.NasPdu = nasPdu
+	gnbue.WriteUeChan <- &uemsg
 }

@@ -3,12 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-package interfacecommon
+package common
 
 type InterfaceType uint8
 
-// Interface types
 const (
-	UU_INTERFACE InterfaceType = iota
-	N2_INTERFACE InterfaceType = iota
+	// Application defined interfaces
+	PROFILE_SIMUE_INTERFACE InterfaceType = 1 + iota
+
+	// Network interfaces
+	UU_INTERFACE
+	N2_INTERFACE
 )

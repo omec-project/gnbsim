@@ -6,36 +6,35 @@
 package gnodeb
 
 import (
-	"fmt"
+	"gnbsim/common"
 	"gnbsim/gnodeb/context"
 	"gnbsim/gnodeb/transport"
 	"gnbsim/gnodeb/worker/gnbamfworker"
 	"gnbsim/gnodeb/worker/gnbueworker"
 	"gnbsim/util/test"
 	"log"
-
-	intfc "gnbsim/interfacecommon"
 )
 
 // Init initializes the GNodeB struct var and connects to the default AMF
 func Init(gnb *context.GNodeB) error {
-	fmt.Printf("Default gNodeB configuration : %#v\n", *gnb)
+	gnb.Log.Traceln("Inititializing GNodeB")
+	gnb.Log.Infoln("GNodeB IP:", gnb.GnbIp, "GNodeB Port:", gnb.GnbPort)
 	gnb.CpTransport = &transport.GnbCTransport{GnbInstance: gnb}
 	gnb.GnbUes = &context.GnbUeDao{}
 
 	if gnb.DefaultAmf == nil {
-		log.Println("Default AMF not configured, continuing ...")
+		gnb.Log.Traceln("Default AMF not configured, continuing ...")
 		return nil
 	}
 
 	err := ConnectToAmf(gnb, gnb.DefaultAmf)
 	if err != nil {
-		log.Println("failed to connect to amf : ", err)
+		gnb.Log.Errorln("failed to connect to amf : ", err)
 		return err
 	}
 	successfulOutcome, err := PerformNgSetup(gnb, gnb.DefaultAmf)
 	if !successfulOutcome || err != nil {
-		log.Println("failed to perform NG Setup procedure : ", err)
+		gnb.Log.Errorln("failed to perform ng setup procedure : ", err)
 		return err
 	}
 
@@ -54,13 +53,14 @@ func QuitGnb(gnb *context.GNodeB) {
 // ConnectToAmf establishes SCTP connection with the AMF and initiates NG Setup
 // Procedure.
 func ConnectToAmf(gnb *context.GNodeB, amf *context.GnbAmf) (err error) {
-	log.Println("gnodeb : ConnectToAmf called, AMF details :", *amf)
-	amf.Conn, err = test.ConnectToAmf(amf.AmfIp, gnb.GnbIp, int(amf.AmfPort), int(gnb.GnbPort))
+	gnb.Log.Traceln("Connecting to AMF")
+	amf.Conn, err = test.ConnectToAmf(amf.AmfIp, gnb.GnbIp, int(amf.AmfPort),
+		int(gnb.GnbPort))
 	if err != nil {
-		log.Println("Failed to connect to AMF ", *amf)
+		gnb.Log.Errorln("failed to connect to AMF, AMF IP:", amf.AmfIp, "Error:", err)
 		return
 	}
-	log.Println("Success - connected to AMF ", *amf)
+	gnb.Log.Infoln("Connected to AMF, AMF IP:", amf.AmfIp, "AMF Port:", amf.AmfPort)
 	return
 }
 
@@ -68,23 +68,26 @@ func ConnectToAmf(gnb *context.GNodeB, amf *context.GnbAmf) (err error) {
 // It waits for the response, process the response and informs whether it was
 // SuccessfulOutcome or UnsuccessfulOutcome
 func PerformNgSetup(gnb *context.GNodeB, amf *context.GnbAmf) (status bool, err error) {
+	gnb.Log.Traceln("Performing NG Setup Procedure")
 
 	// Forming NGSetupRequest with configured parameters
 	ngSetupReq, err := test.GetNGSetupRequest(gnb.Tac, gnb.GnbId, 24, gnb.GnbName)
 	if err != nil {
-		log.Println("failed to create setupRequest message")
+		gnb.Log.Errorln("failed to create setupRequest message")
 		return
 	}
 
 	// Sending NGSetupRequest to AMF
+	gnb.Log.Traceln("Sending NG Setup Request")
 	ngSetupResp, err := gnb.CpTransport.SendToPeerBlock(amf, ngSetupReq)
 	if err != nil {
-		log.Println("failed to send NGSetupRequest to AMF, error:", err)
+		gnb.Log.Errorln("SendToPeerBlock Failed:", err)
 		return
 	}
+	gnb.Log.Traceln("Received NG Setup Response")
 	err = gnbamfworker.HandleMessage(gnb, amf, ngSetupResp)
 	if err != nil {
-		log.Println("Unexpected erro in NGSetupResponse")
+		gnb.Log.Errorln("HandleMessage Failed:", err)
 		return
 	}
 
@@ -92,11 +95,11 @@ func PerformNgSetup(gnb *context.GNodeB, amf *context.GnbAmf) (status bool, err 
 }
 
 // RequestConnection should be called by UE that is willing to connect to this GNodeB
-func RequestConnection(gnb *context.GNodeB, uemsg *intfc.UuMessage) chan intfc.InterfaceMessage {
+func RequestConnection(gnb *context.GNodeB, uemsg *common.UuMessage) chan common.InterfaceMessage {
 	// TODO Get NGAP Id from NGAP ID Pool
 	gnbUe := gnb.GnbUes.GetGnbUe(1)
 	if gnbUe != nil {
-		fmt.Printf("Error: Cannot process Register Request. GnbUe context already exists.")
+		gnb.Log.Errorln("GnbUe context already exists")
 		return nil
 	}
 	gnbUe = context.NewGnbUe(1, gnb, gnb.DefaultAmf)

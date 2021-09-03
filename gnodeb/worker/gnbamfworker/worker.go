@@ -7,6 +7,7 @@ package gnbamfworker
 
 import (
 	"fmt"
+	"gnbsim/common"
 	"gnbsim/gnodeb/context"
 
 	"github.com/free5gc/ngap"
@@ -56,4 +57,12 @@ func HandleMessage(gnb *context.GNodeB, amf *context.GnbAmf, pkt []byte) error {
 	}
 
 	return nil
+}
+
+func SendToGnbUe(gnbue *context.GnbUe, event common.EventType, ngapPdu *ngapType.NGAPPDU) {
+	amfmsg := common.N2Message{}
+	amfmsg.Event = event
+	amfmsg.Interface = common.N2_INTERFACE
+	amfmsg.NgapPdu = ngapPdu
+	gnbue.ReadChan <- &amfmsg
 }

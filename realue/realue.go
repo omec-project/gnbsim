@@ -6,7 +6,8 @@
 package realue
 
 import (
-	intfc "gnbsim/interfacecommon"
+	"fmt"
+	"gnbsim/common"
 	"gnbsim/logger"
 	"gnbsim/realue/context"
 	"gnbsim/util/test"
@@ -27,25 +28,29 @@ func Init(ue *context.RealUe) {
 	for msg := range ue.ReadChan {
 		err := HandleEvent(ue, msg)
 		if err != nil {
-			ue.Log.Errorln("Failed to handle received event")
+			ue.Log.Errorln("Failed to handle received event", err)
 		}
 	}
 }
 
-func HandleEvent(ue *context.RealUe, msg *intfc.UuMessage) (err error) {
-	ue.Log.Infoln("Handling Event:", msg.Event)
+func HandleEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
+	if msg == nil {
+		return fmt.Errorf("empty message received")
+	}
+
+	ue.Log.Traceln("Handling Event:", msg.Event)
 
 	switch msg.Event {
-	case intfc.UE_REG_REQUEST:
+	case common.REG_REQUEST_EVENT:
 		err = HandleRegReqEvent(ue, msg)
-	case intfc.UE_AUTH_RESPONSE:
+	case common.AUTH_RESPONSE_EVENT:
 		err = HandleAuthResponseEvent(ue, msg)
-	case intfc.UE_SEC_MOD_COMPLETE:
+	case common.SEC_MOD_COMPLETE_EVENT:
 		err = HandleSecModCompleteEvent(ue, msg)
-	case intfc.UE_REG_COMPLETE:
+	case common.REG_COMPLETE_EVENT:
 		err = HandleRegCompleteEvent(ue, msg)
-	case intfc.AMF_DOWNLINK_NAS_TRANSPORT:
-		err = HandleDownlinkNasTransportEvent(ue, msg)
+	case common.DL_INFO_TRANSFER_EVENT:
+		err = HandleDlInfoTransferEvent(ue, msg)
 	default:
 		ue.Log.Infoln("Event", msg.Event, "is not supported")
 	}
@@ -57,11 +62,12 @@ func HandleEvent(ue *context.RealUe, msg *intfc.UuMessage) (err error) {
 	return err
 }
 
-func SendToSimUe(ue *context.RealUe, event intfc.EventType, naspdu []byte,
+func SendToSimUe(ue *context.RealUe, event common.EventType, naspdu []byte,
 	nasmsg *nas.Message) {
 	ue.Log.Infoln("Sending event", event, "to SimUe")
-	msg := &intfc.UuMessage{}
+	msg := &common.UuMessage{}
 	msg.Event = event
+	msg.Interface = common.UU_INTERFACE
 	msg.NasPdu = naspdu
 	msg.Extras.NasMsg = nasmsg
 	ue.WriteSimUeChan <- msg

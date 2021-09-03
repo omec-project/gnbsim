@@ -6,9 +6,10 @@
 package context
 
 import (
+	"gnbsim/common"
 	gnbctx "gnbsim/gnodeb/context"
-	intfc "gnbsim/interfacecommon"
 	"gnbsim/logger"
+	profctx "gnbsim/profile/context"
 	realuectx "gnbsim/realue/context"
 
 	"github.com/free5gc/nas/security"
@@ -18,40 +19,47 @@ import (
 // SimUe controls the flow of messages between RealUe and GnbUe as per the test
 // profile. It is the central entry point for all events
 type SimUe struct {
-	Supi   string
-	GnB    *gnbctx.GNodeB
-	RealUe *realuectx.RealUe
+	Supi       string
+	GnB        *gnbctx.GNodeB
+	RealUe     *realuectx.RealUe
+	ProfileCtx *profctx.Profile
+	Procedure  common.ProcedureType
+
+	// SimUe writes messages to Profile routine on this channel
+	WriteProfileChan chan *common.ProfileMessage
 
 	// SimUe writes messages to RealUE on this channel
-	WriteRealUeChan chan *intfc.UuMessage
+	WriteRealUeChan chan *common.UuMessage
 
 	// SimUe writes messages to GnbUE on this channel
-	WriteGnbUeChan chan intfc.InterfaceMessage
+	WriteGnbUeChan chan common.InterfaceMessage
 
 	// SimUe reads messages from other entities on this channel
 	// Entities can be RealUe, GnbUe etc.
-	ReadChan chan *intfc.UuMessage
+	ReadChan chan common.InterfaceMessage
 
 	/* logger */
 	Log *logrus.Entry
 }
 
-func NewSimUe(gnb *gnbctx.GNodeB) *SimUe {
-	supi := "imsi-2089300007487"
+func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile) *SimUe {
+	//Todo: Create Suci from Supi
 	suci := []uint8{0x01, 0x02, 0xf8, 0x39, 0xf0, 0xff, 0x00, 0x00, 0x00, 0x00,
 		0x47, 0x78}
 
 	simue := SimUe{}
 	simue.GnB = gnb
 	simue.Supi = supi
-	simue.ReadChan = make(chan *intfc.UuMessage)
-	simue.RealUe = realuectx.NewRealUeContext(supi,
+	simue.ProfileCtx = profile
+	simue.ReadChan = make(chan common.InterfaceMessage)
+	simue.RealUe = realuectx.NewRealUe(supi,
 		security.AlgCiphering128NEA0, security.AlgIntegrity128NIA2,
 		simue.ReadChan, suci)
 	simue.WriteRealUeChan = simue.RealUe.ReadChan
+	simue.WriteProfileChan = profile.ReadChan
 
-	simue.Log = logger.RealUeLog.WithField(logger.FieldSupi, supi)
+	simue.Log = logger.SimUeLog.WithField(logger.FieldSupi, supi)
 
-	simue.Log.Debugln("Created new context")
+	simue.Log.Traceln("Created new context")
 	return &simue
 }

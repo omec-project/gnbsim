@@ -7,7 +7,7 @@ package context
 
 import (
 	"encoding/hex"
-	intfc "gnbsim/interfacecommon"
+	"gnbsim/common"
 	"gnbsim/logger"
 	"regexp"
 
@@ -35,17 +35,17 @@ type RealUe struct {
 	AuthenticationSubs models.AuthenticationSubscription
 
 	//RealUe writes messages to SimUE on this channel
-	WriteSimUeChan chan *intfc.UuMessage
+	WriteSimUeChan chan common.InterfaceMessage
 
 	//RealUe reads messages from SimUE on this channel
-	ReadChan chan *intfc.UuMessage
+	ReadChan chan *common.UuMessage
 
 	/* logger */
 	Log *logrus.Entry
 }
 
-func NewRealUeContext(supi string, cipheringAlg, integrityAlg uint8,
-	simuechan chan *intfc.UuMessage, suci []uint8) *RealUe {
+func NewRealUe(supi string, cipheringAlg, integrityAlg uint8,
+	simuechan chan common.InterfaceMessage, suci []uint8) *RealUe {
 
 	ue := RealUe{}
 	ue.Supi = supi
@@ -53,10 +53,10 @@ func NewRealUeContext(supi string, cipheringAlg, integrityAlg uint8,
 	ue.IntegrityAlg = integrityAlg
 	ue.WriteSimUeChan = simuechan
 	ue.Suci = suci
-	ue.ReadChan = make(chan *intfc.UuMessage)
+	ue.ReadChan = make(chan *common.UuMessage)
 	ue.Log = logger.RealUeLog.WithField(logger.FieldSupi, supi)
 
-	ue.Log.Debugln("Created new context")
+	ue.Log.Traceln("Created new context")
 	return &ue
 }
 

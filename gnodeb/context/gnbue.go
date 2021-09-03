@@ -6,7 +6,10 @@
 package context
 
 import (
-	intfc "gnbsim/interfacecommon"
+	"gnbsim/common"
+	"gnbsim/logger"
+
+	"github.com/sirupsen/logrus"
 )
 
 type GnbUe struct {
@@ -19,10 +22,13 @@ type GnbUe struct {
 	// TODO MME details
 
 	// GnbUe writes messages to UE on this channel
-	WriteUeChan chan *intfc.UuMessage
+	WriteUeChan chan common.InterfaceMessage
 
 	// GnbUe reads messages from all other workers and UE on this channel
-	ReadChan chan intfc.InterfaceMessage
+	ReadChan chan common.InterfaceMessage
+
+	/* logger */
+	Log *logrus.Entry
 }
 
 func NewGnbUe(ngapId int64, gnb *GNodeB, amf *GnbAmf) *GnbUe {
@@ -30,6 +36,9 @@ func NewGnbUe(ngapId int64, gnb *GNodeB, amf *GnbAmf) *GnbUe {
 	gnbue.GnbUeNgapId = ngapId
 	gnbue.Amf = amf
 	gnbue.Gnb = gnb
-	gnbue.ReadChan = make(chan intfc.InterfaceMessage)
+	gnbue.ReadChan = make(chan common.InterfaceMessage)
+	gnbue.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbUE",
+		logger.FieldGnbUeNgapId: ngapId})
+	gnbue.Log.Traceln("Context Created")
 	return &gnbue
 }

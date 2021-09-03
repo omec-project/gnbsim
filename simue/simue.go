@@ -7,36 +7,128 @@ package simue
 
 import (
 	"fmt"
+	"gnbsim/common"
 	"gnbsim/gnodeb"
-	intfc "gnbsim/interfacecommon"
 	"gnbsim/realue"
 	"gnbsim/simue/context"
 )
 
 func Init(simUe *context.SimUe) {
+	var err error
+	defer func(err error) {
+		if err != nil {
+			SendToProfile(simUe, common.PROFILE_FAIL_EVENT, err)
+			simUe.Log.Infoln("Sent Profile Fail Event to Profile routine")
+		}
+	}(err)
+
 	go realue.Init(simUe.RealUe)
-	err := ConnectToGnb(simUe)
+	err = ConnectToGnb(simUe)
 	if err != nil {
+		errMsg := "failed to connect to gnodeb"
+		err = fmt.Errorf("%v:%v", errMsg, err)
 		simUe.Log.Errorln(err)
+		return
 	}
-	// Start Sim UE event generation/processing logic
+
+	for msg := range simUe.ReadChan {
+		err := HandleEvent(simUe, msg)
+		if err != nil {
+			simUe.Log.Errorln("Failed to handle received event", err)
+			return
+		}
+	}
 }
 
-func ConnectToGnb(simUe *context.SimUe) (err error) {
-	uemsg := intfc.UuMessage{}
-	uemsg.Event = intfc.UE_CONNECTION_REQ
+func ConnectToGnb(simUe *context.SimUe) error {
+	uemsg := common.UuMessage{}
+	uemsg.Interface = common.UU_INTERFACE
+	uemsg.Event = common.CONNECT_REQUEST_EVENT
 	uemsg.UeChan = simUe.ReadChan
 	uemsg.Supi = simUe.Supi
 
 	gNb := simUe.GnB
 	simUe.WriteGnbUeChan = gnodeb.RequestConnection(gNb, &uemsg)
 	if simUe.WriteGnbUeChan == nil {
-		simUe.Log.Errorln("Received empty channel")
-		err = fmt.Errorf("failed to connect to gnodeb")
-		return err
+		return fmt.Errorf("received empty gnbue channel")
 	}
 
 	simUe.Log.Infof("Connected to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
 		gNb.GnbIp, gNb.GnbPort)
 	return nil
+}
+
+func HandleEvent(ue *context.SimUe, msg common.InterfaceMessage) (err error) {
+	if msg == nil {
+		return fmt.Errorf("empty message received")
+	}
+
+	ue.Log.Infoln("Handling event:", msg.GetEventType(), "from interface:",
+		msg.GetInterfaceType())
+
+	switch msg.GetInterfaceType() {
+
+	case common.UU_INTERFACE:
+		uuMsg := msg.(*common.UuMessage)
+
+		switch uuMsg.Event {
+		case common.REG_REQUEST_EVENT:
+			err = HandleRegReqEvent(ue, uuMsg)
+		case common.AUTH_REQUEST_EVENT:
+			err = HandleAuthRequestEvent(ue, uuMsg)
+		case common.AUTH_RESPONSE_EVENT:
+			err = HandleAuthResponseEvent(ue, uuMsg)
+		case common.SEC_MOD_COMMAND_EVENT:
+			err = HandleSecModCommandEvent(ue, uuMsg)
+		case common.SEC_MOD_COMPLETE_EVENT:
+			err = HandleSecModCompleteEvent(ue, uuMsg)
+		case common.REG_ACCEPT_EVENT:
+			err = HandleRegAcceptEvent(ue, uuMsg)
+		case common.REG_COMPLETE_EVENT:
+			err = HandleRegCompleteEvent(ue, uuMsg)
+		case common.DL_INFO_TRANSFER_EVENT:
+			err = HandleDlInfoTransferEvent(ue, uuMsg)
+		default:
+			ue.Log.Infoln("Event", uuMsg.Event, "is not supported")
+		}
+
+	case common.PROFILE_SIMUE_INTERFACE:
+		profileMsg := msg.(*common.ProfileMessage)
+
+		switch profileMsg.Event {
+		case common.PROFILE_START_EVENT:
+			err = HandleProfileStartEvent(ue, profileMsg)
+		default:
+			ue.Log.Infoln("Event", profileMsg.Event, "is not supported")
+		}
+
+	default:
+		ue.Log.Infoln("Interface", msg.GetInterfaceType(), "is not supported")
+	}
+
+	if err != nil {
+		ue.Log.Errorln("Failed to process event:", msg.GetEventType(), "Error:", err)
+	}
+
+	return err
+}
+
+func SendToRealUe(ue *context.SimUe, msg *common.UuMessage) {
+	ue.Log.Infoln("Sending", msg.Event, "to RealUe")
+	ue.WriteRealUeChan <- msg
+}
+
+func SendToGnbUe(ue *context.SimUe, msg *common.UuMessage) {
+	ue.Log.Infoln("Sending", msg.Event, "to GnbUe")
+	ue.WriteGnbUeChan <- msg
+}
+
+func SendToProfile(ue *context.SimUe, event common.EventType, errMsg error) {
+	ue.Log.Infoln("Sending event", event, "to Profile routine")
+	msg := &common.ProfileMessage{}
+	msg.Event = event
+	msg.Supi = ue.Supi
+	msg.Proc = ue.Procedure
+	msg.ErrorMsg = errMsg
+	ue.WriteProfileChan <- msg
 }
