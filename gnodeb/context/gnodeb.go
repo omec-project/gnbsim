@@ -8,6 +8,7 @@ package context
 import (
 	transport "gnbsim/transportcommon"
 
+	"github.com/free5gc/idgenerator"
 	"github.com/sirupsen/logrus"
 )
 
@@ -15,18 +16,19 @@ import (
 // user plane layer of a gNodeB.
 type GNodeB struct {
 	//TODO IP and port should be the property of transport var
-	GnbIp   string
-	GnbPort uint16
-	GnbName string
-	GnbId   []byte
-	Tac     []byte
-	GnbUes  *GnbUeDao
+	GnbIp                string `yaml:"ipAddr"`
+	GnbPort              uint16 `yaml:"port"`
+	GnbName              string `yaml:"name"`
+	GnbId                string `yaml:"gnbId"`
+	Tac                  string `yaml:"tac"`
+	GnbUes               *GnbUeDao
+	RanUeNGAPIDGenerator *idgenerator.IDGenerator
 
 	/*channel to notify all the go routines corresponding to this GNodeB instance to stop*/
 	Quit chan int
 
 	/* Default AMF to connect to */
-	DefaultAmf *GnbAmf
+	DefaultAmf *GnbAmf `yaml:"defaultAmf"`
 
 	/* Control Plane transport */
 	CpTransport transport.Transport
@@ -37,4 +39,8 @@ type GNodeB struct {
 
 func (gnb *GNodeB) GetDefaultAmf() *GnbAmf {
 	return gnb.DefaultAmf
+}
+
+func (gnb *GNodeB) AllocateRanUeNgapID() (int64, error) {
+	return gnb.RanUeNGAPIDGenerator.Allocate()
 }

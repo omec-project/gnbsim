@@ -7,33 +7,42 @@ package ngsetup
 
 import (
 	"fmt"
+	"gnbsim/factory"
 	"gnbsim/gnodeb"
 	"gnbsim/gnodeb/context"
+	profCtx "gnbsim/profile/context"
 	"net"
 )
 
-func NgSetup_test(gnb *context.GNodeB) {
+func NgSetup_test(profile *profCtx.Profile) {
 	// create amf
+
+	gnb, err := factory.AppConfig.Configuration.GetGNodeB(profile.GnbName)
+	if err != nil {
+		profile.Log.Errorln("GetGNodeB returned:", err)
+	}
+
 	addrs, err := net.LookupHost("amf")
 	if err != nil {
 		fmt.Println("Failed to resolve amf")
 		return
 	}
-	gnbamf := context.NewGnbAmf(addrs[0], 38412)
+
+	gnbamf := context.NewGnbAmf(addrs[0], context.NGAP_SCTP_PORT)
 
 	err = gnodeb.ConnectToAmf(gnb, gnbamf)
 	if err != nil {
-		fmt.Println("ConnectToAmf() failed due to:", err)
+		profile.Log.Errorln("ConnectToAmf returned:", err)
 		return
 	}
 
 	successFulOutcome, err := gnodeb.PerformNgSetup(gnb, gnbamf)
 	if err != nil {
-		fmt.Println("PerformNGSetup() failed due to:", err)
+		profile.Log.Errorln("PerformNGSetup returned:", err)
 	} else if !successFulOutcome {
-		fmt.Println("Expected SuccessfulOutcome, received UnsuccessfulOutcome")
+		profile.Log.Infoln("Result: FAIL, Expected SuccessfulOutcome, received UnsuccessfulOutcome")
 		return
 	}
 
-	fmt.Println("NGSetup Procedure successful")
+	profile.Log.Infoln("Result: PASS")
 }

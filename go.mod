@@ -12,6 +12,7 @@ require (
 	github.com/free5gc/UeauCommon v1.0.0
 	github.com/free5gc/amf v1.3.0
 	github.com/free5gc/aper v1.0.0
+	github.com/free5gc/idgenerator v1.0.0
 	github.com/free5gc/logger_util v1.0.0
 	github.com/free5gc/milenage v1.0.0
 	github.com/free5gc/nas v1.0.0
@@ -25,11 +26,13 @@ require (
 	github.com/omec-project/nas v1.0.3-gnbsim
 	github.com/sirupsen/logrus v1.7.0
 	github.com/ugorji/go v1.2.3 // indirect
+	github.com/yerden/go-util v1.1.4
 	go.mongodb.org/mongo-driver v1.4.4
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
 	golang.org/x/net v0.0.0-20201224014010-6772e930b67b
 	golang.org/x/sys v0.0.0-20210112091331-59c308dcf3cc
 	golang.org/x/text v0.3.5 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
+	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

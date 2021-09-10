@@ -7,10 +7,10 @@ package util
 
 import (
 	"gnbsim/common"
-	"gnbsim/simue/context"
+	simueCtx "gnbsim/simue/context"
 )
 
-func SendToSimUe(simUe *context.SimUe, event common.EventType) {
+func SendToSimUe(simUe *simueCtx.SimUe, event common.EventType) {
 	msg := &common.ProfileMessage{}
 	msg.Event = event
 	msg.Interface = common.PROFILE_SIMUE_INTERFACE

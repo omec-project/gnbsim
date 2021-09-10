@@ -10,16 +10,20 @@ import (
 	"gnbsim/common"
 	"gnbsim/logger"
 
+	"github.com/free5gc/openapi/models"
 	"github.com/sirupsen/logrus"
 )
 
 type Profile struct {
-	Name       string
-	Events     map[common.EventType]common.EventType
-	Procedures []common.ProcedureType
-	GnbName    string
-	StartImsi  string
-	UeCount    uint32
+	ProfileType string `yaml:"profileType"`
+	Name        string `yaml:"profileName"`
+	Enable      bool   `yanl:"enable"`
+	Events      map[common.EventType]common.EventType
+	Procedures  []common.ProcedureType
+	GnbName     string         `yaml:"gnbName"`
+	StartImsi   string         `yaml:"startImsi"`
+	UeCount     uint32         `yaml:"ueCount"`
+	Plmn        *models.PlmnId `yaml:"plmnId"`
 
 	// Profile routine reads messages from other entities on this channel
 	// Entities can be SimUe, Main routine.
@@ -29,18 +33,11 @@ type Profile struct {
 	Log *logrus.Entry
 }
 
-func NewProfile(name string) *Profile {
-	profile := Profile{}
-	profile.Name = name
-	profile.GnbName = "gnodeb1"
-	profile.StartImsi = "imsi-2089300007487"
-	profile.UeCount = 1
+func (profile *Profile) Init() {
 	profile.ReadChan = make(chan *common.ProfileMessage)
-	profile.Log = logger.ProfileLog.WithField(logger.FieldProfile, name)
+	profile.Log = logger.ProfileLog.WithField(logger.FieldProfile, profile.Name)
 
-	profile.Log.Traceln("Created new context")
-
-	return &profile
+	profile.Log.Traceln("profile initialized")
 }
 
 func (p *Profile) GetNextEvent(currentEvent common.EventType) (common.EventType, error) {

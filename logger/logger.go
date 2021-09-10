@@ -21,6 +21,7 @@ var (
 	SimUeLog   *logrus.Entry
 	ProfileLog *logrus.Entry
 	GNodeBLog  *logrus.Entry
+	CfgLog     *logrus.Entry
 )
 
 const (
@@ -54,6 +55,7 @@ func init() {
 	SimUeLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "SimUe"})
 	ProfileLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Profile"})
 	GNodeBLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "GNodeB"})
+	CfgLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "CFG"})
 
 	SetLogLevel(logrus.TraceLevel)
 }
