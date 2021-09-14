@@ -43,10 +43,6 @@ type SimUe struct {
 }
 
 func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile) *SimUe {
-	//Todo: Create Suci from Supi
-	suci := []uint8{0x01, 0x02, 0xf8, 0x39, 0xf0, 0xff, 0x00, 0x00, 0x00, 0x00,
-		0x47, 0x78}
-
 	simue := SimUe{}
 	simue.GnB = gnb
 	simue.Supi = supi
@@ -54,7 +50,7 @@ func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile) *SimUe 
 	simue.ReadChan = make(chan common.InterfaceMessage)
 	simue.RealUe = realuectx.NewRealUe(supi,
 		security.AlgCiphering128NEA0, security.AlgIntegrity128NIA2,
-		simue.ReadChan, suci)
+		simue.ReadChan, profile.Plmn)
 	simue.WriteRealUeChan = simue.RealUe.ReadChan
 	simue.WriteProfileChan = profile.ReadChan
 
@@ -63,3 +59,5 @@ func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile) *SimUe 
 	simue.Log.Traceln("Created new context")
 	return &simue
 }
+
+//2089300007487

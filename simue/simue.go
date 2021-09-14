@@ -25,16 +25,16 @@ func Init(simUe *context.SimUe) {
 	go realue.Init(simUe.RealUe)
 	err = ConnectToGnb(simUe)
 	if err != nil {
-		errMsg := "failed to connect to gnodeb"
-		err = fmt.Errorf("%v:%v", errMsg, err)
-		simUe.Log.Errorln(err)
+		simUe.Log.Errorln("ConnectToGnb returned:", err)
+		err = fmt.Errorf("failed to connect to gnodeb")
 		return
 	}
 
 	for msg := range simUe.ReadChan {
 		err := HandleEvent(simUe, msg)
 		if err != nil {
-			simUe.Log.Errorln("Failed to handle received event", err)
+			simUe.Log.Errorln("HandleEvent returned:", err)
+			err = fmt.Errorf("failed to handle received event")
 			return
 		}
 	}
@@ -47,10 +47,11 @@ func ConnectToGnb(simUe *context.SimUe) error {
 	uemsg.UeChan = simUe.ReadChan
 	uemsg.Supi = simUe.Supi
 
+	var err error
 	gNb := simUe.GnB
-	simUe.WriteGnbUeChan = gnodeb.RequestConnection(gNb, &uemsg)
-	if simUe.WriteGnbUeChan == nil {
-		return fmt.Errorf("received empty gnbue channel")
+	simUe.WriteGnbUeChan, err = gnodeb.RequestConnection(gNb, &uemsg)
+	if err != nil {
+		return fmt.Errorf("failed to establish connection with gnb, err: %v", err)
 	}
 
 	simUe.Log.Infof("Connected to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,

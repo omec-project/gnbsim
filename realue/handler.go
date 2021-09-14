@@ -6,8 +6,10 @@
 package realue
 
 import (
+	"fmt"
 	"gnbsim/common"
 	"gnbsim/realue/context"
+	"gnbsim/realue/util"
 	"gnbsim/util/test"
 
 	"github.com/free5gc/nas/nasMessage"
@@ -23,6 +25,12 @@ func HandleRegReqEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
 	ue.Log.Traceln("Handling Registration Request Event")
 
 	ueSecurityCapability := ue.GetUESecurityCapability()
+
+	ue.Suci, err = util.SupiToSuci(ue.Supi, ue.Plmn)
+	if err != nil {
+		ue.Log.Errorln("SupiToSuci returned:", err)
+		return fmt.Errorf("failed to derive suci")
+	}
 	mobileId5GS := nasType.MobileIdentity5GS{
 		Len:    uint16(len(ue.Suci)), // suci
 		Buffer: ue.Suci,

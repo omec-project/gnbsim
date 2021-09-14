@@ -13,15 +13,16 @@ import (
 	"github.com/free5gc/openapi/models"
 )
 
-//TODO Shift this to context package within gnodeb
+const NGAP_SCTP_PORT uint16 = 38412
 
 // GnbAmf holds the AMF context
 type GnbAmf struct {
 	/* Indicates wether NGSetup was successful or not*/
 	NgSetupStatus bool
-	AmfIp         string
+	AmfHostName   string `yaml:"hostName"`
+	AmfIp         string `yaml:"ipAddr"`
 	AmfName       string
-	AmfPort       uint16
+	AmfPort       uint16 `yaml:"port"`
 	/* Relative AMF Capacity */
 	RelCap          int64
 	ServedGuamiList []models.Guami
@@ -32,10 +33,8 @@ type GnbAmf struct {
 
 func NewGnbAmf(ip string, port uint16) *GnbAmf {
 	return &GnbAmf{
-		AmfIp:           ip,
-		AmfPort:         port,
-		ServedGuamiList: NewServedGUAMIList(),
-		PlmnSupportList: NewPlmnSupportList(),
+		AmfIp:   ip,
+		AmfPort: port,
 	}
 }
 

@@ -7,17 +7,23 @@ package register
 
 import (
 	"gnbsim/common"
-	"gnbsim/gnodeb/context"
+	"gnbsim/factory"
 	profctx "gnbsim/profile/context"
 	"gnbsim/profile/util"
 	"gnbsim/simue"
 	simuectx "gnbsim/simue/context"
+	"time"
 	// AJAY - Change required
 )
 
-func Register_test(profile *profctx.Profile, gnb *context.GNodeB) {
+func Register_test(profile *profctx.Profile) {
 	initEventMap(profile)
 	initProcedureList(profile)
+
+	gnb, err := factory.AppConfig.Configuration.GetGNodeB(profile.GnbName)
+	if err != nil {
+		profile.Log.Errorln("GetGNodeB returned:", err)
+	}
 
 	simUe := simuectx.NewSimUe(profile.StartImsi, gnb, profile)
 	go simue.Init(simUe)
@@ -30,6 +36,8 @@ func Register_test(profile *profctx.Profile, gnb *context.GNodeB) {
 		profile.Log.Infoln("Result: FAIL, SimUe:", msg.Supi, "Failed Procedure:",
 			msg.Proc, "Error:", msg.ErrorMsg)
 	}
+
+	time.Sleep(2 * time.Second)
 }
 
 // initEventMap initializes the event map of profile with default values as per

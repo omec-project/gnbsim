@@ -33,6 +33,7 @@ type RealUe struct {
 	KnasInt            [16]uint8
 	Kamf               []uint8
 	AuthenticationSubs models.AuthenticationSubscription
+	Plmn               *models.PlmnId
 
 	//RealUe writes messages to SimUE on this channel
 	WriteSimUeChan chan common.InterfaceMessage
@@ -45,14 +46,14 @@ type RealUe struct {
 }
 
 func NewRealUe(supi string, cipheringAlg, integrityAlg uint8,
-	simuechan chan common.InterfaceMessage, suci []uint8) *RealUe {
+	simuechan chan common.InterfaceMessage, plmnid *models.PlmnId) *RealUe {
 
 	ue := RealUe{}
 	ue.Supi = supi
 	ue.CipheringAlg = cipheringAlg
 	ue.IntegrityAlg = integrityAlg
+	ue.Plmn = plmnid
 	ue.WriteSimUeChan = simuechan
-	ue.Suci = suci
 	ue.ReadChan = make(chan *common.UuMessage)
 	ue.Log = logger.RealUeLog.WithField(logger.FieldSupi, supi)
 
