@@ -64,6 +64,8 @@ func HandleAuthResponseEvent(ue *context.SimUe, msg *common.UuMessage) (err erro
 
 func HandleSecModCommandEvent(ue *context.SimUe, msg *common.UuMessage) (err error) {
 	ue.Log.Traceln("Handling Security Mode Command Event")
+	// TODO: Should check if SecModCommandEvent event is expected
+
 	nextEvent, err := ue.ProfileCtx.GetNextEvent(msg.Event)
 	if err != nil {
 		ue.Log.Errorln("GetNextEvent returned:", err)
@@ -91,6 +93,7 @@ func HandleSecModCompleteEvent(ue *context.SimUe, msg *common.UuMessage) (err er
 
 func HandleRegAcceptEvent(ue *context.SimUe, msg *common.UuMessage) (err error) {
 	ue.Log.Traceln("Handling Registration Accept Event")
+	// TODO: Should check if Registration Accept event is expected
 	nextEvent, err := ue.ProfileCtx.GetNextEvent(msg.Event)
 	if err != nil {
 		ue.Log.Errorln("GetNextEvent returned:", err)
@@ -112,6 +115,42 @@ func HandleRegCompleteEvent(ue *context.SimUe, msg *common.UuMessage) (err error
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
 	ue.Log.Traceln("Sent UL Information Transfer[Registration Complete] Event to GnbUe")
+	nextProcedure := ue.ProfileCtx.GetNextProcedure(ue.Procedure)
+	if nextProcedure != 0 {
+		ue.Procedure = nextProcedure
+		ue.Log.Infoln("Updated procedure to", ue.Procedure)
+		HandleProcedure(ue)
+	} else {
+		SendToProfile(ue, common.PROFILE_PASS_EVENT, nil)
+		ue.Log.Traceln("Sent Profile Pass Event to Profile routine")
+	}
+	return nil
+}
+
+func HandlePduSessEstRequestEvent(ue *context.SimUe, msg *common.UuMessage) (err error) {
+	ue.Log.Traceln("Handling PDU Session Establishment Request Event")
+	SendToGnbUe(ue, msg)
+	msg.Event = common.UL_INFO_TRANSFER_EVENT
+	ue.Log.Traceln("Sent PDU Session Establishment Request to GnbUe")
+	return nil
+}
+
+func HandlePduSessEstAcceptEvent(ue *context.SimUe, msg *common.UuMessage) (err error) {
+	ue.Log.Traceln("Handling PDU Session Establishment Accept Event")
+	err = ue.ProfileCtx.CheckCurrentEvent(common.PDU_SESS_EST_REQUEST_EVENT, msg.Event)
+	if err != nil {
+		ue.Log.Errorln("CheckCurrentEvent returned:", err)
+		return err
+	}
+	nextEvent, err := ue.ProfileCtx.GetNextEvent(msg.Event)
+	if err != nil {
+		ue.Log.Errorln("GetNextEvent returned:", err)
+		return err
+	}
+	ue.Log.Infoln("Next Event:", nextEvent)
+	msg.Event = nextEvent
+	SendToRealUe(ue, msg)
+
 	nextProcedure := ue.ProfileCtx.GetNextProcedure(ue.Procedure)
 	if nextProcedure != 0 {
 		ue.Procedure = nextProcedure

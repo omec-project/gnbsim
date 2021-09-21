@@ -51,6 +51,10 @@ func HandleEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
 		err = HandleRegCompleteEvent(ue, msg)
 	case common.DL_INFO_TRANSFER_EVENT:
 		err = HandleDlInfoTransferEvent(ue, msg)
+	case common.PDU_SESS_EST_REQUEST_EVENT:
+		err = HandlePduSessEstRequestEvent(ue, msg)
+	case common.PDU_SESS_EST_ACCEPT_EVENT:
+		err = HandlePduSessEstAcceptEvent(ue, msg)
 	default:
 		ue.Log.Infoln("Event", msg.Event, "is not supported")
 	}
