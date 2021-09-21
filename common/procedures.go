@@ -9,4 +9,5 @@ type ProcedureType uint8
 
 const (
 	REGISTRATION_PROCEDURE ProcedureType = 1 + iota
+	PDU_SESSION_ESTABLISHMENT_PROCEDURE
 )

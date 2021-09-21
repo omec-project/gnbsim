@@ -13,6 +13,7 @@ import (
 	"gnbsim/logger"
 	"gnbsim/profile"
 	"gnbsim/profile/ngsetup"
+	"gnbsim/profile/pdusessest"
 	"gnbsim/profile/register"
 )
 
@@ -44,6 +45,10 @@ func main() {
 			case "register":
 				{
 					register.Register_test(profileCtx)
+				}
+			case "pdusessest":
+				{
+					pdusessest.PduSessEst_test(profileCtx)
 				}
 			case "deregister":
 				{

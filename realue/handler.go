@@ -15,6 +15,7 @@ import (
 	"github.com/free5gc/nas/nasMessage"
 	"github.com/free5gc/nas/nasTestpacket"
 	"github.com/free5gc/nas/nasType"
+	"github.com/free5gc/openapi/models"
 	"github.com/omec-project/nas"
 )
 
@@ -113,6 +114,34 @@ func HandleRegCompleteEvent(ue *context.RealUe, msg *common.UuMessage) (err erro
 	return nil
 }
 
+func HandlePduSessEstRequestEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
+	ue.Log.Traceln("Handling PDU Session Establishment Request Event")
+
+	sNssai := models.Snssai{
+		Sst: 1,
+		Sd:  "010203",
+	}
+	nasPdu := nasTestpacket.GetUlNasTransport_PduSessionEstablishmentRequest(10,
+		nasMessage.ULNASTransportRequestTypeInitialRequest, "internet", &sNssai)
+
+	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu,
+		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
+	if err != nil {
+		fmt.Println("Failed to encrypt PDU Session Establishment Request Message", err)
+		return
+	}
+
+	SendToSimUe(ue, common.PDU_SESS_EST_REQUEST_EVENT, nasPdu, nil)
+	ue.Log.Traceln("Sent Registration Complete Message to SimUe")
+	return nil
+}
+
+func HandlePduSessEstAcceptEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
+	ue.Log.Traceln("Handling PDU Session Establishment Accept Event")
+	//create new pdu session var and parse msg to pdu session var
+	return nil
+}
+
 func HandleDlInfoTransferEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
 	ue.Log.Traceln("Handling Downlink Nas Transport Event")
 	pdu := msg.NasPdu
@@ -123,6 +152,22 @@ func HandleDlInfoTransferEvent(ue *context.RealUe, msg *common.UuMessage) (err e
 	}
 	msgType := nasMsg.GmmHeader.GetMessageType()
 	ue.Log.Infoln("Received Message Type:", msgType)
+
+	if msgType == nas.MsgTypeDLNASTransport {
+		ue.Log.Info("Payload contaner type:",
+			nasMsg.GmmMessage.DLNASTransport.SpareHalfOctetAndPayloadContainerType)
+		payload := nasMsg.GmmMessage.DLNASTransport.PayloadContainer
+		buffer := payload.Buffer[:payload.Len]
+		m := nas.NewMessage()
+		err := m.PlainNasDecode(&buffer)
+		if err != nil {
+			ue.Log.Errorln("PlainNasDecode returned:", err)
+			return fmt.Errorf("failed to decode payload container")
+		}
+		nasMsg = m
+		msgType = nasMsg.GsmHeader.GetMessageType()
+
+	}
 
 	event := common.EventType(msgType)
 
