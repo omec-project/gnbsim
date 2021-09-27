@@ -35,6 +35,8 @@ func HandleMessage(gnb *context.GNodeB, amf *context.GnbAmf, pkt []byte) error {
 			HandleDownlinkNasTransport(gnb, amf, pdu)
 		case ngapType.ProcedureCodeInitialContextSetup:
 			HandleInitialContextSetupRequest(gnb, amf, pdu)
+		case ngapType.ProcedureCodePDUSessionResourceSetup:
+			HandlePduSessResourceSetupRequest(gnb, amf, pdu)
 		}
 	case ngapType.NGAPPDUPresentSuccessfulOutcome:
 		successfulOutcome := pdu.SuccessfulOutcome

@@ -10,8 +10,10 @@ info:
 configuration:
   gnbs: # pool of gNodeBs
     gnb1:
-      ipAddr: # gNB IP address used to connect to AMF 
-      port: 9487 # gNB Port used to connect to AMF
+      n2IpAddr: # gNB N2 interface IP address used to connect to AMF 
+      n2Port: 9487 # gNB N2 Port used to connect to AMF
+      n3IpAddr: 192.168.251.5 # gNB N3 interface IP address used to connect to UPF
+      n3Port: 2152 # gNB N3 Port used to connect to UPF
       name: gnb1 # gNB name that uniquely identify a gNB within application
       gnbId: 000102 # gNB identifier (3 bytes hex string, range: 000000~FFFFFF)
       tac: 000001 # Tracking Area Code (3 bytes hex string, range: 000000~FFFFFF)

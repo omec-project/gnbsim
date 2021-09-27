@@ -55,7 +55,7 @@ func ConnectToGnb(simUe *context.SimUe) error {
 	}
 
 	simUe.Log.Infof("Connected to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
-		gNb.GnbIp, gNb.GnbPort)
+		gNb.GnbN2Ip, gNb.GnbN2Port)
 	return nil
 }
 
@@ -91,6 +91,8 @@ func HandleEvent(ue *context.SimUe, msg common.InterfaceMessage) (err error) {
 			err = HandlePduSessEstRequestEvent(ue, uuMsg)
 		case common.PDU_SESS_EST_ACCEPT_EVENT:
 			err = HandlePduSessEstAcceptEvent(ue, uuMsg)
+		case common.DL_INFO_TRANSFER_EVENT:
+			err = HandleDlInfoTransferEvent(ue, uuMsg)
 		default:
 			ue.Log.Infoln("Event", uuMsg.Event, "is not supported")
 		}

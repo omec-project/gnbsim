@@ -72,7 +72,7 @@ func SendToSimUe(ue *context.RealUe, event common.EventType, naspdu []byte,
 	msg := &common.UuMessage{}
 	msg.Event = event
 	msg.Interface = common.UU_INTERFACE
-	msg.NasPdu = naspdu
+	msg.NasPdus = append(msg.NasPdus, naspdu)
 	msg.Extras.NasMsg = nasmsg
 	ue.WriteSimUeChan <- msg
 }

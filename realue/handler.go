@@ -11,7 +11,9 @@ import (
 	"gnbsim/realue/context"
 	"gnbsim/realue/util"
 	"gnbsim/util/test"
+	"net"
 
+	"github.com/free5gc/nas/nasConvert"
 	"github.com/free5gc/nas/nasMessage"
 	"github.com/free5gc/nas/nasTestpacket"
 	"github.com/free5gc/nas/nasType"
@@ -132,49 +134,69 @@ func HandlePduSessEstRequestEvent(ue *context.RealUe, msg *common.UuMessage) (er
 	}
 
 	SendToSimUe(ue, common.PDU_SESS_EST_REQUEST_EVENT, nasPdu, nil)
-	ue.Log.Traceln("Sent Registration Complete Message to SimUe")
+	ue.Log.Traceln("Sent PDU Session Establishment Request Message to SimUe")
 	return nil
 }
 
 func HandlePduSessEstAcceptEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
 	ue.Log.Traceln("Handling PDU Session Establishment Accept Event")
-	//create new pdu session var and parse msg to pdu session var
+	//TODO: create new pdu session var and parse msg to pdu session var
+	nasMsg := msg.Extras.NasMsg.PDUSessionEstablishmentAccept
+	if nasMsg == nil {
+		ue.Log.Errorln("PDUSessionEstablishmentAccept is nil")
+		return fmt.Errorf("invalid NAS Message")
+	}
+
+	var pduAddr net.IP
+	pduSessType := nasConvert.PDUSessionTypeToModels(nasMsg.GetPDUSessionType())
+	if pduSessType == models.PduSessionType_IPV4 {
+		ip := nasMsg.GetPDUAddressInformation()
+		pduAddr = net.IPv4(ip[0], ip[1], ip[2], ip[3])
+	}
+	ue.Log.Infoln("PDU Session ID:", nasMsg.PDUSessionID)
+	ue.Log.Infoln("PDU Session Type:", pduSessType)
+	ue.Log.Infoln("SSC Mode:", nasMsg.GetSSCMode())
+	ue.Log.Infoln("PDU Address:", pduAddr.String())
 	return nil
 }
 
 func HandleDlInfoTransferEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
 	ue.Log.Traceln("Handling Downlink Nas Transport Event")
-	pdu := msg.NasPdu
-	nasMsg, err := test.NASDecode(ue, nas.GetSecurityHeaderType(pdu), pdu)
-	if err != nil {
-		ue.Log.Errorln("Failed to decode dowlink NAS Message due to", err)
-		return err
-	}
-	msgType := nasMsg.GmmHeader.GetMessageType()
-	ue.Log.Infoln("Received Message Type:", msgType)
-
-	if msgType == nas.MsgTypeDLNASTransport {
-		ue.Log.Info("Payload contaner type:",
-			nasMsg.GmmMessage.DLNASTransport.SpareHalfOctetAndPayloadContainerType)
-		payload := nasMsg.GmmMessage.DLNASTransport.PayloadContainer
-		buffer := payload.Buffer[:payload.Len]
-		m := nas.NewMessage()
-		err := m.PlainNasDecode(&buffer)
+	for _, pdu := range msg.NasPdus {
+		nasMsg, err := test.NASDecode(ue, nas.GetSecurityHeaderType(pdu), pdu)
 		if err != nil {
-			ue.Log.Errorln("PlainNasDecode returned:", err)
-			return fmt.Errorf("failed to decode payload container")
+			ue.Log.Errorln("Failed to decode dowlink NAS Message due to", err)
+			return err
 		}
-		nasMsg = m
-		msgType = nasMsg.GsmHeader.GetMessageType()
+		msgType := nasMsg.GmmHeader.GetMessageType()
+		ue.Log.Infoln("Received Message Type:", msgType)
 
+		if msgType == nas.MsgTypeDLNASTransport {
+			ue.Log.Info("Payload contaner type:",
+				nasMsg.GmmMessage.DLNASTransport.SpareHalfOctetAndPayloadContainerType)
+			payload := nasMsg.GmmMessage.DLNASTransport.PayloadContainer
+			if payload.Len == 0 {
+				return fmt.Errorf("payload container length is 0")
+			}
+			buffer := payload.Buffer[:payload.Len]
+			m := nas.NewMessage()
+			err := m.PlainNasDecode(&buffer)
+			if err != nil {
+				ue.Log.Errorln("PlainNasDecode returned:", err)
+				return fmt.Errorf("failed to decode payload container")
+			}
+			nasMsg = m
+			msgType = nasMsg.GsmHeader.GetMessageType()
+
+		}
+
+		event := common.EventType(msgType)
+
+		// Simply notify SimUe about the received nas message. Later SimUe will
+		// asynchrously send next event to RealUE informing about what to do with
+		// the received NAS message
+		SendToSimUe(ue, event, nil, nasMsg)
+		ue.Log.Infoln("Notified SimUe for message type:", msgType)
 	}
-
-	event := common.EventType(msgType)
-
-	// Simply notify SimUe about the received nas message. Later SimUe will
-	// asynchrously send next event to RealUE informing about what to do with
-	// the received NAS message
-	SendToSimUe(ue, event, nil, nasMsg)
-	ue.Log.Infoln("Notified SimUe for message type:", msgType)
 	return nil
 }
