@@ -47,16 +47,18 @@ func HandleMessage(gnbue *context.GnbUe, msg common.InterfaceMessage) (err error
 			HandleDownlinkNasTransport(gnbue, amfmsg)
 		case common.INITIAL_CONTEXT_SETUP_REQUEST_EVENT:
 			HandleInitialContextSetupRequest(gnbue, amfmsg)
+		case common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT:
+			HandlePduSessResourceSetupRequest(gnbue, amfmsg)
 		}
 	}
 	return nil
 }
 
-func SendToUe(gnbue *context.GnbUe, event common.EventType, nasPdu []byte) {
+func SendToUe(gnbue *context.GnbUe, event common.EventType, nasPdus common.NasPduList) {
 	gnbue.Log.Infoln("Sending event", event, "to SimUe")
 	uemsg := common.UuMessage{}
 	uemsg.Event = event
 	uemsg.Interface = common.UU_INTERFACE
-	uemsg.NasPdu = nasPdu
+	uemsg.NasPdus = nasPdus
 	gnbue.WriteUeChan <- &uemsg
 }

@@ -34,13 +34,15 @@ type N2Message struct {
 	NgapPdu *ngapType.NGAPPDU
 }
 
+type NasPduList [][]byte
+
 // UuMessage is used to transfer information between the UE and GNodeB
 type UuMessage struct {
 	DefaultMessage
 	Supi string
 	// Encoded NAS message
-	NasPdu []byte
-	Extras EventData
+	NasPdus NasPduList
+	Extras  EventData
 	// Channel to communicate with UE
 	UeChan chan InterfaceMessage
 }

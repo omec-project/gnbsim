@@ -16,8 +16,10 @@ import (
 // user plane layer of a gNodeB.
 type GNodeB struct {
 	//TODO IP and port should be the property of transport var
-	GnbIp                string `yaml:"ipAddr"`
-	GnbPort              uint16 `yaml:"port"`
+	GnbN2Ip              string `yaml:"n2IpAddr"`
+	GnbN2Port            uint16 `yaml:"n2Port"`
+	GnbN3Ip              string `yaml:"n3IpAddr"`
+	GnbN3Port            uint16 `yaml:"n3Port"`
 	GnbName              string `yaml:"name"`
 	GnbId                string `yaml:"gnbId"`
 	Tac                  string `yaml:"tac"`

@@ -129,8 +129,8 @@ func HandleRegCompleteEvent(ue *context.SimUe, msg *common.UuMessage) (err error
 
 func HandlePduSessEstRequestEvent(ue *context.SimUe, msg *common.UuMessage) (err error) {
 	ue.Log.Traceln("Handling PDU Session Establishment Request Event")
-	SendToGnbUe(ue, msg)
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
+	SendToGnbUe(ue, msg)
 	ue.Log.Traceln("Sent PDU Session Establishment Request to GnbUe")
 	return nil
 }
@@ -178,5 +178,11 @@ func HandleProcedure(ue *context.SimUe) {
 		msg.Event = common.REG_REQUEST_EVENT
 		SendToRealUe(ue, msg)
 		ue.Log.Traceln("Sent Registration Request Event to RealUe")
+	case common.PDU_SESSION_ESTABLISHMENT_PROCEDURE:
+		ue.Log.Traceln("Initiating UE Requested PDU Session Establishment Procedure")
+		msg := &common.UuMessage{}
+		msg.Event = common.PDU_SESS_EST_REQUEST_EVENT
+		SendToRealUe(ue, msg)
+		ue.Log.Traceln("Sent PDU Session Establishment Request Event to RealUe")
 	}
 }

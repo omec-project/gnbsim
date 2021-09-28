@@ -298,6 +298,54 @@ func HandleInitialContextSetupRequest(gnb *context.GNodeB, amf *context.GnbAmf, 
 	SendToGnbUe(gnbue, common.INITIAL_CONTEXT_SETUP_REQUEST_EVENT, pdu)
 }
 
+// TODO : Much of the code is repeated in each handler
+func HandlePduSessResourceSetupRequest(gnb *context.GNodeB, amf *context.GnbAmf, pdu *ngapType.NGAPPDU) {
+	var gnbUeNgapId *ngapType.RANUENGAPID
+
+	if amf == nil {
+		log.Println("ran is nil")
+		return
+	}
+	if pdu == nil {
+		log.Println("NGAP Message is nil")
+		return
+	}
+	if gnb == nil {
+		log.Println("GNodeB Message is nil")
+		return
+	}
+	initiatingMessage := pdu.InitiatingMessage
+	if initiatingMessage == nil {
+		log.Println("Initiating Message is nil")
+		return
+	}
+	pduSessResourceSetupReq := initiatingMessage.Value.PDUSessionResourceSetupRequest
+	if pduSessResourceSetupReq == nil {
+		log.Println("InitialContextSetupRequest is nil")
+		return
+	}
+
+	log.Println("InitialContextSetupRequest")
+	for _, ie := range pduSessResourceSetupReq.ProtocolIEs.List {
+		if ie.Id.Value == ngapType.ProtocolIEIDRANUENGAPID {
+			gnbUeNgapId = ie.Value.RANUENGAPID
+			log.Println("Decode IE RANUENGAPID")
+			if gnbUeNgapId == nil {
+				log.Println("RANUENGAPID is nil")
+				return
+			}
+		}
+	}
+	ngapId := gnbUeNgapId.Value
+	gnbue := gnb.GnbUes.GetGnbUe(ngapId)
+	if gnbue == nil {
+		log.Println("No GnbUe found corresponding to RANUENGAPID:")
+		return
+	}
+
+	SendToGnbUe(gnbue, common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT, pdu)
+}
+
 func PrintAndGetCause(cause *ngapType.Cause) (present int, value aper.Enumerated) {
 	present = cause.Present
 	switch cause.Present {

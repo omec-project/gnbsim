@@ -51,13 +51,17 @@ func GetInitialContextSetupResponse(amfUeNgapID int64, ranUeNgapID int64) ([]byt
 }
 
 func GetInitialContextSetupResponseForServiceRequest(
-	amfUeNgapID int64, ranUeNgapID int64, ipv4 string) ([]byte, error) {
-	message := ngapTestpacket.BuildInitialContextSetupResponse(amfUeNgapID, ranUeNgapID, ipv4, nil)
+	pduSessions []ngapTestpacket.PduSession, amfUeNgapID int64,
+	ranUeNgapID int64, ipv4 string) ([]byte, error) {
+
+	message := ngapTestpacket.BuildInitialContextSetupResponse(nil, amfUeNgapID, ranUeNgapID, ipv4, nil)
 	return ngap.Encoder(message)
 }
 
-func GetPDUSessionResourceSetupResponse(pduSessionId int64, amfUeNgapID int64, ranUeNgapID int64, ipv4 string) ([]byte, error) {
-	message := ngapTestpacket.BuildPDUSessionResourceSetupResponseForRegistrationTest(pduSessionId, amfUeNgapID, ranUeNgapID, ipv4)
+func GetPDUSessionResourceSetupResponse(pduSessions []ngapTestpacket.PduSession,
+	amfUeNgapID int64, ranUeNgapID int64, ipv4 string) ([]byte, error) {
+
+	message := ngapTestpacket.BuildPDUSessionResourceSetupResponseForRegistrationTest(pduSessions, amfUeNgapID, ranUeNgapID, ipv4)
 	return ngap.Encoder(message)
 }
 func EncodeNasPduWithSecurity(ue *context.RealUe, pdu []byte, securityHeaderType uint8,
@@ -111,7 +115,10 @@ func GetHandoverNotify(amfUeNgapID int64, ranUeNgapID int64) ([]byte, error) {
 	return ngap.Encoder(message)
 }
 
-func GetPDUSessionResourceSetupResponseForPaging(amfUeNgapID int64, ranUeNgapID int64, ipv4 string) ([]byte, error) {
-	message := ngapTestpacket.BuildPDUSessionResourceSetupResponseForPaging(amfUeNgapID, ranUeNgapID, ipv4)
+func GetPDUSessionResourceSetupResponseForPaging(pduSessions []ngapTestpacket.PduSession,
+	amfUeNgapID int64, ranUeNgapID int64, ipv4 string) ([]byte, error) {
+
+	message := ngapTestpacket.BuildPDUSessionResourceSetupResponseForPaging(
+		pduSessions, amfUeNgapID, ranUeNgapID, ipv4)
 	return ngap.Encoder(message)
 }

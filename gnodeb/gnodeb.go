@@ -38,7 +38,7 @@ func InitializeAllGnbs() error {
 func Init(gnb *context.GNodeB) error {
 	gnb.Log = logger.GNodeBLog.WithField(logger.FieldGnb, "gnodeb1")
 	gnb.Log.Traceln("Inititializing GNodeB")
-	gnb.Log.Infoln("GNodeB IP:", gnb.GnbIp, "GNodeB Port:", gnb.GnbPort)
+	gnb.Log.Infoln("GNodeB IP:", gnb.GnbN2Ip, "GNodeB Port:", gnb.GnbN2Port)
 
 	gnb.CpTransport = &transport.GnbCTransport{GnbInstance: gnb}
 	gnb.GnbUes = &context.GnbUeDao{}
@@ -91,8 +91,8 @@ func ConnectToAmf(gnb *context.GNodeB, amf *context.GnbAmf) (err error) {
 		amf.AmfIp = addrs[0]
 	}
 
-	amf.Conn, err = test.ConnectToAmf(amf.AmfIp, gnb.GnbIp, int(amf.AmfPort),
-		int(gnb.GnbPort))
+	amf.Conn, err = test.ConnectToAmf(amf.AmfIp, gnb.GnbN2Ip, int(amf.AmfPort),
+		int(gnb.GnbN2Port))
 	if err != nil {
 		return fmt.Errorf("failed to connect amf, ip: %v, port: %v, err: %v",
 			amf.AmfIp, amf.AmfPort, err)
