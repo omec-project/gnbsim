@@ -29,6 +29,7 @@ const (
 	FieldProfile     string = "profile"
 	FieldGnb         string = "gnb"
 	FieldGnbUeNgapId string = "ranuengapid"
+	FieldIp          string = "ip"
 )
 
 func init() {

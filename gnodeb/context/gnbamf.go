@@ -13,7 +13,7 @@ import (
 	"github.com/free5gc/openapi/models"
 )
 
-const NGAP_SCTP_PORT uint16 = 38412
+const NGAP_SCTP_PORT int = 38412
 
 // GnbAmf holds the AMF context
 type GnbAmf struct {
@@ -22,7 +22,7 @@ type GnbAmf struct {
 	AmfHostName   string `yaml:"hostName"`
 	AmfIp         string `yaml:"ipAddr"`
 	AmfName       string
-	AmfPort       uint16 `yaml:"port"`
+	AmfPort       int `yaml:"port"`
 	/* Relative AMF Capacity */
 	RelCap          int64
 	ServedGuamiList []models.Guami
@@ -31,7 +31,7 @@ type GnbAmf struct {
 	Conn net.Conn
 }
 
-func NewGnbAmf(ip string, port uint16) *GnbAmf {
+func NewGnbAmf(ip string, port int) *GnbAmf {
 	return &GnbAmf{
 		AmfIp:   ip,
 		AmfPort: port,
@@ -42,7 +42,7 @@ func (amf *GnbAmf) GetIpAddr() string {
 	return amf.AmfIp
 }
 
-func (amf *GnbAmf) GetPort() uint16 {
+func (amf *GnbAmf) GetPort() int {
 	return amf.AmfPort
 }
 

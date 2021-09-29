@@ -36,11 +36,13 @@ func InitializeAllGnbs() error {
 
 // Init initializes the GNodeB struct var and connects to the default AMF
 func Init(gnb *context.GNodeB) error {
-	gnb.Log = logger.GNodeBLog.WithField(logger.FieldGnb, "gnodeb1")
+	gnb.Log = logger.GNodeBLog.WithField(logger.FieldGnb, gnb.GnbName)
 	gnb.Log.Traceln("Inititializing GNodeB")
 	gnb.Log.Infoln("GNodeB IP:", gnb.GnbN2Ip, "GNodeB Port:", gnb.GnbN2Port)
 
-	gnb.CpTransport = &transport.GnbCTransport{GnbInstance: gnb}
+	gnb.CpTransport = transport.NewGnbCpTransport(gnb)
+	gnb.UpTransport = transport.NewGnbUpTransport(gnb)
+	gnb.UpTransport.Init()
 	gnb.GnbUes = &context.GnbUeDao{}
 	gnb.RanUeNGAPIDGenerator = idgenerator.NewGenerator(1, context.MaxValueOfRanUeNgapId)
 
