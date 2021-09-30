@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type GnbUe struct {
+type GnbCpUe struct {
 	// Should IMSI be stored in GnbUe
 	Supi        string
 	GnbUeNgapId int64
@@ -31,8 +31,8 @@ type GnbUe struct {
 	Log *logrus.Entry
 }
 
-func NewGnbUe(ngapId int64, gnb *GNodeB, amf *GnbAmf) *GnbUe {
-	gnbue := GnbUe{}
+func NewGnbCpUe(ngapId int64, gnb *GNodeB, amf *GnbAmf) *GnbCpUe {
+	gnbue := GnbCpUe{}
 	gnbue.GnbUeNgapId = ngapId
 	gnbue.Amf = amf
 	gnbue.Gnb = gnb

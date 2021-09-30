@@ -160,5 +160,6 @@ func (cpTprt *GnbCpTransport) CheckTransportParam(peer transportcommon.Transport
 	return nil
 }
 
-func (cpTprt *GnbCpTransport) Init() {
+func (cpTprt *GnbCpTransport) Init() error {
+	return nil
 }

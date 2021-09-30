@@ -48,12 +48,13 @@ func (upTprt *GnbUpTransport) Init() error {
 	addr, err := net.ResolveUDPAddr("udp", ipPort)
 	if err != nil {
 		upTprt.Log.Errorln("ResolveUDPAddr returned:", err)
-		return nil
+		return fmt.Errorf("invalid ip or port: %v", ipPort)
 	}
 
 	upTprt.Conn, err = net.ListenUDP("udp", addr)
 	if err != nil {
-		log.Fatal(err)
+		upTprt.Log.Errorln("ListenUDP returned:", err)
+		return fmt.Errorf("failed to create udp socket: %v", ipPort)
 	}
 
 	log.Println("User Plane transport listening on:", ipPort)
@@ -95,9 +96,13 @@ func (upTprt *GnbUpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 		if err != nil {
 			upTprt.Log.Errorln("ReadFromUDP returned:", err)
 		}
-
-		fmt.Printf("Read %v bytes from %v:%v\n", n, srcAddr.IP, srcAddr.Port)
-		//TODO : Fetch GnbUpf using src IP and then pass received message to GnbUpf
+		srcIp := srcAddr.IP.String()
+		fmt.Printf("Read %v bytes from %v:%v\n", n, srcIp, srcAddr.Port)
+		gnbupf := upTprt.GnbInstance.GnbPeers.GetGnbUpf(srcIp)
+		if gnbupf == nil {
+			upTprt.Log.Errorln("No UPF Context found corresponding to IP:", srcIp)
+			continue
+		}
 	}
 }
 

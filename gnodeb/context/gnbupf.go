@@ -6,6 +6,7 @@
 package context
 
 import (
+	"gnbsim/common"
 	"gnbsim/logger"
 	"net"
 	"strconv"
@@ -17,7 +18,13 @@ const GTP_U_PORT int = 2152
 
 // GnbUpf holds the UPF context
 type GnbUpf struct {
-	UpfAddr *net.UDPAddr
+	UpfAddr     *net.UDPAddr
+	UpfIpString string
+
+	GnbUpUes *GnbUeDao
+
+	// GnbUpf Reads messages from transport, GnbUpUe and GNodeB
+	ReadChan chan common.InterfaceMessage
 
 	/* logger */
 	Log *logrus.Entry
@@ -37,12 +44,13 @@ func NewGnbUpf(ip string) *GnbUpf {
 	}
 
 	gnbupf.UpfAddr = addr
+	gnbupf.UpfIpString = addr.IP.String()
 
 	return gnbupf
 }
 
 func (upf *GnbUpf) GetIpAddr() string {
-	return upf.UpfAddr.IP.String()
+	return upf.UpfIpString
 }
 
 func (upf *GnbUpf) GetPort() int {

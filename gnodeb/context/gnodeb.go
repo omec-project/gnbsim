@@ -24,6 +24,7 @@ type GNodeB struct {
 	GnbId                string `yaml:"gnbId"`
 	Tac                  string `yaml:"tac"`
 	GnbUes               *GnbUeDao
+	GnbPeers             *GnbPeerDao
 	RanUeNGAPIDGenerator *idgenerator.IDGenerator
 
 	/*channel to notify all the go routines corresponding to this GNodeB instance to stop*/

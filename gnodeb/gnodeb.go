@@ -13,7 +13,7 @@ import (
 	"gnbsim/gnodeb/context"
 	"gnbsim/gnodeb/transport"
 	"gnbsim/gnodeb/worker/gnbamfworker"
-	"gnbsim/gnodeb/worker/gnbueworker"
+	"gnbsim/gnodeb/worker/gnbcpueworker"
 	"gnbsim/logger"
 	"gnbsim/util/test"
 	"log"
@@ -42,8 +42,13 @@ func Init(gnb *context.GNodeB) error {
 
 	gnb.CpTransport = transport.NewGnbCpTransport(gnb)
 	gnb.UpTransport = transport.NewGnbUpTransport(gnb)
-	gnb.UpTransport.Init()
-	gnb.GnbUes = &context.GnbUeDao{}
+	err := gnb.UpTransport.Init()
+	if err != nil {
+		gnb.Log.Errorln("GnbUpTransport.Init returned", err)
+		return fmt.Errorf("failed to initialize user plane transport")
+	}
+	gnb.GnbUes = context.NewGnbUeDao()
+	gnb.GnbPeers = context.NewGnbPeerDao()
 	gnb.RanUeNGAPIDGenerator = idgenerator.NewGenerator(1, context.MaxValueOfRanUeNgapId)
 
 	if gnb.DefaultAmf == nil {
@@ -51,7 +56,7 @@ func Init(gnb *context.GNodeB) error {
 		return nil
 	}
 
-	err := ConnectToAmf(gnb, gnb.DefaultAmf)
+	err = ConnectToAmf(gnb, gnb.DefaultAmf)
 	if err != nil {
 		gnb.Log.Errorln("ConnectToAmf returned:", err)
 		return fmt.Errorf("failed to connect to amf")
@@ -158,15 +163,10 @@ func RequestConnection(gnb *context.GNodeB, uemsg *common.UuMessage) (chan commo
 		return nil, fmt.Errorf("failed to allocate ran ue ngap id")
 	}
 
-	gnbUe := gnb.GnbUes.GetGnbUe(ranUeNgapID)
-	if gnbUe != nil {
-		return nil, fmt.Errorf("gnb ue context already exists")
-	}
+	gnbUe := context.NewGnbCpUe(ranUeNgapID, gnb, gnb.DefaultAmf)
+	gnb.GnbUes.AddGnbCpUe(1, gnbUe)
 
-	gnbUe = context.NewGnbUe(ranUeNgapID, gnb, gnb.DefaultAmf)
-	gnb.GnbUes.AddGnbUe(1, gnbUe)
-
-	go gnbueworker.Init(gnbUe)
+	go gnbcpueworker.Init(gnbUe)
 	//Channel on which UE can write message to GnbUe and from which GnbUe will
 	//be reading.
 	ch := gnbUe.ReadChan

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-package gnbueworker
+package gnbcpueworker
 
 import (
 	"encoding/binary"
@@ -18,13 +18,13 @@ import (
 	"github.com/free5gc/ngap/ngapType"
 )
 
-func HandleConnectRequest(gnbue *context.GnbUe, msg *common.UuMessage) {
+func HandleConnectRequest(gnbue *context.GnbCpUe, msg *common.UuMessage) {
 	gnbue.Log.Traceln("Handling Connection Request Event from Ue")
 	gnbue.Supi = msg.Supi
 	gnbue.WriteUeChan = msg.UeChan
 }
 
-func HandleInitialUEMessage(gnbue *context.GnbUe, msg *common.UuMessage) {
+func HandleInitialUEMessage(gnbue *context.GnbCpUe, msg *common.UuMessage) {
 	gnbue.Log.Traceln("Handling Initial UE Event")
 
 	sendMsg, err := test.GetInitialUEMessage(gnbue.GnbUeNgapId, msg.NasPdus[0], "")
@@ -41,7 +41,7 @@ func HandleInitialUEMessage(gnbue *context.GnbUe, msg *common.UuMessage) {
 	gnbue.Log.Traceln("Sent Initial UE Message to AMF")
 }
 
-func HandleDownlinkNasTransport(gnbue *context.GnbUe, msg *common.N2Message) {
+func HandleDownlinkNasTransport(gnbue *context.GnbCpUe, msg *common.N2Message) {
 	gnbue.Log.Traceln("Handling Downlink NAS Transport Message")
 
 	// Need not perform other checks as they are validated at gnbamfworker level
@@ -84,7 +84,7 @@ func HandleDownlinkNasTransport(gnbue *context.GnbUe, msg *common.N2Message) {
 	gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
 }
 
-func HandleUlInfoTransfer(gnbue *context.GnbUe, msg *common.UuMessage) {
+func HandleUlInfoTransfer(gnbue *context.GnbCpUe, msg *common.UuMessage) {
 	gnbue.Log.Traceln("Handling UL Information Transfer Event")
 
 	gnbue.Log.Traceln("Creating Uplink NAS Transport Message")
@@ -102,7 +102,7 @@ func HandleUlInfoTransfer(gnbue *context.GnbUe, msg *common.UuMessage) {
 	gnbue.Log.Traceln("Sent Uplink NAS Transport Message to AMF")
 }
 
-func HandleInitialContextSetupRequest(gnbue *context.GnbUe, msg *common.N2Message) {
+func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe, msg *common.N2Message) {
 	gnbue.Log.Traceln("Handling Initial Context Setup Request Message")
 
 	var amfUeNgapId *ngapType.AMFUENGAPID
@@ -156,7 +156,7 @@ func HandleInitialContextSetupRequest(gnbue *context.GnbUe, msg *common.N2Messag
 }
 
 // TODO: Error handling
-func HandlePduSessResourceSetupRequest(gnbue *context.GnbUe, msg *common.N2Message) {
+func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe, msg *common.N2Message) {
 	gnbue.Log.Traceln("Handling PDU Session Resource Setup Request Message")
 
 	var amfUeNgapId *ngapType.AMFUENGAPID
@@ -269,6 +269,9 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbUe, msg *common.N2Messa
 		}
 
 		pduSessions = append(pduSessions, pduSess)
+
+		//	gnbupf := gnbue.Gnb.GnbPeers.GetOrAddGnbUpf(upfIp)
+
 	}
 
 	gnbue.Log.Traceln("Sent PDU Session Resource Setup Response Message to AMF")
