@@ -11,6 +11,7 @@ import (
 	"gnbsim/common"
 	"gnbsim/factory"
 	"gnbsim/gnodeb/context"
+	"gnbsim/gnodeb/idrange"
 	"gnbsim/gnodeb/transport"
 	"gnbsim/gnodeb/worker/gnbamfworker"
 	"gnbsim/gnodeb/worker/gnbcpueworker"
@@ -49,7 +50,9 @@ func Init(gnb *context.GNodeB) error {
 	}
 	gnb.GnbUes = context.NewGnbUeDao()
 	gnb.GnbPeers = context.NewGnbPeerDao()
-	gnb.RanUeNGAPIDGenerator = idgenerator.NewGenerator(1, context.MaxValueOfRanUeNgapId)
+	start, end := idrange.GetIdRange()
+	gnb.RanUeNGAPIDGenerator = idgenerator.NewGenerator(int64(start), int64(end))
+	gnb.DlTeidGenerator = idgenerator.NewGenerator(int64(start), int64(end))
 
 	if gnb.DefaultAmf == nil {
 		gnb.Log.Infoln("Default AMF not configured, continuing ...")

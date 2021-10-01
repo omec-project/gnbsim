@@ -29,6 +29,7 @@ const (
 	FieldProfile     string = "profile"
 	FieldGnb         string = "gnb"
 	FieldGnbUeNgapId string = "ranuengapid"
+	FieldDlTeid      string = "dlteid"
 	FieldIp          string = "ip"
 )
 

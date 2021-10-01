@@ -8,21 +8,22 @@ package register
 import (
 	"encoding/hex"
 	"fmt"
-    "gnbsim/util/test" // AJAY - Change required 
-	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
-	"github.com/omec-project/nas"
-	"github.com/omec-project/nas/nasTestpacket"
-	"github.com/omec-project/nas/nasMessage"
-	"github.com/omec-project/nas/nasType"
-	"github.com/omec-project/nas/security"
-	"github.com/free5gc/ngap"
-	"github.com/free5gc/ngap/ngapType"
-	"github.com/free5gc/openapi/models"
-	"golang.org/x/net/icmp"
-	"golang.org/x/net/ipv4"
+	"gnbsim/util/test" // AJAY - Change required
 	"net"
 	"strconv"
 	"time"
+
+	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
+	"github.com/free5gc/ngap"
+	"github.com/free5gc/ngap/ngapType"
+	"github.com/free5gc/openapi/models"
+	"github.com/omec-project/nas"
+	"github.com/omec-project/nas/nasMessage"
+	"github.com/omec-project/nas/nasTestpacket"
+	"github.com/omec-project/nas/nasType"
+	"github.com/omec-project/nas/security"
+	"golang.org/x/net/icmp"
+	"golang.org/x/net/ipv4"
 )
 
 func Register_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr string) {
@@ -116,14 +117,14 @@ func Register_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr string) {
 
 	for i := 0; i < len(dlpdu.ProtocolIEs.List); i++ {
 		ie := dlpdu.ProtocolIEs.List[i]
-		fmt.Println(" IE received ", ie.Id.Value )
-        switch(ie.Id.Value) {
-            case ngapType.ProtocolIEIDRANUENGAPID:
-		        fmt.Println(" NGAP RAN Id received ", ie.Value.RANUENGAPID )
-            case ngapType.ProtocolIEIDAMFUENGAPID:
-		        fmt.Println(" NGAP AMF Id received ", ie.Value.AMFUENGAPID )
-        }
-    }
+		fmt.Println(" IE received ", ie.Id.Value)
+		switch ie.Id.Value {
+		case ngapType.ProtocolIEIDRANUENGAPID:
+			fmt.Println(" NGAP RAN Id received ", ie.Value.RANUENGAPID)
+		case ngapType.ProtocolIEIDAMFUENGAPID:
+			fmt.Println(" NGAP AMF Id received ", ie.Value.AMFUENGAPID)
+		}
+	}
 	// Calculate for RES*
 	nasPdu := test.GetNasPdu(ue, ngapPdu.InitiatingMessage.Value.DownlinkNASTransport)
 	if nasPdu.GmmHeader.GetMessageType() != nas.MsgTypeAuthenticationRequest {
@@ -170,7 +171,7 @@ func Register_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr string) {
 		return
 	}
 	fmt.Println("Received Security Mode Command Message")
-    fmt.Println("Security Mode Command -nasPdu ", nasPdu)
+	fmt.Println("Security Mode Command -nasPdu ", nasPdu)
 
 	// send NAS Security Mode Complete Msg
 	registrationRequestWith5GMM := nasTestpacket.GetRegistrationRequest(nasMessage.RegistrationType5GSInitialRegistration,
@@ -296,12 +297,12 @@ func Register_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr string) {
 	}
 
 	nasPdu = test.GetNasPduSetupRequest(ue, ngapPdu.InitiatingMessage.Value.PDUSessionResourceSetupRequest)
-    fmt.Println("Assigned address to UE address ", nasPdu.GmmMessage.DLNASTransport.Ipaddr)
-    ueIpaddr := nasPdu.GmmMessage.DLNASTransport.Ipaddr
+	fmt.Println("Assigned address to UE address ", nasPdu.GmmMessage.DLNASTransport.Ipaddr)
+	ueIpaddr := nasPdu.GmmMessage.DLNASTransport.Ipaddr
 
 	// send 14. NGAP-PDU Session Resource Setup Response
-    var pduSessionId int64
-    pduSessionId = 10
+	var pduSessionId int64
+	pduSessionId = 10
 	sendMsg, err = test.GetPDUSessionResourceSetupResponse(pduSessionId, ue.AmfUeNgapId, ue.RanUeNgapId, ranUIpAddr)
 	if err != nil {
 		fmt.Println("Failed to create - NGAP-PDU Session Resource Setup Response")
@@ -339,7 +340,7 @@ func Register_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr string) {
 		Flags:    0,
 		TotalLen: 48,
 		TTL:      64,
-		Src:      net.ParseIP(ueIpaddr).To4(),    // ue IP address
+		Src:      net.ParseIP(ueIpaddr).To4(),        // ue IP address
 		Dst:      net.ParseIP("192.168.250.1").To4(), // upstream router interface connected to Gi
 		ID:       1,
 	}

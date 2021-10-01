@@ -38,11 +38,13 @@ func HandleMessage(gnbue *context.GnbCpUe, msg common.InterfaceMessage) (err err
 			HandleInitialUEMessage(gnbue, uemsg)
 		case common.UL_INFO_TRANSFER_EVENT:
 			HandleUlInfoTransfer(gnbue, uemsg)
+		case common.DATA_BEARER_SETUP_RESPONSE_EVENT:
+			HandleDataBearerSetupResponse(gnbue, uemsg)
 		}
 
 	case common.N2_INTERFACE:
 		amfmsg := msg.(*common.N2Message)
-		switch msg.GetEventType() {
+		switch amfmsg.GetEventType() {
 		case common.DOWNLINK_NAS_TRANSPORT_EVENT:
 			HandleDownlinkNasTransport(gnbue, amfmsg)
 		case common.INITIAL_CONTEXT_SETUP_REQUEST_EVENT:

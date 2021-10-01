@@ -22,6 +22,10 @@ type PduSession struct {
 	PduSessId      int64
 	SuccessQfiList []int64
 	FailedQfiList  []int64
+
+	/* indicates whether  the pdu session was successfully established in Real
+	   UE or not*/
+	Success bool
 }
 
 func init() {

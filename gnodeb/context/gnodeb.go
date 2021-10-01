@@ -26,6 +26,7 @@ type GNodeB struct {
 	GnbUes               *GnbUeDao
 	GnbPeers             *GnbPeerDao
 	RanUeNGAPIDGenerator *idgenerator.IDGenerator
+	DlTeidGenerator      *idgenerator.IDGenerator
 
 	/*channel to notify all the go routines corresponding to this GNodeB instance to stop*/
 	Quit chan int

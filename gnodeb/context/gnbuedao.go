@@ -13,6 +13,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+//TODO: Need to seperate out the DAOs
+
 // GnbUeDao acts as a Data Access Object that stores and provides access to all
 // the GNodeB instances
 type GnbUeDao struct {
@@ -36,6 +38,7 @@ func NewGnbUeDao() *GnbUeDao {
 
 // GetGnbCpUe returns the GnbCpUe instance corresponding to provided NGAP ID
 func (dao *GnbUeDao) GetGnbCpUe(gnbUeNgapId int64) *GnbCpUe {
+	log.Println("Fetching GnbCpUe for RANUENGAPID:", gnbUeNgapId)
 	val, ok := dao.ngapIdGnbCpUeMap.Load(gnbUeNgapId)
 	if ok {
 		return val.(*GnbCpUe)
@@ -47,11 +50,13 @@ func (dao *GnbUeDao) GetGnbCpUe(gnbUeNgapId int64) *GnbCpUe {
 
 // AddGnbCpUe adds the GnbCpUe instance corresponding to provided NGAP ID
 func (dao *GnbUeDao) AddGnbCpUe(gnbUeNgapId int64, gnbue *GnbCpUe) {
+	dao.Log.Infoln("Adding new GnbCpUe for RANUENGAPID:", gnbUeNgapId)
 	dao.ngapIdGnbCpUeMap.Store(gnbUeNgapId, gnbue)
 }
 
 // GetGnbCpUe returns the GnbCpUe instance corresponding to provided NGAP ID
-func (dao *GnbUeDao) GetGnbUpUe(teid int64, downlink bool) *GnbUpUe {
+func (dao *GnbUeDao) GetGnbUpUe(teid uint32, downlink bool) *GnbUpUe {
+	log.Println("Fetching GnbUpUe for TEID:", teid, "Downlink:", downlink)
 	var val interface{}
 	var ok bool
 	if downlink {
@@ -70,6 +75,11 @@ func (dao *GnbUeDao) GetGnbUpUe(teid int64, downlink bool) *GnbUpUe {
 }
 
 // AddGnbCpUe adds the GnbCpUe instance corresponding to provided NGAP ID
-func (dao *GnbCpUeDao) AddGnbUpUe(gnbUeNgapId int64, gnbue *GnbCpUe) {
-	dao.ngapIdGnbCpUeMap.Store(gnbUeNgapId, gnbue)
+func (dao *GnbUeDao) AddGnbUpUe(teid uint32, downlink bool, gnbue *GnbUpUe) {
+	dao.Log.Infoln("Adding new GnbUpUe for TEID:", teid, "Downlink:", downlink)
+	if downlink {
+		dao.dlTeidGnbUpUeMap.Store(teid, gnbue)
+	} else {
+		//  TODO
+	}
 }

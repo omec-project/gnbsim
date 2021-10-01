@@ -8,6 +8,8 @@ package context
 import (
 	"gnbsim/common"
 	"gnbsim/logger"
+	"log"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 )
@@ -19,12 +21,13 @@ type GnbCpUe struct {
 	AmfUeNgapId int64
 	Amf         *GnbAmf
 	Gnb         *GNodeB
+	GnbUpUes    sync.Map
 	// TODO MME details
 
-	// GnbUe writes messages to UE on this channel
+	// GnbCpUe writes messages to UE on this channel
 	WriteUeChan chan common.InterfaceMessage
 
-	// GnbUe reads messages from all other workers and UE on this channel
+	// GnbCpUe reads messages from all other workers and UE on this channel
 	ReadChan chan common.InterfaceMessage
 
 	/* logger */
@@ -37,8 +40,33 @@ func NewGnbCpUe(ngapId int64, gnb *GNodeB, amf *GnbAmf) *GnbCpUe {
 	gnbue.Amf = amf
 	gnbue.Gnb = gnb
 	gnbue.ReadChan = make(chan common.InterfaceMessage)
-	gnbue.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbUE",
+	gnbue.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbCpUe",
 		logger.FieldGnbUeNgapId: ngapId})
 	gnbue.Log.Traceln("Context Created")
 	return &gnbue
+}
+
+// GetGnbUpUe returns the GnbUpUe instance corresponding to provided PDU Sess ID
+func (ctx *GnbCpUe) GetGnbUpUe(pduSessId int64) *GnbUpUe {
+	log.Println("Fetching GnbUpUe for pduSessId:", pduSessId)
+	val, ok := ctx.GnbUpUes.Load(pduSessId)
+	if ok {
+		return val.(*GnbUpUe)
+	} else {
+		log.Println("key not present:", pduSessId)
+		return nil
+	}
+}
+
+// AddGnbUpUe adds the GnbUpUe instance corresponding to provided PDU Sess ID
+func (ctx *GnbCpUe) AddGnbUpUe(pduSessId int64, gnbue *GnbUpUe) {
+	ctx.Log.Infoln("Adding new GnbUpUe for PDU Sess ID:", pduSessId)
+	ctx.GnbUpUes.Store(pduSessId, gnbue)
+}
+
+// RemoveGnbUpUe removes the GnbUpUe instance corresponding to provided PDU
+// sess ID from the map
+func (ctx *GnbCpUe) RemoveGnbUpUe(pduSessId int64) {
+	log.Println("Deleting GnbUpUe for pduSessId:", pduSessId)
+	ctx.GnbUpUes.Delete(pduSessId)
 }

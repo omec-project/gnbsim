@@ -98,11 +98,13 @@ func (upTprt *GnbUpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 		}
 		srcIp := srcAddr.IP.String()
 		fmt.Printf("Read %v bytes from %v:%v\n", n, srcIp, srcAddr.Port)
+
 		gnbupf := upTprt.GnbInstance.GnbPeers.GetGnbUpf(srcIp)
 		if gnbupf == nil {
 			upTprt.Log.Errorln("No UPF Context found corresponding to IP:", srcIp)
 			continue
 		}
+
 	}
 }
 

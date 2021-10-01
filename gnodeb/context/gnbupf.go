@@ -43,6 +43,8 @@ func NewGnbUpf(ip string) *GnbUpf {
 		return nil
 	}
 
+	gnbupf.ReadChan = make(chan common.InterfaceMessage)
+	gnbupf.GnbUpUes = NewGnbUeDao()
 	gnbupf.UpfAddr = addr
 	gnbupf.UpfIpString = addr.IP.String()
 
