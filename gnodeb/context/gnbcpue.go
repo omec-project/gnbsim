@@ -8,21 +8,20 @@ package context
 import (
 	"gnbsim/common"
 	"gnbsim/logger"
-	"log"
 	"sync"
 
 	"github.com/sirupsen/logrus"
 )
 
 type GnbCpUe struct {
-	// Should IMSI be stored in GnbUe
 	Supi        string
 	GnbUeNgapId int64
 	AmfUeNgapId int64
 	Amf         *GnbAmf
 	Gnb         *GNodeB
-	GnbUpUes    sync.Map
-	// TODO MME details
+
+	/*TODO: Sync map is not needed as it is handled single threaded */
+	GnbUpUes sync.Map
 
 	// GnbCpUe writes messages to UE on this channel
 	WriteUeChan chan common.InterfaceMessage
@@ -48,12 +47,12 @@ func NewGnbCpUe(ngapId int64, gnb *GNodeB, amf *GnbAmf) *GnbCpUe {
 
 // GetGnbUpUe returns the GnbUpUe instance corresponding to provided PDU Sess ID
 func (ctx *GnbCpUe) GetGnbUpUe(pduSessId int64) *GnbUpUe {
-	log.Println("Fetching GnbUpUe for pduSessId:", pduSessId)
+	ctx.Log.Infoln("Fetching GnbUpUe for pduSessId:", pduSessId)
 	val, ok := ctx.GnbUpUes.Load(pduSessId)
 	if ok {
 		return val.(*GnbUpUe)
 	} else {
-		log.Println("key not present:", pduSessId)
+		ctx.Log.Errorln("key not present:", pduSessId)
 		return nil
 	}
 }
@@ -67,6 +66,6 @@ func (ctx *GnbCpUe) AddGnbUpUe(pduSessId int64, gnbue *GnbUpUe) {
 // RemoveGnbUpUe removes the GnbUpUe instance corresponding to provided PDU
 // sess ID from the map
 func (ctx *GnbCpUe) RemoveGnbUpUe(pduSessId int64) {
-	log.Println("Deleting GnbUpUe for pduSessId:", pduSessId)
+	ctx.Log.Infoln("Deleting GnbUpUe for pduSessId:", pduSessId)
 	ctx.GnbUpUes.Delete(pduSessId)
 }

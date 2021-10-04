@@ -10,6 +10,7 @@ import (
 	"gnbsim/common"
 	"gnbsim/realue/context"
 	"gnbsim/realue/util"
+	"gnbsim/realue/worker/pdusessworker"
 	"gnbsim/util/test"
 	"net"
 
@@ -153,10 +154,51 @@ func HandlePduSessEstAcceptEvent(ue *context.RealUe, msg *common.UuMessage) (err
 		ip := nasMsg.GetPDUAddressInformation()
 		pduAddr = net.IPv4(ip[0], ip[1], ip[2], ip[3])
 	}
-	ue.Log.Infoln("PDU Session ID:", nasMsg.PDUSessionID)
-	ue.Log.Infoln("PDU Session Type:", pduSessType)
-	ue.Log.Infoln("SSC Mode:", nasMsg.GetSSCMode())
+
+	pduSess := context.NewPduSession(ue, uint64(nasMsg.PDUSessionID.Octet))
+	pduSess.PduSessType = pduSessType
+	pduSess.SscMode = nasMsg.GetSSCMode()
+	pduSess.PduAddress = pduAddr
+	ue.AddPduSession(int64(pduSess.PduSessId), pduSess)
+	ue.Log.Infoln("PDU Session ID:", pduSess.PduSessId)
+	ue.Log.Infoln("PDU Session Type:", pduSess.PduSessType)
+	ue.Log.Infoln("SSC Mode:", pduSess.SscMode)
 	ue.Log.Infoln("PDU Address:", pduAddr.String())
+
+	return nil
+}
+
+func HandleDataBearerSetupRequestEvent(ue *context.RealUe,
+	msg *common.UuMessage) (err error) {
+	for _, item := range msg.UPData {
+		/* Currently gNB also adds failed pdu session ids in the list.
+		   pdu sessions are marked failed during decoding. real ue simply
+		   returns the same list back by marking any failed pdu sessions on
+		   its side. This consolidated list can be used by gnb to form
+		   PDUSession Resource Setup Response message
+		*/
+		if item.PduSess.Success {
+			pduSess := ue.GetPduSession(item.PduSess.PduSessId)
+			if pduSess == nil {
+				item.PduSess.Success = false
+				continue
+			}
+
+			pduSess.WriteGnbChan = item.CommChan
+
+			/* gNb can use this channel to send DL packets for this PDU session */
+			item.CommChan = pduSess.ReadDlChan
+
+			go pdusessworker.Init(pduSess)
+		}
+	}
+
+	rsp := &common.UuMessage{}
+	rsp.Event = common.DATA_BEARER_SETUP_RESPONSE_EVENT
+	rsp.Interface = common.UU_INTERFACE
+	rsp.UPData = msg.UPData
+	ue.WriteSimUeChan <- rsp
+	ue.Log.Infoln("Sent Data Radio Bearer Setup Response event to SimUe")
 	return nil
 }
 

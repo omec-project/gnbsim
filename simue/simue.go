@@ -44,7 +44,7 @@ func ConnectToGnb(simUe *context.SimUe) error {
 	uemsg := common.UuMessage{}
 	uemsg.Interface = common.UU_INTERFACE
 	uemsg.Event = common.CONNECT_REQUEST_EVENT
-	uemsg.UeChan = simUe.ReadChan
+	uemsg.CommChan = simUe.ReadChan
 	uemsg.Supi = simUe.Supi
 
 	var err error
@@ -93,6 +93,8 @@ func HandleEvent(ue *context.SimUe, msg common.InterfaceMessage) (err error) {
 			err = HandlePduSessEstAcceptEvent(ue, uuMsg)
 		case common.DL_INFO_TRANSFER_EVENT:
 			err = HandleDlInfoTransferEvent(ue, uuMsg)
+		case common.DATA_BEARER_SETUP_REQUEST_EVENT:
+			err = HandleDataBearerSetupRequestEvent(ue, uuMsg)
 		default:
 			ue.Log.Infoln("Event", uuMsg.Event, "is not supported")
 		}

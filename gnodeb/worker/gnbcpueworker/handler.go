@@ -14,6 +14,7 @@ import (
 	"gnbsim/gnodeb/worker/gnbupueworker"
 	"gnbsim/util/ngapTestpacket"
 	"gnbsim/util/test"
+	"time"
 
 	"github.com/free5gc/aper"
 	"github.com/free5gc/ngap/ngapConvert"
@@ -245,6 +246,7 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe, msg *common.N2Mes
 		gnbupue.PduSessType = test.PDUSessionTypeToModels(*pduSessType)
 		pduSess := &ngapTestpacket.PduSession{}
 		pduSess.PduSessId = gnbupue.PduSessId
+		pduSess.Teid = gnbupue.DlTeid
 
 		gnbue.Log.Infoln("PDU Session ID:", gnbupue.PduSessId)
 		gnbue.Log.Infoln("S-NSSAI - SST: ", gnbupue.Snssai.Sst)
@@ -280,6 +282,7 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe, msg *common.N2Mes
 			gnbupue.AddQosFlow(qosFlowId, &qosFlowSetupReqItem)
 		}
 
+		pduSess.Success = true
 		if item.PDUSessionNASPDU != nil {
 			nasPdus = append(nasPdus, item.PDUSessionNASPDU.Value)
 		}
@@ -296,19 +299,15 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe, msg *common.N2Mes
 		upData.CommChan = gnbupue.ReadUlChan
 		upData.PduSess = pduSess
 		upDataSet = append(upDataSet, upData)
-
-		// Create a Data Bearer Setup Request populated with pdu sessions
-		// and send it to Sim UE, upon receiving all the Data Bearer Setup
-		// Response, Create PDU Session Resource Setup Response with successful
-		// pdu session ids and failed pdu session ids and send it to amf
-		// also add real ue data channels to gnbupue and associate the gnbupue
-		// with the teid in gnbupf-maps
-
 	}
 
 	SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, nasPdus)
 	gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
 
+	/* TODO: To be fixed, currently Data Berer Setup Event may get processed
+	 * before the pdu sessions are established on the UE side
+	 */
+	time.Sleep(1 * time.Millisecond)
 	uemsg := common.UuMessage{}
 	uemsg.Event = common.DATA_BEARER_SETUP_REQUEST_EVENT
 	uemsg.Interface = common.UU_INTERFACE

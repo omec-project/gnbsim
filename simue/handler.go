@@ -170,6 +170,14 @@ func HandleDlInfoTransferEvent(ue *context.SimUe, msg *common.UuMessage) (err er
 	return nil
 }
 
+func HandleDataBearerSetupRequestEvent(ue *context.SimUe,
+	msg *common.UuMessage) (err error) {
+	ue.Log.Traceln("Handling Data Bearer Setup Request Event")
+	SendToRealUe(ue, msg)
+	ue.Log.Traceln("Sent Data Bearer Setup Request to RealUE")
+	return nil
+}
+
 func HandleProcedure(ue *context.SimUe) {
 	switch ue.Procedure {
 	case common.REGISTRATION_PROCEDURE:

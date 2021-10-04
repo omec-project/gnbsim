@@ -15,7 +15,6 @@ import (
 )
 
 type GnbUpUe struct {
-	// Should IMSI be stored in GnbUe
 	PduSessId   int64
 	DlTeid      uint32
 	UlTeid      uint32
@@ -24,7 +23,6 @@ type GnbUpUe struct {
 	Gnb         *GNodeB
 	PduSessType models.PduSessionType
 	QosFlows    map[int64]*ngapType.QosFlowSetupRequestItem
-	// TODO MME details
 
 	// GnbUpUe writes downlink packets to UE on this channel
 	WriteUeChan chan common.InterfaceMessage

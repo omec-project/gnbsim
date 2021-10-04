@@ -115,7 +115,7 @@ func GetHandoverNotify(amfUeNgapID int64, ranUeNgapID int64) ([]byte, error) {
 	return ngap.Encoder(message)
 }
 
-func GetPDUSessionResourceSetupResponseForPaging(pduSessions []ngapTestpacket.PduSession,
+func GetPDUSessionResourceSetupResponseForPaging(pduSessions []*ngapTestpacket.PduSession,
 	amfUeNgapID int64, ranUeNgapID int64, ipv4 string) ([]byte, error) {
 
 	message := ngapTestpacket.BuildPDUSessionResourceSetupResponseForPaging(

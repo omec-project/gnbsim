@@ -30,6 +30,7 @@ const (
 	FieldGnb         string = "gnb"
 	FieldGnbUeNgapId string = "ranuengapid"
 	FieldDlTeid      string = "dlteid"
+	FieldPduSessId   string = "pdusessid"
 	FieldIp          string = "ip"
 )
 
