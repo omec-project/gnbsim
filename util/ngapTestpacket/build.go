@@ -3739,7 +3739,7 @@ func BuildInitialContextSetupResponseForRegistraionTest(amfUeNgapID, ranUeNgapID
 	return pdu
 }
 
-func BuildPDUSessionResourceSetupResponseForRegistrationTest(pduSessions []PduSession,
+func BuildPDUSessionResourceSetupResponseForRegistrationTest(pduSessions []*PduSession,
 	amfUeNgapID, ranUeNgapID int64, ipv4 string) (pdu ngapType.NGAPPDU) {
 
 	pdu.Present = ngapType.NGAPPDUPresentSuccessfulOutcome

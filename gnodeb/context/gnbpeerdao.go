@@ -45,19 +45,21 @@ func (dao *GnbPeerDao) GetGnbUpf(ip string) *GnbUpf {
 	}
 }
 
-func (dao *GnbPeerDao) GetOrAddGnbUpf(ip string) *GnbUpf {
+func (dao *GnbPeerDao) GetOrAddGnbUpf(ip string) (*GnbUpf, bool) {
 	// Though it is a sync map, we need to acquire lock because this function
 	// can be called from multiple Go routines, in which case the fetch + add
 	// operation should be atomic
 	dao.lock.Lock()
 	defer dao.lock.Unlock()
 
+	var created bool
 	gnbupf := dao.GetGnbUpf(ip)
 	if gnbupf == nil {
+		created = true
 		gnbupf = NewGnbUpf(ip)
 		dao.AddGnbUpf(ip, gnbupf)
 	}
-	return gnbupf
+	return gnbupf, created
 }
 
 // AddGnbUpf adds a GnbUpf instance corresponding to the IP into the map

@@ -19,6 +19,12 @@ const (
 	CONNECT_REQUEST_EVENT EventType = 1 + iota
 	UL_INFO_TRANSFER_EVENT
 	DL_INFO_TRANSFER_EVENT
+
+	/* For exchanging user data */
+	UL_UE_DATA_TRANSFER_EVENT
+	DL_UE_DATA_TRANSFER_EVENT
+
+	/* For setting up channels between UE and GNB to exchange user data */
 	DATA_BEARER_SETUP_REQUEST_EVENT
 	DATA_BEARER_SETUP_RESPONSE_EVENT
 )
@@ -97,4 +103,9 @@ const (
 	DOWNLINK_NAS_TRANSPORT_EVENT EventType = 1 + iota
 	INITIAL_CONTEXT_SETUP_REQUEST_EVENT
 	PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT
+)
+
+// Events between GNodeB and UPF (N3)
+const (
+	DL_UE_DATA_TRANSPORT_EVENT EventType = 1 + iota
 )

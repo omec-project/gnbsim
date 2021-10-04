@@ -7,8 +7,11 @@ package gnbcpueworker
 
 import (
 	"encoding/binary"
+	"fmt"
 	"gnbsim/common"
 	"gnbsim/gnodeb/context"
+	"gnbsim/gnodeb/worker/gnbupfworker"
+	"gnbsim/gnodeb/worker/gnbupueworker"
 	"gnbsim/util/ngapTestpacket"
 	"gnbsim/util/test"
 
@@ -281,13 +284,16 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe, msg *common.N2Mes
 			nasPdus = append(nasPdus, item.PDUSessionNASPDU.Value)
 		}
 
-		gnbupf := gnbue.Gnb.GnbPeers.GetOrAddGnbUpf(upfIp)
+		gnbupf, created := gnbue.Gnb.GnbPeers.GetOrAddGnbUpf(upfIp)
+		if created {
+			go gnbupfworker.Init(gnbupf)
+		}
 		gnbupue.Upf = gnbupf
 		gnbue.AddGnbUpUe(gnbupue.PduSessId, gnbupue)
 
 		//pduSessions = append(pduSessions, pduSess)
 		upData := &common.UserPlaneData{}
-		upData.CommChan = gnbupue.ReadChan
+		upData.CommChan = gnbupue.ReadUlChan
 		upData.PduSess = pduSess
 		upDataSet = append(upDataSet, upData)
 
@@ -300,17 +306,21 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe, msg *common.N2Mes
 
 	}
 
+	SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, nasPdus)
+	gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
+
 	uemsg := common.UuMessage{}
 	uemsg.Event = common.DATA_BEARER_SETUP_REQUEST_EVENT
 	uemsg.Interface = common.UU_INTERFACE
 	uemsg.UPData = upDataSet
 	gnbue.WriteUeChan <- &uemsg
-	gnbue.Log.Infoln("Sent event", uemsg.Event, "to SimUe")
+	gnbue.Log.Infoln("Sent Data Radio Bearer Setup Event to Ue")
 }
 
 func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe, msg *common.UuMessage) {
 	gnbue.Log.Traceln("Handling Initial UE Event")
 
+	var pduSessions []*ngapTestpacket.PduSession
 	for _, item := range msg.UPData {
 		pduSess := item.PduSess
 		if !pduSess.Success {
@@ -321,26 +331,11 @@ func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe, msg *common.UuMessage
 			// routine. This will help in replacing sync map with normal map
 			// Thus will help avoid lock unlock operation on per downlink message
 			gnbUpUe.Upf.GnbUpUes.AddGnbUpUe(gnbUpUe.DlTeid, true, gnbUpUe)
-			go gnbcpueworker.Init(gnbupue)
+			gnbUpUe.WriteUeChan = item.CommChan
+			go gnbupueworker.Init(gnbUpUe)
 		}
+		pduSessions = append(pduSessions, pduSess)
 	}
-
-	sendMsg, err := test.GetInitialUEMessage(gnbue.GnbUeNgapId, msg.NasPdus[0], "")
-	if err != nil {
-		gnbue.Log.Errorln("GetInitialUEMessage failed:", err)
-		return
-	}
-	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg)
-	if err != nil {
-		gnbue.Log.Errorln("SendToPeer failed:", err)
-		return
-	}
-
-	gnbue.Log.Traceln("Sent Initial UE Message to AMF")
-
-	/*gnbue.Log.Traceln("Sent PDU Session Resource Setup Response Message to AMF")
-	SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, nasPdus)
-	gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
 
 	ngapPdu, err := test.GetPDUSessionResourceSetupResponse(pduSessions,
 		gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, gnbue.Gnb.GnbN3Ip)
@@ -354,5 +349,5 @@ func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe, msg *common.UuMessage
 		gnbue.Log.Errorln("SendToPeer failed:", err)
 		return
 	}
-	gnbue.Log.Traceln("Sent PDU Session Resource Setup Response Message to AMF")*/
+	gnbue.Log.Traceln("Sent PDU Session Resource Setup Response Message to AMF")
 }

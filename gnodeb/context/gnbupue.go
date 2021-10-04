@@ -26,11 +26,17 @@ type GnbUpUe struct {
 	QosFlows    map[int64]*ngapType.QosFlowSetupRequestItem
 	// TODO MME details
 
-	// GnbUpUe writes messages to UE on this channel
+	// GnbUpUe writes downlink packets to UE on this channel
 	WriteUeChan chan common.InterfaceMessage
 
-	// GnbUpUe reads messages from all other workers and UE on this channel
-	ReadChan chan common.InterfaceMessage
+	// GnbUpUe reads up link data packets from UE on this channel
+	ReadUlChan chan common.InterfaceMessage
+
+	// GnbUpUe reads down link data packets from UPF Worker on this channel
+	ReadDlChan chan common.InterfaceMessage
+
+	// GnbUpUe reads commands from GnbCpUe on this channel
+	ReadCmdChan chan common.InterfaceMessage
 
 	/* logger */
 	Log *logrus.Entry
@@ -42,7 +48,9 @@ func NewGnbUpUe(dlTeid, ulTeid uint32, gnb *GNodeB) *GnbUpUe {
 	gnbue.UlTeid = ulTeid
 	gnbue.Gnb = gnb
 	gnbue.QosFlows = make(map[int64]*ngapType.QosFlowSetupRequestItem)
-	gnbue.ReadChan = make(chan common.InterfaceMessage, 10)
+	gnbue.ReadUlChan = make(chan common.InterfaceMessage, 10)
+	gnbue.ReadDlChan = make(chan common.InterfaceMessage, 10)
+	gnbue.ReadCmdChan = make(chan common.InterfaceMessage)
 	gnbue.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbUpUe",
 		logger.FieldDlTeid: dlTeid})
 	gnbue.Log.Traceln("Context Created")

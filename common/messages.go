@@ -81,3 +81,14 @@ type UserPlaneData struct {
 	   pdu session */
 	CommChan chan InterfaceMessage
 }
+
+type UserDataMessage struct {
+	DefaultMessage
+	Payload []byte
+	Qfi     int64
+}
+
+type TransportMessage struct {
+	DefaultMessage
+	RawPkt []byte
+}

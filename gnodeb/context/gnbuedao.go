@@ -54,7 +54,7 @@ func (dao *GnbUeDao) AddGnbCpUe(gnbUeNgapId int64, gnbue *GnbCpUe) {
 	dao.ngapIdGnbCpUeMap.Store(gnbUeNgapId, gnbue)
 }
 
-// GetGnbCpUe returns the GnbCpUe instance corresponding to provided NGAP ID
+// GetGnbUpUe returns the GnbUpUe instance corresponding to provided TEID
 func (dao *GnbUeDao) GetGnbUpUe(teid uint32, downlink bool) *GnbUpUe {
 	log.Println("Fetching GnbUpUe for TEID:", teid, "Downlink:", downlink)
 	var val interface{}
@@ -74,7 +74,7 @@ func (dao *GnbUeDao) GetGnbUpUe(teid uint32, downlink bool) *GnbUpUe {
 	}
 }
 
-// AddGnbCpUe adds the GnbCpUe instance corresponding to provided NGAP ID
+// AddGnbUpUe adds the GnbUpUe instance corresponding to provided TEID
 func (dao *GnbUeDao) AddGnbUpUe(teid uint32, downlink bool, gnbue *GnbUpUe) {
 	dao.Log.Infoln("Adding new GnbUpUe for TEID:", teid, "Downlink:", downlink)
 	if downlink {

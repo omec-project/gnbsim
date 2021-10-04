@@ -242,7 +242,7 @@ func HandleDownlinkNasTransport(gnb *context.GNodeB, amf *context.GnbAmf, pdu *n
 		}
 	}
 	ngapId := gnbUeNgapId.Value
-	gnbue := gnb.GnbUes.GetGnbUe(ngapId)
+	gnbue := gnb.GnbUes.GetGnbCpUe(ngapId)
 	if gnbue == nil {
 		log.Println("No GnbUe found corresponding to RANUENGAPID:")
 		return
@@ -289,7 +289,7 @@ func HandleInitialContextSetupRequest(gnb *context.GNodeB, amf *context.GnbAmf, 
 		}
 	}
 	ngapId := gnbUeNgapId.Value
-	gnbue := gnb.GnbUes.GetGnbUe(ngapId)
+	gnbue := gnb.GnbUes.GetGnbCpUe(ngapId)
 	if gnbue == nil {
 		log.Println("No GnbUe found corresponding to RANUENGAPID:")
 		return
@@ -337,7 +337,7 @@ func HandlePduSessResourceSetupRequest(gnb *context.GNodeB, amf *context.GnbAmf,
 		}
 	}
 	ngapId := gnbUeNgapId.Value
-	gnbue := gnb.GnbUes.GetGnbUe(ngapId)
+	gnbue := gnb.GnbUes.GetGnbCpUe(ngapId)
 	if gnbue == nil {
 		log.Println("No GnbUe found corresponding to RANUENGAPID:")
 		return

@@ -58,7 +58,7 @@ func GetInitialContextSetupResponseForServiceRequest(
 	return ngap.Encoder(message)
 }
 
-func GetPDUSessionResourceSetupResponse(pduSessions []ngapTestpacket.PduSession,
+func GetPDUSessionResourceSetupResponse(pduSessions []*ngapTestpacket.PduSession,
 	amfUeNgapID int64, ranUeNgapID int64, ipv4 string) ([]byte, error) {
 
 	message := ngapTestpacket.BuildPDUSessionResourceSetupResponseForRegistrationTest(pduSessions, amfUeNgapID, ranUeNgapID, ipv4)
