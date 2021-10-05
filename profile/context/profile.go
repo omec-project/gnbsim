@@ -15,15 +15,16 @@ import (
 )
 
 type Profile struct {
-	ProfileType string `yaml:"profileType"`
-	Name        string `yaml:"profileName"`
-	Enable      bool   `yanl:"enable"`
-	Events      map[common.EventType]common.EventType
-	Procedures  []common.ProcedureType
-	GnbName     string         `yaml:"gnbName"`
-	StartImsi   string         `yaml:"startImsi"`
-	UeCount     uint32         `yaml:"ueCount"`
-	Plmn        *models.PlmnId `yaml:"plmnId"`
+	ProfileType  string `yaml:"profileType"`
+	Name         string `yaml:"profileName"`
+	Enable       bool   `yanl:"enable"`
+	Events       map[common.EventType]common.EventType
+	Procedures   []common.ProcedureType
+	GnbName      string         `yaml:"gnbName"`
+	StartImsi    string         `yaml:"startImsi"`
+	UeCount      uint32         `yaml:"ueCount"`
+	Plmn         *models.PlmnId `yaml:"plmnId"`
+	DataPktCount uint32         `yaml:"dataPktCount"`
 
 	// Profile routine reads messages from other entities on this channel
 	// Entities can be SimUe, Main routine.

@@ -167,7 +167,7 @@ func RequestConnection(gnb *context.GNodeB, uemsg *common.UuMessage) (chan commo
 	}
 
 	gnbUe := context.NewGnbCpUe(ranUeNgapID, gnb, gnb.DefaultAmf)
-	gnb.GnbUes.AddGnbCpUe(1, gnbUe)
+	gnb.GnbUes.AddGnbCpUe(ranUeNgapID, gnbUe)
 
 	go gnbcpueworker.Init(gnbUe)
 	//Channel on which UE can write message to GnbUe and from which GnbUe will

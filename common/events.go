@@ -5,13 +5,20 @@
 
 package common
 
-type EventType uint8
+type EventType uint
 
 // Events between Profile and SimUe
 const (
 	PROFILE_START_EVENT EventType = 1 + iota
 	PROFILE_PASS_EVENT
 	PROFILE_FAIL_EVENT
+)
+
+// Events between SimUe and RealUE
+const (
+	DATA_PKT_GEN_REQUEST_EVENT EventType = 1000 + iota
+	DATA_PKT_GEN_SUCCESS_EVENT
+	DATA_PKT_GEN_FAILURE_EVENT
 )
 
 // Events between UE and GNodeB (UU)

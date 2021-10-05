@@ -95,6 +95,12 @@ func HandleEvent(ue *context.SimUe, msg common.InterfaceMessage) (err error) {
 			err = HandleDlInfoTransferEvent(ue, uuMsg)
 		case common.DATA_BEARER_SETUP_REQUEST_EVENT:
 			err = HandleDataBearerSetupRequestEvent(ue, uuMsg)
+		case common.DATA_BEARER_SETUP_RESPONSE_EVENT:
+			err = HandleDataBearerSetupResponseEvent(ue, uuMsg)
+		case common.DATA_PKT_GEN_SUCCESS_EVENT:
+			err = HandleDataPktGenSuccessEvent(ue, uuMsg)
+		case common.DATA_PKT_GEN_FAILURE_EVENT:
+			err = HandleDataPktGenFailureEvent(ue, uuMsg)
 		default:
 			ue.Log.Infoln("Event", uuMsg.Event, "is not supported")
 		}

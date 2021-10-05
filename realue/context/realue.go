@@ -40,7 +40,7 @@ type RealUe struct {
 	WriteSimUeChan chan common.InterfaceMessage
 
 	//RealUe reads messages from SimUE on this channel
-	ReadChan chan *common.UuMessage
+	ReadChan chan common.InterfaceMessage
 
 	/* logger */
 	Log *logrus.Entry
@@ -55,7 +55,8 @@ func NewRealUe(supi string, cipheringAlg, integrityAlg uint8,
 	ue.IntegrityAlg = integrityAlg
 	ue.Plmn = plmnid
 	ue.WriteSimUeChan = simuechan
-	ue.ReadChan = make(chan *common.UuMessage)
+	ue.PduSessions = make(map[int64]*PduSession)
+	ue.ReadChan = make(chan common.InterfaceMessage, 5)
 	ue.Log = logger.RealUeLog.WithField(logger.FieldSupi, supi)
 
 	ue.Log.Traceln("Created new context")

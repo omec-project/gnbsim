@@ -7,10 +7,10 @@ package transport
 
 import (
 	"fmt"
+	"gnbsim/common"
 	"gnbsim/gnodeb/context"
 	"gnbsim/logger"
 	"gnbsim/transportcommon"
-	"log"
 	"net"
 	"strconv"
 
@@ -57,7 +57,9 @@ func (upTprt *GnbUpTransport) Init() error {
 		return fmt.Errorf("failed to create udp socket: %v", ipPort)
 	}
 
-	log.Println("User Plane transport listening on:", ipPort)
+	go upTprt.ReceiveFromPeer(nil)
+
+	upTprt.Log.Infoln("User Plane transport listening on:", ipPort)
 	return nil
 }
 
@@ -80,7 +82,7 @@ func (upTprt *GnbUpTransport) SendToPeer(peer transportcommon.TransportPeer,
 	} else if n != pktLen {
 		return fmt.Errorf("total bytes:%v, written bytes:%v", pktLen, n)
 	} else {
-		fmt.Printf("Wrote %v bytes\n", n)
+		upTprt.Log.Infoln("Sent UDP Packet, length: %v bytes\n", n)
 	}
 
 	return
@@ -97,14 +99,17 @@ func (upTprt *GnbUpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 			upTprt.Log.Errorln("ReadFromUDP returned:", err)
 		}
 		srcIp := srcAddr.IP.String()
-		fmt.Printf("Read %v bytes from %v:%v\n", n, srcIp, srcAddr.Port)
+		upTprt.Log.Infoln("Read %v bytes from %v:%v\n", n, srcIp, srcAddr.Port)
 
 		gnbupf := upTprt.GnbInstance.GnbPeers.GetGnbUpf(srcIp)
 		if gnbupf == nil {
 			upTprt.Log.Errorln("No UPF Context found corresponding to IP:", srcIp)
 			continue
 		}
-
+		tMsg := &common.TransportMessage{}
+		tMsg.RawPkt = recvMsg
+		gnbupf.ReadChan <- tMsg
+		upTprt.Log.Traceln("Forwarded UDP packet to UPF Worker")
 	}
 }
 

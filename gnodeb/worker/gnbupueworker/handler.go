@@ -26,7 +26,7 @@ func HandleUlMessage(gnbue *context.GnbUpUe, msg common.InterfaceMessage) (err e
 		gnbue.Log.Errorln("UP Transport SendToPeer() returned:", err)
 		return fmt.Errorf("failed to send gpdu")
 	}
-
+	gnbue.Log.Traceln("Sent UL Packet from UE to UPF")
 	return nil
 }
 
@@ -43,10 +43,10 @@ func HandleDlMessage(gnbue *context.GnbUpUe, msg common.InterfaceMessage) (err e
 	   gNb may use the QFI to find a corresponding DRB
 	*/
 
-	gnbue.Log.Infoln("Forwarding DL user data packet to UE")
 	userDataMsg.Event = common.DL_UE_DATA_TRANSFER_EVENT
 	userDataMsg.Interface = common.UU_INTERFACE
 	gnbue.WriteUeChan <- userDataMsg
+	gnbue.Log.Infoln("Sent DL user data packet to UE")
 
 	return nil
 }

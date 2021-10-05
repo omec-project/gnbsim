@@ -244,7 +244,7 @@ func HandleDownlinkNasTransport(gnb *context.GNodeB, amf *context.GnbAmf, pdu *n
 	ngapId := gnbUeNgapId.Value
 	gnbue := gnb.GnbUes.GetGnbCpUe(ngapId)
 	if gnbue == nil {
-		log.Println("No GnbUe found corresponding to RANUENGAPID:")
+		log.Println("No GnbUe found corresponding to RANUENGAPID:", ngapId)
 		return
 	}
 

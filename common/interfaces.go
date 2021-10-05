@@ -13,6 +13,7 @@ const (
 
 	// Network interfaces
 	UU_INTERFACE
+	N1_INTERFACE
 	N2_INTERFACE
 	N3_INTERFACE
 )

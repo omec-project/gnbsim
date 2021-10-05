@@ -46,6 +46,9 @@ type UuMessage struct {
 	NasPdus NasPduList
 	Extras  EventData
 	UPData  []*UserPlaneData
+
+	// Any error associated with this message
+	Error error
 	// channel that a src entity can optionally send to the target entity.
 	// Target entity will use this channel to write to the src entity
 	CommChan chan InterfaceMessage
@@ -72,6 +75,9 @@ type EventData struct {
 
 	/* Decoded NAS message */
 	NasMsg *nas.Message
+
+	/* Number of user data packets to be generated as directed by profile*/
+	UserDataPktCount uint32
 }
 
 type UserPlaneData struct {

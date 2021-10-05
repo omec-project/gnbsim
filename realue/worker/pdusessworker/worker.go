@@ -6,6 +6,7 @@
 package pdusessworker
 
 import (
+	"fmt"
 	"gnbsim/common"
 	"gnbsim/realue/context"
 )
@@ -30,11 +31,16 @@ func Init(pduSess *context.PduSession) {
 	}
 }
 
-func HandleCommand(gnbue *context.PduSession, msg common.InterfaceMessage) (err error) {
-	gnbue.Log.Infoln("Handling event:", msg.GetEventType())
+func HandleCommand(pduSess *context.PduSession, msg common.InterfaceMessage) (err error) {
+	pduSess.Log.Infoln("Handling event:", msg.GetEventType())
 	uemsg := msg.(*common.UuMessage)
 	switch uemsg.GetEventType() {
-
+	case common.DATA_PKT_GEN_REQUEST_EVENT:
+		err = HandleDataPktGenRequestEvent(pduSess, msg)
+		if err != nil {
+			pduSess.Log.Errorln("HandleDataPktGenRequestEvent() returned:", err)
+			return fmt.Errorf("failed to handle data packet generation request")
+		}
 	}
 
 	return nil

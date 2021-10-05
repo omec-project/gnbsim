@@ -57,5 +57,6 @@ func initProcedureList(profile *profctx.Profile) {
 	profile.Procedures = []common.ProcedureType{
 		common.REGISTRATION_PROCEDURE,
 		common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
+		common.USER_DATA_PKT_GENERATION_PROCEDURE,
 	}
 }

@@ -29,7 +29,7 @@ type SimUe struct {
 	WriteProfileChan chan *common.ProfileMessage
 
 	// SimUe writes messages to RealUE on this channel
-	WriteRealUeChan chan *common.UuMessage
+	WriteRealUeChan chan common.InterfaceMessage
 
 	// SimUe writes messages to GnbUE on this channel
 	WriteGnbUeChan chan common.InterfaceMessage
@@ -47,7 +47,7 @@ func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile) *SimUe 
 	simue.GnB = gnb
 	simue.Supi = supi
 	simue.ProfileCtx = profile
-	simue.ReadChan = make(chan common.InterfaceMessage)
+	simue.ReadChan = make(chan common.InterfaceMessage, 5)
 	simue.RealUe = realuectx.NewRealUe(supi,
 		security.AlgCiphering128NEA0, security.AlgIntegrity128NIA2,
 		simue.ReadChan, profile.Plmn)

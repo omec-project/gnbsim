@@ -20,15 +20,21 @@ import (
  */
 type PduSession struct {
 	/* Number of UL data packets to be transmitted as requested by Sim UE*/
-	SscMode     uint8
-	PktCount    int
-	PduSessId   uint64
-	Snssai      models.Snssai
-	PduSessType models.PduSessionType
-	PduAddress  net.IP
-
+	SscMode         uint8
+	PktCount        int
+	PduSessId       uint64
+	Snssai          models.Snssai
+	PduSessType     models.PduSessionType
+	PduAddress      net.IP
+	SeqNum          int
+	ReqDataPktCount uint32
+	TxDataPktCount  uint32
+	RxDataPktCount  uint32
 	/* uplink packets are written to gNB UE user plane context on this channel */
 	WriteGnbChan chan common.InterfaceMessage
+
+	/* command replies are written to RealUE over this channel */
+	WriteUeChan chan common.InterfaceMessage
 
 	/* Downlink packets from gNB UE user plane context are read over this channel */
 	ReadDlChan chan common.InterfaceMessage
@@ -42,10 +48,20 @@ type PduSession struct {
 
 func NewPduSession(realUe *RealUe, pduSessId uint64) *PduSession {
 	pduSess := PduSession{}
+	pduSess.PduSessId = pduSessId
 	pduSess.ReadDlChan = make(chan common.InterfaceMessage, 10)
-	pduSess.ReadCmdChan = make(chan common.InterfaceMessage)
-	pduSess.Log = logger.RealUeLog.WithFields(logrus.Fields{"subcategory": "PduSession",
+	pduSess.ReadCmdChan = make(chan common.InterfaceMessage, 10)
+	pduSess.Log = realUe.Log.WithFields(logrus.Fields{"subcategory": "PduSession",
 		logger.FieldPduSessId: pduSessId})
 	pduSess.Log.Traceln("Pdu Session Created")
 	return &pduSess
+}
+
+func (pduSess *PduSession) GetNextSeqNum() int {
+	pduSess.SeqNum++
+	/* Allowing sequence number to always start from 1 */
+	if pduSess.SeqNum <= 0 {
+		pduSess.SeqNum = 1
+	}
+	return pduSess.SeqNum
 }

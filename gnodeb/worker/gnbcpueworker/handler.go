@@ -307,7 +307,7 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe, msg *common.N2Mes
 	/* TODO: To be fixed, currently Data Berer Setup Event may get processed
 	 * before the pdu sessions are established on the UE side
 	 */
-	time.Sleep(1 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	uemsg := common.UuMessage{}
 	uemsg.Event = common.DATA_BEARER_SETUP_REQUEST_EVENT
 	uemsg.Interface = common.UU_INTERFACE

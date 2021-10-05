@@ -25,7 +25,9 @@ import (
 //TODO Remove the hardcoding
 var snName string = "5G:mnc093.mcc208.3gppnetwork.org"
 
-func HandleRegReqEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
+func HandleRegRequestEvent(ue *context.RealUe,
+	msg *common.UuMessage) (err error) {
+
 	ue.Log.Traceln("Handling Registration Request Event")
 
 	ueSecurityCapability := ue.GetUESecurityCapability()
@@ -49,7 +51,9 @@ func HandleRegReqEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
 	return nil
 }
 
-func HandleAuthResponseEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
+func HandleAuthResponseEvent(ue *context.RealUe,
+	msg *common.UuMessage) (err error) {
+
 	ue.Log.Traceln("Handling Authentication Response Event")
 
 	// First process the corresponding Auth Request
@@ -69,7 +73,9 @@ func HandleAuthResponseEvent(ue *context.RealUe, msg *common.UuMessage) (err err
 	return nil
 }
 
-func HandleSecModCompleteEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
+func HandleSecModCompleteEvent(ue *context.RealUe,
+	msg *common.UuMessage) (err error) {
+
 	ue.Log.Traceln("Handling Security Mode Complete Event")
 
 	//TODO: Process corresponding Security Mode Command first
@@ -98,7 +104,9 @@ func HandleSecModCompleteEvent(ue *context.RealUe, msg *common.UuMessage) (err e
 	return nil
 }
 
-func HandleRegCompleteEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
+func HandleRegCompleteEvent(ue *context.RealUe,
+	msg *common.UuMessage) (err error) {
+
 	ue.Log.Traceln("Handling Registration Complete Event")
 
 	//TODO: Process corresponding Registration Accept first
@@ -117,7 +125,9 @@ func HandleRegCompleteEvent(ue *context.RealUe, msg *common.UuMessage) (err erro
 	return nil
 }
 
-func HandlePduSessEstRequestEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
+func HandlePduSessEstRequestEvent(ue *context.RealUe,
+	msg *common.UuMessage) (err error) {
+
 	ue.Log.Traceln("Handling PDU Session Establishment Request Event")
 
 	sNssai := models.Snssai{
@@ -139,7 +149,9 @@ func HandlePduSessEstRequestEvent(ue *context.RealUe, msg *common.UuMessage) (er
 	return nil
 }
 
-func HandlePduSessEstAcceptEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
+func HandlePduSessEstAcceptEvent(ue *context.RealUe,
+	msg *common.UuMessage) (err error) {
+
 	ue.Log.Traceln("Handling PDU Session Establishment Accept Event")
 	//TODO: create new pdu session var and parse msg to pdu session var
 	nasMsg := msg.Extras.NasMsg.PDUSessionEstablishmentAccept
@@ -159,6 +171,7 @@ func HandlePduSessEstAcceptEvent(ue *context.RealUe, msg *common.UuMessage) (err
 	pduSess.PduSessType = pduSessType
 	pduSess.SscMode = nasMsg.GetSSCMode()
 	pduSess.PduAddress = pduAddr
+	pduSess.WriteUeChan = ue.ReadChan
 	ue.AddPduSession(int64(pduSess.PduSessId), pduSess)
 	ue.Log.Infoln("PDU Session ID:", pduSess.PduSessId)
 	ue.Log.Infoln("PDU Session Type:", pduSess.PduSessType)
@@ -202,7 +215,27 @@ func HandleDataBearerSetupRequestEvent(ue *context.RealUe,
 	return nil
 }
 
-func HandleDlInfoTransferEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
+func HandleDataPktGenRequestEvent(ue *context.RealUe,
+	msg *common.UuMessage) (err error) {
+
+	ue.Log.Traceln("Handling Data Packet Generation Request Event")
+	for _, v := range ue.PduSessions {
+		v.ReadCmdChan <- msg
+	}
+
+	return nil
+}
+
+func HandleDataPktGenSuccessEvent(ue *context.RealUe,
+	msg *common.UuMessage) (err error) {
+	msg.Interface = common.UU_INTERFACE
+	ue.WriteSimUeChan <- msg
+	return nil
+}
+
+func HandleDlInfoTransferEvent(ue *context.RealUe,
+	msg *common.UuMessage) (err error) {
+
 	ue.Log.Traceln("Handling Downlink Nas Transport Event")
 	for _, pdu := range msg.NasPdus {
 		nasMsg, err := test.NASDecode(ue, nas.GetSecurityHeaderType(pdu), pdu)
