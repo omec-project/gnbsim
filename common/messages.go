@@ -6,6 +6,8 @@
 package common
 
 import (
+	"gnbsim/util/ngapTestpacket"
+
 	"github.com/free5gc/ngap/ngapType"
 	"github.com/omec-project/nas"
 )
@@ -43,8 +45,13 @@ type UuMessage struct {
 	// Encoded NAS message
 	NasPdus NasPduList
 	Extras  EventData
-	// Channel to communicate with UE
-	UeChan chan InterfaceMessage
+	UPData  []*UserPlaneData
+
+	// Any error associated with this message
+	Error error
+	// channel that a src entity can optionally send to the target entity.
+	// Target entity will use this channel to write to the src entity
+	CommChan chan InterfaceMessage
 }
 
 // UuMessage is used to transfer information between the UE and GNodeB
@@ -65,6 +72,29 @@ func (msg *ProfileMessage) GetInterfaceType() InterfaceType {
 
 type EventData struct {
 	Cause uint8
-	// Decoded NAS message
+
+	/* Decoded NAS message */
 	NasMsg *nas.Message
+
+	/* Number of user data packets to be generated as directed by profile*/
+	UserDataPktCount uint32
+}
+
+type UserPlaneData struct {
+	PduSess *ngapTestpacket.PduSession
+
+	/* Channel to be used to by target entity to send data packets for this
+	   pdu session */
+	CommChan chan InterfaceMessage
+}
+
+type UserDataMessage struct {
+	DefaultMessage
+	Payload []byte
+	Qfi     int64
+}
+
+type TransportMessage struct {
+	DefaultMessage
+	RawPkt []byte
 }

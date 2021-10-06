@@ -34,12 +34,13 @@ type RealUe struct {
 	Kamf               []uint8
 	AuthenticationSubs models.AuthenticationSubscription
 	Plmn               *models.PlmnId
+	PduSessions        map[int64]*PduSession
 
 	//RealUe writes messages to SimUE on this channel
 	WriteSimUeChan chan common.InterfaceMessage
 
 	//RealUe reads messages from SimUE on this channel
-	ReadChan chan *common.UuMessage
+	ReadChan chan common.InterfaceMessage
 
 	/* logger */
 	Log *logrus.Entry
@@ -54,7 +55,8 @@ func NewRealUe(supi string, cipheringAlg, integrityAlg uint8,
 	ue.IntegrityAlg = integrityAlg
 	ue.Plmn = plmnid
 	ue.WriteSimUeChan = simuechan
-	ue.ReadChan = make(chan *common.UuMessage)
+	ue.PduSessions = make(map[int64]*PduSession)
+	ue.ReadChan = make(chan common.InterfaceMessage, 5)
 	ue.Log = logger.RealUeLog.WithField(logger.FieldSupi, supi)
 
 	ue.Log.Traceln("Created new context")
@@ -218,4 +220,22 @@ func (ue *RealUe) Get5GMMCapability() (capability5GMM *nasType.Capability5GMM) {
 		Len:   1,
 		Octet: [13]uint8{0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 	}
+}
+
+// GetPduSession returns the PduSession instance corresponding to provided PDU Sess ID
+func (ctx *RealUe) GetPduSession(pduSessId int64) *PduSession {
+	ctx.Log.Infoln("Fetching PDU Session for pduSessId:", pduSessId)
+	val, ok := ctx.PduSessions[pduSessId]
+	if ok {
+		return val
+	} else {
+		ctx.Log.Errorln("key not present:", pduSessId)
+		return nil
+	}
+}
+
+// AddPduSession adds the PduSession instance corresponding to provided PDU Sess ID
+func (ctx *RealUe) AddPduSession(pduSessId int64, pduSess *PduSession) {
+	ctx.Log.Infoln("Adding new PDU Session for PDU Sess ID:", pduSessId)
+	ctx.PduSessions[pduSessId] = pduSess
 }

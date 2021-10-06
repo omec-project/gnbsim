@@ -17,14 +17,16 @@ import (
 type GNodeB struct {
 	//TODO IP and port should be the property of transport var
 	GnbN2Ip              string `yaml:"n2IpAddr"`
-	GnbN2Port            uint16 `yaml:"n2Port"`
+	GnbN2Port            int    `yaml:"n2Port"`
 	GnbN3Ip              string `yaml:"n3IpAddr"`
-	GnbN3Port            uint16 `yaml:"n3Port"`
+	GnbN3Port            int    `yaml:"n3Port"`
 	GnbName              string `yaml:"name"`
 	GnbId                string `yaml:"gnbId"`
 	Tac                  string `yaml:"tac"`
 	GnbUes               *GnbUeDao
+	GnbPeers             *GnbPeerDao
 	RanUeNGAPIDGenerator *idgenerator.IDGenerator
+	DlTeidGenerator      *idgenerator.IDGenerator
 
 	/*channel to notify all the go routines corresponding to this GNodeB instance to stop*/
 	Quit chan int
@@ -34,6 +36,9 @@ type GNodeB struct {
 
 	/* Control Plane transport */
 	CpTransport transport.Transport
+
+	/* User Plane transport */
+	UpTransport transport.Transport
 
 	/* logger */
 	Log *logrus.Entry

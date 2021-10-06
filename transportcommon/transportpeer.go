@@ -7,5 +7,5 @@ package transportcommon
 
 type TransportPeer interface {
 	GetIpAddr() string
-	GetPort() uint16
+	GetPort() int
 }

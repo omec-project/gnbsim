@@ -14,8 +14,9 @@ import (
 	"github.com/free5gc/ngap/ngapType"
 )
 
-// dispatch decodes an incoming NGAP message and routes it to the corresponding
-// handlers or a GnbCpUe
+/* HandleMessage decodes an incoming NGAP message and routes it to the
+ * corresponding handlers
+ */
 func HandleMessage(gnb *context.GNodeB, amf *context.GnbAmf, pkt []byte) error {
 	// decoding the incoming packet
 	pdu, err := ngap.Decoder(pkt)
@@ -61,7 +62,7 @@ func HandleMessage(gnb *context.GNodeB, amf *context.GnbAmf, pkt []byte) error {
 	return nil
 }
 
-func SendToGnbUe(gnbue *context.GnbUe, event common.EventType, ngapPdu *ngapType.NGAPPDU) {
+func SendToGnbUe(gnbue *context.GnbCpUe, event common.EventType, ngapPdu *ngapType.NGAPPDU) {
 	amfmsg := common.N2Message{}
 	amfmsg.Event = event
 	amfmsg.Interface = common.N2_INTERFACE

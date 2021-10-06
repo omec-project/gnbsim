@@ -6,6 +6,7 @@
 package ngapTestpacket
 
 import (
+	"encoding/binary"
 	"encoding/hex"
 
 	"github.com/calee0219/fatal"
@@ -20,8 +21,13 @@ var TestPlmn ngapType.PLMNIdentity
 
 type PduSession struct {
 	PduSessId      int64
+	Teid           uint32
 	SuccessQfiList []int64
 	FailedQfiList  []int64
+
+	/* indicates whether  the pdu session was successfully established in Real
+	   UE or not*/
+	Success bool
 }
 
 func init() {
@@ -738,7 +744,7 @@ func BuildUplinkNasTransport(amfUeNgapID, ranUeNgapID int64, nasPdu []byte) (pdu
 	return pdu
 }
 
-func BuildInitialContextSetupResponse(pduSessions []PduSession, amfUeNgapID, ranUeNgapID int64, ipv4 string,
+func BuildInitialContextSetupResponse(pduSessions []*PduSession, amfUeNgapID, ranUeNgapID int64, ipv4 string,
 	pduSessionFailedList *ngapType.PDUSessionResourceFailedToSetupListCxtRes) (pdu ngapType.NGAPPDU) {
 
 	pdu.Present = ngapType.NGAPPDUPresentSuccessfulOutcome
@@ -792,8 +798,7 @@ func BuildInitialContextSetupResponse(pduSessions []PduSession, amfUeNgapID, ran
 		pDUSessionResourceSetupItemCxtRes := ngapType.PDUSessionResourceSetupItemCxtRes{}
 		pDUSessionResourceSetupItemCxtRes.PDUSessionID.Value = pduSess.PduSessId
 		pDUSessionResourceSetupItemCxtRes.PDUSessionResourceSetupResponseTransfer =
-			GetPDUSessionResourceSetupResponseTransfer(ipv4,
-				pduSess.SuccessQfiList, pduSess.FailedQfiList)
+			GetPDUSessionResourceSetupResponseTransfer(pduSess, ipv4)
 
 		pDUSessionResourceSetupListCxtRes.List =
 			append(pDUSessionResourceSetupListCxtRes.List, pDUSessionResourceSetupItemCxtRes)
@@ -1503,7 +1508,7 @@ func BuildLocationReportingFailureIndication() (pdu ngapType.NGAPPDU) {
 	return pdu
 }
 
-func BuildPDUSessionResourceSetupResponse(pduSessions []PduSession, amfUeNgapID, ranUeNgapID int64, ipv4 string) (pdu ngapType.NGAPPDU) {
+func BuildPDUSessionResourceSetupResponse(pduSessions []*PduSession, amfUeNgapID, ranUeNgapID int64, ipv4 string) (pdu ngapType.NGAPPDU) {
 
 	pdu.Present = ngapType.NGAPPDUPresentSuccessfulOutcome
 	pdu.SuccessfulOutcome = new(ngapType.SuccessfulOutcome)
@@ -1557,8 +1562,7 @@ func BuildPDUSessionResourceSetupResponse(pduSessions []PduSession, amfUeNgapID,
 		pDUSessionResourceSetupItemSURes.PDUSessionID.Value = pduSess.PduSessId
 
 		pDUSessionResourceSetupItemSURes.PDUSessionResourceSetupResponseTransfer =
-			GetPDUSessionResourceSetupResponseTransfer(ipv4,
-				pduSess.SuccessQfiList, pduSess.FailedQfiList)
+			GetPDUSessionResourceSetupResponseTransfer(pduSess, ipv4)
 
 		pDUSessionResourceSetupListSURes.List = append(pDUSessionResourceSetupListSURes.List, pDUSessionResourceSetupItemSURes)
 	}
@@ -1587,7 +1591,7 @@ func BuildPDUSessionResourceSetupResponse(pduSessions []PduSession, amfUeNgapID,
 	return pdu
 }
 
-func BuildPDUSessionResourceSetupResponseForPaging(pduSessions []PduSession, amfUeNgapID, ranUeNgapID int64, ipv4 string) (pdu ngapType.NGAPPDU) {
+func BuildPDUSessionResourceSetupResponseForPaging(pduSessions []*PduSession, amfUeNgapID, ranUeNgapID int64, ipv4 string) (pdu ngapType.NGAPPDU) {
 
 	pdu.Present = ngapType.NGAPPDUPresentSuccessfulOutcome
 	pdu.SuccessfulOutcome = new(ngapType.SuccessfulOutcome)
@@ -1641,8 +1645,7 @@ func BuildPDUSessionResourceSetupResponseForPaging(pduSessions []PduSession, amf
 		pDUSessionResourceSetupItemSURes.PDUSessionID.Value = pduSess.PduSessId
 
 		pDUSessionResourceSetupItemSURes.PDUSessionResourceSetupResponseTransfer =
-			GetPDUSessionResourceSetupResponseTransfer(ipv4,
-				pduSess.SuccessQfiList, pduSess.FailedQfiList)
+			GetPDUSessionResourceSetupResponseTransfer(pduSess, ipv4)
 
 		pDUSessionResourceSetupListSURes.List = append(pDUSessionResourceSetupListSURes.List, pDUSessionResourceSetupItemSURes)
 	}
@@ -3246,8 +3249,8 @@ func BuildCellTrafficTrace(amfUeNgapID, ranUeNgapID int64) (pdu ngapType.NGAPPDU
 	return pdu
 }
 
-func buildPDUSessionResourceSetupResponseTransfer(ipv4 string, successQfiList,
-	failedQfiList []int64) (data ngapType.PDUSessionResourceSetupResponseTransfer) {
+func buildPDUSessionResourceSetupResponseTransfer(pduSession *PduSession,
+	ipv4 string) (data ngapType.PDUSessionResourceSetupResponseTransfer) {
 
 	// QoS Flow per TNL Information
 	qosFlowPerTNLInformation := &data.DLQosFlowPerTNLInformation
@@ -3257,13 +3260,15 @@ func buildPDUSessionResourceSetupResponseTransfer(ipv4 string, successQfiList,
 	upTransportLayerInformation := &qosFlowPerTNLInformation.UPTransportLayerInformation
 	upTransportLayerInformation.Present = ngapType.UPTransportLayerInformationPresentGTPTunnel
 	upTransportLayerInformation.GTPTunnel = new(ngapType.GTPTunnel)
-	upTransportLayerInformation.GTPTunnel.GTPTEID.Value = aper.OctetString("\x00\x00\x00\x01")
+	teidOct := make([]byte, 4)
+	binary.BigEndian.PutUint32(teidOct, pduSession.Teid)
+	upTransportLayerInformation.GTPTunnel.GTPTEID.Value = teidOct
 	upTransportLayerInformation.GTPTunnel.TransportLayerAddress = ngapConvert.IPAddressToNgap(ipv4, "")
 
 	// Associated QoS Flow List in QoS Flow per TNL Information
 	associatedQosFlowList := &qosFlowPerTNLInformation.AssociatedQosFlowList
 
-	for _, qfi := range successQfiList {
+	for _, qfi := range pduSession.SuccessQfiList {
 		associatedQosFlowItem := ngapType.AssociatedQosFlowItem{}
 		associatedQosFlowItem.QosFlowIdentifier.Value = qfi
 		associatedQosFlowList.List = append(associatedQosFlowList.List, associatedQosFlowItem)
@@ -3538,10 +3543,8 @@ func buildSourceToTargetTransparentTransfer(
 	return data
 }
 
-func GetPDUSessionResourceSetupResponseTransfer(ipv4 string, successQfiList,
-	failedQfiList []int64) []byte {
-	data := buildPDUSessionResourceSetupResponseTransfer(ipv4, successQfiList,
-		failedQfiList)
+func GetPDUSessionResourceSetupResponseTransfer(pduSession *PduSession, ipv4 string) []byte {
+	data := buildPDUSessionResourceSetupResponseTransfer(pduSession, ipv4)
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
 		fatal.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceSetupResponseTransfer: %+v", err)
@@ -3735,7 +3738,7 @@ func BuildInitialContextSetupResponseForRegistraionTest(amfUeNgapID, ranUeNgapID
 	return pdu
 }
 
-func BuildPDUSessionResourceSetupResponseForRegistrationTest(pduSessions []PduSession,
+func BuildPDUSessionResourceSetupResponseForRegistrationTest(pduSessions []*PduSession,
 	amfUeNgapID, ranUeNgapID int64, ipv4 string) (pdu ngapType.NGAPPDU) {
 
 	pdu.Present = ngapType.NGAPPDUPresentSuccessfulOutcome
@@ -3790,8 +3793,7 @@ func BuildPDUSessionResourceSetupResponseForRegistrationTest(pduSessions []PduSe
 		pDUSessionResourceSetupItemSURes.PDUSessionID.Value = pduSess.PduSessId
 
 		pDUSessionResourceSetupItemSURes.PDUSessionResourceSetupResponseTransfer =
-			GetPDUSessionResourceSetupResponseTransfer(ipv4,
-				pduSess.SuccessQfiList, pduSess.FailedQfiList)
+			GetPDUSessionResourceSetupResponseTransfer(pduSess, ipv4)
 
 		pDUSessionResourceSetupListSURes.List = append(pDUSessionResourceSetupListSURes.List, pDUSessionResourceSetupItemSURes)
 	}

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-package gnbueworker
+package gnbcpueworker
 
 import (
 	"gnbsim/common"
@@ -11,7 +11,7 @@ import (
 	"log"
 )
 
-func Init(gnbue *context.GnbUe) {
+func Init(gnbue *context.GnbCpUe) {
 	for {
 		select {
 		case msg := <-gnbue.ReadChan:
@@ -25,7 +25,7 @@ func Init(gnbue *context.GnbUe) {
 	}
 }
 
-func HandleMessage(gnbue *context.GnbUe, msg common.InterfaceMessage) (err error) {
+func HandleMessage(gnbue *context.GnbCpUe, msg common.InterfaceMessage) (err error) {
 	gnbue.Log.Infoln("Handling event:", msg.GetEventType(), "from interface:",
 		msg.GetInterfaceType())
 	switch msg.GetInterfaceType() {
@@ -38,11 +38,13 @@ func HandleMessage(gnbue *context.GnbUe, msg common.InterfaceMessage) (err error
 			HandleInitialUEMessage(gnbue, uemsg)
 		case common.UL_INFO_TRANSFER_EVENT:
 			HandleUlInfoTransfer(gnbue, uemsg)
+		case common.DATA_BEARER_SETUP_RESPONSE_EVENT:
+			HandleDataBearerSetupResponse(gnbue, uemsg)
 		}
 
 	case common.N2_INTERFACE:
 		amfmsg := msg.(*common.N2Message)
-		switch msg.GetEventType() {
+		switch amfmsg.GetEventType() {
 		case common.DOWNLINK_NAS_TRANSPORT_EVENT:
 			HandleDownlinkNasTransport(gnbue, amfmsg)
 		case common.INITIAL_CONTEXT_SETUP_REQUEST_EVENT:
@@ -54,7 +56,7 @@ func HandleMessage(gnbue *context.GnbUe, msg common.InterfaceMessage) (err error
 	return nil
 }
 
-func SendToUe(gnbue *context.GnbUe, event common.EventType, nasPdus common.NasPduList) {
+func SendToUe(gnbue *context.GnbCpUe, event common.EventType, nasPdus common.NasPduList) {
 	gnbue.Log.Infoln("Sending event", event, "to SimUe")
 	uemsg := common.UuMessage{}
 	uemsg.Event = event

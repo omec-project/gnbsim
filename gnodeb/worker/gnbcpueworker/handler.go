@@ -3,28 +3,31 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-package gnbueworker
+package gnbcpueworker
 
 import (
 	"encoding/binary"
 	"fmt"
 	"gnbsim/common"
 	"gnbsim/gnodeb/context"
+	"gnbsim/gnodeb/worker/gnbupfworker"
+	"gnbsim/gnodeb/worker/gnbupueworker"
 	"gnbsim/util/ngapTestpacket"
 	"gnbsim/util/test"
+	"time"
 
 	"github.com/free5gc/aper"
 	"github.com/free5gc/ngap/ngapConvert"
 	"github.com/free5gc/ngap/ngapType"
 )
 
-func HandleConnectRequest(gnbue *context.GnbUe, msg *common.UuMessage) {
+func HandleConnectRequest(gnbue *context.GnbCpUe, msg *common.UuMessage) {
 	gnbue.Log.Traceln("Handling Connection Request Event from Ue")
 	gnbue.Supi = msg.Supi
-	gnbue.WriteUeChan = msg.UeChan
+	gnbue.WriteUeChan = msg.CommChan
 }
 
-func HandleInitialUEMessage(gnbue *context.GnbUe, msg *common.UuMessage) {
+func HandleInitialUEMessage(gnbue *context.GnbCpUe, msg *common.UuMessage) {
 	gnbue.Log.Traceln("Handling Initial UE Event")
 
 	sendMsg, err := test.GetInitialUEMessage(gnbue.GnbUeNgapId, msg.NasPdus[0], "")
@@ -41,7 +44,7 @@ func HandleInitialUEMessage(gnbue *context.GnbUe, msg *common.UuMessage) {
 	gnbue.Log.Traceln("Sent Initial UE Message to AMF")
 }
 
-func HandleDownlinkNasTransport(gnbue *context.GnbUe, msg *common.N2Message) {
+func HandleDownlinkNasTransport(gnbue *context.GnbCpUe, msg *common.N2Message) {
 	gnbue.Log.Traceln("Handling Downlink NAS Transport Message")
 
 	// Need not perform other checks as they are validated at gnbamfworker level
@@ -84,7 +87,7 @@ func HandleDownlinkNasTransport(gnbue *context.GnbUe, msg *common.N2Message) {
 	gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
 }
 
-func HandleUlInfoTransfer(gnbue *context.GnbUe, msg *common.UuMessage) {
+func HandleUlInfoTransfer(gnbue *context.GnbCpUe, msg *common.UuMessage) {
 	gnbue.Log.Traceln("Handling UL Information Transfer Event")
 
 	gnbue.Log.Traceln("Creating Uplink NAS Transport Message")
@@ -102,7 +105,7 @@ func HandleUlInfoTransfer(gnbue *context.GnbUe, msg *common.UuMessage) {
 	gnbue.Log.Traceln("Sent Uplink NAS Transport Message to AMF")
 }
 
-func HandleInitialContextSetupRequest(gnbue *context.GnbUe, msg *common.N2Message) {
+func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe, msg *common.N2Message) {
 	gnbue.Log.Traceln("Handling Initial Context Setup Request Message")
 
 	var amfUeNgapId *ngapType.AMFUENGAPID
@@ -156,7 +159,7 @@ func HandleInitialContextSetupRequest(gnbue *context.GnbUe, msg *common.N2Messag
 }
 
 // TODO: Error handling
-func HandlePduSessResourceSetupRequest(gnbue *context.GnbUe, msg *common.N2Message) {
+func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe, msg *common.N2Message) {
 	gnbue.Log.Traceln("Handling PDU Session Resource Setup Request Message")
 
 	var amfUeNgapId *ngapType.AMFUENGAPID
@@ -189,15 +192,11 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbUe, msg *common.N2Messa
 		}
 	}
 
-	var pduSessions []ngapTestpacket.PduSession
-	for _, item := range pduSessResourceSetupReqList.List {
-		gnbue.Log.Infoln("PDU Session ID:", item.PDUSessionID.Value)
-		snssai := ngapConvert.SNssaiToModels(item.SNSSAI)
-		gnbue.Log.Infoln("S-NSSAI - SST: ", snssai.Sst)
-		gnbue.Log.Infoln("S-NSSAI - SD: ", snssai.Sd)
+	//var pduSessions []ngapTestpacket.PduSession
+	var upDataSet []*common.UserPlaneData
 
-		pduSess := ngapTestpacket.PduSession{}
-		pduSess.PduSessId = item.PDUSessionID.Value
+	// supporting only one pdu session currently
+	for _, item := range pduSessResourceSetupReqList.List[:1] {
 
 		resourceSetupRequestTransfer := ngapType.PDUSessionResourceSetupRequestTransfer{}
 		err := aper.UnmarshalWithParams(item.PDUSessionResourceSetupRequestTransfer,
@@ -233,11 +232,29 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbUe, msg *common.N2Messa
 			}
 		}
 
-		teid := binary.BigEndian.Uint32(gtpTunnel.GTPTEID.Value)
+		ulteid := binary.BigEndian.Uint32(gtpTunnel.GTPTEID.Value)
+		dlteid, err := gnbue.Gnb.DlTeidGenerator.Allocate()
+		if err != nil {
+			gnbue.Log.Errorln("ID Generator Allocate() returned:", err)
+			return
+		}
 		upfIp, _ := ngapConvert.IPAddressToString(gtpTunnel.TransportLayerAddress)
-		gnbue.Log.Infoln("UL GTP-TEID: ", teid)
+
+		gnbupue := context.NewGnbUpUe(uint32(dlteid), ulteid, gnbue.Gnb)
+		gnbupue.Snssai = ngapConvert.SNssaiToModels(item.SNSSAI)
+		gnbupue.PduSessId = item.PDUSessionID.Value
+		gnbupue.PduSessType = test.PDUSessionTypeToModels(*pduSessType)
+		pduSess := &ngapTestpacket.PduSession{}
+		pduSess.PduSessId = gnbupue.PduSessId
+		pduSess.Teid = gnbupue.DlTeid
+
+		gnbue.Log.Infoln("PDU Session ID:", gnbupue.PduSessId)
+		gnbue.Log.Infoln("S-NSSAI - SST: ", gnbupue.Snssai.Sst)
+		gnbue.Log.Infoln("S-NSSAI - SD: ", gnbupue.Snssai.Sd)
+		gnbue.Log.Infoln("UL GTP-TEID: ", ulteid)
+		gnbue.Log.Infoln("DL GTP-TEID: ", dlteid)
 		gnbue.Log.Infoln("UPF Endpoint IP: ", upfIp)
-		gnbue.Log.Infoln("PDU Session Type: ", pduSessType.Value)
+		gnbue.Log.Infoln("PDU Session Type: ", gnbupue.PduSessType)
 
 		var qosFlowId int64
 		var qosChar ngapType.QosCharacteristics
@@ -262,18 +279,62 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbUe, msg *common.N2Messa
 			gnbue.Log.Infoln("Pre-emption Vulnerability:", arp.PreEmptionVulnerability.Value)
 
 			pduSess.SuccessQfiList = append(pduSess.SuccessQfiList, qosFlowId)
+			gnbupue.AddQosFlow(qosFlowId, &qosFlowSetupReqItem)
 		}
 
+		pduSess.Success = true
 		if item.PDUSessionNASPDU != nil {
 			nasPdus = append(nasPdus, item.PDUSessionNASPDU.Value)
 		}
 
-		pduSessions = append(pduSessions, pduSess)
+		gnbupf, created := gnbue.Gnb.GnbPeers.GetOrAddGnbUpf(upfIp)
+		if created {
+			go gnbupfworker.Init(gnbupf)
+		}
+		gnbupue.Upf = gnbupf
+		gnbue.AddGnbUpUe(gnbupue.PduSessId, gnbupue)
+
+		//pduSessions = append(pduSessions, pduSess)
+		upData := &common.UserPlaneData{}
+		upData.CommChan = gnbupue.ReadUlChan
+		upData.PduSess = pduSess
+		upDataSet = append(upDataSet, upData)
 	}
 
-	gnbue.Log.Traceln("Sent PDU Session Resource Setup Response Message to AMF")
 	SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, nasPdus)
 	gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
+
+	/* TODO: To be fixed, currently Data Berer Setup Event may get processed
+	 * before the pdu sessions are established on the UE side
+	 */
+	time.Sleep(500 * time.Millisecond)
+	uemsg := common.UuMessage{}
+	uemsg.Event = common.DATA_BEARER_SETUP_REQUEST_EVENT
+	uemsg.Interface = common.UU_INTERFACE
+	uemsg.UPData = upDataSet
+	gnbue.WriteUeChan <- &uemsg
+	gnbue.Log.Infoln("Sent Data Radio Bearer Setup Event to Ue")
+}
+
+func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe, msg *common.UuMessage) {
+	gnbue.Log.Traceln("Handling Initial UE Event")
+
+	var pduSessions []*ngapTestpacket.PduSession
+	for _, item := range msg.UPData {
+		pduSess := item.PduSess
+		if !pduSess.Success {
+			gnbue.RemoveGnbUpUe(pduSess.PduSessId)
+		} else {
+			gnbUpUe := gnbue.GetGnbUpUe(pduSess.PduSessId)
+			// TODO: Addition to this map should only be through GnbUpfWorker
+			// routine. This will help in replacing sync map with normal map
+			// Thus will help avoid lock unlock operation on per downlink message
+			gnbUpUe.Upf.GnbUpUes.AddGnbUpUe(gnbUpUe.DlTeid, true, gnbUpUe)
+			gnbUpUe.WriteUeChan = item.CommChan
+			go gnbupueworker.Init(gnbUpUe)
+		}
+		pduSessions = append(pduSessions, pduSess)
+	}
 
 	ngapPdu, err := test.GetPDUSessionResourceSetupResponse(pduSessions,
 		gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, gnbue.Gnb.GnbN3Ip)

@@ -8,6 +8,7 @@ package simue
 import (
 	"gnbsim/common"
 	"gnbsim/simue/context"
+	"time"
 )
 
 func HandleProfileStartEvent(ue *context.SimUe, msg *common.ProfileMessage) (err error) {
@@ -115,15 +116,9 @@ func HandleRegCompleteEvent(ue *context.SimUe, msg *common.UuMessage) (err error
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
 	ue.Log.Traceln("Sent UL Information Transfer[Registration Complete] Event to GnbUe")
-	nextProcedure := ue.ProfileCtx.GetNextProcedure(ue.Procedure)
-	if nextProcedure != 0 {
-		ue.Procedure = nextProcedure
-		ue.Log.Infoln("Updated procedure to", ue.Procedure)
-		HandleProcedure(ue)
-	} else {
-		SendToProfile(ue, common.PROFILE_PASS_EVENT, nil)
-		ue.Log.Traceln("Sent Profile Pass Event to Profile routine")
-	}
+
+	ChangeProcedure(ue)
+
 	return nil
 }
 
@@ -151,15 +146,6 @@ func HandlePduSessEstAcceptEvent(ue *context.SimUe, msg *common.UuMessage) (err 
 	msg.Event = nextEvent
 	SendToRealUe(ue, msg)
 
-	nextProcedure := ue.ProfileCtx.GetNextProcedure(ue.Procedure)
-	if nextProcedure != 0 {
-		ue.Procedure = nextProcedure
-		ue.Log.Infoln("Updated procedure to", ue.Procedure)
-		HandleProcedure(ue)
-	} else {
-		SendToProfile(ue, common.PROFILE_PASS_EVENT, nil)
-		ue.Log.Traceln("Sent Profile Pass Event to Profile routine")
-	}
 	return nil
 }
 
@@ -170,18 +156,78 @@ func HandleDlInfoTransferEvent(ue *context.SimUe, msg *common.UuMessage) (err er
 	return nil
 }
 
+func HandleDataBearerSetupRequestEvent(ue *context.SimUe,
+	msg *common.UuMessage) (err error) {
+	ue.Log.Traceln("Handling Data Bearer Setup Request Event")
+	SendToRealUe(ue, msg)
+	ue.Log.Traceln("Sent Data Bearer Setup Request to RealUE")
+	return nil
+}
+
+func HandleDataBearerSetupResponseEvent(ue *context.SimUe,
+	msg *common.UuMessage) (err error) {
+	ue.Log.Traceln("Handling Data Bearer Setup Response Event")
+	SendToGnbUe(ue, msg)
+	ue.Log.Traceln("Sent Data Bearer Setup Response to RealUE")
+
+	/* TODO: Solve timing issue. Currently UE may start sending user data
+	 * before gnb has successfuly sent PDU Session Resource Setup Response
+	 */
+	time.Sleep(500 * time.Millisecond)
+	ChangeProcedure(ue)
+
+	return nil
+}
+
+func HandleDataPktGenSuccessEvent(ue *context.SimUe,
+	msg *common.UuMessage) (err error) {
+	ue.Log.Traceln("Handling Data Packet Generation Success Event")
+
+	ChangeProcedure(ue)
+
+	return nil
+}
+
+func HandleDataPktGenFailureEvent(ue *context.SimUe,
+	msg *common.UuMessage) (err error) {
+	ue.Log.Traceln("Handling Data Packet Generation Failure Event")
+
+	SendToProfile(ue, common.PROFILE_FAIL_EVENT, msg.Error)
+
+	return nil
+}
+
+func ChangeProcedure(ue *context.SimUe) {
+	nextProcedure := ue.ProfileCtx.GetNextProcedure(ue.Procedure)
+	if nextProcedure != 0 {
+		ue.Procedure = nextProcedure
+		ue.Log.Infoln("Updated procedure to", ue.Procedure)
+		HandleProcedure(ue)
+	} else {
+		SendToProfile(ue, common.PROFILE_PASS_EVENT, nil)
+		ue.Log.Traceln("Sent Profile Pass Event to Profile routine")
+	}
+}
+
 func HandleProcedure(ue *context.SimUe) {
 	switch ue.Procedure {
 	case common.REGISTRATION_PROCEDURE:
-		ue.Log.Traceln("Initiating Registration Procedure")
+		ue.Log.Infoln("Initiating Registration Procedure")
 		msg := &common.UuMessage{}
 		msg.Event = common.REG_REQUEST_EVENT
 		SendToRealUe(ue, msg)
 		ue.Log.Traceln("Sent Registration Request Event to RealUe")
 	case common.PDU_SESSION_ESTABLISHMENT_PROCEDURE:
-		ue.Log.Traceln("Initiating UE Requested PDU Session Establishment Procedure")
+		ue.Log.Infoln("Initiating UE Requested PDU Session Establishment Procedure")
 		msg := &common.UuMessage{}
 		msg.Event = common.PDU_SESS_EST_REQUEST_EVENT
+		SendToRealUe(ue, msg)
+		ue.Log.Traceln("Sent PDU Session Establishment Request Event to RealUe")
+	case common.USER_DATA_PKT_GENERATION_PROCEDURE:
+		ue.Log.Infoln("Initiating User Data Packet Generation Procedure")
+		msg := &common.UuMessage{}
+		msg.Extras.UserDataPktCount = ue.ProfileCtx.DataPktCount
+		msg.Event = common.DATA_PKT_GEN_REQUEST_EVENT
 		SendToRealUe(ue, msg)
 		ue.Log.Traceln("Sent PDU Session Establishment Request Event to RealUe")
 	}

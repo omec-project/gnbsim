@@ -33,16 +33,22 @@ func Init(ue *context.RealUe) {
 	}
 }
 
-func HandleEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
-	if msg == nil {
+func HandleEvent(ue *context.RealUe, intfMsg common.InterfaceMessage) (err error) {
+	if intfMsg == nil {
 		return fmt.Errorf("empty message received")
 	}
 
+	/* TODO support different message types */
+	msg := intfMsg.(*common.UuMessage)
+
 	ue.Log.Traceln("Handling Event:", msg.Event)
 
+	/* TODO: Should check interface type to avoid overlapping events
+	 * add support for N1 interface, internal realue-sim ue interface
+	 */
 	switch msg.Event {
 	case common.REG_REQUEST_EVENT:
-		err = HandleRegReqEvent(ue, msg)
+		err = HandleRegRequestEvent(ue, msg)
 	case common.AUTH_RESPONSE_EVENT:
 		err = HandleAuthResponseEvent(ue, msg)
 	case common.SEC_MOD_COMPLETE_EVENT:
@@ -55,6 +61,12 @@ func HandleEvent(ue *context.RealUe, msg *common.UuMessage) (err error) {
 		err = HandlePduSessEstRequestEvent(ue, msg)
 	case common.PDU_SESS_EST_ACCEPT_EVENT:
 		err = HandlePduSessEstAcceptEvent(ue, msg)
+	case common.DATA_BEARER_SETUP_REQUEST_EVENT:
+		err = HandleDataBearerSetupRequestEvent(ue, msg)
+	case common.DATA_PKT_GEN_REQUEST_EVENT:
+		err = HandleDataPktGenRequestEvent(ue, msg)
+	case common.DATA_PKT_GEN_SUCCESS_EVENT:
+		err = HandleDataPktGenSuccessEvent(ue, msg)
 	default:
 		ue.Log.Infoln("Event", msg.Event, "is not supported")
 	}

@@ -6,7 +6,9 @@
 package transportcommon
 
 type Transport interface {
+	Init() error
 	SendToPeerBlock(peer TransportPeer, pkt []byte) ([]byte, error)
 	SendToPeer(peer TransportPeer, pkt []byte) (err error)
 	ReceiveFromPeer(peer TransportPeer)
+	CheckTransportParam(peer TransportPeer, pkt []byte) error
 }

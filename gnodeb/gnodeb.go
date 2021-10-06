@@ -11,9 +11,10 @@ import (
 	"gnbsim/common"
 	"gnbsim/factory"
 	"gnbsim/gnodeb/context"
+	"gnbsim/gnodeb/idrange"
 	"gnbsim/gnodeb/transport"
 	"gnbsim/gnodeb/worker/gnbamfworker"
-	"gnbsim/gnodeb/worker/gnbueworker"
+	"gnbsim/gnodeb/worker/gnbcpueworker"
 	"gnbsim/logger"
 	"gnbsim/util/test"
 	"log"
@@ -36,20 +37,29 @@ func InitializeAllGnbs() error {
 
 // Init initializes the GNodeB struct var and connects to the default AMF
 func Init(gnb *context.GNodeB) error {
-	gnb.Log = logger.GNodeBLog.WithField(logger.FieldGnb, "gnodeb1")
+	gnb.Log = logger.GNodeBLog.WithField(logger.FieldGnb, gnb.GnbName)
 	gnb.Log.Traceln("Inititializing GNodeB")
 	gnb.Log.Infoln("GNodeB IP:", gnb.GnbN2Ip, "GNodeB Port:", gnb.GnbN2Port)
 
-	gnb.CpTransport = &transport.GnbCTransport{GnbInstance: gnb}
-	gnb.GnbUes = &context.GnbUeDao{}
-	gnb.RanUeNGAPIDGenerator = idgenerator.NewGenerator(1, context.MaxValueOfRanUeNgapId)
+	gnb.CpTransport = transport.NewGnbCpTransport(gnb)
+	gnb.UpTransport = transport.NewGnbUpTransport(gnb)
+	err := gnb.UpTransport.Init()
+	if err != nil {
+		gnb.Log.Errorln("GnbUpTransport.Init returned", err)
+		return fmt.Errorf("failed to initialize user plane transport")
+	}
+	gnb.GnbUes = context.NewGnbUeDao()
+	gnb.GnbPeers = context.NewGnbPeerDao()
+	start, end := idrange.GetIdRange()
+	gnb.RanUeNGAPIDGenerator = idgenerator.NewGenerator(int64(start), int64(end))
+	gnb.DlTeidGenerator = idgenerator.NewGenerator(int64(start), int64(end))
 
 	if gnb.DefaultAmf == nil {
 		gnb.Log.Infoln("Default AMF not configured, continuing ...")
 		return nil
 	}
 
-	err := ConnectToAmf(gnb, gnb.DefaultAmf)
+	err = ConnectToAmf(gnb, gnb.DefaultAmf)
 	if err != nil {
 		gnb.Log.Errorln("ConnectToAmf returned:", err)
 		return fmt.Errorf("failed to connect to amf")
@@ -156,15 +166,10 @@ func RequestConnection(gnb *context.GNodeB, uemsg *common.UuMessage) (chan commo
 		return nil, fmt.Errorf("failed to allocate ran ue ngap id")
 	}
 
-	gnbUe := gnb.GnbUes.GetGnbUe(ranUeNgapID)
-	if gnbUe != nil {
-		return nil, fmt.Errorf("gnb ue context already exists")
-	}
+	gnbUe := context.NewGnbCpUe(ranUeNgapID, gnb, gnb.DefaultAmf)
+	gnb.GnbUes.AddGnbCpUe(ranUeNgapID, gnbUe)
 
-	gnbUe = context.NewGnbUe(ranUeNgapID, gnb, gnb.DefaultAmf)
-	gnb.GnbUes.AddGnbUe(1, gnbUe)
-
-	go gnbueworker.Init(gnbUe)
+	go gnbcpueworker.Init(gnbUe)
 	//Channel on which UE can write message to GnbUe and from which GnbUe will
 	//be reading.
 	ch := gnbUe.ReadChan
