@@ -22,9 +22,9 @@ type Profile struct {
 	Procedures   []common.ProcedureType
 	GnbName      string         `yaml:"gnbName"`
 	StartImsi    string         `yaml:"startImsi"`
-	UeCount      uint32         `yaml:"ueCount"`
+	UeCount      int            `yaml:"ueCount"`
 	Plmn         *models.PlmnId `yaml:"plmnId"`
-	DataPktCount uint32         `yaml:"dataPktCount"`
+	DataPktCount int            `yaml:"dataPktCount"`
 
 	// Profile routine reads messages from other entities on this channel
 	// Entities can be SimUe, Main routine.

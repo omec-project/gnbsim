@@ -82,7 +82,7 @@ func (upTprt *GnbUpTransport) SendToPeer(peer transportcommon.TransportPeer,
 	} else if n != pktLen {
 		return fmt.Errorf("total bytes:%v, written bytes:%v", pktLen, n)
 	} else {
-		upTprt.Log.Infoln("Sent UDP Packet, length: %v bytes\n", n)
+		upTprt.Log.Infof("Sent UDP Packet, length: %v bytes\n", n)
 	}
 
 	return
@@ -99,7 +99,7 @@ func (upTprt *GnbUpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 			upTprt.Log.Errorln("ReadFromUDP returned:", err)
 		}
 		srcIp := srcAddr.IP.String()
-		upTprt.Log.Infoln("Read %v bytes from %v:%v\n", n, srcIp, srcAddr.Port)
+		upTprt.Log.Infof("Read %v bytes from %v:%v\n", n, srcIp, srcAddr.Port)
 
 		gnbupf := upTprt.GnbInstance.GnbPeers.GetGnbUpf(srcIp)
 		if gnbupf == nil {
@@ -107,7 +107,7 @@ func (upTprt *GnbUpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 			continue
 		}
 		tMsg := &common.TransportMessage{}
-		tMsg.RawPkt = recvMsg
+		tMsg.RawPkt = recvMsg[:n]
 		gnbupf.ReadChan <- tMsg
 		upTprt.Log.Traceln("Forwarded UDP packet to UPF Worker")
 	}

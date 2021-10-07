@@ -17,24 +17,33 @@ import (
 	"golang.org/x/net/ipv4"
 )
 
+const (
+	ICMP_HEADER_LEN int = 8
+
+	/*ipv4 package requires ipv4 header length in terms of number of bytes,
+	  however it later converts it into number of 32 bit words
+	*/
+	IPV4_MIN_HEADER_LEN int = 20
+)
+
 func SendIcmpEchoRequest(pduSess *context.PduSession) (err error) {
 
 	pduSess.Log.Traceln("Sending UL ICMP ping message")
 
-	icmpData, err := hex.DecodeString("8c870d0000000000101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3031323334353637")
+	icmpPayload, err := hex.DecodeString("8c870d0000000000101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3031323334353637")
 	if err != nil {
 		pduSess.Log.Errorln("Failed to decode icmp hexString ")
 		return
 	}
-
-	pduSess.Log.Infoln("icmp data size:", len(icmpData))
+	icmpPayloadLen := len(icmpPayload)
+	pduSess.Log.Traceln("ICMP payload size:", icmpPayloadLen)
 
 	ipv4hdr := ipv4.Header{
 		Version:  4,
-		Len:      20,
+		Len:      IPV4_MIN_HEADER_LEN,
 		Protocol: 1,
 		Flags:    0,
-		TotalLen: 48,
+		TotalLen: IPV4_MIN_HEADER_LEN + ICMP_HEADER_LEN + icmpPayloadLen,
 		TTL:      64,
 		Src:      pduSess.PduAddress,                 // ue IP address
 		Dst:      net.ParseIP("192.168.250.1").To4(), // upstream router interface connected to Gi
@@ -53,7 +62,7 @@ func SendIcmpEchoRequest(pduSess *context.PduSession) (err error) {
 		Type: ipv4.ICMPTypeEcho, Code: 0,
 		Body: &icmp.Echo{
 			ID: 12394, Seq: pduSess.GetNextSeqNum(),
-			Data: icmpData,
+			Data: icmpPayload,
 		},
 	}
 	b, err := icmpMsg.Marshal(nil)
@@ -61,8 +70,6 @@ func SendIcmpEchoRequest(pduSess *context.PduSession) (err error) {
 		pduSess.Log.Errorln("Failed to marshal icmp message")
 		return
 	}
-	b[2] = 0xaf
-	b[3] = 0x88
 
 	payload := append(v4HdrBuf, b...)
 
