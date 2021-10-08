@@ -27,9 +27,9 @@ type PduSession struct {
 	PduSessType     models.PduSessionType
 	PduAddress      net.IP
 	SeqNum          int
-	ReqDataPktCount uint32
-	TxDataPktCount  uint32
-	RxDataPktCount  uint32
+	ReqDataPktCount int
+	TxDataPktCount  int
+	RxDataPktCount  int
 	/* uplink packets are written to gNB UE user plane context on this channel */
 	WriteGnbChan chan common.InterfaceMessage
 

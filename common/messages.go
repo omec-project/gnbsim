@@ -77,7 +77,7 @@ type EventData struct {
 	NasMsg *nas.Message
 
 	/* Number of user data packets to be generated as directed by profile*/
-	UserDataPktCount uint32
+	UserDataPktCount int
 }
 
 type UserPlaneData struct {

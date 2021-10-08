@@ -12,6 +12,7 @@ import (
 	"gnbsim/profile/util"
 	"gnbsim/simue"
 	simuectx "gnbsim/simue/context"
+	"strconv"
 	"time"
 	// AJAY - Change required
 )
@@ -25,19 +26,28 @@ func Register_test(profile *profctx.Profile) {
 		profile.Log.Errorln("GetGNodeB returned:", err)
 	}
 
-	simUe := simuectx.NewSimUe(profile.StartImsi, gnb, profile)
-	go simue.Init(simUe)
-	util.SendToSimUe(simUe, common.PROFILE_START_EVENT)
-	msg := <-profile.ReadChan
-	switch msg.Event {
-	case common.PROFILE_PASS_EVENT:
-		profile.Log.Infoln("Result: PASS, SimUe:", msg.Supi)
-	case common.PROFILE_FAIL_EVENT:
-		profile.Log.Infoln("Result: FAIL, SimUe:", msg.Supi, "Failed Procedure:",
-			msg.Proc, "Error:", msg.ErrorMsg)
+	imsi, err := strconv.Atoi(profile.StartImsi)
+	if err != nil {
+		profile.Log.Fatalln("invalid imsi value")
 	}
 
-	time.Sleep(2 * time.Second)
+	// Currently executing profile for one IMSI at a time
+	for count := 1; count <= profile.UeCount; count++ {
+		simUe := simuectx.NewSimUe("imsi-"+strconv.Itoa(imsi), gnb, profile)
+		go simue.Init(simUe)
+		util.SendToSimUe(simUe, common.PROFILE_START_EVENT)
+
+		msg := <-profile.ReadChan
+		switch msg.Event {
+		case common.PROFILE_PASS_EVENT:
+			profile.Log.Infoln("Result: PASS, SimUe:", msg.Supi)
+		case common.PROFILE_FAIL_EVENT:
+			profile.Log.Infoln("Result: FAIL, SimUe:", msg.Supi, "Failed Procedure:",
+				msg.Proc, "Error:", msg.ErrorMsg)
+		}
+		time.Sleep(2 * time.Second)
+		imsi++
+	}
 }
 
 // initEventMap initializes the event map of profile with default values as per

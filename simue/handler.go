@@ -170,10 +170,14 @@ func HandleDataBearerSetupResponseEvent(ue *context.SimUe,
 	SendToGnbUe(ue, msg)
 	ue.Log.Traceln("Sent Data Bearer Setup Response to RealUE")
 
+	time.Sleep(500 * time.Millisecond)
 	/* TODO: Solve timing issue. Currently UE may start sending user data
 	 * before gnb has successfuly sent PDU Session Resource Setup Response
+	 * or before 5g core has processed id
 	 */
-	time.Sleep(500 * time.Millisecond)
+	ue.Log.Infoln("Please wait, initiating uplink user data in 3 seconds ...")
+	time.Sleep(3 * time.Second)
+
 	ChangeProcedure(ue)
 
 	return nil
@@ -229,6 +233,6 @@ func HandleProcedure(ue *context.SimUe) {
 		msg.Extras.UserDataPktCount = ue.ProfileCtx.DataPktCount
 		msg.Event = common.DATA_PKT_GEN_REQUEST_EVENT
 		SendToRealUe(ue, msg)
-		ue.Log.Traceln("Sent PDU Session Establishment Request Event to RealUe")
+		ue.Log.Traceln("Sent Data Packet Generation Request Event to RealUe")
 	}
 }

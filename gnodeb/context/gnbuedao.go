@@ -56,7 +56,7 @@ func (dao *GnbUeDao) AddGnbCpUe(gnbUeNgapId int64, gnbue *GnbCpUe) {
 
 // GetGnbUpUe returns the GnbUpUe instance corresponding to provided TEID
 func (dao *GnbUeDao) GetGnbUpUe(teid uint32, downlink bool) *GnbUpUe {
-	log.Println("Fetching GnbUpUe for TEID:", teid, "Downlink:", downlink)
+	dao.Log.Traceln("Fetching GnbUpUe for TEID:", teid, "Downlink:", downlink)
 	var val interface{}
 	var ok bool
 	if downlink {

@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"gnbsim/logger"
 )
 
 const (
@@ -18,6 +19,8 @@ const (
 	FLAG_EXT_HEADER        uint8 = 0x04
 	FLAG_SEQ_NUM           uint8 = 0x02
 	FLAG_NPDU_NUM          uint8 = 0x01
+	FLAG_REQUIRED          uint8 = (FLAG_GTP_VERSION_1 | FLAG_PROTOCOL_TYPE_GTP)
+	FLAG_OPTIONAL          uint8 = (FLAG_EXT_HEADER | FLAG_SEQ_NUM | FLAG_NPDU_NUM)
 
 	/* GTPv1 Message Types Spec 3GPP TS-29281 */
 	TYPE_GPDU uint8 = 0xff
@@ -106,23 +109,24 @@ func BuildGTPv1Header(extHdrFlag bool, snFlag bool, nPduFlag bool,
 func DecodeGTPv1Header(pkt []byte, hdr *GtpHdr, optHdr *GtpHdrOpt) (payload []byte,
 	err error) {
 	buf := bytes.NewReader(pkt)
-	err = binary.Read(buf, binary.LittleEndian, hdr)
+	err = binary.Read(buf, binary.BigEndian, hdr)
 	if err != nil {
 		return nil, err
 	}
 
-	requiredFlags := FLAG_GTP_VERSION_1 | FLAG_PROTOCOL_TYPE_GTP
-	optFlags := FLAG_EXT_HEADER | FLAG_SEQ_NUM | FLAG_NPDU_NUM
-
-	if (hdr.Flags & requiredFlags) != requiredFlags {
+	if (hdr.Flags & FLAG_REQUIRED) != FLAG_REQUIRED {
 		return nil, fmt.Errorf("invalid gtp version or protocol type")
 	}
+
+	logger.GtpLog.Traceln("Header field - Length:", hdr.Len)
+	logger.GtpLog.Traceln("Header field - TEID:", hdr.Teid)
 
 	payloadStart := GTPU_HEADER_LENGTH
 	payloadEnd := hdr.Len + GTPU_HEADER_LENGTH
 
-	if (hdr.Flags & optFlags) != 0 {
-		err = binary.Read(buf, binary.LittleEndian, optHdr)
+	if (hdr.Flags & FLAG_OPTIONAL) != 0 {
+		logger.GtpLog.Traceln("Optional header present")
+		err = binary.Read(buf, binary.BigEndian, optHdr)
 		if err != nil {
 			return nil, err
 		}
