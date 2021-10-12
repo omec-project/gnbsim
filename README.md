@@ -5,26 +5,58 @@ SPDX-License-Identifier: Apache-2.0
 SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 -->
 
-## How to Use
-1. Clone gnbSim
-2. Create image - sudo make docker-build
-3. Use newly created image in the aiab oerride file (make 5gc)
+The GNBSIM tool simulates gNodeB and UE by generating NAS and NGAP messages for 
+the configured UEs and call flows. It currently supports Registration, UE 
+initiated PDU Session Establishment Procedures and is capable to generate and 
+send a user data packet (ICMP echo request) and process downlink user data 
+(ICMP echo response) over the established data plane path (N3 Tunnel). 
+To simulate other call flows, kindly use the following docker image:
+    ajaythakuronf/5gc-gnbsim:0.0.9-dev
 
-## How to run Testcases 
-
-1. Once gnbsim is started, get into gnbsim pod 
-    kubectl exec -it gnbsim-0 -n omec bash
-2. cd src/gnbsim
-3. Now you can run multiple testcases in this running container
-
-    Register Testcase    - ./gnbsim register  
+## Step 1: Configure GNBSIM
     
-    DeRegister Testcase    - ./gnbsim deregister  
+    1. The config file for GNBSIM can be found at <repo dir>/config/gnbsim.yaml
+        
+        Note: The configuration has following major fields:
+            - gnbs: 
+                List of gNB's to be simulated. Each item in the list holds 
+                configuration specific to a gNB.
+            - profiles:
+                List of test/simulation profiles. Each item in the list holds 
+                configuration specific to a profile.
     
-    xnhandover Testcase - ./gnbsim xnhandover 
-
-    n2handover Testcase - ./gnbsim n2handover 
-
-## Code Change in running container
-If any code is changed within container then use following command 
-root@gnbsim-0:/go/src/gnbsim# go build gnbsim.go
+        Read the comments in the config file for more details    
+        
+    2. Enable or disable a specific profile using the "enable" field. 
+        
+        Currently following profiles are supported :
+            - pdusessest : Registration + UE initiated PDU Session Establishment + User Data packets
+            - register   : Registration procedure
+   
+        Note: The default configuration has the "pdusessest" type profile enabled
+      
+## Step 2: Build GNBSIM
+    1. To modify GNBSIM within a container run 
+        
+        $ kubectl exec -it gnbsim-0 -n GNBSIM bash
+        make required changes and run
+        $ go build
+    
+    2.  To modify GNBSIM and build a new docker image
+        
+        $ cd <repo dir>
+        $ make docker-build
+      
+        To use newly created image in the AIAB cluster run, 
+        $ cd <aiab repo dir>
+        $ make reset-5g-test
+        modify the override file (ransim-values.yaml) to add the new image name
+        $ make 5gc
+      
+      
+## Step 3: Run GNBSIM
+   
+    Once GNBSIM is started, get into GNBSIM pod by running
+    $ kubectl exec -it gnbsim-0 -n omec bash
+    After entering the pod run,
+    $ ./gnbsim
