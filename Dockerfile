@@ -9,6 +9,7 @@ LABEL maintainer="ONF <omec-dev@opennetworking.org>"
 
 RUN apt-get update
 RUN apt-get -y install vim 
+RUN apt-get -y install ethtool 
 RUN cd $GOPATH/src && mkdir -p gnbsim
 COPY . $GOPATH/src/gnbsim 
 RUN cd $GOPATH/src/gnbsim && go build -mod=vendor
