@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"gnbsim/factory"
 	"gnbsim/gnodeb"
-	"gnbsim/loadsub"
 	"gnbsim/logger"
 	"gnbsim/profile"
 	"gnbsim/profile/ngsetup"
@@ -92,7 +91,7 @@ func main() {
 				}
 			case "loadsubs":
 				{
-					loadsub.LoadSubscriberData(10)
+					//loadsub.LoadSubscriberData(10)
 				}
 			}
 		}
