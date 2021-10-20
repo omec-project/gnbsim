@@ -58,9 +58,11 @@ func HandleAuthResponseEvent(ue *context.RealUe,
 
 	// First process the corresponding Auth Request
 	ue.Log.Traceln("Processing corresponding Authentication Request Message")
-	nasMsg := msg.Extras.NasMsg
-	rand := nasMsg.AuthenticationRequest.GetRANDValue()
-	resStat := ue.DeriveRESstarAndSetKey(ue.AuthenticationSubs, rand[:], snName)
+	authReq := msg.Extras.NasMsg.AuthenticationRequest
+
+	rand := authReq.GetRANDValue()
+	autn := authReq.GetAUTN()
+	resStat := ue.DeriveRESstarAndSetKey(autn[:], rand[:], snName)
 
 	// TODO: Parse Auth Request IEs and update the RealUE Context
 

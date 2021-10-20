@@ -32,7 +32,7 @@ type RealUe struct {
 	KnasEnc            [16]uint8
 	KnasInt            [16]uint8
 	Kamf               []uint8
-	AuthenticationSubs models.AuthenticationSubscription
+	AuthenticationSubs *models.AuthenticationSubscription
 	Plmn               *models.PlmnId
 	PduSessions        map[int64]*PduSession
 
@@ -95,17 +95,9 @@ func (ue *RealUe) GetUESecurityCapability() (UESecurityCapability *nasType.UESec
 }
 
 func (ue *RealUe) DeriveRESstarAndSetKey(
-	authSubs models.AuthenticationSubscription, rand []byte, snName string) []byte {
+	autn, rand []byte, snName string) []byte {
 
-	sqn, err := hex.DecodeString(authSubs.SequenceNumber)
-	if err != nil {
-		ue.Log.Fatalf("DecodeString error: %+v", err)
-	}
-
-	amf, err := hex.DecodeString(authSubs.AuthenticationManagementField)
-	if err != nil {
-		ue.Log.Fatalf("DecodeString error: %+v", err)
-	}
+	authSubs := ue.AuthenticationSubs
 
 	// Run milenage
 	macA, macS := make([]byte, 8), make([]byte, 8)
@@ -139,14 +131,29 @@ func (ue *RealUe) DeriveRESstarAndSetKey(
 		}
 	}
 
-	// Generate MAC_A, MAC_S
-	err = milenage.F1(opc, k, rand, sqn, amf, macA, macS)
+	// Generate RES, CK, IK, AK, AKstar
+	err = milenage.F2345(opc, k, rand, res, ck, ik, ak, akStar)
 	if err != nil {
 		ue.Log.Fatalf("regexp Compile error: %+v", err)
 	}
 
-	// Generate RES, CK, IK, AK, AKstar
-	err = milenage.F2345(opc, k, rand, res, ck, ik, ak, akStar)
+	rcvSQN := make([]byte, 6)
+
+	// Todo : check what to do with the seperation bit of the AMF field
+	rcvAMF := autn[6:8]
+
+	for i := 0; i < 6; i++ {
+		rcvSQN[i] = ak[i] ^ autn[i]
+	}
+
+	authSubs.SequenceNumber = hex.EncodeToString(rcvSQN)
+
+	// Todo : Figure 9 of 33.102 shows that we can use the SQN received from the
+	// network to calculate XMAC which we can then compare with the received MAC
+	// value in the Authentication Request(AUTN IE) to authenticate the network
+
+	// Generate MAC_A, MAC_S
+	err = milenage.F1(opc, k, rand, rcvSQN, rcvAMF, macA, macS)
 	if err != nil {
 		ue.Log.Fatalf("regexp Compile error: %+v", err)
 	}
@@ -158,7 +165,7 @@ func (ue *RealUe) DeriveRESstarAndSetKey(
 	P1 := rand
 	P2 := res
 
-	ue.DerivateKamf(key, snName, sqn, ak)
+	ue.DerivateKamf(key, snName, rcvSQN, ak)
 	ue.DerivateAlgKey()
 	kdfVal_for_resStar :=
 		UeauCommon.GetKDFValue(key, FC, P0, UeauCommon.KDFLen(P0), P1, UeauCommon.KDFLen(P1), P2, UeauCommon.KDFLen(P2))

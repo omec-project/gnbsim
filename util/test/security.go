@@ -133,6 +133,9 @@ func NASDecode(ue *context.RealUe, securityHeaderType uint8, payload []byte) (ms
 		}
 		ue.DLCount.SetSQN(sequenceNumber)
 
+		ue.Log.Infof("Calculate NAS MAC (algorithm: %+v, DLCount: 0x%0x)", ue.IntegrityAlg, ue.DLCount.Get())
+		ue.Log.Infof("NAS integrity key: %0x", ue.KnasInt)
+
 		mac32, errNas := security.NASMacCalculate(ue.IntegrityAlg, ue.KnasInt, ue.DLCount.Get(), security.Bearer3GPP,
 			security.DirectionDownlink, payload)
 		if errNas != nil {
