@@ -26,7 +26,7 @@ import (
 var snName string = "5G:mnc093.mcc208.3gppnetwork.org"
 
 func HandleRegRequestEvent(ue *context.RealUe,
-	msg *common.UuMessage) (err error) {
+	msg common.InterfaceMessage) (err error) {
 
 	ue.Log.Traceln("Handling Registration Request Event")
 
@@ -46,19 +46,21 @@ func HandleRegRequestEvent(ue *context.RealUe,
 	nasPdu := nasTestpacket.GetRegistrationRequest(nasMessage.RegistrationType5GSInitialRegistration,
 		mobileId5GS, nil, ueSecurityCapability, nil, nil, nil)
 
-	SendToSimUe(ue, common.REG_REQUEST_EVENT, nasPdu, nil)
+	m := formUuMessage(common.REG_REQUEST_EVENT, nasPdu)
+	SendToSimUe(ue, m)
 	ue.Log.Traceln("Sent Registration Request Message to SimUe")
 	return nil
 }
 
 func HandleAuthResponseEvent(ue *context.RealUe,
-	msg *common.UuMessage) (err error) {
+	intfcMsg common.InterfaceMessage) (err error) {
 
 	ue.Log.Traceln("Handling Authentication Response Event")
 
+	msg := intfcMsg.(*common.UeMessage)
 	// First process the corresponding Auth Request
 	ue.Log.Traceln("Processing corresponding Authentication Request Message")
-	authReq := msg.Extras.NasMsg.AuthenticationRequest
+	authReq := msg.NasMsg.AuthenticationRequest
 
 	rand := authReq.GetRANDValue()
 	autn := authReq.GetAUTN()
@@ -70,13 +72,14 @@ func HandleAuthResponseEvent(ue *context.RealUe,
 	ue.Log.Traceln("Generating Authentication Reponse Message")
 	nasPdu := nasTestpacket.GetAuthenticationResponse(resStat, "")
 
-	SendToSimUe(ue, common.AUTH_RESPONSE_EVENT, nasPdu, nil)
+	m := formUuMessage(common.AUTH_RESPONSE_EVENT, nasPdu)
+	SendToSimUe(ue, m)
 	ue.Log.Traceln("Sent Authentication Reponse Message to SimUe")
 	return nil
 }
 
 func HandleSecModCompleteEvent(ue *context.RealUe,
-	msg *common.UuMessage) (err error) {
+	msg common.InterfaceMessage) (err error) {
 
 	ue.Log.Traceln("Handling Security Mode Complete Event")
 
@@ -101,13 +104,14 @@ func HandleSecModCompleteEvent(ue *context.RealUe,
 		return err
 	}
 
-	SendToSimUe(ue, common.SEC_MOD_COMPLETE_EVENT, nasPdu, nil)
+	m := formUuMessage(common.SEC_MOD_COMPLETE_EVENT, nasPdu)
+	SendToSimUe(ue, m)
 	ue.Log.Traceln("Sent Security Mode Complete Message to SimUe")
 	return nil
 }
 
 func HandleRegCompleteEvent(ue *context.RealUe,
-	msg *common.UuMessage) (err error) {
+	msg common.InterfaceMessage) (err error) {
 
 	ue.Log.Traceln("Handling Registration Complete Event")
 
@@ -122,13 +126,14 @@ func HandleRegCompleteEvent(ue *context.RealUe,
 		return
 	}
 
-	SendToSimUe(ue, common.REG_COMPLETE_EVENT, nasPdu, nil)
+	m := formUuMessage(common.REG_COMPLETE_EVENT, nasPdu)
+	SendToSimUe(ue, m)
 	ue.Log.Traceln("Sent Registration Complete Message to SimUe")
 	return nil
 }
 
 func HandlePduSessEstRequestEvent(ue *context.RealUe,
-	msg *common.UuMessage) (err error) {
+	msg common.InterfaceMessage) (err error) {
 
 	ue.Log.Traceln("Handling PDU Session Establishment Request Event")
 
@@ -146,17 +151,20 @@ func HandlePduSessEstRequestEvent(ue *context.RealUe,
 		return
 	}
 
-	SendToSimUe(ue, common.PDU_SESS_EST_REQUEST_EVENT, nasPdu, nil)
+	m := formUuMessage(common.PDU_SESS_EST_REQUEST_EVENT, nasPdu)
+	SendToSimUe(ue, m)
 	ue.Log.Traceln("Sent PDU Session Establishment Request Message to SimUe")
 	return nil
 }
 
 func HandlePduSessEstAcceptEvent(ue *context.RealUe,
-	msg *common.UuMessage) (err error) {
+	intfcMsg common.InterfaceMessage) (err error) {
 
 	ue.Log.Traceln("Handling PDU Session Establishment Accept Event")
+
+	msg := intfcMsg.(*common.UeMessage)
 	//TODO: create new pdu session var and parse msg to pdu session var
-	nasMsg := msg.Extras.NasMsg.PDUSessionEstablishmentAccept
+	nasMsg := msg.NasMsg.PDUSessionEstablishmentAccept
 	if nasMsg == nil {
 		ue.Log.Errorln("PDUSessionEstablishmentAccept is nil")
 		return fmt.Errorf("invalid NAS Message")
@@ -184,8 +192,12 @@ func HandlePduSessEstAcceptEvent(ue *context.RealUe,
 }
 
 func HandleDataBearerSetupRequestEvent(ue *context.RealUe,
-	msg *common.UuMessage) (err error) {
-	for _, item := range msg.UPData {
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	ue.Log.Traceln("Handling Data Bearer Setup Request Event")
+
+	msg := intfcMsg.(*common.UuMessage)
+	for _, item := range msg.DBParams {
 		/* Currently gNB also adds failed pdu session ids in the list.
 		   pdu sessions are marked failed during decoding. real ue simply
 		   returns the same list back by marking any failed pdu sessions on
@@ -210,17 +222,17 @@ func HandleDataBearerSetupRequestEvent(ue *context.RealUe,
 
 	rsp := &common.UuMessage{}
 	rsp.Event = common.DATA_BEARER_SETUP_RESPONSE_EVENT
-	rsp.Interface = common.UU_INTERFACE
-	rsp.UPData = msg.UPData
+	rsp.DBParams = msg.DBParams
 	ue.WriteSimUeChan <- rsp
 	ue.Log.Infoln("Sent Data Radio Bearer Setup Response event to SimUe")
 	return nil
 }
 
 func HandleDataPktGenRequestEvent(ue *context.RealUe,
-	msg *common.UuMessage) (err error) {
+	msg common.InterfaceMessage) (err error) {
 
 	ue.Log.Traceln("Handling Data Packet Generation Request Event")
+
 	for _, v := range ue.PduSessions {
 		v.ReadCmdChan <- msg
 	}
@@ -229,16 +241,17 @@ func HandleDataPktGenRequestEvent(ue *context.RealUe,
 }
 
 func HandleDataPktGenSuccessEvent(ue *context.RealUe,
-	msg *common.UuMessage) (err error) {
-	msg.Interface = common.UU_INTERFACE
+	msg common.InterfaceMessage) (err error) {
 	ue.WriteSimUeChan <- msg
 	return nil
 }
 
 func HandleDlInfoTransferEvent(ue *context.RealUe,
-	msg *common.UuMessage) (err error) {
+	intfcMsg common.InterfaceMessage) (err error) {
 
 	ue.Log.Traceln("Handling Downlink Nas Transport Event")
+
+	msg := intfcMsg.(*common.UuMessage)
 	for _, pdu := range msg.NasPdus {
 		nasMsg, err := test.NASDecode(ue, nas.GetSecurityHeaderType(pdu), pdu)
 		if err != nil {
@@ -267,12 +280,17 @@ func HandleDlInfoTransferEvent(ue *context.RealUe,
 
 		}
 
-		event := common.EventType(msgType)
+		m := &common.UeMessage{}
+
+		// The MSB out of the 32 bytes represents event type, which in this case
+		// is N1_EVENT
+		m.Event = common.EventType(msgType) | common.N1_EVENT
+		m.NasMsg = nasMsg
 
 		// Simply notify SimUe about the received nas message. Later SimUe will
 		// asynchrously send next event to RealUE informing about what to do with
 		// the received NAS message
-		SendToSimUe(ue, event, nil, nasMsg)
+		SendToSimUe(ue, m)
 		ue.Log.Infoln("Notified SimUe for message type:", msgType)
 	}
 	return nil

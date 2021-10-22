@@ -13,7 +13,6 @@ import (
 	"gnbsim/util/test"
 
 	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
-	"github.com/omec-project/nas"
 )
 
 func Init(ue *context.RealUe) {
@@ -33,20 +32,18 @@ func Init(ue *context.RealUe) {
 	}
 }
 
-func HandleEvent(ue *context.RealUe, intfMsg common.InterfaceMessage) (err error) {
-	if intfMsg == nil {
+func HandleEvent(ue *context.RealUe, msg common.InterfaceMessage) (err error) {
+	if msg == nil {
 		return fmt.Errorf("empty message received")
 	}
 
-	/* TODO support different message types */
-	msg := intfMsg.(*common.UuMessage)
-
-	ue.Log.Traceln("Handling Event:", msg.Event)
+	event := msg.GetEventType()
+	ue.Log.Traceln("Handling Event:", event)
 
 	/* TODO: Should check interface type to avoid overlapping events
 	 * add support for N1 interface, internal realue-sim ue interface
 	 */
-	switch msg.Event {
+	switch event {
 	case common.REG_REQUEST_EVENT:
 		err = HandleRegRequestEvent(ue, msg)
 	case common.AUTH_RESPONSE_EVENT:
@@ -68,23 +65,26 @@ func HandleEvent(ue *context.RealUe, intfMsg common.InterfaceMessage) (err error
 	case common.DATA_PKT_GEN_SUCCESS_EVENT:
 		err = HandleDataPktGenSuccessEvent(ue, msg)
 	default:
-		ue.Log.Infoln("Event", msg.Event, "is not supported")
+		ue.Log.Infoln("Event", event, "is not supported")
 	}
 
 	if err != nil {
-		ue.Log.Errorln("Failed to process event:", msg.Event, "Error:", err)
+		ue.Log.Errorln("Failed to process event:", event, "Error:", err)
 	}
 
 	return err
 }
 
-func SendToSimUe(ue *context.RealUe, event common.EventType, naspdu []byte,
-	nasmsg *nas.Message) {
-	ue.Log.Infoln("Sending event", event, "to SimUe")
+func formUuMessage(event common.EventType, nasPdu []byte) *common.UuMessage {
 	msg := &common.UuMessage{}
 	msg.Event = event
-	msg.Interface = common.UU_INTERFACE
-	msg.NasPdus = append(msg.NasPdus, naspdu)
-	msg.Extras.NasMsg = nasmsg
+	msg.NasPdus = append(msg.NasPdus, nasPdu)
+	return msg
+}
+
+func SendToSimUe(ue *context.RealUe,
+	msg common.InterfaceMessage) {
+
+	ue.Log.Infoln("Sending event", msg.GetEventType(), "to SimUe")
 	ue.WriteSimUeChan <- msg
 }

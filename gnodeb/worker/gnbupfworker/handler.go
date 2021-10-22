@@ -22,8 +22,7 @@ func HandleDlGpduMessage(gnbUpf *context.GnbUpf, gtpHdr *test.GtpHdr,
 		/* TODO: Send ErrorIndication message to upf*/
 	}
 	userDataMsg := &common.UserDataMessage{}
-	userDataMsg.Event = common.DL_UE_DATA_TRANSFER_EVENT
-	userDataMsg.Interface = common.N3_INTERFACE
+	userDataMsg.Event = common.DL_UE_DATA_TRANSPORT_EVENT
 	userDataMsg.Payload = payload
 	gnbUpUe.ReadDlChan <- userDataMsg
 

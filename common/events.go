@@ -5,25 +5,38 @@
 
 package common
 
-type EventType uint
+type EventType uint32
 
-// Events between Profile and SimUe
+/* Using the MSB to represent the interface to which the event belongs.*/
 const (
-	PROFILE_START_EVENT EventType = 1 + iota
+	/* Network interface events */
+	UU_EVENT EventType = 0x1000000
+	N1_EVENT EventType = 0x2000000
+	N2_EVENT EventType = 0x3000000
+	N3_EVENT EventType = 0x4000000
+
+	/* Application interface events */
+	PROFILE_SIMUE_EVENT EventType = 0x5000000
+	SIMUE_REALUE_EVENT  EventType = 0x6000000
+)
+
+/* Events between Profile and SimUe */
+const (
+	PROFILE_START_EVENT EventType = PROFILE_SIMUE_EVENT + 1 + iota
 	PROFILE_PASS_EVENT
 	PROFILE_FAIL_EVENT
 )
 
-// Events between SimUe and RealUE
+/* Events between SimUe and RealUE */
 const (
-	DATA_PKT_GEN_REQUEST_EVENT EventType = 1000 + iota
+	DATA_PKT_GEN_REQUEST_EVENT EventType = SIMUE_REALUE_EVENT + 1 + iota
 	DATA_PKT_GEN_SUCCESS_EVENT
 	DATA_PKT_GEN_FAILURE_EVENT
 )
 
-// Events between UE and GNodeB (UU)
+/* Events between UE and GNodeB (UU) */
 const (
-	CONNECT_REQUEST_EVENT EventType = 1 + iota
+	CONNECT_REQUEST_EVENT EventType = UU_EVENT + 1 + iota
 	UL_INFO_TRANSFER_EVENT
 	DL_INFO_TRANSFER_EVENT
 
@@ -36,13 +49,13 @@ const (
 	DATA_BEARER_SETUP_RESPONSE_EVENT
 )
 
-// Events betweem UE and AMF (N1)
-
-// Following events are numbered same as the NAS Message types in section 9.7 of
-// 3GPP TS 24.501
-
-const UE_5GS_MOBILITY_MANAGEMENT_EVENTS EventType = 64
-const UE_5GS_SESSION_MANAGEMENT_EVENTS EventType = 192
+/* Events betweem UE and AMF (N1)
+ * Following events offsets are numbered same as the NAS Message types in
+ * section 9.7 of 3GPP TS 24.501. This makes it easy to generate events
+ * corresponding to received NAS messages.
+ */
+const UE_5GS_MOBILITY_MANAGEMENT_EVENTS EventType = N1_EVENT + 64
+const UE_5GS_SESSION_MANAGEMENT_EVENTS EventType = N1_EVENT + 192
 
 // 5GS Mobility Management events.
 const (
@@ -102,17 +115,17 @@ const (
 	PDU_SESS_REL_COMMAND_EVENT
 	PDU_SESS_REL_COMPLETE_EVENT
 
-	FIVEGSM_STATUS_EVENT = UE_5GS_SESSION_MANAGEMENT_EVENTS + 6 + iota
+	FIVEGSM_STATUS_EVENT = UE_5GS_SESSION_MANAGEMENT_EVENTS + 6 + iota //214
 )
 
 // Events between GNodeB and AMF (N2)
 const (
-	DOWNLINK_NAS_TRANSPORT_EVENT EventType = 1 + iota
+	DOWNLINK_NAS_TRANSPORT_EVENT EventType = N2_EVENT + 1 + iota
 	INITIAL_CONTEXT_SETUP_REQUEST_EVENT
 	PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT
 )
 
 // Events between GNodeB and UPF (N3)
 const (
-	DL_UE_DATA_TRANSPORT_EVENT EventType = 1 + iota
+	DL_UE_DATA_TRANSPORT_EVENT EventType = N3_EVENT + 1 + iota
 )

@@ -42,7 +42,6 @@ func Init(simUe *context.SimUe) {
 
 func ConnectToGnb(simUe *context.SimUe) error {
 	uemsg := common.UuMessage{}
-	uemsg.Interface = common.UU_INTERFACE
 	uemsg.Event = common.CONNECT_REQUEST_EVENT
 	uemsg.CommChan = simUe.ReadChan
 	uemsg.Supi = simUe.Supi
@@ -64,59 +63,41 @@ func HandleEvent(ue *context.SimUe, msg common.InterfaceMessage) (err error) {
 		return fmt.Errorf("empty message received")
 	}
 
-	ue.Log.Infoln("Handling event:", msg.GetEventType(), "from interface:",
-		msg.GetInterfaceType())
+	ue.Log.Infoln("Handling event:", msg.GetEventType())
 
-	switch msg.GetInterfaceType() {
-
-	case common.UU_INTERFACE:
-		uuMsg := msg.(*common.UuMessage)
-
-		switch uuMsg.Event {
-		case common.REG_REQUEST_EVENT:
-			err = HandleRegReqEvent(ue, uuMsg)
-		case common.AUTH_REQUEST_EVENT:
-			err = HandleAuthRequestEvent(ue, uuMsg)
-		case common.AUTH_RESPONSE_EVENT:
-			err = HandleAuthResponseEvent(ue, uuMsg)
-		case common.SEC_MOD_COMMAND_EVENT:
-			err = HandleSecModCommandEvent(ue, uuMsg)
-		case common.SEC_MOD_COMPLETE_EVENT:
-			err = HandleSecModCompleteEvent(ue, uuMsg)
-		case common.REG_ACCEPT_EVENT:
-			err = HandleRegAcceptEvent(ue, uuMsg)
-		case common.REG_COMPLETE_EVENT:
-			err = HandleRegCompleteEvent(ue, uuMsg)
-		case common.PDU_SESS_EST_REQUEST_EVENT:
-			err = HandlePduSessEstRequestEvent(ue, uuMsg)
-		case common.PDU_SESS_EST_ACCEPT_EVENT:
-			err = HandlePduSessEstAcceptEvent(ue, uuMsg)
-		case common.DL_INFO_TRANSFER_EVENT:
-			err = HandleDlInfoTransferEvent(ue, uuMsg)
-		case common.DATA_BEARER_SETUP_REQUEST_EVENT:
-			err = HandleDataBearerSetupRequestEvent(ue, uuMsg)
-		case common.DATA_BEARER_SETUP_RESPONSE_EVENT:
-			err = HandleDataBearerSetupResponseEvent(ue, uuMsg)
-		case common.DATA_PKT_GEN_SUCCESS_EVENT:
-			err = HandleDataPktGenSuccessEvent(ue, uuMsg)
-		case common.DATA_PKT_GEN_FAILURE_EVENT:
-			err = HandleDataPktGenFailureEvent(ue, uuMsg)
-		default:
-			ue.Log.Infoln("Event", uuMsg.Event, "is not supported")
-		}
-
-	case common.PROFILE_SIMUE_INTERFACE:
-		profileMsg := msg.(*common.ProfileMessage)
-
-		switch profileMsg.Event {
-		case common.PROFILE_START_EVENT:
-			err = HandleProfileStartEvent(ue, profileMsg)
-		default:
-			ue.Log.Infoln("Event", profileMsg.Event, "is not supported")
-		}
-
+	switch msg.GetEventType() {
+	case common.REG_REQUEST_EVENT:
+		err = HandleRegReqEvent(ue, msg)
+	case common.AUTH_REQUEST_EVENT:
+		err = HandleAuthRequestEvent(ue, msg)
+	case common.AUTH_RESPONSE_EVENT:
+		err = HandleAuthResponseEvent(ue, msg)
+	case common.SEC_MOD_COMMAND_EVENT:
+		err = HandleSecModCommandEvent(ue, msg)
+	case common.SEC_MOD_COMPLETE_EVENT:
+		err = HandleSecModCompleteEvent(ue, msg)
+	case common.REG_ACCEPT_EVENT:
+		err = HandleRegAcceptEvent(ue, msg)
+	case common.REG_COMPLETE_EVENT:
+		err = HandleRegCompleteEvent(ue, msg)
+	case common.PDU_SESS_EST_REQUEST_EVENT:
+		err = HandlePduSessEstRequestEvent(ue, msg)
+	case common.PDU_SESS_EST_ACCEPT_EVENT:
+		err = HandlePduSessEstAcceptEvent(ue, msg)
+	case common.DL_INFO_TRANSFER_EVENT:
+		err = HandleDlInfoTransferEvent(ue, msg)
+	case common.DATA_BEARER_SETUP_REQUEST_EVENT:
+		err = HandleDataBearerSetupRequestEvent(ue, msg)
+	case common.DATA_BEARER_SETUP_RESPONSE_EVENT:
+		err = HandleDataBearerSetupResponseEvent(ue, msg)
+	case common.DATA_PKT_GEN_SUCCESS_EVENT:
+		err = HandleDataPktGenSuccessEvent(ue, msg)
+	case common.DATA_PKT_GEN_FAILURE_EVENT:
+		err = HandleDataPktGenFailureEvent(ue, msg)
+	case common.PROFILE_START_EVENT:
+		err = HandleProfileStartEvent(ue, msg)
 	default:
-		ue.Log.Infoln("Interface", msg.GetInterfaceType(), "is not supported")
+		ue.Log.Infoln("Event", msg.GetEventType(), "is not supported")
 	}
 
 	if err != nil {
@@ -126,13 +107,13 @@ func HandleEvent(ue *context.SimUe, msg common.InterfaceMessage) (err error) {
 	return err
 }
 
-func SendToRealUe(ue *context.SimUe, msg *common.UuMessage) {
-	ue.Log.Infoln("Sending", msg.Event, "to RealUe")
+func SendToRealUe(ue *context.SimUe, msg common.InterfaceMessage) {
+	ue.Log.Infoln("Sending", msg.GetEventType(), "to RealUe")
 	ue.WriteRealUeChan <- msg
 }
 
-func SendToGnbUe(ue *context.SimUe, msg *common.UuMessage) {
-	ue.Log.Infoln("Sending", msg.Event, "to GnbUe")
+func SendToGnbUe(ue *context.SimUe, msg common.InterfaceMessage) {
+	ue.Log.Infoln("Sending", msg.GetEventType(), "to GnbUe")
 	ue.WriteGnbUeChan <- msg
 }
 
@@ -142,6 +123,6 @@ func SendToProfile(ue *context.SimUe, event common.EventType, errMsg error) {
 	msg.Event = event
 	msg.Supi = ue.Supi
 	msg.Proc = ue.Procedure
-	msg.ErrorMsg = errMsg
+	msg.Error = errMsg
 	ue.WriteProfileChan <- msg
 }

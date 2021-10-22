@@ -65,7 +65,6 @@ func HandleMessage(gnb *context.GNodeB, amf *context.GnbAmf, pkt []byte) error {
 func SendToGnbUe(gnbue *context.GnbCpUe, event common.EventType, ngapPdu *ngapType.NGAPPDU) {
 	amfmsg := common.N2Message{}
 	amfmsg.Event = event
-	amfmsg.Interface = common.N2_INTERFACE
 	amfmsg.NgapPdu = ngapPdu
 	gnbue.ReadChan <- &amfmsg
 }
