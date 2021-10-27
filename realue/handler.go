@@ -14,16 +14,19 @@ import (
 	"gnbsim/util/test"
 	"net"
 
-	"github.com/free5gc/nas/nasConvert"
 	"github.com/free5gc/nas/nasMessage"
 	"github.com/free5gc/nas/nasTestpacket"
 	"github.com/free5gc/nas/nasType"
 	"github.com/free5gc/openapi/models"
 	"github.com/omec-project/nas"
+	"github.com/omec-project/nas/nasConvert"
 )
 
 //TODO Remove the hardcoding
-var snName string = "5G:mnc093.mcc208.3gppnetwork.org"
+const (
+	SN_NAME    string = "5G:mnc093.mcc208.3gppnetwork.org"
+	SWITCH_OFF uint8  = 0
+)
 
 func HandleRegRequestEvent(ue *context.RealUe,
 	msg common.InterfaceMessage) (err error) {
@@ -62,9 +65,11 @@ func HandleAuthResponseEvent(ue *context.RealUe,
 	ue.Log.Traceln("Processing corresponding Authentication Request Message")
 	authReq := msg.NasMsg.AuthenticationRequest
 
+	ue.NgKsi = nasConvert.SpareHalfOctetAndNgksiToModels(authReq.SpareHalfOctetAndNgksi)
+
 	rand := authReq.GetRANDValue()
 	autn := authReq.GetAUTN()
-	resStat := ue.DeriveRESstarAndSetKey(autn[:], rand[:], snName)
+	resStat := ue.DeriveRESstarAndSetKey(autn[:], rand[:], SN_NAME)
 
 	// TODO: Parse Auth Request IEs and update the RealUE Context
 
@@ -100,8 +105,8 @@ func HandleSecModCompleteEvent(ue *context.RealUe,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCipheredWithNew5gNasSecurityContext,
 		true, true)
 	if err != nil {
-		ue.Log.Errorln("Failed to encrypt Security Mode Complete Message", err)
-		return err
+		ue.Log.Errorln("EncodeNasPduWithSecurity() returned:", err)
+		return fmt.Errorf("failed to encrypt security mode complete message")
 	}
 
 	m := formUuMessage(common.SEC_MOD_COMPLETE_EVENT, nasPdu)
@@ -111,24 +116,62 @@ func HandleSecModCompleteEvent(ue *context.RealUe,
 }
 
 func HandleRegCompleteEvent(ue *context.RealUe,
-	msg common.InterfaceMessage) (err error) {
+	intfcMsg common.InterfaceMessage) (err error) {
 
 	ue.Log.Traceln("Handling Registration Complete Event")
 
 	//TODO: Process corresponding Registration Accept first
+	msg := intfcMsg.(*common.UeMessage).NasMsg.RegistrationAccept
+
+	var guti []uint8
+	if msg.GUTI5G != nil {
+		guti = msg.GUTI5G.Octet[:]
+	}
+
+	_, ue.Guti = nasConvert.GutiToString(guti)
 
 	ue.Log.Traceln("Generating Registration Complete Message")
 	nasPdu := nasTestpacket.GetRegistrationComplete(nil)
 	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
 	if err != nil {
-		ue.Log.Errorln("Failed to encrypt Registration Complete Message", err)
-		return
+		ue.Log.Errorln("EncodeNasPduWithSecurity() returned:", err)
+		return fmt.Errorf("failed to encrypt registration complete message")
 	}
 
 	m := formUuMessage(common.REG_COMPLETE_EVENT, nasPdu)
 	SendToSimUe(ue, m)
 	ue.Log.Traceln("Sent Registration Complete Message to SimUe")
+	return nil
+}
+
+func HandleDeregRequestEvent(ue *context.RealUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	ue.Log.Traceln("Handling UE Initiated Deregistration Request Event")
+
+	if ue.Guti == "" {
+		ue.Log.Errorln("guti not allocated")
+		return fmt.Errorf("failed to create deregistration request: guti not unallocated")
+	}
+	gutiNas := nasConvert.GutiToNas(ue.Guti)
+	mobileIdentity5GS := nasType.MobileIdentity5GS{
+		Len:    11, // 5g-guti
+		Buffer: gutiNas.Octet[:],
+	}
+
+	nasPdu := nasTestpacket.GetDeregistrationRequest(nasMessage.AccessType3GPP,
+		SWITCH_OFF, uint8(ue.NgKsi.Ksi), mobileIdentity5GS)
+	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu,
+		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
+	if err != nil {
+		ue.Log.Errorln("EncodeNasPduWithSecurity() returned:", err)
+		return fmt.Errorf("failed to encrypt deregistration request message")
+	}
+
+	m := formUuMessage(common.DEREG_REQUEST_UE_ORIG_EVENT, nasPdu)
+	SendToSimUe(ue, m)
+	ue.Log.Traceln("Sent UE Initiated Deregistration Request message to SimUe")
 	return nil
 }
 

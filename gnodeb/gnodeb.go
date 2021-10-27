@@ -18,7 +18,6 @@ import (
 	"gnbsim/logger"
 	"gnbsim/util/test"
 	"log"
-	"net"
 
 	"github.com/free5gc/idgenerator"
 )
@@ -59,9 +58,11 @@ func Init(gnb *context.GNodeB) error {
 		return nil
 	}
 
-	err = ConnectToAmf(gnb, gnb.DefaultAmf)
+	gnb.DefaultAmf.Init()
+
+	err = gnb.CpTransport.ConnectToPeer(gnb.DefaultAmf)
 	if err != nil {
-		gnb.Log.Errorln("ConnectToAmf returned:", err)
+		gnb.Log.Errorln("ConnectToPeer returned:", err)
 		return fmt.Errorf("failed to connect to amf")
 	}
 
@@ -80,36 +81,6 @@ func Init(gnb *context.GNodeB) error {
 func QuitGnb(gnb *context.GNodeB) {
 	log.Println("Shutting Down GNodeB:", gnb.GnbName)
 	close(gnb.Quit)
-}
-
-//TODO this should be in transport as ConnectToPeer
-
-// ConnectToAmf establishes SCTP connection with the AMF and initiates NG Setup
-// Procedure.
-func ConnectToAmf(gnb *context.GNodeB, amf *context.GnbAmf) (err error) {
-	gnb.Log.Traceln("Connecting to AMF")
-
-	if amf.AmfIp == "" {
-		if amf.AmfHostName == "" {
-			return fmt.Errorf("amf ip or host name not configured")
-		}
-		addrs, err := net.LookupHost(amf.AmfHostName)
-		if err != nil {
-			return fmt.Errorf("failed to resolve amf host name: %v, err: %v",
-				amf.AmfHostName, err)
-		}
-		amf.AmfIp = addrs[0]
-	}
-
-	amf.Conn, err = test.ConnectToAmf(amf.AmfIp, gnb.GnbN2Ip, int(amf.AmfPort),
-		int(gnb.GnbN2Port))
-	if err != nil {
-		return fmt.Errorf("failed to connect amf, ip: %v, port: %v, err: %v",
-			amf.AmfIp, amf.AmfPort, err)
-	}
-
-	gnb.Log.Infoln("Connected to AMF, AMF IP:", amf.AmfIp, "AMF Port:", amf.AmfPort)
-	return
 }
 
 // PerformNGSetup sends the NGSetupRequest to the provided GnbAmf.

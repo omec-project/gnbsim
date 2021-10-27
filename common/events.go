@@ -40,13 +40,16 @@ const (
 	UL_INFO_TRANSFER_EVENT
 	DL_INFO_TRANSFER_EVENT
 
-	/* For exchanging user data */
+	// For exchanging user data
 	UL_UE_DATA_TRANSFER_EVENT
 	DL_UE_DATA_TRANSFER_EVENT
 
-	/* For setting up channels between UE and GNB to exchange user data */
+	// For setting up channels between UE and GNB to exchange user data
 	DATA_BEARER_SETUP_REQUEST_EVENT
 	DATA_BEARER_SETUP_RESPONSE_EVENT
+
+	// gNB acknowledges simue for releasing UE context using this event
+	CTX_RELEASE_ACKNOWLEDGEMENT_EVENT
 )
 
 /* Events betweem UE and AMF (N1)
@@ -121,8 +124,9 @@ const (
 // Events between GNodeB and AMF (N2)
 const (
 	DOWNLINK_NAS_TRANSPORT_EVENT EventType = N2_EVENT + 1 + iota
-	INITIAL_CONTEXT_SETUP_REQUEST_EVENT
+	INITIAL_CTX_SETUP_REQUEST_EVENT
 	PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT
+	UE_CTX_RELEASE_COMMAND_EVENT
 )
 
 // Events between GNodeB and UPF (N3)

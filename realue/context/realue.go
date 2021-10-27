@@ -32,6 +32,7 @@ type RealUe struct {
 	KnasEnc            [16]uint8
 	KnasInt            [16]uint8
 	Kamf               []uint8
+	NgKsi              models.NgKsi
 	AuthenticationSubs *models.AuthenticationSubscription
 	Plmn               *models.PlmnId
 	PduSessions        map[int64]*PduSession

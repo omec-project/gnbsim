@@ -11,6 +11,7 @@ import (
 	"gnbsim/gnodeb"
 	"gnbsim/logger"
 	"gnbsim/profile"
+	"gnbsim/profile/deregister"
 	"gnbsim/profile/ngsetup"
 	"gnbsim/profile/pdusessest"
 	"gnbsim/profile/register"
@@ -51,7 +52,7 @@ func main() {
 				}
 			case "deregister":
 				{
-					//deregister.Deregister_test(ranIpAddr, amfIpAddr)
+					deregister.Deregister_test(profileCtx)
 				}
 			case "pdusessionrelease":
 				{

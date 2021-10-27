@@ -149,6 +149,40 @@ func HandleRegCompleteEvent(ue *context.SimUe,
 	return nil
 }
 
+func HandleDeregRequestEvent(ue *context.SimUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	ue.Log.Traceln("Handling UE Originated Deregistration Request Event")
+
+	msg := intfcMsg.(*common.UuMessage)
+	msg.Event = common.UL_INFO_TRANSFER_EVENT
+	SendToGnbUe(ue, msg)
+	ue.Log.Traceln("Sent UL Information Transfer[Deregistration Request] Event to GnbUe")
+
+	return nil
+}
+
+func HandleDeregAcceptEvent(ue *context.SimUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	ue.Log.Traceln("Handling UE Originated Deregistration Accept Event")
+
+	return nil
+}
+
+// HandleCtxRelAckEvent handler is called upon receiving acknowledgement
+// from gNB for releasing the UE context. This ensures SimUE that the UE
+// originated Deregisteration procedure followed by AN Release procedure is
+// completed
+func HandleCtxRelAckEvent(ue *context.SimUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	ue.Log.Traceln("Handling UE context release acknowledgement from gNB")
+
+	ChangeProcedure(ue)
+	return nil
+}
+
 func HandlePduSessEstRequestEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
@@ -260,19 +294,21 @@ func HandleProcedure(ue *context.SimUe) {
 		msg := &common.UeMessage{}
 		msg.Event = common.REG_REQUEST_EVENT
 		SendToRealUe(ue, msg)
-		ue.Log.Traceln("Sent Registration Request Event to RealUe")
 	case common.PDU_SESSION_ESTABLISHMENT_PROCEDURE:
 		ue.Log.Infoln("Initiating UE Requested PDU Session Establishment Procedure")
 		msg := &common.UeMessage{}
 		msg.Event = common.PDU_SESS_EST_REQUEST_EVENT
 		SendToRealUe(ue, msg)
-		ue.Log.Traceln("Sent PDU Session Establishment Request Event to RealUe")
 	case common.USER_DATA_PKT_GENERATION_PROCEDURE:
 		ue.Log.Infoln("Initiating User Data Packet Generation Procedure")
 		msg := &common.UeMessage{}
 		msg.UserDataPktCount = ue.ProfileCtx.DataPktCount
 		msg.Event = common.DATA_PKT_GEN_REQUEST_EVENT
 		SendToRealUe(ue, msg)
-		ue.Log.Traceln("Sent Data Packet Generation Request Event to RealUe")
+	case common.UE_INITIATED_DEREGISTRATION_PROCEDURE:
+		ue.Log.Infoln("Initiating UE Initiated Deregistration Procedure")
+		msg := &common.UeMessage{}
+		msg.Event = common.DEREG_REQUEST_UE_ORIG_EVENT
+		SendToRealUe(ue, msg)
 	}
 }

@@ -62,10 +62,6 @@ func HandleDownlinkNasTransport(gnbue *context.GnbCpUe,
 	var nasPdu *ngapType.NASPDU
 
 	pdu := msg.NgapPdu
-	if pdu == nil {
-		gnbue.Log.Errorln("NgapPdu is nil")
-		return
-	}
 
 	// Null checks are already performed at gnbamfworker level
 	initiatingMessage := pdu.InitiatingMessage
@@ -128,10 +124,6 @@ func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe,
 	var nasPdu *ngapType.NASPDU
 
 	pdu := msg.NgapPdu
-	if pdu == nil {
-		gnbue.Log.Errorln("NgapPdu is nil")
-		return
-	}
 
 	// Null checks are already performed at gnbamfworker level
 	initiatingMessage := pdu.InitiatingMessage
@@ -186,10 +178,6 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe,
 	var pduSessResourceSetupReqList *ngapType.PDUSessionResourceSetupListSUReq
 
 	pdu := msg.NgapPdu
-	if pdu == nil {
-		gnbue.Log.Errorln("NgapPdu is nil")
-		return
-	}
 
 	initiatingMessage := pdu.InitiatingMessage
 	pduSessResourceSetupReq := initiatingMessage.Value.PDUSessionResourceSetupRequest
@@ -370,4 +358,70 @@ func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe,
 		return
 	}
 	gnbue.Log.Traceln("Sent PDU Session Resource Setup Response Message to AMF")
+}
+
+func HandleUeCtxReleaseCommand(gnbue *context.GnbCpUe,
+	intfcMsg common.InterfaceMessage) {
+
+	gnbue.Log.Traceln("Handling UE Context Release Command Message")
+
+	msg := intfcMsg.(*common.N2Message)
+	var ueNgapIds *ngapType.UENGAPIDs
+	var amfUeNgapId ngapType.AMFUENGAPID
+	var cause *ngapType.Cause
+
+	pdu := msg.NgapPdu
+
+	// Null checks are already performed at gnbamfworker level
+	initiatingMessage := pdu.InitiatingMessage
+	ueCtxRelCmd := initiatingMessage.Value.UEContextReleaseCommand
+
+	for _, ie := range ueCtxRelCmd.ProtocolIEs.List {
+		switch ie.Id.Value {
+		case ngapType.ProtocolIEIDUENGAPIDs:
+			ueNgapIds = ie.Value.UENGAPIDs
+			if ueNgapIds == nil {
+				gnbue.Log.Errorln("UENGAPIDs is nil")
+				return
+			}
+		case ngapType.ProtocolIEIDCause:
+			cause = ie.Value.Cause
+			if cause == nil {
+				gnbue.Log.Errorln("Cause is nil")
+				return
+			}
+		}
+	}
+
+	test.PrintAndGetCause(cause)
+
+	if ueNgapIds.Present == ngapType.UENGAPIDsPresentUENGAPIDPair {
+		amfUeNgapId = ueNgapIds.UENGAPIDPair.AMFUENGAPID
+		if gnbue.AmfUeNgapId != amfUeNgapId.Value {
+			gnbue.Log.Errorln("AmfUeNgapId mismatch")
+		}
+	}
+
+	var pduSessIds []int64
+	f := func(k interface{}, v interface{}) bool {
+		pduSessIds = append(pduSessIds, k.(int64))
+		return true
+	}
+	gnbue.GnbUpUes.Range(f)
+
+	ngapPdu, err := test.GetUEContextReleaseComplete(gnbue.AmfUeNgapId,
+		gnbue.GnbUeNgapId, pduSessIds)
+	if err != nil {
+		fmt.Println("Failed to create UE Context Release Complete message")
+		return
+	}
+
+	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, ngapPdu)
+	if err != nil {
+		gnbue.Log.Errorln("SendToPeer failed:", err)
+		return
+	}
+	gnbue.Log.Traceln("Sent UE Context Release Complete Message to AMF")
+
+	SendToUe(gnbue, common.CTX_RELEASE_ACKNOWLEDGEMENT_EVENT, nil)
 }

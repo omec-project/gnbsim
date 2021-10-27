@@ -40,10 +40,12 @@ func HandleMessage(gnbue *context.GnbCpUe, msg common.InterfaceMessage) (err err
 		HandleDataBearerSetupResponse(gnbue, msg)
 	case common.DOWNLINK_NAS_TRANSPORT_EVENT:
 		HandleDownlinkNasTransport(gnbue, msg)
-	case common.INITIAL_CONTEXT_SETUP_REQUEST_EVENT:
+	case common.INITIAL_CTX_SETUP_REQUEST_EVENT:
 		HandleInitialContextSetupRequest(gnbue, msg)
 	case common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT:
 		HandlePduSessResourceSetupRequest(gnbue, msg)
+	case common.UE_CTX_RELEASE_COMMAND_EVENT:
+		HandleUeCtxReleaseCommand(gnbue, msg)
 	default:
 		gnbue.Log.Infoln("Event", msg.GetEventType(), "is not supported")
 	}

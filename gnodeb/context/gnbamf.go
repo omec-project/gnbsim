@@ -6,11 +6,13 @@
 package context
 
 import (
+	"gnbsim/logger"
 	"net"
 
 	"github.com/free5gc/amf/context"
 	"github.com/free5gc/amf/factory"
 	"github.com/free5gc/openapi/models"
+	"github.com/sirupsen/logrus"
 )
 
 const NGAP_SCTP_PORT int = 38412
@@ -29,13 +31,23 @@ type GnbAmf struct {
 	PlmnSupportList []factory.PlmnSupportItem
 	/*Socket Connection*/
 	Conn net.Conn
+
+	/* logger */
+	Log *logrus.Entry
 }
 
 func NewGnbAmf(ip string, port int) *GnbAmf {
-	return &GnbAmf{
-		AmfIp:   ip,
-		AmfPort: port,
-	}
+	gnbAmf := &GnbAmf{}
+	gnbAmf.AmfIp = ip
+	gnbAmf.AmfPort = port
+	gnbAmf.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbAmf",
+		logger.FieldIp: gnbAmf.AmfIp})
+	return gnbAmf
+}
+
+func (amf *GnbAmf) Init() {
+	amf.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbAmf",
+		logger.FieldIp: amf.AmfIp})
 }
 
 func (amf *GnbAmf) GetIpAddr() string {

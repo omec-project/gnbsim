@@ -52,6 +52,8 @@ func HandleEvent(ue *context.RealUe, msg common.InterfaceMessage) (err error) {
 		err = HandleSecModCompleteEvent(ue, msg)
 	case common.REG_COMPLETE_EVENT:
 		err = HandleRegCompleteEvent(ue, msg)
+	case common.DEREG_REQUEST_UE_ORIG_EVENT:
+		err = HandleDeregRequestEvent(ue, msg)
 	case common.DL_INFO_TRANSFER_EVENT:
 		err = HandleDlInfoTransferEvent(ue, msg)
 	case common.PDU_SESS_EST_REQUEST_EVENT:

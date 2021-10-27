@@ -15,10 +15,10 @@ import (
 
 const (
 	SUPI_FORMAT          uint8 = 0x00 // imsi
-	ID_TYPE                    = 0x01 // suci
-	PROTECTION_SCHEME_ID       = 0x00 // null scheme
-	PUBLIC_KEY_ID              = 0x00
-	SUCI_LEN                   = 22
+	ID_TYPE              uint8 = 0x01 // suci
+	PROTECTION_SCHEME_ID uint8 = 0x00 // null scheme
+	PUBLIC_KEY_ID        uint8 = 0x00
+	SUCI_LEN             uint8 = 22
 )
 
 var ROUTING_INDICATOR []uint8 = []uint8{0xf0, 0xff}
@@ -45,7 +45,7 @@ func SupiToSuci(supi string, plmnid *models.PlmnId) ([]byte, error) {
 	msin := imsi[index:]
 
 	suci := make([]uint8, 0, SUCI_LEN)
-	// creating octet 3 of 5GS mobile identity info
+	// creating octet 4 of 5GS mobile identity info
 	octet := (SUPI_FORMAT << 4) | ID_TYPE
 	suci = append(suci, octet)
 

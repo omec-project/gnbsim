@@ -38,6 +38,8 @@ func HandleMessage(gnb *context.GNodeB, amf *context.GnbAmf, pkt []byte) error {
 			HandleInitialContextSetupRequest(gnb, amf, pdu)
 		case ngapType.ProcedureCodePDUSessionResourceSetup:
 			HandlePduSessResourceSetupRequest(gnb, amf, pdu)
+		case ngapType.ProcedureCodeUEContextRelease:
+			HandleUeCtxReleaseCommand(gnb, amf, pdu)
 		}
 	case ngapType.NGAPPDUPresentSuccessfulOutcome:
 		successfulOutcome := pdu.SuccessfulOutcome
