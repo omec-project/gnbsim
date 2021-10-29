@@ -7,6 +7,7 @@
 info:
   version: 1.0.0
   description: GNBSIM initial local configuration
+
 configuration:
   gnbs: # pool of gNodeBs
     gnb1:
@@ -50,3 +51,6 @@ configuration:
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+
+logger:
+  logLevel: info # how detailed the log will be, values: trace, debug, info, warn, error, fatal, panic

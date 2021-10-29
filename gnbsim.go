@@ -6,7 +6,6 @@
 package main
 
 import (
-	"fmt"
 	"gnbsim/factory"
 	"gnbsim/gnodeb"
 	"gnbsim/logger"
@@ -15,24 +14,52 @@ import (
 	"gnbsim/profile/ngsetup"
 	"gnbsim/profile/pdusessest"
 	"gnbsim/profile/register"
+	"os"
+
+	"github.com/urfave/cli"
 )
 
 func main() {
-	if err := factory.InitConfigFactory(factory.GNBSIM_DEFAULT_CONFIG_PATH); err != nil {
-		logger.AppLog.Errorln("Failed to initialize config factory")
+	app := cli.NewApp()
+	app.Name = "GNBSIM"
+	app.Usage = "./gnbsim -cfg [gnbsim configuration file]"
+	app.Action = action
+	app.Flags = getCliFlags()
+
+	logger.AppLog.Infoln("App Name:", app.Name)
+
+	if err := app.Run(os.Args); err != nil {
+		logger.AppLog.Errorln("Failed to run GNBSIM:", err)
 		return
 	}
+}
 
-	config := factory.AppConfig.Configuration
+func action(c *cli.Context) error {
+	cfg := c.String("cfg")
+	if cfg == "" {
+		logger.AppLog.Warnln("No configuration file provided. Using default configuration file:", factory.GNBSIM_DEFAULT_CONFIG_PATH)
+		logger.AppLog.Infoln("Application Usage:", c.App.Usage)
+		cfg = factory.GNBSIM_DEFAULT_CONFIG_PATH
+	}
+
+	if err := factory.InitConfigFactory(cfg); err != nil {
+		logger.AppLog.Errorln("Failed to initialize config factory:", err)
+		return err
+	}
+
+	config := factory.AppConfig
+	lvl := config.Logger.LogLevel
+	logger.AppLog.Infoln("Setting log level to:", lvl)
+	logger.SetLogLevel(lvl)
 
 	profile.InitializeAllProfiles()
 	err := gnodeb.InitializeAllGnbs()
 	if err != nil {
-		fmt.Println("Failed to initialize gNodeBs")
-		return
+		logger.AppLog.Errorln("Failed to initialize gNodeBs:", err)
+		return err
 	}
 
-	for _, profileCtx := range config.Profiles {
+	for _, profileCtx := range config.Configuration.Profiles {
 		if profileCtx.Enable {
 			logger.AppLog.Infoln("executing profile:", profileCtx.Name,
 				", profile type:", profileCtx.ProfileType)
@@ -96,5 +123,15 @@ func main() {
 				}
 			}
 		}
+	}
+	return nil
+}
+
+func getCliFlags() []cli.Flag {
+	return []cli.Flag{
+		cli.StringFlag{
+			Name:  "cfg",
+			Usage: "GNBSIM config file",
+		},
 	}
 }

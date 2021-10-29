@@ -65,12 +65,14 @@ func init() {
 	UtilLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Util"})
 	GtpLog = UtilLog.WithField("subcategory", "GTP")
 	NgapLog = UtilLog.WithField("subcategory", "NGAP")
-
-	SetLogLevel(logrus.TraceLevel)
 }
 
-func SetLogLevel(level logrus.Level) {
-	log.SetLevel(level)
+func SetLogLevel(level string) {
+	lvl, err := logrus.ParseLevel(level)
+	if err != nil {
+		AppLog.Fatalln("Failed to parse log level:", err)
+	}
+	log.SetLevel(lvl)
 }
 
 func SetReportCaller(set bool) {
