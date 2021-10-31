@@ -24,6 +24,7 @@ var (
 	CfgLog     *logrus.Entry
 	UtilLog    *logrus.Entry
 	GtpLog     *logrus.Entry
+	NgapLog    *logrus.Entry
 )
 
 const (
@@ -63,12 +64,15 @@ func init() {
 	CfgLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "CFG"})
 	UtilLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Util"})
 	GtpLog = UtilLog.WithField("subcategory", "GTP")
-
-	SetLogLevel(logrus.TraceLevel)
+	NgapLog = UtilLog.WithField("subcategory", "NGAP")
 }
 
-func SetLogLevel(level logrus.Level) {
-	log.SetLevel(level)
+func SetLogLevel(level string) {
+	lvl, err := logrus.ParseLevel(level)
+	if err != nil {
+		AppLog.Fatalln("Failed to parse log level:", err)
+	}
+	log.SetLevel(lvl)
 }
 
 func SetReportCaller(set bool) {

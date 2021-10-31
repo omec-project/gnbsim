@@ -74,8 +74,7 @@ func SendIcmpEchoRequest(pduSess *context.PduSession) (err error) {
 	payload := append(v4HdrBuf, b...)
 
 	userDataMsg := &common.UserDataMessage{}
-	userDataMsg.Event = common.DL_UE_DATA_TRANSFER_EVENT
-	userDataMsg.Interface = common.UU_INTERFACE
+	userDataMsg.Event = common.UL_UE_DATA_TRANSFER_EVENT
 	userDataMsg.Payload = payload
 	pduSess.WriteGnbChan <- userDataMsg
 	pduSess.TxDataPktCount++
@@ -148,9 +147,9 @@ func HandleDlMessage(pduSess *context.PduSession,
 }
 
 func HandleDataPktGenRequestEvent(pduSess *context.PduSession,
-	msg common.InterfaceMessage) (err error) {
-	cmd := msg.(*common.UuMessage)
-	pduSess.ReqDataPktCount = cmd.Extras.UserDataPktCount
+	intfcMsg common.InterfaceMessage) (err error) {
+	cmd := intfcMsg.(*common.UeMessage)
+	pduSess.ReqDataPktCount = cmd.UserDataPktCount
 	err = SendIcmpEchoRequest(pduSess)
 	if err != nil {
 		pduSess.Log.Errorln("SendIcmpEchoRequest() returned:", err)

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-package pdusessest
+package deregister
 
 import (
 	"gnbsim/common"
@@ -17,7 +17,7 @@ import (
 	// AJAY - Change required
 )
 
-func PduSessEst_test(profile *profctx.Profile) {
+func Deregister_test(profile *profctx.Profile) {
 	initEventMap(profile)
 	initProcedureList(profile)
 
@@ -54,12 +54,13 @@ func PduSessEst_test(profile *profctx.Profile) {
 // the procedures in the profile
 func initEventMap(profile *profctx.Profile) {
 	profile.Events = map[common.EventType]common.EventType{
-		common.REG_REQUEST_EVENT:          common.AUTH_REQUEST_EVENT,
-		common.AUTH_REQUEST_EVENT:         common.AUTH_RESPONSE_EVENT,
-		common.SEC_MOD_COMMAND_EVENT:      common.SEC_MOD_COMPLETE_EVENT,
-		common.REG_ACCEPT_EVENT:           common.REG_COMPLETE_EVENT,
-		common.PDU_SESS_EST_REQUEST_EVENT: common.PDU_SESS_EST_ACCEPT_EVENT,
-		common.PDU_SESS_EST_ACCEPT_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
+		common.REG_REQUEST_EVENT:           common.AUTH_REQUEST_EVENT,
+		common.AUTH_REQUEST_EVENT:          common.AUTH_RESPONSE_EVENT,
+		common.SEC_MOD_COMMAND_EVENT:       common.SEC_MOD_COMPLETE_EVENT,
+		common.REG_ACCEPT_EVENT:            common.REG_COMPLETE_EVENT,
+		common.PDU_SESS_EST_REQUEST_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
+		common.PDU_SESS_EST_ACCEPT_EVENT:   common.PDU_SESS_EST_ACCEPT_EVENT,
+		common.DEREG_REQUEST_UE_ORIG_EVENT: common.DEREG_ACCEPT_UE_ORIG_EVENT,
 	}
 }
 
@@ -68,5 +69,6 @@ func initProcedureList(profile *profctx.Profile) {
 		common.REGISTRATION_PROCEDURE,
 		common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
 		common.USER_DATA_PKT_GENERATION_PROCEDURE,
+		common.UE_INITIATED_DEREGISTRATION_PROCEDURE,
 	}
 }

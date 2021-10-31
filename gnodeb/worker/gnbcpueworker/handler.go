@@ -21,15 +21,22 @@ import (
 	"github.com/free5gc/ngap/ngapType"
 )
 
-func HandleConnectRequest(gnbue *context.GnbCpUe, msg *common.UuMessage) {
+func HandleConnectRequest(gnbue *context.GnbCpUe,
+	intfcMsg common.InterfaceMessage) {
+
 	gnbue.Log.Traceln("Handling Connection Request Event from Ue")
+
+	msg := intfcMsg.(*common.UuMessage)
 	gnbue.Supi = msg.Supi
 	gnbue.WriteUeChan = msg.CommChan
 }
 
-func HandleInitialUEMessage(gnbue *context.GnbCpUe, msg *common.UuMessage) {
+func HandleInitialUEMessage(gnbue *context.GnbCpUe,
+	intfcMsg common.InterfaceMessage) {
+
 	gnbue.Log.Traceln("Handling Initial UE Event")
 
+	msg := intfcMsg.(*common.UuMessage)
 	sendMsg, err := test.GetInitialUEMessage(gnbue.GnbUeNgapId, msg.NasPdus[0], "")
 	if err != nil {
 		gnbue.Log.Errorln("GetInitialUEMessage failed:", err)
@@ -44,18 +51,17 @@ func HandleInitialUEMessage(gnbue *context.GnbCpUe, msg *common.UuMessage) {
 	gnbue.Log.Traceln("Sent Initial UE Message to AMF")
 }
 
-func HandleDownlinkNasTransport(gnbue *context.GnbCpUe, msg *common.N2Message) {
+func HandleDownlinkNasTransport(gnbue *context.GnbCpUe,
+	intfcMsg common.InterfaceMessage) {
+
 	gnbue.Log.Traceln("Handling Downlink NAS Transport Message")
 
+	msg := intfcMsg.(*common.N2Message)
 	// Need not perform other checks as they are validated at gnbamfworker level
 	var amfUeNgapId *ngapType.AMFUENGAPID
 	var nasPdu *ngapType.NASPDU
 
 	pdu := msg.NgapPdu
-	if pdu == nil {
-		gnbue.Log.Errorln("NgapPdu is nil")
-		return
-	}
 
 	// Null checks are already performed at gnbamfworker level
 	initiatingMessage := pdu.InitiatingMessage
@@ -87,9 +93,12 @@ func HandleDownlinkNasTransport(gnbue *context.GnbCpUe, msg *common.N2Message) {
 	gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
 }
 
-func HandleUlInfoTransfer(gnbue *context.GnbCpUe, msg *common.UuMessage) {
+func HandleUlInfoTransfer(gnbue *context.GnbCpUe,
+	intfcMsg common.InterfaceMessage) {
+
 	gnbue.Log.Traceln("Handling UL Information Transfer Event")
 
+	msg := intfcMsg.(*common.UuMessage)
 	gnbue.Log.Traceln("Creating Uplink NAS Transport Message")
 	sendMsg, err := test.GetUplinkNASTransport(gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, msg.NasPdus[0])
 	if err != nil {
@@ -105,17 +114,16 @@ func HandleUlInfoTransfer(gnbue *context.GnbCpUe, msg *common.UuMessage) {
 	gnbue.Log.Traceln("Sent Uplink NAS Transport Message to AMF")
 }
 
-func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe, msg *common.N2Message) {
+func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe,
+	intfcMsg common.InterfaceMessage) {
+
 	gnbue.Log.Traceln("Handling Initial Context Setup Request Message")
 
+	msg := intfcMsg.(*common.N2Message)
 	var amfUeNgapId *ngapType.AMFUENGAPID
 	var nasPdu *ngapType.NASPDU
 
 	pdu := msg.NgapPdu
-	if pdu == nil {
-		gnbue.Log.Errorln("NgapPdu is nil")
-		return
-	}
 
 	// Null checks are already performed at gnbamfworker level
 	initiatingMessage := pdu.InitiatingMessage
@@ -159,18 +167,17 @@ func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe, msg *common.N2Mess
 }
 
 // TODO: Error handling
-func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe, msg *common.N2Message) {
+func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe,
+	intfcMsg common.InterfaceMessage) {
+
 	gnbue.Log.Traceln("Handling PDU Session Resource Setup Request Message")
 
+	msg := intfcMsg.(*common.N2Message)
 	var amfUeNgapId *ngapType.AMFUENGAPID
 	var nasPdus common.NasPduList
 	var pduSessResourceSetupReqList *ngapType.PDUSessionResourceSetupListSUReq
 
 	pdu := msg.NgapPdu
-	if pdu == nil {
-		gnbue.Log.Errorln("NgapPdu is nil")
-		return
-	}
 
 	initiatingMessage := pdu.InitiatingMessage
 	pduSessResourceSetupReq := initiatingMessage.Value.PDUSessionResourceSetupRequest
@@ -193,7 +200,7 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe, msg *common.N2Mes
 	}
 
 	//var pduSessions []ngapTestpacket.PduSession
-	var upDataSet []*common.UserPlaneData
+	var dbParamSet []*common.DataBearerParams
 
 	// supporting only one pdu session currently
 	for _, item := range pduSessResourceSetupReqList.List[:1] {
@@ -295,10 +302,10 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe, msg *common.N2Mes
 		gnbue.AddGnbUpUe(gnbupue.PduSessId, gnbupue)
 
 		//pduSessions = append(pduSessions, pduSess)
-		upData := &common.UserPlaneData{}
-		upData.CommChan = gnbupue.ReadUlChan
-		upData.PduSess = pduSess
-		upDataSet = append(upDataSet, upData)
+		dbParam := &common.DataBearerParams{}
+		dbParam.CommChan = gnbupue.ReadUlChan
+		dbParam.PduSess = pduSess
+		dbParamSet = append(dbParamSet, dbParam)
 	}
 
 	SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, nasPdus)
@@ -310,17 +317,19 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe, msg *common.N2Mes
 	time.Sleep(500 * time.Millisecond)
 	uemsg := common.UuMessage{}
 	uemsg.Event = common.DATA_BEARER_SETUP_REQUEST_EVENT
-	uemsg.Interface = common.UU_INTERFACE
-	uemsg.UPData = upDataSet
+	uemsg.DBParams = dbParamSet
 	gnbue.WriteUeChan <- &uemsg
 	gnbue.Log.Infoln("Sent Data Radio Bearer Setup Event to Ue")
 }
 
-func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe, msg *common.UuMessage) {
+func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe,
+	intfcMsg common.InterfaceMessage) {
+
 	gnbue.Log.Traceln("Handling Initial UE Event")
 
+	msg := intfcMsg.(*common.UuMessage)
 	var pduSessions []*ngapTestpacket.PduSession
-	for _, item := range msg.UPData {
+	for _, item := range msg.DBParams {
 		pduSess := item.PduSess
 		if !pduSess.Success {
 			gnbue.RemoveGnbUpUe(pduSess.PduSessId)
@@ -349,4 +358,70 @@ func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe, msg *common.UuMessage
 		return
 	}
 	gnbue.Log.Traceln("Sent PDU Session Resource Setup Response Message to AMF")
+}
+
+func HandleUeCtxReleaseCommand(gnbue *context.GnbCpUe,
+	intfcMsg common.InterfaceMessage) {
+
+	gnbue.Log.Traceln("Handling UE Context Release Command Message")
+
+	msg := intfcMsg.(*common.N2Message)
+	var ueNgapIds *ngapType.UENGAPIDs
+	var amfUeNgapId ngapType.AMFUENGAPID
+	var cause *ngapType.Cause
+
+	pdu := msg.NgapPdu
+
+	// Null checks are already performed at gnbamfworker level
+	initiatingMessage := pdu.InitiatingMessage
+	ueCtxRelCmd := initiatingMessage.Value.UEContextReleaseCommand
+
+	for _, ie := range ueCtxRelCmd.ProtocolIEs.List {
+		switch ie.Id.Value {
+		case ngapType.ProtocolIEIDUENGAPIDs:
+			ueNgapIds = ie.Value.UENGAPIDs
+			if ueNgapIds == nil {
+				gnbue.Log.Errorln("UENGAPIDs is nil")
+				return
+			}
+		case ngapType.ProtocolIEIDCause:
+			cause = ie.Value.Cause
+			if cause == nil {
+				gnbue.Log.Errorln("Cause is nil")
+				return
+			}
+		}
+	}
+
+	test.PrintAndGetCause(cause)
+
+	if ueNgapIds.Present == ngapType.UENGAPIDsPresentUENGAPIDPair {
+		amfUeNgapId = ueNgapIds.UENGAPIDPair.AMFUENGAPID
+		if gnbue.AmfUeNgapId != amfUeNgapId.Value {
+			gnbue.Log.Errorln("AmfUeNgapId mismatch")
+		}
+	}
+
+	var pduSessIds []int64
+	f := func(k interface{}, v interface{}) bool {
+		pduSessIds = append(pduSessIds, k.(int64))
+		return true
+	}
+	gnbue.GnbUpUes.Range(f)
+
+	ngapPdu, err := test.GetUEContextReleaseComplete(gnbue.AmfUeNgapId,
+		gnbue.GnbUeNgapId, pduSessIds)
+	if err != nil {
+		fmt.Println("Failed to create UE Context Release Complete message")
+		return
+	}
+
+	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, ngapPdu)
+	if err != nil {
+		gnbue.Log.Errorln("SendToPeer failed:", err)
+		return
+	}
+	gnbue.Log.Traceln("Sent UE Context Release Complete Message to AMF")
+
+	SendToUe(gnbue, common.CTX_RELEASE_ACKNOWLEDGEMENT_EVENT, nil)
 }

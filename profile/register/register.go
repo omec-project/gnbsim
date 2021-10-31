@@ -43,7 +43,7 @@ func Register_test(profile *profctx.Profile) {
 			profile.Log.Infoln("Result: PASS, SimUe:", msg.Supi)
 		case common.PROFILE_FAIL_EVENT:
 			profile.Log.Infoln("Result: FAIL, SimUe:", msg.Supi, "Failed Procedure:",
-				msg.Proc, "Error:", msg.ErrorMsg)
+				msg.Proc, "Error:", msg.Error)
 		}
 		time.Sleep(2 * time.Second)
 		imsi++

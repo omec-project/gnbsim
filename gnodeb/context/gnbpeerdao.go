@@ -40,7 +40,7 @@ func (dao *GnbPeerDao) GetGnbUpf(ip string) *GnbUpf {
 	if ok {
 		return val.(*GnbUpf)
 	} else {
-		dao.Log.Errorln("key not present:", ip)
+		dao.Log.Warnln("key not present:", ip)
 		return nil
 	}
 }

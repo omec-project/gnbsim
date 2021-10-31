@@ -30,7 +30,7 @@ func NgSetup_test(profile *profCtx.Profile) {
 
 	gnbamf := context.NewGnbAmf(addrs[0], context.NGAP_SCTP_PORT)
 
-	err = gnodeb.ConnectToAmf(gnb, gnbamf)
+	err = gnb.CpTransport.ConnectToPeer(gnbamf)
 	if err != nil {
 		profile.Log.Errorln("ConnectToAmf returned:", err)
 		return

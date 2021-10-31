@@ -13,6 +13,5 @@ import (
 func SendToSimUe(simUe *simueCtx.SimUe, event common.EventType) {
 	msg := &common.ProfileMessage{}
 	msg.Event = event
-	msg.Interface = common.PROFILE_SIMUE_INTERFACE
 	simUe.ReadChan <- msg
 }

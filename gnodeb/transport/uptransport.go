@@ -136,3 +136,7 @@ func (upTprt *GnbUpTransport) CheckTransportParam(peer transportcommon.Transport
 func (upTprt *GnbUpTransport) SendToPeerBlock(peer transportcommon.TransportPeer, pkt []byte) ([]byte, error) {
 	return nil, nil
 }
+
+func (upTprt *GnbUpTransport) ConnectToPeer(peer transportcommon.TransportPeer) error {
+	return nil
+}

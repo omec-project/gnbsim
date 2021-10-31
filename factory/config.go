@@ -18,13 +18,13 @@ import (
 
 const (
 	GNBSIM_EXPECTED_CONFIG_VERSION string = "1.0.0"
-	GNBSIM_DEFAULT_CONFIG_PATH            = "config/gnbsim.yaml"
+	GNBSIM_DEFAULT_CONFIG_PATH            = "/free5gc/config/gnb.conf"
 )
 
 type Config struct {
 	Info          *Info          `yaml:"info"`
 	Configuration *Configuration `yaml:"configuration"`
-	// TODO: Add Logger Config
+	Logger        *Logger        `yaml: "logger"`
 }
 
 type Info struct {
@@ -35,6 +35,10 @@ type Info struct {
 type Configuration struct {
 	Gnbs     map[string]*gnbctx.GNodeB `yaml:"gnbs"`
 	Profiles []*profctx.Profile        `yaml:"profiles"`
+}
+
+type Logger struct {
+	LogLevel string `yaml:"logLevel"`
 }
 
 func (c *Config) GetVersion() string {

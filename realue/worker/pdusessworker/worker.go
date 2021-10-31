@@ -31,10 +31,12 @@ func Init(pduSess *context.PduSession) {
 	}
 }
 
-func HandleCommand(pduSess *context.PduSession, msg common.InterfaceMessage) (err error) {
+func HandleCommand(pduSess *context.PduSession,
+	msg common.InterfaceMessage) (err error) {
+
 	pduSess.Log.Infoln("Handling event:", msg.GetEventType())
-	uemsg := msg.(*common.UuMessage)
-	switch uemsg.GetEventType() {
+
+	switch msg.GetEventType() {
 	case common.DATA_PKT_GEN_REQUEST_EVENT:
 		err = HandleDataPktGenRequestEvent(pduSess, msg)
 		if err != nil {

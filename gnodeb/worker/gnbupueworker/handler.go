@@ -44,7 +44,6 @@ func HandleDlMessage(gnbue *context.GnbUpUe, msg common.InterfaceMessage) (err e
 	*/
 
 	userDataMsg.Event = common.DL_UE_DATA_TRANSFER_EVENT
-	userDataMsg.Interface = common.UU_INTERFACE
 	gnbue.WriteUeChan <- userDataMsg
 	gnbue.Log.Infoln("Sent DL user data packet to UE")
 

@@ -11,7 +11,9 @@ import (
 	"gnbsim/gnodeb/worker/gnbamfworker"
 	"gnbsim/logger"
 	"gnbsim/transportcommon"
+	"gnbsim/util/test"
 	"io"
+	"net"
 	"syscall"
 
 	"git.cs.nctu.edu.tw/calee/sctp"
@@ -38,6 +40,36 @@ func NewGnbCpTransport(gnb *context.GNodeB) *GnbCpTransport {
 	transport.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "ControlPlaneTransport"})
 
 	return transport
+}
+
+// ConnectToPeer establishes SCTP connection with the AMF
+func (cpTprt *GnbCpTransport) ConnectToPeer(peer transportcommon.TransportPeer) (err error) {
+	cpTprt.Log.Traceln("Connecting to AMF")
+
+	amf := peer.(*context.GnbAmf)
+	gnb := cpTprt.GnbInstance
+
+	if amf.AmfIp == "" {
+		if amf.AmfHostName == "" {
+			return fmt.Errorf("amf ip or host name not configured")
+		}
+		addrs, err := net.LookupHost(amf.AmfHostName)
+		if err != nil {
+			return fmt.Errorf("failed to resolve amf host name: %v, err: %v",
+				amf.AmfHostName, err)
+		}
+		amf.AmfIp = addrs[0]
+	}
+
+	amf.Conn, err = test.ConnectToAmf(amf.AmfIp, gnb.GnbN2Ip, int(amf.AmfPort),
+		int(gnb.GnbN2Port))
+	if err != nil {
+		return fmt.Errorf("failed to connect amf, ip: %v, port: %v, err: %v",
+			amf.AmfIp, amf.AmfPort, err)
+	}
+
+	cpTprt.Log.Infoln("Connected to AMF, AMF IP:", amf.AmfIp, "AMF Port:", amf.AmfPort)
+	return
 }
 
 //TODO Should add timeout

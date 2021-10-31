@@ -26,6 +26,7 @@ require (
 	github.com/omec-project/nas v1.0.3-gnbsim
 	github.com/sirupsen/logrus v1.7.0
 	github.com/ugorji/go v1.2.3 // indirect
+	github.com/urfave/cli v1.22.4
 	github.com/yerden/go-util v1.1.4
 	go.mongodb.org/mongo-driver v1.4.4
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
