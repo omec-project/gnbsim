@@ -16,8 +16,22 @@ configuration:
       n3IpAddr: 192.168.251.5 # gNB N3 interface IP address used to connect to UPF
       n3Port: 2152 # gNB N3 Port used to connect to UPF
       name: gnb1 # gNB name that uniquely identify a gNB within application
-      gnbId: 000102 # gNB identifier (3 bytes hex string, range: 000000~FFFFFF)
-      tac: 000001 # Tracking Area Code (3 bytes hex string, range: 000000~FFFFFF)
+      globalRanId:
+        plmnId:
+          mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
+          mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+        gNbId: 
+          bitLength: 24
+          gNBValue: 000102 # gNB identifier (3 bytes hex string, range: 000000~FFFFFF)
+      supportedTaList:
+        - tac: 000001 # Tracking Area Code (3 bytes hex string, range: 000000~FFFFFF)
+          broadcastPlmnList:
+            - plmnId:
+                mcc: 208
+                mnc: 93
+              taiSliceSupportList:
+                - sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+                  sd: 010203 # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       defaultAmf:
         hostName: amf # Host name of AMF
         ipAddr: # AMF IP address

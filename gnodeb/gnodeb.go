@@ -6,17 +6,16 @@
 package gnodeb
 
 import (
-	"encoding/hex"
 	"fmt"
 	"gnbsim/common"
 	"gnbsim/factory"
 	"gnbsim/gnodeb/context"
 	"gnbsim/gnodeb/idrange"
+	"gnbsim/gnodeb/ngap"
 	"gnbsim/gnodeb/transport"
 	"gnbsim/gnodeb/worker/gnbamfworker"
 	"gnbsim/gnodeb/worker/gnbcpueworker"
 	"gnbsim/logger"
-	"gnbsim/util/test"
 	"log"
 
 	"github.com/free5gc/idgenerator"
@@ -90,20 +89,9 @@ func PerformNgSetup(gnb *context.GNodeB, amf *context.GnbAmf) (bool, error) {
 	gnb.Log.Traceln("Performing NG Setup Procedure")
 
 	var status bool
-	tac, err := hex.DecodeString(gnb.Tac)
-	if err != nil {
-		gnb.Log.Errorln("DecodeString returned:", err)
-		return status, fmt.Errorf("invalid TAC")
-	}
-
-	gnbId, err := hex.DecodeString(gnb.GnbId)
-	if err != nil {
-		gnb.Log.Errorln("DecodeString returned:", err)
-		return status, fmt.Errorf("invalid gNB ID")
-	}
 
 	// Forming NGSetupRequest
-	ngSetupReq, err := test.GetNGSetupRequest(tac, gnbId, 24, gnb.GnbName)
+	ngSetupReq, err := ngap.GetNGSetupRequest(gnb)
 	if err != nil {
 		gnb.Log.Errorln("GetNGSetupRequest returned:", err)
 		return status, fmt.Errorf("failed to create ng setup request")
