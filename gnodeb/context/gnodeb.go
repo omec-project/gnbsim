@@ -9,6 +9,7 @@ import (
 	transport "gnbsim/transportcommon"
 
 	"github.com/free5gc/idgenerator"
+	"github.com/free5gc/openapi/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,13 +17,13 @@ import (
 // user plane layer of a gNodeB.
 type GNodeB struct {
 	//TODO IP and port should be the property of transport var
-	GnbN2Ip              string `yaml:"n2IpAddr"`
-	GnbN2Port            int    `yaml:"n2Port"`
-	GnbN3Ip              string `yaml:"n3IpAddr"`
-	GnbN3Port            int    `yaml:"n3Port"`
-	GnbName              string `yaml:"name"`
-	GnbId                string `yaml:"gnbId"`
-	Tac                  string `yaml:"tac"`
+	GnbN2Ip              string                 `yaml:"n2IpAddr"`
+	GnbN2Port            int                    `yaml:"n2Port"`
+	GnbN3Ip              string                 `yaml:"n3IpAddr"`
+	GnbN3Port            int                    `yaml:"n3Port"`
+	GnbName              string                 `yaml:"name"`
+	RanId                models.GlobalRanNodeId `yaml:"globalRanId"`
+	SupportedTaList      []SupportedTA          `yaml:"supportedTaList"`
 	GnbUes               *GnbUeDao
 	GnbPeers             *GnbPeerDao
 	RanUeNGAPIDGenerator *idgenerator.IDGenerator
@@ -50,4 +51,14 @@ func (gnb *GNodeB) GetDefaultAmf() *GnbAmf {
 
 func (gnb *GNodeB) AllocateRanUeNgapID() (int64, error) {
 	return gnb.RanUeNGAPIDGenerator.Allocate()
+}
+
+type SupportedTA struct {
+	Tac               string              `yaml:"tac"`
+	BroadcastPLMNList []BroadcastPLMNItem `yaml:"broadcastPlmnList"`
+}
+
+type BroadcastPLMNItem struct {
+	PlmnId              models.PlmnId   `yaml:"plmnId"`
+	TaiSliceSupportList []models.Snssai `yaml:"taiSliceSupportList"`
 }
