@@ -7,9 +7,10 @@ SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 The GNBSIM tool simulates gNodeB and UE by generating NAS and NGAP messages for 
 the configured UEs and call flows. It currently supports Registration, UE 
-initiated PDU Session Establishment Procedures and is capable to generate and 
-send a user data packet (ICMP echo request) and process downlink user data 
-(ICMP echo response) over the established data plane path (N3 Tunnel). 
+initiated PDU Session Establishment, UE Initiated Deregistration procedures and 
+is capable to generate and send a user data packet (ICMP echo request) and 
+process downlink user data (ICMP echo response) over the established data plane 
+path (N3 Tunnel). 
 To simulate other call flows, kindly use the following docker image:
     ajaythakuronf/5gc-gnbsim:0.0.9-dev
 
@@ -59,4 +60,11 @@ To simulate other call flows, kindly use the following docker image:
     Once GNBSIM is started, get into GNBSIM pod by running
     $ kubectl exec -it gnbsim-0 -n omec bash
     After entering the pod run,
+    
     $ ./gnbsim
+    
+    Note: By default, the gNB Sim reads the configuration from 
+    /free5gc/config/gnb.conf file. To provide a different configuration file,
+    use the below command
+
+    $ ./gnbsim --cfg config/gnbsim.yaml

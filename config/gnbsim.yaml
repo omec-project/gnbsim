@@ -42,7 +42,7 @@ configuration:
       enable: false # Set true to execute the profile, false otherwise.
       gnbName: gnb1 # gNB to be used for this profile
       startImsi: 2089300007487
-      ueCount: 1
+      ueCount: 5
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
@@ -50,8 +50,8 @@ configuration:
       profileName: profile2 # uniqely identifies a profile within application
       enable: true # Set true to execute the profile, false otherwise.
       gnbName: gnb1 # gNB to be used for this profile
-      startImsi: 2089300007487 # First IMSI. Subsequent values will be used if ueCount is more than 1
-      ueCount: 1 # Number of UEs for for which the profile will be executed
+      startImsi: 2089300007492 # First IMSI. Subsequent values will be used if ueCount is more than 1
+      ueCount: 5 # Number of UEs for for which the profile will be executed
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
@@ -60,8 +60,8 @@ configuration:
       profileName: profile3 # uniqely identifies a profile within application
       enable: false # Set true to execute the profile, false otherwise.
       gnbName: gnb1 # gNB to be used for this profile
-      startImsi: 2089300007487 # First IMSI. Subsequent values will be used if ueCount is more than 1
-      ueCount: 1 # Number of UEs for for which the profile will be executed
+      startImsi: 2089300007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
+      ueCount: 5 # Number of UEs for for which the profile will be executed
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
