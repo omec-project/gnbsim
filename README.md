@@ -39,7 +39,7 @@ To simulate other call flows, kindly use the following docker image:
 ## Step 2: Build GNBSIM
     1. To modify GNBSIM within a container run 
         
-        $ kubectl exec -it gnbsim-0 -n GNBSIM bash
+        $ kubectl exec -it gnbsim-0 -n omec bash
         make required changes and run
         $ go build
     

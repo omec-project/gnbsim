@@ -64,3 +64,24 @@ func GetNGSetupRequest(gnb *context.GNodeB) ([]byte, error) {
 
 	return ngap.Encoder(message)
 }
+
+func GetUEContextReleaseRequest(gnbue *context.GnbCpUe) ([]byte, error) {
+	var pduSessIds []int64
+	f := func(k interface{}, v interface{}) bool {
+		pduSessIds = append(pduSessIds, k.(int64))
+		return true
+	}
+
+	gnbue.GnbUpUes.Range(f)
+
+	message := ngapTestpacket.BuildUEContextReleaseRequest(gnbue.AmfUeNgapId,
+		gnbue.GnbUeNgapId, pduSessIds)
+
+	lst := message.InitiatingMessage.Value.UEContextReleaseRequest.ProtocolIEs.List
+
+	// Cause
+	ie := lst[len(lst)-1]
+	ie.Value.Cause.RadioNetwork.Value = ngapType.CauseRadioNetworkPresentUserInactivity
+
+	return ngap.Encoder(message)
+}

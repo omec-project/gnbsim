@@ -10,6 +10,7 @@ import (
 	"gnbsim/gnodeb"
 	"gnbsim/logger"
 	"gnbsim/profile"
+	"gnbsim/profile/anrelease"
 	"gnbsim/profile/deregister"
 	"gnbsim/profile/ngsetup"
 	"gnbsim/profile/pdusessest"
@@ -76,6 +77,10 @@ func action(c *cli.Context) error {
 			case "pdusessest":
 				{
 					pdusessest.PduSessEst_test(profileCtx)
+				}
+			case "anrelease":
+				{
+					anrelease.AnRelease_test(profileCtx)
 				}
 			case "deregister":
 				{

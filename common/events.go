@@ -15,7 +15,7 @@ const (
 	N2_EVENT EventType = 0x3000000
 	N3_EVENT EventType = 0x4000000
 
-	/* Application interface events */
+	/* Application's interfaces events */
 	PROFILE_SIMUE_EVENT EventType = 0x5000000
 	SIMUE_REALUE_EVENT  EventType = 0x6000000
 )
@@ -50,6 +50,10 @@ const (
 
 	// gNB acknowledges simue for releasing UE context using this event
 	CTX_RELEASE_ACKNOWLEDGEMENT_EVENT
+
+	// SimUe commands gNB to trigger RAN Connection release which further
+	// triggers gNB initiated UE Context Release Request
+	RAN_CONNECTION_RELEASE_EVENT
 )
 
 /* Events betweem UE and AMF (N1)
