@@ -310,5 +310,10 @@ func HandleProcedure(ue *context.SimUe) {
 		msg := &common.UeMessage{}
 		msg.Event = common.DEREG_REQUEST_UE_ORIG_EVENT
 		SendToRealUe(ue, msg)
+	case common.AN_RELEASE_PROCEDURE:
+		ue.Log.Infoln("Initiating AN Release Procedure")
+		msg := &common.UeMessage{}
+		msg.Event = common.RAN_CONNECTION_RELEASE_EVENT
+		SendToGnbUe(ue, msg)
 	}
 }

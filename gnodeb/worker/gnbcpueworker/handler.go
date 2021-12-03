@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"gnbsim/common"
 	"gnbsim/gnodeb/context"
+	"gnbsim/gnodeb/ngap"
 	"gnbsim/gnodeb/worker/gnbupfworker"
 	"gnbsim/gnodeb/worker/gnbupueworker"
 	"gnbsim/util/ngapTestpacket"
@@ -424,4 +425,27 @@ func HandleUeCtxReleaseCommand(gnbue *context.GnbCpUe,
 	gnbue.Log.Traceln("Sent UE Context Release Complete Message to AMF")
 
 	SendToUe(gnbue, common.CTX_RELEASE_ACKNOWLEDGEMENT_EVENT, nil)
+}
+
+func HandleRanConnectionRelease(gnbue *context.GnbCpUe,
+	intfcMsg common.InterfaceMessage) {
+
+	// Todo: The cause for the RAN connection release should
+	// be sent by the Sim-UE and inturn through configuration
+	gnbue.Log.Traceln("Handling RAN Connection Release Event")
+
+	gnbue.Log.Traceln("Creating UE Context Release Request")
+
+	sendMsg, err := ngap.GetUEContextReleaseRequest(gnbue)
+	if err != nil {
+		gnbue.Log.Errorln("GetUplinkNASTransport failed:", err)
+		return
+	}
+	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg)
+	if err != nil {
+		gnbue.Log.Errorln("SendToPeer failed:", err)
+		return
+	}
+
+	gnbue.Log.Traceln("Sent Uplink NAS Transport Message to AMF")
 }

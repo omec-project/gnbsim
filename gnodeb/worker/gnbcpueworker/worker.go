@@ -46,6 +46,8 @@ func HandleMessage(gnbue *context.GnbCpUe, msg common.InterfaceMessage) (err err
 		HandlePduSessResourceSetupRequest(gnbue, msg)
 	case common.UE_CTX_RELEASE_COMMAND_EVENT:
 		HandleUeCtxReleaseCommand(gnbue, msg)
+	case common.RAN_CONNECTION_RELEASE_EVENT:
+		HandleRanConnectionRelease(gnbue, msg)
 	default:
 		gnbue.Log.Infoln("Event", msg.GetEventType(), "is not supported")
 	}
