@@ -15,6 +15,7 @@ import (
 	"gnbsim/profile/ngsetup"
 	"gnbsim/profile/pdusessest"
 	"gnbsim/profile/register"
+	"gnbsim/profile/uetriggservicereq"
 	"os"
 
 	"github.com/urfave/cli"
@@ -81,6 +82,10 @@ func action(c *cli.Context) error {
 			case "anrelease":
 				{
 					anrelease.AnRelease_test(profileCtx)
+				}
+			case "uetriggservicereq":
+				{
+					uetriggservicereq.UeTriggServiceReq_test(profileCtx)
 				}
 			case "deregister":
 				{
