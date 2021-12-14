@@ -6,6 +6,7 @@
 package simue
 
 import (
+	"fmt"
 	"gnbsim/common"
 	"gnbsim/simue/context"
 	"time"
@@ -22,7 +23,7 @@ func HandleProfileStartEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleRegReqEvent(ue *context.SimUe,
+func HandleRegRequestEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	ue.Log.Traceln("Handling Registration Request Event")
@@ -275,6 +276,22 @@ func HandleDataPktGenFailureEvent(ue *context.SimUe,
 	return nil
 }
 
+func HandleServiceRequestEvent(ue *context.SimUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	ue.Log.Traceln("Handling Service Request Event")
+
+	err = ConnectToGnb(ue)
+	if err != nil {
+		return fmt.Errorf("failed to connect gnb:", err)
+	}
+
+	SendToGnbUe(ue, intfcMsg)
+
+	ue.Log.Traceln("Sent Service Request Event to GnbUe")
+	return nil
+}
+
 func ChangeProcedure(ue *context.SimUe) {
 	nextProcedure := ue.ProfileCtx.GetNextProcedure(ue.Procedure)
 	if nextProcedure != 0 {
@@ -315,5 +332,10 @@ func HandleProcedure(ue *context.SimUe) {
 		msg := &common.UeMessage{}
 		msg.Event = common.RAN_CONNECTION_RELEASE_EVENT
 		SendToGnbUe(ue, msg)
+	case common.UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE:
+		ue.Log.Infoln("Initiating UE Triggered Service Request Procedure")
+		msg := &common.UeMessage{}
+		msg.Event = common.SERVICE_REQUEST_EVENT
+		SendToRealUe(ue, msg)
 	}
 }

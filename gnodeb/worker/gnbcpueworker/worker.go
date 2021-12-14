@@ -32,7 +32,7 @@ func HandleMessage(gnbue *context.GnbCpUe, msg common.InterfaceMessage) (err err
 	switch msg.GetEventType() {
 	case common.CONNECT_REQUEST_EVENT:
 		HandleConnectRequest(gnbue, msg)
-	case common.REG_REQUEST_EVENT:
+	case common.REG_REQUEST_EVENT, common.SERVICE_REQUEST_EVENT:
 		HandleInitialUEMessage(gnbue, msg)
 	case common.UL_INFO_TRANSFER_EVENT:
 		HandleUlInfoTransfer(gnbue, msg)

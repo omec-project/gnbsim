@@ -50,7 +50,7 @@ func ConnectToGnb(simUe *context.SimUe) error {
 	gNb := simUe.GnB
 	simUe.WriteGnbUeChan, err = gnodeb.RequestConnection(gNb, &uemsg)
 	if err != nil {
-		return fmt.Errorf("failed to establish connection with gnb, err: %v", err)
+		return err
 	}
 
 	simUe.Log.Infof("Connected to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
@@ -67,7 +67,7 @@ func HandleEvent(ue *context.SimUe, msg common.InterfaceMessage) (err error) {
 
 	switch msg.GetEventType() {
 	case common.REG_REQUEST_EVENT:
-		err = HandleRegReqEvent(ue, msg)
+		err = HandleRegRequestEvent(ue, msg)
 	case common.AUTH_REQUEST_EVENT:
 		err = HandleAuthRequestEvent(ue, msg)
 	case common.AUTH_RESPONSE_EVENT:
@@ -100,6 +100,8 @@ func HandleEvent(ue *context.SimUe, msg common.InterfaceMessage) (err error) {
 		err = HandleDataPktGenSuccessEvent(ue, msg)
 	case common.DATA_PKT_GEN_FAILURE_EVENT:
 		err = HandleDataPktGenFailureEvent(ue, msg)
+	case common.SERVICE_REQUEST_EVENT:
+		err = HandleServiceRequestEvent(ue, msg)
 	case common.PROFILE_START_EVENT:
 		err = HandleProfileStartEvent(ue, msg)
 	default:

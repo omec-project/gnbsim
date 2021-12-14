@@ -66,6 +66,8 @@ func HandleEvent(ue *context.RealUe, msg common.InterfaceMessage) (err error) {
 		err = HandleDataPktGenRequestEvent(ue, msg)
 	case common.DATA_PKT_GEN_SUCCESS_EVENT:
 		err = HandleDataPktGenSuccessEvent(ue, msg)
+	case common.SERVICE_REQUEST_EVENT:
+		err = HandleServiceRequestEvent(ue, msg)
 	default:
 		ue.Log.Infoln("Event", event, "is not supported")
 	}
