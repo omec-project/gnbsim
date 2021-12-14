@@ -14,6 +14,8 @@ import (
 	"gnbsim/util/test"
 	"net"
 
+	realue_nas "gnbsim/realue/nas"
+
 	"github.com/free5gc/nas/nasMessage"
 	"github.com/free5gc/nas/nasTestpacket"
 	"github.com/free5gc/nas/nasType"
@@ -336,5 +338,25 @@ func HandleDlInfoTransferEvent(ue *context.RealUe,
 		SendToSimUe(ue, m)
 		ue.Log.Infoln("Notified SimUe for message type:", msgType)
 	}
+	return nil
+}
+
+func HandleServiceRequestEvent(ue *context.RealUe,
+	msg common.InterfaceMessage) (err error) {
+
+	ue.Log.Traceln("Handling Service Request Event")
+
+	nasPdu, err := realue_nas.GetServiceRequest(ue)
+	if err != nil {
+		return fmt.Errorf("failed to handle service request event:", err)
+	}
+	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu, nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt nas pdu")
+	}
+
+	m := formUuMessage(common.SERVICE_REQUEST_EVENT, nasPdu)
+	SendToSimUe(ue, m)
+	ue.Log.Traceln("Sent Service Request Message to SimUe")
 	return nil
 }
