@@ -21,6 +21,7 @@ func GetServiceRequest(ue *context.RealUe) ([]byte, error) {
 	serviceRequest := nasMsg.GmmMessage.ServiceRequest
 
 	guti := nasConvert.GutiToNas(ue.Guti)
+	serviceRequest.SetTypeOfIdentity(nasMessage.MobileIdentity5GSType5gSTmsi)
 	serviceRequest.SetAMFSetID(guti.GetAMFSetID())
 	serviceRequest.SetAMFPointer(guti.GetAMFPointer())
 	serviceRequest.SetTMSI5G(guti.GetTMSI5G())

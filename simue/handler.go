@@ -246,14 +246,6 @@ func HandleDataBearerSetupResponseEvent(ue *context.SimUe,
 	SendToGnbUe(ue, msg)
 	ue.Log.Traceln("Sent Data Bearer Setup Response to RealUE")
 
-	time.Sleep(500 * time.Millisecond)
-	/* TODO: Solve timing issue. Currently UE may start sending user data
-	 * before gnb has successfuly sent PDU Session Resource Setup Response
-	 * or before 5g core has processed id
-	 */
-	ue.Log.Infoln("Please wait, initiating uplink user data in 3 seconds ...")
-	time.Sleep(3 * time.Second)
-
 	ChangeProcedure(ue)
 	return nil
 }
@@ -292,6 +284,23 @@ func HandleServiceRequestEvent(ue *context.SimUe,
 	return nil
 }
 
+func HandleServiceRequestAcceptEvent(ue *context.SimUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	ue.Log.Traceln("Handling Service Request Accept Event")
+
+	err = ue.ProfileCtx.CheckCurrentEvent(common.SERVICE_REQUEST_EVENT,
+		intfcMsg.GetEventType())
+	if err != nil {
+		ue.Log.Errorln("CheckCurrentEvent returned:", err)
+		return err
+	}
+
+	//ChangeProcedure(ue)
+
+	return nil
+}
+
 func ChangeProcedure(ue *context.SimUe) {
 	nextProcedure := ue.ProfileCtx.GetNextProcedure(ue.Procedure)
 	if nextProcedure != 0 {
@@ -321,6 +330,15 @@ func HandleProcedure(ue *context.SimUe) {
 		msg := &common.UeMessage{}
 		msg.UserDataPktCount = ue.ProfileCtx.DataPktCount
 		msg.Event = common.DATA_PKT_GEN_REQUEST_EVENT
+
+		time.Sleep(500 * time.Millisecond)
+		/* TODO: Solve timing issue. Currently UE may start sending user data
+		 * before gnb has successfuly sent PDU Session Resource Setup Response
+		 * or before 5g core has processed it
+		 */
+		ue.Log.Infoln("Please wait, initiating uplink user data in 3 seconds ...")
+		time.Sleep(3 * time.Second)
+
 		SendToRealUe(ue, msg)
 	case common.UE_INITIATED_DEREGISTRATION_PROCEDURE:
 		ue.Log.Infoln("Initiating UE Initiated Deregistration Procedure")

@@ -105,7 +105,7 @@ func HandleSecModCompleteEvent(ue *context.RealUe,
 
 	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCipheredWithNew5gNasSecurityContext,
-		true, true)
+		true)
 	if err != nil {
 		ue.Log.Errorln("EncodeNasPduWithSecurity() returned:", err)
 		return fmt.Errorf("failed to encrypt security mode complete message")
@@ -135,7 +135,7 @@ func HandleRegCompleteEvent(ue *context.RealUe,
 	ue.Log.Traceln("Generating Registration Complete Message")
 	nasPdu := nasTestpacket.GetRegistrationComplete(nil)
 	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu,
-		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
+		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
 	if err != nil {
 		ue.Log.Errorln("EncodeNasPduWithSecurity() returned:", err)
 		return fmt.Errorf("failed to encrypt registration complete message")
@@ -165,7 +165,7 @@ func HandleDeregRequestEvent(ue *context.RealUe,
 	nasPdu := nasTestpacket.GetDeregistrationRequest(nasMessage.AccessType3GPP,
 		SWITCH_OFF, uint8(ue.NgKsi.Ksi), mobileIdentity5GS)
 	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu,
-		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
+		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
 	if err != nil {
 		ue.Log.Errorln("EncodeNasPduWithSecurity() returned:", err)
 		return fmt.Errorf("failed to encrypt deregistration request message")
@@ -190,7 +190,7 @@ func HandlePduSessEstRequestEvent(ue *context.RealUe,
 		nasMessage.ULNASTransportRequestTypeInitialRequest, "internet", &sNssai)
 
 	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu,
-		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
+		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
 	if err != nil {
 		fmt.Println("Failed to encrypt PDU Session Establishment Request Message", err)
 		return
@@ -350,9 +350,12 @@ func HandleServiceRequestEvent(ue *context.RealUe,
 	if err != nil {
 		return fmt.Errorf("failed to handle service request event:", err)
 	}
-	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu, nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
+
+	// TS 24.501 Section 4.4.6 - Protection of Initial NAS signalling messages
+	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu,
+		nas.SecurityHeaderTypeIntegrityProtected, true)
 	if err != nil {
-		return fmt.Errorf("failed to encrypt nas pdu")
+		return fmt.Errorf("failed to encode with security:", err)
 	}
 
 	m := formUuMessage(common.SERVICE_REQUEST_EVENT, nasPdu)

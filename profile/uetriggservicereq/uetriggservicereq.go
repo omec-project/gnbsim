@@ -53,7 +53,15 @@ func UeTriggServiceReq_test(profile *profctx.Profile) {
 // initEventMap initializes the event map of profile with default values as per
 // the procedures in the profile
 func initEventMap(profile *profctx.Profile) {
-	profile.Events = map[common.EventType]common.EventType{}
+	profile.Events = map[common.EventType]common.EventType{
+		common.REG_REQUEST_EVENT:          common.AUTH_REQUEST_EVENT,
+		common.AUTH_REQUEST_EVENT:         common.AUTH_RESPONSE_EVENT,
+		common.SEC_MOD_COMMAND_EVENT:      common.SEC_MOD_COMPLETE_EVENT,
+		common.REG_ACCEPT_EVENT:           common.REG_COMPLETE_EVENT,
+		common.PDU_SESS_EST_REQUEST_EVENT: common.PDU_SESS_EST_ACCEPT_EVENT,
+		common.PDU_SESS_EST_ACCEPT_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
+		common.SERVICE_REQUEST_EVENT:      common.SERVICE_ACCEPT_EVENT,
+	}
 }
 
 func initProcedureList(profile *profctx.Profile) {
