@@ -103,7 +103,7 @@ func HandleEvent(ue *context.SimUe, msg common.InterfaceMessage) (err error) {
 	case common.SERVICE_REQUEST_EVENT:
 		err = HandleServiceRequestEvent(ue, msg)
 	case common.SERVICE_ACCEPT_EVENT:
-		err = HandleServiceRequestEvent(ue, msg)
+		err = HandleServiceAcceptEvent(ue, msg)
 	case common.PROFILE_START_EVENT:
 		err = HandleProfileStartEvent(ue, msg)
 	default:

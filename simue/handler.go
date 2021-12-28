@@ -284,7 +284,7 @@ func HandleServiceRequestEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleServiceRequestAcceptEvent(ue *context.SimUe,
+func HandleServiceAcceptEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	ue.Log.Traceln("Handling Service Request Accept Event")
