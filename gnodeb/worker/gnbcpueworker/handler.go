@@ -22,6 +22,13 @@ import (
 	"github.com/free5gc/ngap/ngapType"
 )
 
+type pduSessResourceSetupItem struct {
+	PDUSessionID                           ngapType.PDUSessionID
+	NASPDU                                 *ngapType.NASPDU
+	SNSSAI                                 ngapType.SNSSAI
+	PDUSessionResourceSetupRequestTransfer aper.OctetString
+}
+
 func HandleConnectRequest(gnbue *context.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
 
@@ -123,6 +130,7 @@ func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe,
 	msg := intfcMsg.(*common.N2Message)
 	var amfUeNgapId *ngapType.AMFUENGAPID
 	var nasPdu *ngapType.NASPDU
+	var pduSessResourceSetupReqList *ngapType.PDUSessionResourceSetupListCxtReq
 
 	pdu := msg.NgapPdu
 
@@ -144,7 +152,39 @@ func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe,
 				gnbue.Log.Errorln("NASPDU is nil")
 				return
 			}
+		case ngapType.ProtocolIEIDPDUSessionResourceSetupListCxtReq:
+			pduSessResourceSetupReqList = ie.Value.PDUSessionResourceSetupListCxtReq
+			if pduSessResourceSetupReqList == nil || len(pduSessResourceSetupReqList.List) == 0 {
+				gnbue.Log.Errorln("PDUSessionResourceSetupListCxtReq is empty")
+				return
+			}
 		}
+	}
+
+	if nasPdu.Value != nil {
+		var pdus common.NasPduList
+		pdus = append(pdus, nasPdu.Value)
+		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, pdus)
+		gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
+	}
+
+	var list []pduSessResourceSetupItem
+	if pduSessResourceSetupReqList != nil {
+		for _, v := range pduSessResourceSetupReqList.List {
+			dst := pduSessResourceSetupItem{}
+			dst.NASPDU = v.NASPDU
+			dst.PDUSessionID = v.PDUSessionID
+			dst.SNSSAI = v.SNSSAI
+			dst.PDUSessionResourceSetupRequestTransfer = v.PDUSessionResourceSetupRequestTransfer
+			list = append(list, dst)
+		}
+	}
+
+	if len(list) != 0 {
+		ProcessPduSessResourceSetupList(gnbue, list,
+			common.INITIAL_CTX_SETUP_REQUEST_EVENT)
+
+		return
 	}
 
 	//TODO: Handle other mandatory IEs
@@ -160,11 +200,6 @@ func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe,
 		return
 	}
 	gnbue.Log.Traceln("Sent Initial Context Setup Response Message to UE")
-
-	var pdus common.NasPduList
-	pdus = append(pdus, nasPdu.Value)
-	SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, pdus)
-	gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
 }
 
 // TODO: Error handling
@@ -175,7 +210,6 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe,
 
 	msg := intfcMsg.(*common.N2Message)
 	var amfUeNgapId *ngapType.AMFUENGAPID
-	var nasPdus common.NasPduList
 	var pduSessResourceSetupReqList *ngapType.PDUSessionResourceSetupListSUReq
 
 	pdu := msg.NgapPdu
@@ -200,127 +234,18 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe,
 		}
 	}
 
-	//var pduSessions []ngapTestpacket.PduSession
-	var dbParamSet []*common.DataBearerParams
-
-	// supporting only one pdu session currently
-	for _, item := range pduSessResourceSetupReqList.List[:1] {
-
-		resourceSetupRequestTransfer := ngapType.PDUSessionResourceSetupRequestTransfer{}
-		err := aper.UnmarshalWithParams(item.PDUSessionResourceSetupRequestTransfer,
-			&resourceSetupRequestTransfer, "valueExt")
-		if err != nil {
-			gnbue.Log.Errorln("UnmarshalWithParams returned:", err)
-			return
-		}
-
-		var gtpTunnel *ngapType.GTPTunnel
-		var pduSessType *ngapType.PDUSessionType
-		var qosFlowSetupReqList *ngapType.QosFlowSetupRequestList
-		for _, ie := range resourceSetupRequestTransfer.ProtocolIEs.List {
-			switch ie.Id.Value {
-			case ngapType.ProtocolIEIDULNGUUPTNLInformation:
-				gtpTunnel = ie.Value.ULNGUUPTNLInformation.GTPTunnel
-				if gtpTunnel == nil {
-					gnbue.Log.Errorln("GTPTunnel is nil")
-					return
-				}
-			case ngapType.ProtocolIEIDPDUSessionType:
-				pduSessType = ie.Value.PDUSessionType
-				if pduSessType == nil {
-					gnbue.Log.Errorln("PDUSessionType is nil")
-					return
-				}
-			case ngapType.ProtocolIEIDQosFlowSetupRequestList:
-				qosFlowSetupReqList = ie.Value.QosFlowSetupRequestList
-				if qosFlowSetupReqList == nil || len(qosFlowSetupReqList.List) == 0 {
-					gnbue.Log.Errorln("QosFlowSetupRequestList is empty")
-					return
-				}
-			}
-		}
-
-		ulteid := binary.BigEndian.Uint32(gtpTunnel.GTPTEID.Value)
-		dlteid, err := gnbue.Gnb.DlTeidGenerator.Allocate()
-		if err != nil {
-			gnbue.Log.Errorln("ID Generator Allocate() returned:", err)
-			return
-		}
-		upfIp, _ := ngapConvert.IPAddressToString(gtpTunnel.TransportLayerAddress)
-
-		gnbupue := context.NewGnbUpUe(uint32(dlteid), ulteid, gnbue.Gnb)
-		gnbupue.Snssai = ngapConvert.SNssaiToModels(item.SNSSAI)
-		gnbupue.PduSessId = item.PDUSessionID.Value
-		gnbupue.PduSessType = test.PDUSessionTypeToModels(*pduSessType)
-		pduSess := &ngapTestpacket.PduSession{}
-		pduSess.PduSessId = gnbupue.PduSessId
-		pduSess.Teid = gnbupue.DlTeid
-
-		gnbue.Log.Infoln("PDU Session ID:", gnbupue.PduSessId)
-		gnbue.Log.Infoln("S-NSSAI - SST: ", gnbupue.Snssai.Sst)
-		gnbue.Log.Infoln("S-NSSAI - SD: ", gnbupue.Snssai.Sd)
-		gnbue.Log.Infoln("UL GTP-TEID: ", ulteid)
-		gnbue.Log.Infoln("DL GTP-TEID: ", dlteid)
-		gnbue.Log.Infoln("UPF Endpoint IP: ", upfIp)
-		gnbue.Log.Infoln("PDU Session Type: ", gnbupue.PduSessType)
-
-		var qosFlowId int64
-		var qosChar ngapType.QosCharacteristics
-		var arp ngapType.AllocationAndRetentionPriority
-		var nonDynamic5QI *ngapType.NonDynamic5QIDescriptor
-		for _, qosFlowSetupReqItem := range qosFlowSetupReqList.List {
-			qosFlowId = qosFlowSetupReqItem.QosFlowIdentifier.Value
-			qosChar = qosFlowSetupReqItem.QosFlowLevelQosParameters.QosCharacteristics
-			arp = qosFlowSetupReqItem.QosFlowLevelQosParameters.AllocationAndRetentionPriority
-
-			gnbue.Log.Infoln("QoS Flow Id:", qosFlowId)
-			if qosChar.Present == ngapType.QosCharacteristicsPresentNonDynamic5QI {
-				nonDynamic5QI = qosChar.NonDynamic5QI
-				if nonDynamic5QI == nil {
-					gnbue.Log.Errorln("NonDynamic5QI is nil")
-					return
-				}
-				gnbue.Log.Infoln("Non Dynamic 5QI:", nonDynamic5QI.FiveQI.Value)
-			}
-			gnbue.Log.Infoln("ARP Priority Level:", arp.PriorityLevelARP.Value)
-			gnbue.Log.Infoln("Pre-emption Capability:", arp.PreEmptionCapability.Value)
-			gnbue.Log.Infoln("Pre-emption Vulnerability:", arp.PreEmptionVulnerability.Value)
-
-			pduSess.SuccessQfiList = append(pduSess.SuccessQfiList, qosFlowId)
-			gnbupue.AddQosFlow(qosFlowId, &qosFlowSetupReqItem)
-		}
-
-		pduSess.Success = true
-		if item.PDUSessionNASPDU != nil {
-			nasPdus = append(nasPdus, item.PDUSessionNASPDU.Value)
-		}
-
-		gnbupf, created := gnbue.Gnb.GnbPeers.GetOrAddGnbUpf(upfIp)
-		if created {
-			go gnbupfworker.Init(gnbupf)
-		}
-		gnbupue.Upf = gnbupf
-		gnbue.AddGnbUpUe(gnbupue.PduSessId, gnbupue)
-
-		//pduSessions = append(pduSessions, pduSess)
-		dbParam := &common.DataBearerParams{}
-		dbParam.CommChan = gnbupue.ReadUlChan
-		dbParam.PduSess = pduSess
-		dbParamSet = append(dbParamSet, dbParam)
+	var list []pduSessResourceSetupItem
+	for _, v := range pduSessResourceSetupReqList.List {
+		dst := pduSessResourceSetupItem{}
+		dst.NASPDU = v.PDUSessionNASPDU
+		dst.PDUSessionID = v.PDUSessionID
+		dst.SNSSAI = v.SNSSAI
+		dst.PDUSessionResourceSetupRequestTransfer = v.PDUSessionResourceSetupRequestTransfer
+		list = append(list, dst)
 	}
 
-	SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, nasPdus)
-	gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
-
-	/* TODO: To be fixed, currently Data Berer Setup Event may get processed
-	 * before the pdu sessions are established on the UE side
-	 */
-	time.Sleep(500 * time.Millisecond)
-	uemsg := common.UuMessage{}
-	uemsg.Event = common.DATA_BEARER_SETUP_REQUEST_EVENT
-	uemsg.DBParams = dbParamSet
-	gnbue.WriteUeChan <- &uemsg
-	gnbue.Log.Infoln("Sent Data Radio Bearer Setup Event to Ue")
+	ProcessPduSessResourceSetupList(gnbue, list,
+		common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT)
 }
 
 func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe,
@@ -346,11 +271,23 @@ func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe,
 		pduSessions = append(pduSessions, pduSess)
 	}
 
-	ngapPdu, err := test.GetPDUSessionResourceSetupResponse(pduSessions,
-		gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, gnbue.Gnb.GnbN3Ip)
-	if err != nil {
-		fmt.Println("Failed to create - NGAP-PDU Session Resource Setup Response")
-		return
+	var ngapPdu []byte
+	var err error
+
+	if msg.TriggeringEvent == common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT {
+		ngapPdu, err = test.GetPDUSessionResourceSetupResponse(pduSessions,
+			gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, gnbue.Gnb.GnbN3Ip)
+		if err != nil {
+			gnbue.Log.Errorln("Failed to create PDU Session Resource Setup Response:", err)
+			return
+		}
+	} else if msg.TriggeringEvent == common.INITIAL_CTX_SETUP_REQUEST_EVENT {
+		ngapPdu, err = test.GetInitialContextSetupResponseForServiceRequest(pduSessions,
+			gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, gnbue.Gnb.GnbN3Ip)
+		if err != nil {
+			gnbue.Log.Errorln("Failed to create Initial Context Setup Response:", err)
+			return
+		}
 	}
 
 	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, ngapPdu)
@@ -448,4 +385,134 @@ func HandleRanConnectionRelease(gnbue *context.GnbCpUe,
 	}
 
 	gnbue.Log.Traceln("Sent Uplink NAS Transport Message to AMF")
+}
+
+func ProcessPduSessResourceSetupList(gnbue *context.GnbCpUe,
+	lst []pduSessResourceSetupItem, event common.EventType) {
+	//var pduSessions []ngapTestpacket.PduSession
+	var dbParamSet []*common.DataBearerParams
+
+	var nasPdus common.NasPduList
+
+	// supporting only one pdu session currently
+	for _, item := range lst {
+
+		resourceSetupRequestTransfer := ngapType.PDUSessionResourceSetupRequestTransfer{}
+		err := aper.UnmarshalWithParams(item.PDUSessionResourceSetupRequestTransfer,
+			&resourceSetupRequestTransfer, "valueExt")
+		if err != nil {
+			gnbue.Log.Errorln("UnmarshalWithParams returned:", err)
+			return
+		}
+
+		var gtpTunnel *ngapType.GTPTunnel
+		var pduSessType *ngapType.PDUSessionType
+		var qosFlowSetupReqList *ngapType.QosFlowSetupRequestList
+		for _, ie := range resourceSetupRequestTransfer.ProtocolIEs.List {
+			switch ie.Id.Value {
+			case ngapType.ProtocolIEIDULNGUUPTNLInformation:
+				gtpTunnel = ie.Value.ULNGUUPTNLInformation.GTPTunnel
+				if gtpTunnel == nil {
+					gnbue.Log.Errorln("GTPTunnel is nil")
+					return
+				}
+			case ngapType.ProtocolIEIDPDUSessionType:
+				pduSessType = ie.Value.PDUSessionType
+				if pduSessType == nil {
+					gnbue.Log.Errorln("PDUSessionType is nil")
+					return
+				}
+			case ngapType.ProtocolIEIDQosFlowSetupRequestList:
+				qosFlowSetupReqList = ie.Value.QosFlowSetupRequestList
+				if qosFlowSetupReqList == nil || len(qosFlowSetupReqList.List) == 0 {
+					gnbue.Log.Errorln("QosFlowSetupRequestList is empty")
+					return
+				}
+			}
+		}
+
+		ulteid := binary.BigEndian.Uint32(gtpTunnel.GTPTEID.Value)
+		dlteid, err := gnbue.Gnb.DlTeidGenerator.Allocate()
+		if err != nil {
+			gnbue.Log.Errorln("ID Generator Allocate() returned:", err)
+			return
+		}
+		upfIp, _ := ngapConvert.IPAddressToString(gtpTunnel.TransportLayerAddress)
+
+		gnbupue := context.NewGnbUpUe(uint32(dlteid), ulteid, gnbue.Gnb)
+		gnbupue.Snssai = ngapConvert.SNssaiToModels(item.SNSSAI)
+		gnbupue.PduSessId = item.PDUSessionID.Value
+		gnbupue.PduSessType = test.PDUSessionTypeToModels(*pduSessType)
+		pduSess := &ngapTestpacket.PduSession{}
+		pduSess.PduSessId = gnbupue.PduSessId
+		pduSess.Teid = gnbupue.DlTeid
+
+		gnbue.Log.Infoln("PDU Session ID:", gnbupue.PduSessId)
+		gnbue.Log.Infoln("S-NSSAI - SST: ", gnbupue.Snssai.Sst)
+		gnbue.Log.Infoln("S-NSSAI - SD: ", gnbupue.Snssai.Sd)
+		gnbue.Log.Infoln("UL GTP-TEID: ", ulteid)
+		gnbue.Log.Infoln("DL GTP-TEID: ", dlteid)
+		gnbue.Log.Infoln("UPF Endpoint IP: ", upfIp)
+		gnbue.Log.Infoln("PDU Session Type: ", gnbupue.PduSessType)
+
+		var qosFlowId int64
+		var qosChar ngapType.QosCharacteristics
+		var arp ngapType.AllocationAndRetentionPriority
+		var nonDynamic5QI *ngapType.NonDynamic5QIDescriptor
+		for _, qosFlowSetupReqItem := range qosFlowSetupReqList.List {
+			qosFlowId = qosFlowSetupReqItem.QosFlowIdentifier.Value
+			qosChar = qosFlowSetupReqItem.QosFlowLevelQosParameters.QosCharacteristics
+			arp = qosFlowSetupReqItem.QosFlowLevelQosParameters.AllocationAndRetentionPriority
+
+			gnbue.Log.Infoln("QoS Flow Id:", qosFlowId)
+			if qosChar.Present == ngapType.QosCharacteristicsPresentNonDynamic5QI {
+				nonDynamic5QI = qosChar.NonDynamic5QI
+				if nonDynamic5QI == nil {
+					gnbue.Log.Errorln("NonDynamic5QI is nil")
+					return
+				}
+				gnbue.Log.Infoln("Non Dynamic 5QI:", nonDynamic5QI.FiveQI.Value)
+			}
+			gnbue.Log.Infoln("ARP Priority Level:", arp.PriorityLevelARP.Value)
+			gnbue.Log.Infoln("Pre-emption Capability:", arp.PreEmptionCapability.Value)
+			gnbue.Log.Infoln("Pre-emption Vulnerability:", arp.PreEmptionVulnerability.Value)
+
+			pduSess.SuccessQfiList = append(pduSess.SuccessQfiList, qosFlowId)
+			gnbupue.AddQosFlow(qosFlowId, &qosFlowSetupReqItem)
+		}
+
+		pduSess.Success = true
+		if item.NASPDU != nil {
+			nasPdus = append(nasPdus, item.NASPDU.Value)
+		}
+
+		gnbupf, created := gnbue.Gnb.GnbPeers.GetOrAddGnbUpf(upfIp)
+		if created {
+			go gnbupfworker.Init(gnbupf)
+		}
+		gnbupue.Upf = gnbupf
+		gnbue.AddGnbUpUe(gnbupue.PduSessId, gnbupue)
+
+		//pduSessions = append(pduSessions, pduSess)
+		dbParam := &common.DataBearerParams{}
+		dbParam.CommChan = gnbupue.ReadUlChan
+		dbParam.PduSess = pduSess
+		dbParamSet = append(dbParamSet, dbParam)
+	}
+
+	if len(nasPdus) != 0 {
+		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, nasPdus)
+		gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
+	}
+
+	/* TODO: To be fixed, currently Data Berer Setup Event may get processed
+	 * before the pdu sessions are established on the UE side
+	 */
+	time.Sleep(500 * time.Millisecond)
+	uemsg := common.UuMessage{}
+	uemsg.Event = common.DATA_BEARER_SETUP_REQUEST_EVENT
+	uemsg.DBParams = dbParamSet
+	uemsg.TriggeringEvent = event
+	gnbue.WriteUeChan <- &uemsg
+	gnbue.Log.Infoln("Sent Data Radio Bearer Setup Event to Ue")
 }

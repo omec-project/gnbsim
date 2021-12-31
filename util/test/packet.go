@@ -51,10 +51,10 @@ func GetInitialContextSetupResponse(amfUeNgapID int64, ranUeNgapID int64) ([]byt
 }
 
 func GetInitialContextSetupResponseForServiceRequest(
-	pduSessions []ngapTestpacket.PduSession, amfUeNgapID int64,
+	pduSessions []*ngapTestpacket.PduSession, amfUeNgapID int64,
 	ranUeNgapID int64, ipv4 string) ([]byte, error) {
 
-	message := ngapTestpacket.BuildInitialContextSetupResponse(nil, amfUeNgapID, ranUeNgapID, ipv4, nil)
+	message := ngapTestpacket.BuildInitialContextSetupResponse(pduSessions, amfUeNgapID, ranUeNgapID, ipv4, nil)
 	return ngap.Encoder(message)
 }
 

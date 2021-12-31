@@ -247,7 +247,7 @@ func HandleDataBearerSetupRequestEvent(ue *context.RealUe,
 		   pdu sessions are marked failed during decoding. real ue simply
 		   returns the same list back by marking any failed pdu sessions on
 		   its side. This consolidated list can be used by gnb to form
-		   PDUSession Resource Setup Response message
+		   PDUSession Resource Setup/Failed To Setup Response list
 		*/
 		if item.PduSess.Success {
 			pduSess := ue.GetPduSession(item.PduSess.PduSessId)
@@ -268,6 +268,7 @@ func HandleDataBearerSetupRequestEvent(ue *context.RealUe,
 	rsp := &common.UuMessage{}
 	rsp.Event = common.DATA_BEARER_SETUP_RESPONSE_EVENT
 	rsp.DBParams = msg.DBParams
+	rsp.TriggeringEvent = msg.TriggeringEvent
 	ue.WriteSimUeChan <- rsp
 	ue.Log.Infoln("Sent Data Radio Bearer Setup Response event to SimUe")
 	return nil

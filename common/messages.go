@@ -49,6 +49,12 @@ type UuMessage struct {
 	NasPdus  NasPduList
 	DBParams []*DataBearerParams
 
+	/* Real UE simply resends this value in the response message to gNB
+	   While setting up Data Bearers, this helps gNB in understanding the
+	   triggering procedure.
+	*/
+	TriggeringEvent EventType
+
 	// channel that a src entity can optionally send to the target entity.
 	// Target entity will use this channel to write to the src entity
 	CommChan chan InterfaceMessage
