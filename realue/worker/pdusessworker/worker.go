@@ -9,41 +9,44 @@ import (
 	"fmt"
 	"gnbsim/common"
 	"gnbsim/realue/context"
+	"sync"
 )
 
-func Init(pduSess *context.PduSession) {
+func Init(pduSess *context.PduSession, wg *sync.WaitGroup) {
+	HandleEvents(pduSess)
+	wg.Done()
+}
+
+func HandleEvents(pduSess *context.PduSession) {
+	var err error
 	for {
 		select {
 		/* Reading Down link packets from gNb*/
 		case msg := <-pduSess.ReadDlChan:
-			err := HandleDlMessage(pduSess, msg)
-			if err != nil {
-				pduSess.Log.Errorln("HandleDlMessage() returned:", err)
-			}
-
+			err = HandleDlMessage(pduSess, msg)
 		/* Reading commands from RealUE control plane*/
 		case msg := <-pduSess.ReadCmdChan:
-			err := HandleCommand(pduSess, msg)
-			if err != nil {
-				pduSess.Log.Errorln("HandleCommand() returned:", err)
+			event := msg.GetEventType()
+			pduSess.Log.Infoln("Handling event:", event)
+
+			switch msg.GetEventType() {
+			case common.INIT_EVENT:
+				HandleInitEvent(pduSess, msg)
+			case common.DATA_PKT_GEN_REQUEST_EVENT:
+				err = HandleDataPktGenRequestEvent(pduSess, msg)
+			case common.CONNECTION_RELEASE_REQUEST_EVENT:
+				err = HandleConnectionReleaseRequestEvent(pduSess, msg)
+			case common.QUIT_EVENT:
+				HandleQuitEvent(pduSess, msg)
+				return
 			}
 		}
-	}
-}
 
-func HandleCommand(pduSess *context.PduSession,
-	msg common.InterfaceMessage) (err error) {
-
-	pduSess.Log.Infoln("Handling event:", msg.GetEventType())
-
-	switch msg.GetEventType() {
-	case common.DATA_PKT_GEN_REQUEST_EVENT:
-		err = HandleDataPktGenRequestEvent(pduSess, msg)
 		if err != nil {
-			pduSess.Log.Errorln("HandleDataPktGenRequestEvent() returned:", err)
-			return fmt.Errorf("failed to handle data packet generation request")
+			msg := &common.UeMessage{}
+			msg.Error = fmt.Errorf("pdu session failed:", err)
+			msg.Event = common.ERROR_EVENT
+			pduSess.WriteUeChan <- msg
 		}
 	}
-
-	return nil
 }

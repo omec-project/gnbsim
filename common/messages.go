@@ -91,7 +91,7 @@ type TransportMessage struct {
 	RawPkt []byte
 }
 
-// UeMessage is used to carry information between SimUe and RealUe
+// UeMessage is used to carry information within UE
 type UeMessage struct {
 	DefaultMessage
 
@@ -100,4 +100,6 @@ type UeMessage struct {
 
 	// Number of user data packets to be generated as directed by profile
 	UserDataPktCount int
+
+	CommChan chan InterfaceMessage
 }

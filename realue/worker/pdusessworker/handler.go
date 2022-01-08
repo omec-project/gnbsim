@@ -26,6 +26,14 @@ const (
 	IPV4_MIN_HEADER_LEN int = 20
 )
 
+func HandleInitEvent(pduSess *context.PduSession,
+	intfcMsg common.InterfaceMessage) (err error) {
+	msg := intfcMsg.(*common.UeMessage)
+	pduSess.WriteGnbChan = msg.CommChan
+	pduSess.EndMarkerRecvd = false
+	return nil
+}
+
 func SendIcmpEchoRequest(pduSess *context.PduSession) (err error) {
 
 	pduSess.Log.Traceln("Sending UL ICMP ping message")
@@ -123,6 +131,12 @@ func HandleDlMessage(pduSess *context.PduSession,
 
 	pduSess.Log.Traceln("Handling DL user data packet from gNb")
 
+	if msg.GetEventType() == common.END_MARKER_EVENT {
+		pduSess.Log.Debugln("Received last downlink data packet")
+		pduSess.EndMarkerRecvd = true
+		return nil
+	}
+
 	dataMsg := msg.(*common.UserDataMessage)
 
 	ipv4Hdr, err := ipv4.ParseHeader(dataMsg.Payload)
@@ -155,5 +169,42 @@ func HandleDataPktGenRequestEvent(pduSess *context.PduSession,
 		pduSess.Log.Errorln("SendIcmpEchoRequest() returned:", err)
 		return fmt.Errorf("failed to send icmp echo req")
 	}
+	return nil
+}
+
+func HandleConnectionReleaseRequestEvent(pduSess *context.PduSession,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	userDataMsg := &common.UserDataMessage{}
+	userDataMsg.Event = common.END_MARKER_EVENT
+	pduSess.WriteGnbChan <- userDataMsg
+	// Releasing the reference so as to be freed by Garbage Collector
+	pduSess.WriteGnbChan = nil
+	return nil
+}
+
+func HandleQuitEvent(pduSess *context.PduSession,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	userDataMsg := &common.UserDataMessage{}
+	userDataMsg.Event = common.END_MARKER_EVENT
+	pduSess.WriteGnbChan <- userDataMsg
+	pduSess.WriteGnbChan = nil
+
+	// Drain all the messages until END MARKER is received.
+	// This ensures that the transmitting go routine is not blocked while
+	// sending data on this channel
+	if pduSess.EndMarkerRecvd != true {
+		for pkt := range pduSess.ReadDlChan {
+			if pkt.GetEventType() == common.END_MARKER_EVENT {
+				pduSess.Log.Debugln("Received last downlink data packet")
+				break
+			}
+		}
+	}
+
+	pduSess.WriteUeChan = nil
+	pduSess.Log.Infoln("Pdu Session terminated")
+
 	return nil
 }

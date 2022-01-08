@@ -17,6 +17,7 @@ import (
 	"gnbsim/gnodeb/worker/gnbcpueworker"
 	"gnbsim/logger"
 	"log"
+	"sync"
 
 	"github.com/free5gc/idgenerator"
 )
@@ -128,7 +129,10 @@ func RequestConnection(gnb *context.GNodeB, uemsg *common.UuMessage) (chan commo
 	gnbUe := context.NewGnbCpUe(ranUeNgapID, gnb, gnb.DefaultAmf)
 	gnb.GnbUes.AddGnbCpUe(ranUeNgapID, gnbUe)
 
-	go gnbcpueworker.Init(gnbUe)
+	// TODO: Launching a GO Routine for gNB and handling the waitgroup
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go gnbcpueworker.Init(gnbUe, &wg)
 	//Channel on which UE can write message to GnbUe and from which GnbUe will
 	//be reading.
 	ch := gnbUe.ReadChan

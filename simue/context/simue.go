@@ -11,6 +11,7 @@ import (
 	"gnbsim/logger"
 	profctx "gnbsim/profile/context"
 	realuectx "gnbsim/realue/context"
+	"sync"
 
 	"github.com/free5gc/nas/security"
 	"github.com/sirupsen/logrus"
@@ -24,6 +25,7 @@ type SimUe struct {
 	RealUe     *realuectx.RealUe
 	ProfileCtx *profctx.Profile
 	Procedure  common.ProcedureType
+	WaitGrp    sync.WaitGroup
 
 	// SimUe writes messages to Profile routine on this channel
 	WriteProfileChan chan *common.ProfileMessage

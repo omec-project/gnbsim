@@ -171,19 +171,6 @@ func HandleDeregAcceptEvent(ue *context.SimUe,
 	return nil
 }
 
-// HandleCtxRelAckEvent handler is called upon receiving acknowledgement
-// from gNB for releasing the UE context. This ensures SimUE that the UE
-// originated Deregisteration procedure followed by AN Release procedure is
-// completed
-func HandleCtxRelAckEvent(ue *context.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
-	ue.Log.Traceln("Handling UE context release acknowledgement from gNB")
-
-	ChangeProcedure(ue)
-	return nil
-}
-
 func HandlePduSessEstRequestEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
@@ -296,8 +283,60 @@ func HandleServiceAcceptEvent(ue *context.SimUe,
 		return err
 	}
 
-	//ChangeProcedure(ue)
+	return nil
+}
 
+func HandleConnectionReleaseRequestEvent(ue *context.SimUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+	msg := intfcMsg.(*common.UuMessage)
+
+	if ue.Procedure == common.AN_RELEASE_PROCEDURE {
+		err = ue.ProfileCtx.CheckCurrentEvent(common.TRIGGER_AN_RELEASE_EVENT,
+			common.CONNECTION_RELEASE_REQUEST_EVENT)
+		if err != nil {
+			return err
+		}
+	}
+
+	ue.WriteGnbUeChan = nil
+
+	if msg.TriggeringEvent == common.DEREG_REQUEST_UE_ORIG_EVENT {
+		msg := &common.UuMessage{}
+		msg.Event = common.QUIT_EVENT
+		ue.ReadChan <- msg
+		// Once UE is deregistered, Sim UE is not expecting any further
+		// procedures
+		SendToProfile(ue, common.PROFILE_PASS_EVENT, nil)
+		return nil
+	}
+
+	SendToRealUe(ue, msg)
+	ChangeProcedure(ue)
+
+	return nil
+}
+
+func HandleErrorEvent(ue *context.SimUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	SendToProfile(ue, common.PROFILE_FAIL_EVENT, intfcMsg.GetErrorMsg())
+	ue.Log.Infoln("Sent Profile Fail Event to Profile routine")
+
+	msg := &common.UuMessage{}
+	msg.Event = common.QUIT_EVENT
+	ue.ReadChan <- msg
+	return nil
+}
+
+func HandleQuitEvent(ue *context.SimUe,
+	msg common.InterfaceMessage) (err error) {
+	if ue.WriteGnbUeChan != nil {
+		SendToGnbUe(ue, msg)
+	}
+	SendToRealUe(ue, msg)
+	ue.WriteRealUeChan = nil
+	ue.WaitGrp.Wait()
+	ue.Log.Infoln("Sim UE terminated")
 	return nil
 }
 
@@ -310,6 +349,16 @@ func ChangeProcedure(ue *context.SimUe) {
 	} else {
 		SendToProfile(ue, common.PROFILE_PASS_EVENT, nil)
 		ue.Log.Traceln("Sent Profile Pass Event to Profile routine")
+		evt, err := ue.ProfileCtx.GetNextEvent(common.PROFILE_PASS_EVENT)
+		if err != nil {
+			ue.Log.Errorln("GetNextEvent failed:", err)
+			return
+		}
+		if evt == common.QUIT_EVENT {
+			msg := &common.DefaultMessage{}
+			msg.Event = common.QUIT_EVENT
+			ue.ReadChan <- msg
+		}
 	}
 }
 
@@ -348,7 +397,7 @@ func HandleProcedure(ue *context.SimUe) {
 	case common.AN_RELEASE_PROCEDURE:
 		ue.Log.Infoln("Initiating AN Release Procedure")
 		msg := &common.UeMessage{}
-		msg.Event = common.RAN_CONNECTION_RELEASE_EVENT
+		msg.Event = common.TRIGGER_AN_RELEASE_EVENT
 		SendToGnbUe(ue, msg)
 	case common.UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE:
 		ue.Log.Infoln("Initiating UE Triggered Service Request Procedure")

@@ -15,6 +15,7 @@ import (
 	"gnbsim/gnodeb/worker/gnbupueworker"
 	"gnbsim/util/ngapTestpacket"
 	"gnbsim/util/test"
+	"sync"
 	"time"
 
 	"github.com/free5gc/aper"
@@ -266,7 +267,8 @@ func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe,
 			// Thus will help avoid lock unlock operation on per downlink message
 			gnbUpUe.Upf.GnbUpUes.AddGnbUpUe(gnbUpUe.DlTeid, true, gnbUpUe)
 			gnbUpUe.WriteUeChan = item.CommChan
-			go gnbupueworker.Init(gnbUpUe)
+			gnbue.WaitGrp.Add(1)
+			go gnbupueworker.Init(gnbUpUe, &gnbue.WaitGrp)
 		}
 		pduSessions = append(pduSessions, pduSess)
 	}
@@ -331,7 +333,7 @@ func HandleUeCtxReleaseCommand(gnbue *context.GnbCpUe,
 		}
 	}
 
-	test.PrintAndGetCause(cause)
+	_, causeNum := test.PrintAndGetCause(cause)
 
 	if ueNgapIds.Present == ngapType.UENGAPIDsPresentUENGAPIDPair {
 		amfUeNgapId = ueNgapIds.UENGAPIDPair.AMFUENGAPID
@@ -361,7 +363,19 @@ func HandleUeCtxReleaseCommand(gnbue *context.GnbCpUe,
 	}
 	gnbue.Log.Traceln("Sent UE Context Release Complete Message to AMF")
 
-	SendToUe(gnbue, common.CTX_RELEASE_ACKNOWLEDGEMENT_EVENT, nil)
+	quitEvt := &common.DefaultMessage{}
+	quitEvt.Event = common.QUIT_EVENT
+	gnbue.ReadChan <- quitEvt
+
+	req := &common.UuMessage{}
+	req.Event = common.CONNECTION_RELEASE_REQUEST_EVENT
+	if causeNum == ngapType.CauseNasPresentDeregister {
+		req.TriggeringEvent = common.DEREG_REQUEST_UE_ORIG_EVENT
+	} else {
+		req.TriggeringEvent = common.TRIGGER_AN_RELEASE_EVENT
+	}
+
+	gnbue.WriteUeChan <- req
 }
 
 func HandleRanConnectionRelease(gnbue *context.GnbCpUe,
@@ -515,4 +529,24 @@ func ProcessPduSessResourceSetupList(gnbue *context.GnbCpUe,
 	uemsg.TriggeringEvent = event
 	gnbue.WriteUeChan <- &uemsg
 	gnbue.Log.Infoln("Sent Data Radio Bearer Setup Event to Ue")
+}
+
+func HandleQuitEvent(gnbue *context.GnbCpUe, intfcMsg common.InterfaceMessage) {
+	releaseUpUeContexts(gnbue)
+	gnbue.Gnb.RanUeNGAPIDGenerator.FreeID(gnbue.GnbUeNgapId)
+	gnbue.WaitGrp.Wait()
+	gnbue.Log.Infoln("gNB Control-Plane UE context terminated")
+}
+
+func releaseUpUeContexts(gnbue *context.GnbCpUe) {
+	f := func(key, value interface{}) bool {
+		ctx := value.(*context.GnbUpUe)
+		msg := &common.DefaultMessage{}
+		msg.Event = common.QUIT_EVENT
+		ctx.ReadCmdChan <- msg
+		ctx.Upf.GnbUpUes.RemoveGnbUpUe(ctx.DlTeid, true)
+		return true
+	}
+	gnbue.GnbUpUes.Range(f)
+	gnbue.GnbUpUes = sync.Map{}
 }

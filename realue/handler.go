@@ -256,12 +256,19 @@ func HandleDataBearerSetupRequestEvent(ue *context.RealUe,
 				continue
 			}
 
-			pduSess.WriteGnbChan = item.CommChan
+			if !pduSess.Launched {
+				pduSess.Launched = true
+				ue.WaitGrp.Add(1)
+				go pdusessworker.Init(pduSess, &ue.WaitGrp)
+			}
+
+			initMsg := &common.UeMessage{}
+			initMsg.Event = common.INIT_EVENT
+			initMsg.CommChan = item.CommChan
+			pduSess.ReadCmdChan <- initMsg
 
 			/* gNb can use this channel to send DL packets for this PDU session */
 			item.CommChan = pduSess.ReadDlChan
-
-			go pdusessworker.Init(pduSess)
 		}
 	}
 
@@ -289,6 +296,35 @@ func HandleDataPktGenRequestEvent(ue *context.RealUe,
 func HandleDataPktGenSuccessEvent(ue *context.RealUe,
 	msg common.InterfaceMessage) (err error) {
 	ue.WriteSimUeChan <- msg
+	return nil
+}
+
+func HandleConnectionReleaseRequestEvent(ue *context.RealUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+	msg := intfcMsg.(*common.UuMessage)
+
+	for _, pdusess := range ue.PduSessions {
+		pdusess.ReadCmdChan <- msg
+	}
+
+	return nil
+}
+
+func HandleErrorEvent(ue *context.RealUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	SendToSimUe(ue, intfcMsg)
+	return nil
+}
+
+func HandleQuitEvent(ue *context.RealUe, intfcMsg common.InterfaceMessage) (err error) {
+	ue.WriteSimUeChan = nil
+	for _, pdusess := range ue.PduSessions {
+		pdusess.ReadCmdChan <- intfcMsg
+	}
+	ue.PduSessions = nil
+	ue.WaitGrp.Wait()
+	ue.Log.Infoln("Real UE terminated")
 	return nil
 }
 

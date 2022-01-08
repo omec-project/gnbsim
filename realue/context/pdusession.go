@@ -30,6 +30,9 @@ type PduSession struct {
 	ReqDataPktCount int
 	TxDataPktCount  int
 	RxDataPktCount  int
+	EndMarkerRecvd  bool
+	// Inidicates that a Go routine already exists for this PDU Session
+	Launched bool
 	/* uplink packets are written to gNB UE user plane context on this channel */
 	WriteGnbChan chan common.InterfaceMessage
 

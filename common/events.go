@@ -18,6 +18,13 @@ const (
 	/* Application's interfaces events */
 	PROFILE_SIMUE_EVENT EventType = 0x5000000
 	SIMUE_REALUE_EVENT  EventType = 0x6000000
+	COMMON_EVENT        EventType = 0x7000000
+)
+
+const (
+	INIT_EVENT EventType = COMMON_EVENT + 1 + iota
+	QUIT_EVENT
+	ERROR_EVENT
 )
 
 /* Events between Profile and SimUe */
@@ -36,13 +43,16 @@ const (
 
 /* Events between UE and GNodeB (UU) */
 const (
-	CONNECT_REQUEST_EVENT EventType = UU_EVENT + 1 + iota
+	CONNECTION_REQUEST_EVENT EventType = UU_EVENT + 1 + iota
+	CONNECTION_RELEASE_REQUEST_EVENT
+
 	UL_INFO_TRANSFER_EVENT
 	DL_INFO_TRANSFER_EVENT
 
 	// For exchanging user data
 	UL_UE_DATA_TRANSFER_EVENT
 	DL_UE_DATA_TRANSFER_EVENT
+	END_MARKER_EVENT
 
 	// For setting up channels between UE and GNB to exchange user data
 	DATA_BEARER_SETUP_REQUEST_EVENT
@@ -53,7 +63,7 @@ const (
 
 	// SimUe commands gNB to trigger RAN Connection release which further
 	// triggers gNB initiated UE Context Release Request
-	RAN_CONNECTION_RELEASE_EVENT
+	TRIGGER_AN_RELEASE_EVENT
 )
 
 /* Events betweem UE and AMF (N1)
