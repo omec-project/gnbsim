@@ -49,6 +49,12 @@ type UuMessage struct {
 	NasPdus  NasPduList
 	DBParams []*DataBearerParams
 
+	/* Real UE simply resends this value in the response message to gNB
+	   While setting up Data Bearers, this helps gNB in understanding the
+	   triggering procedure.
+	*/
+	TriggeringEvent EventType
+
 	// channel that a src entity can optionally send to the target entity.
 	// Target entity will use this channel to write to the src entity
 	CommChan chan InterfaceMessage
@@ -85,7 +91,7 @@ type TransportMessage struct {
 	RawPkt []byte
 }
 
-// UeMessage is used to carry information between SimUe and RealUe
+// UeMessage is used to carry information within UE
 type UeMessage struct {
 	DefaultMessage
 
@@ -94,4 +100,6 @@ type UeMessage struct {
 
 	// Number of user data packets to be generated as directed by profile
 	UserDataPktCount int
+
+	CommChan chan InterfaceMessage
 }

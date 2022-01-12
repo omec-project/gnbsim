@@ -15,12 +15,20 @@ import (
 	"gnbsim/gnodeb/worker/gnbupueworker"
 	"gnbsim/util/ngapTestpacket"
 	"gnbsim/util/test"
+	"sync"
 	"time"
 
 	"github.com/free5gc/aper"
 	"github.com/free5gc/ngap/ngapConvert"
 	"github.com/free5gc/ngap/ngapType"
 )
+
+type pduSessResourceSetupItem struct {
+	PDUSessionID                           ngapType.PDUSessionID
+	NASPDU                                 *ngapType.NASPDU
+	SNSSAI                                 ngapType.SNSSAI
+	PDUSessionResourceSetupRequestTransfer aper.OctetString
+}
 
 func HandleConnectRequest(gnbue *context.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
@@ -123,6 +131,7 @@ func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe,
 	msg := intfcMsg.(*common.N2Message)
 	var amfUeNgapId *ngapType.AMFUENGAPID
 	var nasPdu *ngapType.NASPDU
+	var pduSessResourceSetupReqList *ngapType.PDUSessionResourceSetupListCxtReq
 
 	pdu := msg.NgapPdu
 
@@ -144,7 +153,39 @@ func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe,
 				gnbue.Log.Errorln("NASPDU is nil")
 				return
 			}
+		case ngapType.ProtocolIEIDPDUSessionResourceSetupListCxtReq:
+			pduSessResourceSetupReqList = ie.Value.PDUSessionResourceSetupListCxtReq
+			if pduSessResourceSetupReqList == nil || len(pduSessResourceSetupReqList.List) == 0 {
+				gnbue.Log.Errorln("PDUSessionResourceSetupListCxtReq is empty")
+				return
+			}
 		}
+	}
+
+	if nasPdu.Value != nil {
+		var pdus common.NasPduList
+		pdus = append(pdus, nasPdu.Value)
+		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, pdus)
+		gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
+	}
+
+	var list []pduSessResourceSetupItem
+	if pduSessResourceSetupReqList != nil {
+		for _, v := range pduSessResourceSetupReqList.List {
+			dst := pduSessResourceSetupItem{}
+			dst.NASPDU = v.NASPDU
+			dst.PDUSessionID = v.PDUSessionID
+			dst.SNSSAI = v.SNSSAI
+			dst.PDUSessionResourceSetupRequestTransfer = v.PDUSessionResourceSetupRequestTransfer
+			list = append(list, dst)
+		}
+	}
+
+	if len(list) != 0 {
+		ProcessPduSessResourceSetupList(gnbue, list,
+			common.INITIAL_CTX_SETUP_REQUEST_EVENT)
+
+		return
 	}
 
 	//TODO: Handle other mandatory IEs
@@ -160,11 +201,6 @@ func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe,
 		return
 	}
 	gnbue.Log.Traceln("Sent Initial Context Setup Response Message to UE")
-
-	var pdus common.NasPduList
-	pdus = append(pdus, nasPdu.Value)
-	SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, pdus)
-	gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
 }
 
 // TODO: Error handling
@@ -175,7 +211,6 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe,
 
 	msg := intfcMsg.(*common.N2Message)
 	var amfUeNgapId *ngapType.AMFUENGAPID
-	var nasPdus common.NasPduList
 	var pduSessResourceSetupReqList *ngapType.PDUSessionResourceSetupListSUReq
 
 	pdu := msg.NgapPdu
@@ -200,11 +235,181 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe,
 		}
 	}
 
+	var list []pduSessResourceSetupItem
+	for _, v := range pduSessResourceSetupReqList.List {
+		dst := pduSessResourceSetupItem{}
+		dst.NASPDU = v.PDUSessionNASPDU
+		dst.PDUSessionID = v.PDUSessionID
+		dst.SNSSAI = v.SNSSAI
+		dst.PDUSessionResourceSetupRequestTransfer = v.PDUSessionResourceSetupRequestTransfer
+		list = append(list, dst)
+	}
+
+	ProcessPduSessResourceSetupList(gnbue, list,
+		common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT)
+}
+
+func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe,
+	intfcMsg common.InterfaceMessage) {
+
+	gnbue.Log.Traceln("Handling Initial UE Event")
+
+	msg := intfcMsg.(*common.UuMessage)
+	var pduSessions []*ngapTestpacket.PduSession
+	for _, item := range msg.DBParams {
+		pduSess := item.PduSess
+		if !pduSess.Success {
+			gnbue.RemoveGnbUpUe(pduSess.PduSessId)
+		} else {
+			gnbUpUe := gnbue.GetGnbUpUe(pduSess.PduSessId)
+			// TODO: Addition to this map should only be through GnbUpfWorker
+			// routine. This will help in replacing sync map with normal map
+			// Thus will help avoid lock unlock operation on per downlink message
+			gnbUpUe.Upf.GnbUpUes.AddGnbUpUe(gnbUpUe.DlTeid, true, gnbUpUe)
+			gnbUpUe.WriteUeChan = item.CommChan
+			gnbue.WaitGrp.Add(1)
+			go gnbupueworker.Init(gnbUpUe, &gnbue.WaitGrp)
+		}
+		pduSessions = append(pduSessions, pduSess)
+	}
+
+	var ngapPdu []byte
+	var err error
+
+	if msg.TriggeringEvent == common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT {
+		ngapPdu, err = test.GetPDUSessionResourceSetupResponse(pduSessions,
+			gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, gnbue.Gnb.GnbN3Ip)
+		if err != nil {
+			gnbue.Log.Errorln("Failed to create PDU Session Resource Setup Response:", err)
+			return
+		}
+	} else if msg.TriggeringEvent == common.INITIAL_CTX_SETUP_REQUEST_EVENT {
+		ngapPdu, err = test.GetInitialContextSetupResponseForServiceRequest(pduSessions,
+			gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, gnbue.Gnb.GnbN3Ip)
+		if err != nil {
+			gnbue.Log.Errorln("Failed to create Initial Context Setup Response:", err)
+			return
+		}
+	}
+
+	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, ngapPdu)
+	if err != nil {
+		gnbue.Log.Errorln("SendToPeer failed:", err)
+		return
+	}
+	gnbue.Log.Traceln("Sent PDU Session Resource Setup Response Message to AMF")
+}
+
+func HandleUeCtxReleaseCommand(gnbue *context.GnbCpUe,
+	intfcMsg common.InterfaceMessage) {
+
+	gnbue.Log.Traceln("Handling UE Context Release Command Message")
+
+	msg := intfcMsg.(*common.N2Message)
+	var ueNgapIds *ngapType.UENGAPIDs
+	var amfUeNgapId ngapType.AMFUENGAPID
+	var cause *ngapType.Cause
+
+	pdu := msg.NgapPdu
+
+	// Null checks are already performed at gnbamfworker level
+	initiatingMessage := pdu.InitiatingMessage
+	ueCtxRelCmd := initiatingMessage.Value.UEContextReleaseCommand
+
+	for _, ie := range ueCtxRelCmd.ProtocolIEs.List {
+		switch ie.Id.Value {
+		case ngapType.ProtocolIEIDUENGAPIDs:
+			ueNgapIds = ie.Value.UENGAPIDs
+			if ueNgapIds == nil {
+				gnbue.Log.Errorln("UENGAPIDs is nil")
+				return
+			}
+		case ngapType.ProtocolIEIDCause:
+			cause = ie.Value.Cause
+			if cause == nil {
+				gnbue.Log.Errorln("Cause is nil")
+				return
+			}
+		}
+	}
+
+	_, causeNum := test.PrintAndGetCause(cause)
+
+	if ueNgapIds.Present == ngapType.UENGAPIDsPresentUENGAPIDPair {
+		amfUeNgapId = ueNgapIds.UENGAPIDPair.AMFUENGAPID
+		if gnbue.AmfUeNgapId != amfUeNgapId.Value {
+			gnbue.Log.Errorln("AmfUeNgapId mismatch")
+		}
+	}
+
+	var pduSessIds []int64
+	f := func(k interface{}, v interface{}) bool {
+		pduSessIds = append(pduSessIds, k.(int64))
+		return true
+	}
+	gnbue.GnbUpUes.Range(f)
+
+	ngapPdu, err := test.GetUEContextReleaseComplete(gnbue.AmfUeNgapId,
+		gnbue.GnbUeNgapId, pduSessIds)
+	if err != nil {
+		fmt.Println("Failed to create UE Context Release Complete message")
+		return
+	}
+
+	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, ngapPdu)
+	if err != nil {
+		gnbue.Log.Errorln("SendToPeer failed:", err)
+		return
+	}
+	gnbue.Log.Traceln("Sent UE Context Release Complete Message to AMF")
+
+	quitEvt := &common.DefaultMessage{}
+	quitEvt.Event = common.QUIT_EVENT
+	gnbue.ReadChan <- quitEvt
+
+	req := &common.UuMessage{}
+	req.Event = common.CONNECTION_RELEASE_REQUEST_EVENT
+	if causeNum == ngapType.CauseNasPresentDeregister {
+		req.TriggeringEvent = common.DEREG_REQUEST_UE_ORIG_EVENT
+	} else {
+		req.TriggeringEvent = common.TRIGGER_AN_RELEASE_EVENT
+	}
+
+	gnbue.WriteUeChan <- req
+}
+
+func HandleRanConnectionRelease(gnbue *context.GnbCpUe,
+	intfcMsg common.InterfaceMessage) {
+
+	// Todo: The cause for the RAN connection release should
+	// be sent by the Sim-UE and inturn through configuration
+	gnbue.Log.Traceln("Handling RAN Connection Release Event")
+
+	gnbue.Log.Traceln("Creating UE Context Release Request")
+
+	sendMsg, err := ngap.GetUEContextReleaseRequest(gnbue)
+	if err != nil {
+		gnbue.Log.Errorln("GetUplinkNASTransport failed:", err)
+		return
+	}
+	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg)
+	if err != nil {
+		gnbue.Log.Errorln("SendToPeer failed:", err)
+		return
+	}
+
+	gnbue.Log.Traceln("Sent Uplink NAS Transport Message to AMF")
+}
+
+func ProcessPduSessResourceSetupList(gnbue *context.GnbCpUe,
+	lst []pduSessResourceSetupItem, event common.EventType) {
 	//var pduSessions []ngapTestpacket.PduSession
 	var dbParamSet []*common.DataBearerParams
 
+	var nasPdus common.NasPduList
+
 	// supporting only one pdu session currently
-	for _, item := range pduSessResourceSetupReqList.List[:1] {
+	for _, item := range lst {
 
 		resourceSetupRequestTransfer := ngapType.PDUSessionResourceSetupRequestTransfer{}
 		err := aper.UnmarshalWithParams(item.PDUSessionResourceSetupRequestTransfer,
@@ -291,8 +496,8 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe,
 		}
 
 		pduSess.Success = true
-		if item.PDUSessionNASPDU != nil {
-			nasPdus = append(nasPdus, item.PDUSessionNASPDU.Value)
+		if item.NASPDU != nil {
+			nasPdus = append(nasPdus, item.NASPDU.Value)
 		}
 
 		gnbupf, created := gnbue.Gnb.GnbPeers.GetOrAddGnbUpf(upfIp)
@@ -309,8 +514,10 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe,
 		dbParamSet = append(dbParamSet, dbParam)
 	}
 
-	SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, nasPdus)
-	gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
+	if len(nasPdus) != 0 {
+		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, nasPdus)
+		gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
+	}
 
 	/* TODO: To be fixed, currently Data Berer Setup Event may get processed
 	 * before the pdu sessions are established on the UE side
@@ -319,133 +526,27 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe,
 	uemsg := common.UuMessage{}
 	uemsg.Event = common.DATA_BEARER_SETUP_REQUEST_EVENT
 	uemsg.DBParams = dbParamSet
+	uemsg.TriggeringEvent = event
 	gnbue.WriteUeChan <- &uemsg
 	gnbue.Log.Infoln("Sent Data Radio Bearer Setup Event to Ue")
 }
 
-func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe,
-	intfcMsg common.InterfaceMessage) {
-
-	gnbue.Log.Traceln("Handling Initial UE Event")
-
-	msg := intfcMsg.(*common.UuMessage)
-	var pduSessions []*ngapTestpacket.PduSession
-	for _, item := range msg.DBParams {
-		pduSess := item.PduSess
-		if !pduSess.Success {
-			gnbue.RemoveGnbUpUe(pduSess.PduSessId)
-		} else {
-			gnbUpUe := gnbue.GetGnbUpUe(pduSess.PduSessId)
-			// TODO: Addition to this map should only be through GnbUpfWorker
-			// routine. This will help in replacing sync map with normal map
-			// Thus will help avoid lock unlock operation on per downlink message
-			gnbUpUe.Upf.GnbUpUes.AddGnbUpUe(gnbUpUe.DlTeid, true, gnbUpUe)
-			gnbUpUe.WriteUeChan = item.CommChan
-			go gnbupueworker.Init(gnbUpUe)
-		}
-		pduSessions = append(pduSessions, pduSess)
-	}
-
-	ngapPdu, err := test.GetPDUSessionResourceSetupResponse(pduSessions,
-		gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, gnbue.Gnb.GnbN3Ip)
-	if err != nil {
-		fmt.Println("Failed to create - NGAP-PDU Session Resource Setup Response")
-		return
-	}
-
-	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, ngapPdu)
-	if err != nil {
-		gnbue.Log.Errorln("SendToPeer failed:", err)
-		return
-	}
-	gnbue.Log.Traceln("Sent PDU Session Resource Setup Response Message to AMF")
+func HandleQuitEvent(gnbue *context.GnbCpUe, intfcMsg common.InterfaceMessage) {
+	releaseUpUeContexts(gnbue)
+	gnbue.Gnb.RanUeNGAPIDGenerator.FreeID(gnbue.GnbUeNgapId)
+	gnbue.WaitGrp.Wait()
+	gnbue.Log.Infoln("gNB Control-Plane UE context terminated")
 }
 
-func HandleUeCtxReleaseCommand(gnbue *context.GnbCpUe,
-	intfcMsg common.InterfaceMessage) {
-
-	gnbue.Log.Traceln("Handling UE Context Release Command Message")
-
-	msg := intfcMsg.(*common.N2Message)
-	var ueNgapIds *ngapType.UENGAPIDs
-	var amfUeNgapId ngapType.AMFUENGAPID
-	var cause *ngapType.Cause
-
-	pdu := msg.NgapPdu
-
-	// Null checks are already performed at gnbamfworker level
-	initiatingMessage := pdu.InitiatingMessage
-	ueCtxRelCmd := initiatingMessage.Value.UEContextReleaseCommand
-
-	for _, ie := range ueCtxRelCmd.ProtocolIEs.List {
-		switch ie.Id.Value {
-		case ngapType.ProtocolIEIDUENGAPIDs:
-			ueNgapIds = ie.Value.UENGAPIDs
-			if ueNgapIds == nil {
-				gnbue.Log.Errorln("UENGAPIDs is nil")
-				return
-			}
-		case ngapType.ProtocolIEIDCause:
-			cause = ie.Value.Cause
-			if cause == nil {
-				gnbue.Log.Errorln("Cause is nil")
-				return
-			}
-		}
-	}
-
-	test.PrintAndGetCause(cause)
-
-	if ueNgapIds.Present == ngapType.UENGAPIDsPresentUENGAPIDPair {
-		amfUeNgapId = ueNgapIds.UENGAPIDPair.AMFUENGAPID
-		if gnbue.AmfUeNgapId != amfUeNgapId.Value {
-			gnbue.Log.Errorln("AmfUeNgapId mismatch")
-		}
-	}
-
-	var pduSessIds []int64
-	f := func(k interface{}, v interface{}) bool {
-		pduSessIds = append(pduSessIds, k.(int64))
+func releaseUpUeContexts(gnbue *context.GnbCpUe) {
+	f := func(key, value interface{}) bool {
+		ctx := value.(*context.GnbUpUe)
+		msg := &common.DefaultMessage{}
+		msg.Event = common.QUIT_EVENT
+		ctx.ReadCmdChan <- msg
+		ctx.Upf.GnbUpUes.RemoveGnbUpUe(ctx.DlTeid, true)
 		return true
 	}
 	gnbue.GnbUpUes.Range(f)
-
-	ngapPdu, err := test.GetUEContextReleaseComplete(gnbue.AmfUeNgapId,
-		gnbue.GnbUeNgapId, pduSessIds)
-	if err != nil {
-		fmt.Println("Failed to create UE Context Release Complete message")
-		return
-	}
-
-	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, ngapPdu)
-	if err != nil {
-		gnbue.Log.Errorln("SendToPeer failed:", err)
-		return
-	}
-	gnbue.Log.Traceln("Sent UE Context Release Complete Message to AMF")
-
-	SendToUe(gnbue, common.CTX_RELEASE_ACKNOWLEDGEMENT_EVENT, nil)
-}
-
-func HandleRanConnectionRelease(gnbue *context.GnbCpUe,
-	intfcMsg common.InterfaceMessage) {
-
-	// Todo: The cause for the RAN connection release should
-	// be sent by the Sim-UE and inturn through configuration
-	gnbue.Log.Traceln("Handling RAN Connection Release Event")
-
-	gnbue.Log.Traceln("Creating UE Context Release Request")
-
-	sendMsg, err := ngap.GetUEContextReleaseRequest(gnbue)
-	if err != nil {
-		gnbue.Log.Errorln("GetUplinkNASTransport failed:", err)
-		return
-	}
-	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg)
-	if err != nil {
-		gnbue.Log.Errorln("SendToPeer failed:", err)
-		return
-	}
-
-	gnbue.Log.Traceln("Sent Uplink NAS Transport Message to AMF")
+	gnbue.GnbUpUes = sync.Map{}
 }

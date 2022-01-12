@@ -83,3 +83,13 @@ func (dao *GnbUeDao) AddGnbUpUe(teid uint32, downlink bool, gnbue *GnbUpUe) {
 		//  TODO
 	}
 }
+
+// RemoveGnbUpUe removes the GnbUpUe instance corresponding to provided TEID
+func (dao *GnbUeDao) RemoveGnbUpUe(teid uint32, downlink bool) {
+	dao.Log.Infoln("Removing GnbUpUe for TEID:", teid, "Downlink:", downlink)
+	if downlink {
+		dao.dlTeidGnbUpUeMap.Delete(teid)
+	} else {
+		//  TODO
+	}
+}

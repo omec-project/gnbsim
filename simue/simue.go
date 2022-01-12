@@ -11,38 +11,29 @@ import (
 	"gnbsim/gnodeb"
 	"gnbsim/realue"
 	"gnbsim/simue/context"
+	"sync"
 )
 
-func Init(simUe *context.SimUe) {
-	var err error
-	defer func(err error) {
-		if err != nil {
-			SendToProfile(simUe, common.PROFILE_FAIL_EVENT, err)
-			simUe.Log.Infoln("Sent Profile Fail Event to Profile routine")
-		}
-	}(err)
+func Init(simUe *context.SimUe, wg *sync.WaitGroup) {
 
-	go realue.Init(simUe.RealUe)
-	err = ConnectToGnb(simUe)
+	err := ConnectToGnb(simUe)
 	if err != nil {
-		simUe.Log.Errorln("ConnectToGnb returned:", err)
-		err = fmt.Errorf("failed to connect to gnodeb")
+		err = fmt.Errorf("failed to connect to gnodeb:", err)
+		SendToProfile(simUe, common.PROFILE_FAIL_EVENT, err)
+		simUe.Log.Infoln("Sent Profile Fail Event to Profile routine")
 		return
 	}
 
-	for msg := range simUe.ReadChan {
-		err := HandleEvent(simUe, msg)
-		if err != nil {
-			simUe.Log.Errorln("HandleEvent returned:", err)
-			err = fmt.Errorf("failed to handle received event")
-			return
-		}
-	}
+	simUe.WaitGrp.Add(1)
+	go realue.Init(simUe.RealUe, &simUe.WaitGrp)
+
+	HandleEvents(simUe)
+	wg.Done()
 }
 
 func ConnectToGnb(simUe *context.SimUe) error {
 	uemsg := common.UuMessage{}
-	uemsg.Event = common.CONNECT_REQUEST_EVENT
+	uemsg.Event = common.CONNECTION_REQUEST_EVENT
 	uemsg.CommChan = simUe.ReadChan
 	uemsg.Supi = simUe.Supi
 
@@ -50,7 +41,7 @@ func ConnectToGnb(simUe *context.SimUe) error {
 	gNb := simUe.GnB
 	simUe.WriteGnbUeChan, err = gnodeb.RequestConnection(gNb, &uemsg)
 	if err != nil {
-		return fmt.Errorf("failed to establish connection with gnb, err: %v", err)
+		return err
 	}
 
 	simUe.Log.Infof("Connected to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
@@ -58,59 +49,72 @@ func ConnectToGnb(simUe *context.SimUe) error {
 	return nil
 }
 
-func HandleEvent(ue *context.SimUe, msg common.InterfaceMessage) (err error) {
-	if msg == nil {
-		return fmt.Errorf("empty message received")
+func HandleEvents(ue *context.SimUe) {
+	var err error
+	for msg := range ue.ReadChan {
+		event := msg.GetEventType()
+		ue.Log.Infoln("Handling event:", msg.GetEventType())
+
+		switch event {
+		case common.REG_REQUEST_EVENT:
+			err = HandleRegRequestEvent(ue, msg)
+		case common.AUTH_REQUEST_EVENT:
+			err = HandleAuthRequestEvent(ue, msg)
+		case common.AUTH_RESPONSE_EVENT:
+			err = HandleAuthResponseEvent(ue, msg)
+		case common.SEC_MOD_COMMAND_EVENT:
+			err = HandleSecModCommandEvent(ue, msg)
+		case common.SEC_MOD_COMPLETE_EVENT:
+			err = HandleSecModCompleteEvent(ue, msg)
+		case common.REG_ACCEPT_EVENT:
+			err = HandleRegAcceptEvent(ue, msg)
+		case common.REG_COMPLETE_EVENT:
+			err = HandleRegCompleteEvent(ue, msg)
+		case common.DEREG_REQUEST_UE_ORIG_EVENT:
+			err = HandleDeregRequestEvent(ue, msg)
+		case common.DEREG_ACCEPT_UE_ORIG_EVENT:
+			err = HandleDeregAcceptEvent(ue, msg)
+		case common.PDU_SESS_EST_REQUEST_EVENT:
+			err = HandlePduSessEstRequestEvent(ue, msg)
+		case common.PDU_SESS_EST_ACCEPT_EVENT:
+			err = HandlePduSessEstAcceptEvent(ue, msg)
+		case common.DL_INFO_TRANSFER_EVENT:
+			err = HandleDlInfoTransferEvent(ue, msg)
+		case common.DATA_BEARER_SETUP_REQUEST_EVENT:
+			err = HandleDataBearerSetupRequestEvent(ue, msg)
+		case common.DATA_BEARER_SETUP_RESPONSE_EVENT:
+			err = HandleDataBearerSetupResponseEvent(ue, msg)
+		case common.DATA_PKT_GEN_SUCCESS_EVENT:
+			err = HandleDataPktGenSuccessEvent(ue, msg)
+		case common.DATA_PKT_GEN_FAILURE_EVENT:
+			err = HandleDataPktGenFailureEvent(ue, msg)
+		case common.SERVICE_REQUEST_EVENT:
+			err = HandleServiceRequestEvent(ue, msg)
+		case common.SERVICE_ACCEPT_EVENT:
+			err = HandleServiceAcceptEvent(ue, msg)
+		case common.PROFILE_START_EVENT:
+			err = HandleProfileStartEvent(ue, msg)
+		case common.CONNECTION_RELEASE_REQUEST_EVENT:
+			err = HandleConnectionReleaseRequestEvent(ue, msg)
+		case common.ERROR_EVENT:
+			HandleErrorEvent(ue, msg)
+		case common.QUIT_EVENT:
+			HandleQuitEvent(ue, msg)
+			return
+		default:
+			ue.Log.Infoln("Event", msg.GetEventType(), "is not supported")
+		}
+
+		if err != nil {
+			ue.Log.Errorln("Failed to handle event:", event, "Error:", err)
+			msg := &common.UeMessage{}
+			msg.Error = err
+			msg.Event = common.ERROR_EVENT
+			HandleErrorEvent(ue, msg)
+		}
 	}
 
-	ue.Log.Infoln("Handling event:", msg.GetEventType())
-
-	switch msg.GetEventType() {
-	case common.REG_REQUEST_EVENT:
-		err = HandleRegReqEvent(ue, msg)
-	case common.AUTH_REQUEST_EVENT:
-		err = HandleAuthRequestEvent(ue, msg)
-	case common.AUTH_RESPONSE_EVENT:
-		err = HandleAuthResponseEvent(ue, msg)
-	case common.SEC_MOD_COMMAND_EVENT:
-		err = HandleSecModCommandEvent(ue, msg)
-	case common.SEC_MOD_COMPLETE_EVENT:
-		err = HandleSecModCompleteEvent(ue, msg)
-	case common.REG_ACCEPT_EVENT:
-		err = HandleRegAcceptEvent(ue, msg)
-	case common.REG_COMPLETE_EVENT:
-		err = HandleRegCompleteEvent(ue, msg)
-	case common.DEREG_REQUEST_UE_ORIG_EVENT:
-		err = HandleDeregRequestEvent(ue, msg)
-	case common.DEREG_ACCEPT_UE_ORIG_EVENT:
-		err = HandleDeregAcceptEvent(ue, msg)
-	case common.CTX_RELEASE_ACKNOWLEDGEMENT_EVENT:
-		err = HandleCtxRelAckEvent(ue, msg)
-	case common.PDU_SESS_EST_REQUEST_EVENT:
-		err = HandlePduSessEstRequestEvent(ue, msg)
-	case common.PDU_SESS_EST_ACCEPT_EVENT:
-		err = HandlePduSessEstAcceptEvent(ue, msg)
-	case common.DL_INFO_TRANSFER_EVENT:
-		err = HandleDlInfoTransferEvent(ue, msg)
-	case common.DATA_BEARER_SETUP_REQUEST_EVENT:
-		err = HandleDataBearerSetupRequestEvent(ue, msg)
-	case common.DATA_BEARER_SETUP_RESPONSE_EVENT:
-		err = HandleDataBearerSetupResponseEvent(ue, msg)
-	case common.DATA_PKT_GEN_SUCCESS_EVENT:
-		err = HandleDataPktGenSuccessEvent(ue, msg)
-	case common.DATA_PKT_GEN_FAILURE_EVENT:
-		err = HandleDataPktGenFailureEvent(ue, msg)
-	case common.PROFILE_START_EVENT:
-		err = HandleProfileStartEvent(ue, msg)
-	default:
-		ue.Log.Infoln("Event", msg.GetEventType(), "is not supported")
-	}
-
-	if err != nil {
-		ue.Log.Errorln("Failed to process event:", msg.GetEventType(), "Error:", err)
-	}
-
-	return err
+	return
 }
 
 func SendToRealUe(ue *context.SimUe, msg common.InterfaceMessage) {

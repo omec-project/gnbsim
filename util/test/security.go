@@ -14,53 +14,62 @@ import (
 	"github.com/omec-project/nas/security"
 )
 
-func NASEncode(ue *context.RealUe, msg *nas.Message, securityContextAvailable bool, newSecurityContext bool) (
+func NASEncode(ue *context.RealUe, msg *nas.Message, securityContextAvailable bool) (
 	payload []byte, err error) {
-	var sequenceNumber uint8
+
 	if ue == nil {
 		err = fmt.Errorf("amfUe is nil")
 		return
 	}
 	if msg == nil {
-		err = fmt.Errorf("Nas Message is empty")
+		err = fmt.Errorf("nas message is empty")
 		return
 	}
 
 	if !securityContextAvailable {
 		return msg.PlainNasEncode()
 	} else {
-		if newSecurityContext {
+		needCiphering := false
+		switch msg.SecurityHeader.SecurityHeaderType {
+		case nas.SecurityHeaderTypeIntegrityProtected:
+			ue.Log.Debugln("Security header type: Integrity Protected")
+		case nas.SecurityHeaderTypeIntegrityProtectedAndCiphered:
+			ue.Log.Debugln("Security header type: Integrity Protected And Ciphered")
+			needCiphering = true
+		case nas.SecurityHeaderTypeIntegrityProtectedWithNew5gNasSecurityContext:
+			ue.Log.Debugln("Security header type: Integrity Protected With New 5G Security Context")
 			ue.ULCount.Set(0, 0)
 			ue.DLCount.Set(0, 0)
+		case nas.SecurityHeaderTypeIntegrityProtectedAndCipheredWithNew5gNasSecurityContext:
+			ue.Log.Debugln("Security header type: Integrity Protected With New 5G Security Context")
+			ue.ULCount.Set(0, 0)
+			ue.DLCount.Set(0, 0)
+			needCiphering = true
+		default:
+			return nil, fmt.Errorf("Wrong security header type: 0x%0x", msg.SecurityHeader.SecurityHeaderType)
 		}
 
-		sequenceNumber = ue.ULCount.SQN()
 		payload, err = msg.PlainNasEncode()
 		if err != nil {
-			return
+			return nil, fmt.Errorf("plain nas encode failed: %+v", err)
 		}
 
-		// TODO: Support for ue has nas connection in both accessType
-		if err = security.NASEncrypt(ue.CipheringAlg, ue.KnasEnc, ue.ULCount.Get(), security.Bearer3GPP,
-			security.DirectionUplink, payload); err != nil {
-			return
+		if needCiphering {
+			ue.Log.Debugf("Encrypt NAS message (algorithm: %+v, DLCount: 0x%0x)", ue.CipheringAlg, ue.DLCount.Get())
+			ue.Log.Tracef("NAS ciphering key: %0x", ue.KnasEnc)
+			// TODO: Support for ue has nas connection in both accessType
+			if err = security.NASEncrypt(ue.CipheringAlg, ue.KnasEnc, ue.ULCount.Get(), security.Bearer3GPP,
+				security.DirectionUplink, payload); err != nil {
+				return nil, fmt.Errorf("Encrypt error: %+v", err)
+			}
 		}
-		// add sequece number
-		payload = append([]byte{sequenceNumber}, payload[:]...)
-		mac32 := make([]byte, 4)
-		_ = mac32
-		// fmt.Println("sequenceNumber", sequenceNumber)
-		// fmt.Println("ue.IntegrityAlg", ue.IntegrityAlg)
-		// fmt.Println("ue.KnasInt", ue.KnasInt)
-		// fmt.Println("ue.ULCount.Get()", ue.ULCount.Get())
-		// fmt.Println("security.Bearer3GPP", security.Bearer3GPP)
-		// fmt.Println("security.DirectionUplink", security.DirectionUplink)
-		// fmt.Println("payload", payload)
+		// add sequence number
+		payload = append([]byte{ue.ULCount.SQN()}, payload[:]...)
 
-		mac32, err = security.NASMacCalculate(ue.IntegrityAlg, ue.KnasInt, ue.ULCount.Get(),
+		mac32, err := security.NASMacCalculate(ue.IntegrityAlg, ue.KnasInt, ue.ULCount.Get(),
 			security.Bearer3GPP, security.DirectionUplink, payload)
 		if err != nil {
-			return
+			return nil, fmt.Errorf("nas mac calcuate failed: %+v", err)
 		}
 
 		// Add mac value
@@ -91,7 +100,7 @@ func NASDecode(ue *context.RealUe, securityHeaderType uint8, payload []byte) (ms
 		err = msg.PlainNasDecode(&payload)
 		return
 	} else if ue.IntegrityAlg == security.AlgIntegrity128NIA0 {
-		fmt.Println("decode payload is ", payload)
+		ue.Log.Debugln("decode payload is ", payload)
 		// remove header
 		payload = payload[3:]
 
@@ -113,15 +122,15 @@ func NASDecode(ue *context.RealUe, securityHeaderType uint8, payload []byte) (ms
 		ciphered := false
 		switch msg.SecurityHeaderType {
 		case nas.SecurityHeaderTypeIntegrityProtected:
-			fmt.Println("Security header type: Integrity Protected")
+			ue.Log.Debugln("Security header type: Integrity Protected")
 		case nas.SecurityHeaderTypeIntegrityProtectedAndCiphered:
-			fmt.Println("Security header type: Integrity Protected And Ciphered")
+			ue.Log.Debugln("Security header type: Integrity Protected And Ciphered")
 			ciphered = true
 		case nas.SecurityHeaderTypeIntegrityProtectedWithNew5gNasSecurityContext:
-			fmt.Println("Security Header Type Integrity Protected With New 5g Nas Security Context")
+			ue.Log.Debugln("Security Header Type Integrity Protected With New 5g Nas Security Context")
 			ue.DLCount.Set(0, 0)
 		case nas.SecurityHeaderTypeIntegrityProtectedAndCipheredWithNew5gNasSecurityContext:
-			fmt.Println("Security header type: Integrity Protected And Ciphered With New 5G Security Context")
+			ue.Log.Debugln("Security header type: Integrity Protected And Ciphered With New 5G Security Context")
 			ciphered = true
 			ue.DLCount.Set(0, 0)
 		default:
@@ -158,7 +167,6 @@ func NASDecode(ue *context.RealUe, securityHeaderType uint8, payload []byte) (ms
 		}
 
 		err = msg.PlainNasDecode(&payload)
-		fmt.Println("err", err)
 		return msg, err
 	}
 }

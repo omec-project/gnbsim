@@ -20,8 +20,10 @@ type GnbCpUe struct {
 	Amf         *GnbAmf
 	Gnb         *GNodeB
 
-	/*TODO: Sync map is not needed as it is handled single threaded */
+	// TODO: Sync map is not needed as it is handled single threaded
 	GnbUpUes sync.Map
+
+	WaitGrp sync.WaitGroup
 
 	// GnbCpUe writes messages to UE on this channel
 	WriteUeChan chan common.InterfaceMessage
@@ -29,7 +31,7 @@ type GnbCpUe struct {
 	// GnbCpUe reads messages from all other workers and UE on this channel
 	ReadChan chan common.InterfaceMessage
 
-	/* logger */
+	// logger
 	Log *logrus.Entry
 }
 

@@ -13,6 +13,7 @@ import (
 	"gnbsim/simue"
 	simuectx "gnbsim/simue/context"
 	"strconv"
+	"sync"
 	"time"
 	// AJAY - Change required
 )
@@ -30,11 +31,13 @@ func AnRelease_test(profile *profctx.Profile) {
 	if err != nil {
 		profile.Log.Fatalln("invalid imsi value")
 	}
-
+	var wg sync.WaitGroup
 	// Currently executing profile for one IMSI at a time
 	for count := 1; count <= profile.UeCount; count++ {
 		simUe := simuectx.NewSimUe("imsi-"+strconv.Itoa(imsi), gnb, profile)
-		go simue.Init(simUe)
+
+		wg.Add(1)
+		go simue.Init(simUe, &wg)
 		util.SendToSimUe(simUe, common.PROFILE_START_EVENT)
 
 		msg := <-profile.ReadChan
@@ -48,6 +51,8 @@ func AnRelease_test(profile *profctx.Profile) {
 		time.Sleep(2 * time.Second)
 		imsi++
 	}
+
+	wg.Wait()
 }
 
 // initEventMap initializes the event map of profile with default values as per
@@ -60,6 +65,8 @@ func initEventMap(profile *profctx.Profile) {
 		common.REG_ACCEPT_EVENT:           common.REG_COMPLETE_EVENT,
 		common.PDU_SESS_EST_REQUEST_EVENT: common.PDU_SESS_EST_ACCEPT_EVENT,
 		common.PDU_SESS_EST_ACCEPT_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
+		common.TRIGGER_AN_RELEASE_EVENT:   common.CONNECTION_RELEASE_REQUEST_EVENT,
+		common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
 	}
 }
 

@@ -8,41 +8,40 @@ package gnbupueworker
 import (
 	"gnbsim/common"
 	"gnbsim/gnodeb/context"
+	"sync"
 )
 
-func Init(gnbue *context.GnbUpUe) {
+func Init(gnbue *context.GnbUpUe, wg *sync.WaitGroup) {
+	HandleEvents(gnbue)
+	wg.Done()
+}
+
+func HandleEvents(gnbue *context.GnbUpUe) {
+	var err error
 	for {
 		select {
 		/* Reading Up link packets from UE*/
 		case msg := <-gnbue.ReadUlChan:
-			err := HandleUlMessage(gnbue, msg)
+			err = HandleUlMessage(gnbue, msg)
 			if err != nil {
 				gnbue.Log.Errorln("HandleUlMessage() returned:", err)
 			}
 
 		/* Reading Down link packets from UPF worker*/
 		case msg := <-gnbue.ReadDlChan:
-			err := HandleDlMessage(gnbue, msg)
+			err = HandleDlMessage(gnbue, msg)
 			if err != nil {
 				gnbue.Log.Errorln("HandleDlMessage() returned:", err)
 			}
 
 		/* Reading commands from GnbCpUe (Control plane context)*/
 		case msg := <-gnbue.ReadCmdChan:
-			err := HandleCommand(gnbue, msg)
-			if err != nil {
-				gnbue.Log.Errorln("HandleCommand() returned:", err)
+			switch msg.GetEventType() {
+			case common.QUIT_EVENT:
+				HandleQuitEvent(gnbue, msg)
+				return
 			}
 		}
+		//TODO: Handle Errors
 	}
-}
-
-func HandleCommand(gnbue *context.GnbUpUe, msg common.InterfaceMessage) (err error) {
-	gnbue.Log.Infoln("Handling event:", msg.GetEventType())
-	uemsg := msg.(*common.UuMessage)
-	switch uemsg.GetEventType() {
-
-	}
-
-	return nil
 }

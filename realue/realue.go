@@ -6,75 +6,76 @@
 package realue
 
 import (
-	"fmt"
 	"gnbsim/common"
-	"gnbsim/logger"
 	"gnbsim/realue/context"
 	"gnbsim/util/test"
+	"sync"
 
 	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
 )
 
-func Init(ue *context.RealUe) {
-	if ue == nil {
-		logger.RealUeLog.Errorln("RealUe is nil")
-		return
-	}
+func Init(ue *context.RealUe, wg *sync.WaitGroup) {
+
 	ue.AuthenticationSubs = test.GetAuthSubscription(TestGenAuthData.MilenageTestSet19.K,
 		TestGenAuthData.MilenageTestSet19.OPC,
 		"")
 
-	for msg := range ue.ReadChan {
-		err := HandleEvent(ue, msg)
-		if err != nil {
-			ue.Log.Errorln("Failed to handle received event", err)
-		}
-	}
+	HandleEvents(ue)
+	wg.Done()
 }
 
-func HandleEvent(ue *context.RealUe, msg common.InterfaceMessage) (err error) {
-	if msg == nil {
-		return fmt.Errorf("empty message received")
+func HandleEvents(ue *context.RealUe) (err error) {
+
+	for msg := range ue.ReadChan {
+		event := msg.GetEventType()
+		ue.Log.Traceln("Handling Event:", event)
+
+		switch event {
+		case common.REG_REQUEST_EVENT:
+			err = HandleRegRequestEvent(ue, msg)
+		case common.AUTH_RESPONSE_EVENT:
+			err = HandleAuthResponseEvent(ue, msg)
+		case common.SEC_MOD_COMPLETE_EVENT:
+			err = HandleSecModCompleteEvent(ue, msg)
+		case common.REG_COMPLETE_EVENT:
+			err = HandleRegCompleteEvent(ue, msg)
+		case common.DEREG_REQUEST_UE_ORIG_EVENT:
+			err = HandleDeregRequestEvent(ue, msg)
+		case common.DL_INFO_TRANSFER_EVENT:
+			err = HandleDlInfoTransferEvent(ue, msg)
+		case common.PDU_SESS_EST_REQUEST_EVENT:
+			err = HandlePduSessEstRequestEvent(ue, msg)
+		case common.PDU_SESS_EST_ACCEPT_EVENT:
+			err = HandlePduSessEstAcceptEvent(ue, msg)
+		case common.DATA_BEARER_SETUP_REQUEST_EVENT:
+			err = HandleDataBearerSetupRequestEvent(ue, msg)
+		case common.DATA_PKT_GEN_REQUEST_EVENT:
+			err = HandleDataPktGenRequestEvent(ue, msg)
+		case common.DATA_PKT_GEN_SUCCESS_EVENT:
+			err = HandleDataPktGenSuccessEvent(ue, msg)
+		case common.SERVICE_REQUEST_EVENT:
+			err = HandleServiceRequestEvent(ue, msg)
+		case common.CONNECTION_RELEASE_REQUEST_EVENT:
+			err = HandleConnectionReleaseRequestEvent(ue, msg)
+		case common.ERROR_EVENT:
+			HandleErrorEvent(ue, msg)
+		case common.QUIT_EVENT:
+			HandleQuitEvent(ue, msg)
+			return nil
+		default:
+			ue.Log.Warnln("Event", event, "is not supported")
+		}
+
+		if err != nil {
+			ue.Log.Errorln("real ue failed:", event, ":", err)
+			msg := &common.UeMessage{}
+			msg.Error = err
+			msg.Event = common.ERROR_EVENT
+			HandleErrorEvent(ue, msg)
+		}
 	}
 
-	event := msg.GetEventType()
-	ue.Log.Traceln("Handling Event:", event)
-
-	/* TODO: Should check interface type to avoid overlapping events
-	 * add support for N1 interface, internal realue-sim ue interface
-	 */
-	switch event {
-	case common.REG_REQUEST_EVENT:
-		err = HandleRegRequestEvent(ue, msg)
-	case common.AUTH_RESPONSE_EVENT:
-		err = HandleAuthResponseEvent(ue, msg)
-	case common.SEC_MOD_COMPLETE_EVENT:
-		err = HandleSecModCompleteEvent(ue, msg)
-	case common.REG_COMPLETE_EVENT:
-		err = HandleRegCompleteEvent(ue, msg)
-	case common.DEREG_REQUEST_UE_ORIG_EVENT:
-		err = HandleDeregRequestEvent(ue, msg)
-	case common.DL_INFO_TRANSFER_EVENT:
-		err = HandleDlInfoTransferEvent(ue, msg)
-	case common.PDU_SESS_EST_REQUEST_EVENT:
-		err = HandlePduSessEstRequestEvent(ue, msg)
-	case common.PDU_SESS_EST_ACCEPT_EVENT:
-		err = HandlePduSessEstAcceptEvent(ue, msg)
-	case common.DATA_BEARER_SETUP_REQUEST_EVENT:
-		err = HandleDataBearerSetupRequestEvent(ue, msg)
-	case common.DATA_PKT_GEN_REQUEST_EVENT:
-		err = HandleDataPktGenRequestEvent(ue, msg)
-	case common.DATA_PKT_GEN_SUCCESS_EVENT:
-		err = HandleDataPktGenSuccessEvent(ue, msg)
-	default:
-		ue.Log.Infoln("Event", event, "is not supported")
-	}
-
-	if err != nil {
-		ue.Log.Errorln("Failed to process event:", event, "Error:", err)
-	}
-
-	return err
+	return nil
 }
 
 func formUuMessage(event common.EventType, nasPdu []byte) *common.UuMessage {

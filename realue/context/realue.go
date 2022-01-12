@@ -10,6 +10,7 @@ import (
 	"gnbsim/common"
 	"gnbsim/logger"
 	"regexp"
+	"sync"
 
 	"github.com/free5gc/UeauCommon"
 	"github.com/free5gc/milenage"
@@ -36,6 +37,7 @@ type RealUe struct {
 	AuthenticationSubs *models.AuthenticationSubscription
 	Plmn               *models.PlmnId
 	PduSessions        map[int64]*PduSession
+	WaitGrp            sync.WaitGroup
 
 	//RealUe writes messages to SimUE on this channel
 	WriteSimUeChan chan common.InterfaceMessage
