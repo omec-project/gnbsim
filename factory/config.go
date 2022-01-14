@@ -18,7 +18,7 @@ import (
 
 const (
 	GNBSIM_EXPECTED_CONFIG_VERSION string = "1.0.0"
-	GNBSIM_DEFAULT_CONFIG_PATH            = "/free5gc/config/gnb.conf"
+	GNBSIM_DEFAULT_CONFIG_PATH            = "/gnbsim/config/gnb.conf"
 )
 
 type Config struct {
