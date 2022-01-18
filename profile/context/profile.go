@@ -45,19 +45,21 @@ func (p *Profile) GetNextEvent(currentEvent common.EventType) (common.EventType,
 	var err error
 	nextEvent, ok := p.Events[currentEvent]
 	if !ok {
-		err = fmt.Errorf("event %v not configured in event map", currentEvent)
+		err = fmt.Errorf("event %v not configured in event map", common.GetEvtString(currentEvent))
 	}
 	return nextEvent, err
 }
 
 func (p *Profile) CheckCurrentEvent(triggerEvent, recvEvent common.EventType) (err error) {
+	tgrEvtStr := common.GetEvtString(triggerEvent)
+	rcvEvtStr := common.GetEvtString(recvEvent)
 	expected, ok := p.Events[triggerEvent]
 	if !ok {
 		err = fmt.Errorf("triggering event %v not configured in event map",
-			triggerEvent)
+			tgrEvtStr)
 	} else if recvEvent != expected {
 		err = fmt.Errorf("triggering event:%v, expected event:%v, received event:%v",
-			triggerEvent, expected, recvEvent)
+			tgrEvtStr, common.GetEvtString(expected), rcvEvtStr)
 	}
 	return err
 }

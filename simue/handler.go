@@ -15,8 +15,6 @@ import (
 func HandleProfileStartEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
-	ue.Log.Traceln("Handling Profile Start Event")
-
 	ue.Procedure = ue.ProfileCtx.GetFirstProcedure()
 	ue.Log.Infoln("Updated procedure to", ue.Procedure)
 	HandleProcedure(ue)
@@ -26,17 +24,12 @@ func HandleProfileStartEvent(ue *context.SimUe,
 func HandleRegRequestEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
-	ue.Log.Traceln("Handling Registration Request Event")
-
 	SendToGnbUe(ue, intfcMsg)
-	ue.Log.Traceln("Sent Registration Request Event to GnbUe")
 	return nil
 }
 
 func HandleAuthRequestEvent(ue *context.SimUe,
 	intfMsg common.InterfaceMessage) (err error) {
-
-	ue.Log.Traceln("Handling Authentication Request Event")
 
 	msg := intfMsg.(*common.UeMessage)
 	// checking as per profile if Authentication Request Message is expected
@@ -51,7 +44,7 @@ func HandleAuthRequestEvent(ue *context.SimUe,
 		ue.Log.Errorln("GetNextEvent returned:", err)
 		return err
 	}
-	ue.Log.Infoln("Next Event:", nextEvent)
+	ue.Log.Infoln("Next Event:", common.GetEvtString(nextEvent))
 	msg.Event = nextEvent
 	SendToRealUe(ue, msg)
 	return nil
@@ -59,8 +52,6 @@ func HandleAuthRequestEvent(ue *context.SimUe,
 
 func HandleAuthResponseEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
-
-	ue.Log.Traceln("Handling Authentication Response Event")
 
 	msg := intfcMsg.(*common.UuMessage)
 	// Checking if RealUe has sent expected message as per profile against
@@ -73,14 +64,13 @@ func HandleAuthResponseEvent(ue *context.SimUe,
 
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
-	ue.Log.Traceln("Sent UL Information Transfer[Authentication Response] Event to GnbUe")
+	ue.Log.Traceln("Sending Authentication Response to the network")
 	return nil
 }
 
 func HandleSecModCommandEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
-	ue.Log.Traceln("Handling Security Mode Command Event")
 	// TODO: Should check if SecModCommandEvent event is expected
 
 	msg := intfcMsg.(*common.UeMessage)
@@ -109,14 +99,12 @@ func HandleSecModCompleteEvent(ue *context.SimUe,
 
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
-	ue.Log.Traceln("Sent UL Information Transfer[Security Mode Complete] Event to GnbUe")
+	ue.Log.Traceln("Sent Security Mode Complete to the network")
 	return nil
 }
 
 func HandleRegAcceptEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
-
-	ue.Log.Traceln("Handling Registration Accept Event")
 
 	msg := intfcMsg.(*common.UeMessage)
 	// TODO: Should check if Registration Accept event is expected
@@ -133,8 +121,6 @@ func HandleRegAcceptEvent(ue *context.SimUe,
 func HandleRegCompleteEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
-	ue.Log.Traceln("Handling Registration Complete Event")
-
 	msg := intfcMsg.(*common.UuMessage)
 	err = ue.ProfileCtx.CheckCurrentEvent(common.REG_ACCEPT_EVENT, msg.Event)
 	if err != nil {
@@ -144,7 +130,7 @@ func HandleRegCompleteEvent(ue *context.SimUe,
 
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
-	ue.Log.Traceln("Sent UL Information Transfer[Registration Complete] Event to GnbUe")
+	ue.Log.Traceln("Sent Registration Complete to the network")
 
 	ChangeProcedure(ue)
 	return nil
@@ -153,12 +139,10 @@ func HandleRegCompleteEvent(ue *context.SimUe,
 func HandleDeregRequestEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
-	ue.Log.Traceln("Handling UE Originated Deregistration Request Event")
-
 	msg := intfcMsg.(*common.UuMessage)
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
-	ue.Log.Traceln("Sent UL Information Transfer[Deregistration Request] Event to GnbUe")
+	ue.Log.Traceln("Sent Deregistration Request to the network")
 
 	return nil
 }
@@ -166,27 +150,20 @@ func HandleDeregRequestEvent(ue *context.SimUe,
 func HandleDeregAcceptEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
-	ue.Log.Traceln("Handling UE Originated Deregistration Accept Event")
-
 	return nil
 }
 
 func HandlePduSessEstRequestEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
-	ue.Log.Traceln("Handling PDU Session Establishment Request Event")
-
 	msg := intfcMsg.(*common.UuMessage)
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
-	ue.Log.Traceln("Sent PDU Session Establishment Request to GnbUe")
 	return nil
 }
 
 func HandlePduSessEstAcceptEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
-
-	ue.Log.Traceln("Handling PDU Session Establishment Accept Event")
 
 	msg := intfcMsg.(*common.UeMessage)
 	err = ue.ProfileCtx.CheckCurrentEvent(common.PDU_SESS_EST_REQUEST_EVENT, msg.Event)
@@ -199,7 +176,7 @@ func HandlePduSessEstAcceptEvent(ue *context.SimUe,
 		ue.Log.Errorln("GetNextEvent returned:", err)
 		return err
 	}
-	ue.Log.Infoln("Next Event:", nextEvent)
+	ue.Log.Infoln("Next Event:", common.GetEvtString(nextEvent))
 	msg.Event = nextEvent
 	SendToRealUe(ue, msg)
 	return nil
@@ -208,30 +185,21 @@ func HandlePduSessEstAcceptEvent(ue *context.SimUe,
 func HandleDlInfoTransferEvent(ue *context.SimUe,
 	msg common.InterfaceMessage) (err error) {
 
-	ue.Log.Traceln("Handling DL Information Transfer Event")
-
 	SendToRealUe(ue, msg)
-	ue.Log.Traceln("Sent DL Information Event to RealUE")
 	return nil
 }
 
 func HandleDataBearerSetupRequestEvent(ue *context.SimUe,
 	msg common.InterfaceMessage) (err error) {
 
-	ue.Log.Traceln("Handling Data Bearer Setup Request Event")
-
 	SendToRealUe(ue, msg)
-	ue.Log.Traceln("Sent Data Bearer Setup Request to RealUE")
 	return nil
 }
 
 func HandleDataBearerSetupResponseEvent(ue *context.SimUe,
 	msg common.InterfaceMessage) (err error) {
 
-	ue.Log.Traceln("Handling Data Bearer Setup Response Event")
-
 	SendToGnbUe(ue, msg)
-	ue.Log.Traceln("Sent Data Bearer Setup Response to RealUE")
 
 	ChangeProcedure(ue)
 	return nil
@@ -240,16 +208,12 @@ func HandleDataBearerSetupResponseEvent(ue *context.SimUe,
 func HandleDataPktGenSuccessEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
-	ue.Log.Traceln("Handling Data Packet Generation Success Event")
-
 	ChangeProcedure(ue)
 	return nil
 }
 
 func HandleDataPktGenFailureEvent(ue *context.SimUe,
 	msg common.InterfaceMessage) (err error) {
-
-	ue.Log.Traceln("Handling Data Packet Generation Failure Event")
 
 	SendToProfile(ue, common.PROFILE_FAIL_EVENT, msg.GetErrorMsg())
 	return nil
@@ -258,8 +222,6 @@ func HandleDataPktGenFailureEvent(ue *context.SimUe,
 func HandleServiceRequestEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
-	ue.Log.Traceln("Handling Service Request Event")
-
 	err = ConnectToGnb(ue)
 	if err != nil {
 		return fmt.Errorf("failed to connect gnb:", err)
@@ -267,14 +229,12 @@ func HandleServiceRequestEvent(ue *context.SimUe,
 
 	SendToGnbUe(ue, intfcMsg)
 
-	ue.Log.Traceln("Sent Service Request Event to GnbUe")
+	ue.Log.Traceln("Sent Service Request Event to the network")
 	return nil
 }
 
 func HandleServiceAcceptEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
-
-	ue.Log.Traceln("Handling Service Request Accept Event")
 
 	err = ue.ProfileCtx.CheckCurrentEvent(common.SERVICE_REQUEST_EVENT,
 		intfcMsg.GetEventType())
@@ -320,7 +280,6 @@ func HandleErrorEvent(ue *context.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	SendToProfile(ue, common.PROFILE_FAIL_EVENT, intfcMsg.GetErrorMsg())
-	ue.Log.Infoln("Sent Profile Fail Event to Profile routine")
 
 	msg := &common.UuMessage{}
 	msg.Event = common.QUIT_EVENT
@@ -348,7 +307,6 @@ func ChangeProcedure(ue *context.SimUe) {
 		HandleProcedure(ue)
 	} else {
 		SendToProfile(ue, common.PROFILE_PASS_EVENT, nil)
-		ue.Log.Traceln("Sent Profile Pass Event to Profile routine")
 		evt, err := ue.ProfileCtx.GetNextEvent(common.PROFILE_PASS_EVENT)
 		if err != nil {
 			ue.Log.Errorln("GetNextEvent failed:", err)

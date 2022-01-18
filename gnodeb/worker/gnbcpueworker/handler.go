@@ -33,8 +33,6 @@ type pduSessResourceSetupItem struct {
 func HandleConnectRequest(gnbue *context.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
 
-	gnbue.Log.Traceln("Handling Connection Request Event from Ue")
-
 	msg := intfcMsg.(*common.UuMessage)
 	gnbue.Supi = msg.Supi
 	gnbue.WriteUeChan = msg.CommChan
@@ -42,8 +40,6 @@ func HandleConnectRequest(gnbue *context.GnbCpUe,
 
 func HandleInitialUEMessage(gnbue *context.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
-
-	gnbue.Log.Traceln("Handling Initial UE Event")
 
 	msg := intfcMsg.(*common.UuMessage)
 	sendMsg, err := test.GetInitialUEMessage(gnbue.GnbUeNgapId, msg.NasPdus[0], "")
@@ -62,8 +58,6 @@ func HandleInitialUEMessage(gnbue *context.GnbCpUe,
 
 func HandleDownlinkNasTransport(gnbue *context.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
-
-	gnbue.Log.Traceln("Handling Downlink NAS Transport Message")
 
 	msg := intfcMsg.(*common.N2Message)
 	// Need not perform other checks as they are validated at gnbamfworker level
@@ -99,13 +93,10 @@ func HandleDownlinkNasTransport(gnbue *context.GnbCpUe,
 	var pdus common.NasPduList
 	pdus = append(pdus, nasPdu.Value)
 	SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, pdus)
-	gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
 }
 
 func HandleUlInfoTransfer(gnbue *context.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
-
-	gnbue.Log.Traceln("Handling UL Information Transfer Event")
 
 	msg := intfcMsg.(*common.UuMessage)
 	gnbue.Log.Traceln("Creating Uplink NAS Transport Message")
@@ -125,8 +116,6 @@ func HandleUlInfoTransfer(gnbue *context.GnbCpUe,
 
 func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
-
-	gnbue.Log.Traceln("Handling Initial Context Setup Request Message")
 
 	msg := intfcMsg.(*common.N2Message)
 	var amfUeNgapId *ngapType.AMFUENGAPID
@@ -200,14 +189,11 @@ func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe,
 		gnbue.Log.Errorln("SendToPeer failed:", err)
 		return
 	}
-	gnbue.Log.Traceln("Sent Initial Context Setup Response Message to UE")
 }
 
 // TODO: Error handling
 func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
-
-	gnbue.Log.Traceln("Handling PDU Session Resource Setup Request Message")
 
 	msg := intfcMsg.(*common.N2Message)
 	var amfUeNgapId *ngapType.AMFUENGAPID
@@ -251,8 +237,6 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe,
 
 func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
-
-	gnbue.Log.Traceln("Handling Initial UE Event")
 
 	msg := intfcMsg.(*common.UuMessage)
 	var pduSessions []*ngapTestpacket.PduSession
@@ -302,8 +286,6 @@ func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe,
 
 func HandleUeCtxReleaseCommand(gnbue *context.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
-
-	gnbue.Log.Traceln("Handling UE Context Release Command Message")
 
 	msg := intfcMsg.(*common.N2Message)
 	var ueNgapIds *ngapType.UENGAPIDs
@@ -528,7 +510,6 @@ func ProcessPduSessResourceSetupList(gnbue *context.GnbCpUe,
 	uemsg.DBParams = dbParamSet
 	uemsg.TriggeringEvent = event
 	gnbue.WriteUeChan <- &uemsg
-	gnbue.Log.Infoln("Sent Data Radio Bearer Setup Event to Ue")
 }
 
 func HandleQuitEvent(gnbue *context.GnbCpUe, intfcMsg common.InterfaceMessage) {
