@@ -59,6 +59,8 @@ func HandleEvents(ue *context.SimUe) {
 		switch event {
 		case common.REG_REQUEST_EVENT:
 			err = HandleRegRequestEvent(ue, msg)
+		case common.REG_REJECT_EVENT:
+			err = HandleRegRejectEvent(ue, msg)
 		case common.AUTH_REQUEST_EVENT:
 			err = HandleAuthRequestEvent(ue, msg)
 		case common.AUTH_RESPONSE_EVENT:
@@ -79,6 +81,8 @@ func HandleEvents(ue *context.SimUe) {
 			err = HandlePduSessEstRequestEvent(ue, msg)
 		case common.PDU_SESS_EST_ACCEPT_EVENT:
 			err = HandlePduSessEstAcceptEvent(ue, msg)
+		case common.PDU_SESS_EST_REJECT_EVENT:
+			err = HandlePduSessEstRejectEvent(ue, msg)
 		case common.DL_INFO_TRANSFER_EVENT:
 			err = HandleDlInfoTransferEvent(ue, msg)
 		case common.DATA_BEARER_SETUP_REQUEST_EVENT:

@@ -28,6 +28,19 @@ func HandleRegRequestEvent(ue *context.SimUe,
 	return nil
 }
 
+func HandleRegRejectEvent(ue *context.SimUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	err = ue.ProfileCtx.CheckCurrentEvent(common.REG_REQUEST_EVENT,
+		intfcMsg.GetEventType())
+	if err != nil {
+		ue.Log.Errorln("CheckCurrentEvent returned:", err)
+		return err
+	}
+
+	return nil
+}
+
 func HandleAuthRequestEvent(ue *context.SimUe,
 	intfMsg common.InterfaceMessage) (err error) {
 
@@ -182,6 +195,19 @@ func HandlePduSessEstAcceptEvent(ue *context.SimUe,
 	return nil
 }
 
+func HandlePduSessEstRejectEvent(ue *context.SimUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	err = ue.ProfileCtx.CheckCurrentEvent(common.PDU_SESS_EST_REQUEST_EVENT,
+		intfcMsg.GetEventType())
+	if err != nil {
+		ue.Log.Errorln("CheckCurrentEvent returned:", err)
+		return err
+	}
+
+	return nil
+}
+
 func HandleDlInfoTransferEvent(ue *context.SimUe,
 	msg common.InterfaceMessage) (err error) {
 
@@ -303,7 +329,7 @@ func ChangeProcedure(ue *context.SimUe) {
 	nextProcedure := ue.ProfileCtx.GetNextProcedure(ue.Procedure)
 	if nextProcedure != 0 {
 		ue.Procedure = nextProcedure
-		ue.Log.Infoln("Updated procedure to", ue.Procedure)
+		ue.Log.Infoln("Updated procedure to", common.GetProcString(nextProcedure))
 		HandleProcedure(ue)
 	} else {
 		SendToProfile(ue, common.PROFILE_PASS_EVENT, nil)
