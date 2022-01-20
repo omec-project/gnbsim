@@ -28,7 +28,8 @@ func HandleEvents(ue *context.RealUe) (err error) {
 
 	for msg := range ue.ReadChan {
 		event := msg.GetEventType()
-		ue.Log.Traceln("Handling Event:", event)
+		evtStr := common.GetEvtString(event)
+		ue.Log.Infoln("Handling:", evtStr)
 
 		switch event {
 		case common.REG_REQUEST_EVENT:
@@ -63,11 +64,11 @@ func HandleEvents(ue *context.RealUe) (err error) {
 			HandleQuitEvent(ue, msg)
 			return nil
 		default:
-			ue.Log.Warnln("Event", event, "is not supported")
+			ue.Log.Warnln("Event", evtStr, "is not supported")
 		}
 
 		if err != nil {
-			ue.Log.Errorln("real ue failed:", event, ":", err)
+			ue.Log.Errorln("real ue failed:", evtStr, ":", err)
 			msg := &common.UeMessage{}
 			msg.Error = err
 			msg.Event = common.ERROR_EVENT
@@ -88,6 +89,6 @@ func formUuMessage(event common.EventType, nasPdu []byte) *common.UuMessage {
 func SendToSimUe(ue *context.RealUe,
 	msg common.InterfaceMessage) {
 
-	ue.Log.Infoln("Sending event", msg.GetEventType(), "to SimUe")
+	ue.Log.Traceln("Sending", common.GetEvtString(msg.GetEventType()), "to SimUe")
 	ue.WriteSimUeChan <- msg
 }

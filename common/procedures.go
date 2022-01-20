@@ -5,6 +5,8 @@
 
 package common
 
+import "gnbsim/logger"
+
 type ProcedureType uint8
 
 const (
@@ -15,3 +17,20 @@ const (
 	AN_RELEASE_PROCEDURE
 	UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE
 )
+
+var procStrMap = map[ProcedureType]string{
+	REGISTRATION_PROCEDURE:                 "REGISTRATION-PROCEDURE",
+	PDU_SESSION_ESTABLISHMENT_PROCEDURE:    "PDU-SESSION-ESTABLISHMENT-PROCEDURE",
+	USER_DATA_PKT_GENERATION_PROCEDURE:     "USER-DATA-PACKET-GENERATION-PROCEDURE",
+	UE_INITIATED_DEREGISTRATION_PROCEDURE:  "UE-INITIATED-DEREGISTRATION-PROCEDURE",
+	AN_RELEASE_PROCEDURE:                   "AN-RELEASE-PROCEDURE",
+	UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE: "UE-TRIGGERED-SERVICE-REQUEST-PROCEDURE",
+}
+
+func GetProcString(id ProcedureType) string {
+	procStr, ok := procStrMap[id]
+	if !ok {
+		logger.AppLog.Fatalln("Invaid Procedure ID:", id)
+	}
+	return procStr
+}

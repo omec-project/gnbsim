@@ -27,9 +27,9 @@ func HandleEvents(pduSess *context.PduSession) {
 		/* Reading commands from RealUE control plane*/
 		case msg := <-pduSess.ReadCmdChan:
 			event := msg.GetEventType()
-			pduSess.Log.Infoln("Handling event:", event)
+			pduSess.Log.Infoln("Handling:", common.GetEvtString(event))
 
-			switch msg.GetEventType() {
+			switch event {
 			case common.INIT_EVENT:
 				HandleInitEvent(pduSess, msg)
 			case common.DATA_PKT_GEN_REQUEST_EVENT:

@@ -19,7 +19,8 @@ func Init(gnbue *context.GnbCpUe, wg *sync.WaitGroup) {
 func HandleEvents(gnbue *context.GnbCpUe) (err error) {
 
 	for msg := range gnbue.ReadChan {
-		gnbue.Log.Infoln("Handling event:", msg.GetEventType())
+		evt := msg.GetEventType()
+		gnbue.Log.Infoln("Handling event:", common.GetEvtString(evt))
 
 		switch msg.GetEventType() {
 		case common.CONNECTION_REQUEST_EVENT:
@@ -44,7 +45,7 @@ func HandleEvents(gnbue *context.GnbCpUe) (err error) {
 			HandleQuitEvent(gnbue, msg)
 			return
 		default:
-			gnbue.Log.Infoln("Event", msg.GetEventType(), "is not supported")
+			gnbue.Log.Infoln("Event", common.GetEvtString(evt), "is not supported")
 		}
 
 		// TODO: Need to return and handle errors from handlers
@@ -53,7 +54,7 @@ func HandleEvents(gnbue *context.GnbCpUe) (err error) {
 }
 
 func SendToUe(gnbue *context.GnbCpUe, event common.EventType, nasPdus common.NasPduList) {
-	gnbue.Log.Infoln("Sending event", event, "to SimUe")
+	gnbue.Log.Traceln("Sending event", common.GetEvtString(event), "to SimUe")
 	uemsg := common.UuMessage{}
 	uemsg.Event = event
 	uemsg.NasPdus = nasPdus

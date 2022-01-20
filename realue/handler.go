@@ -33,8 +33,6 @@ const (
 func HandleRegRequestEvent(ue *context.RealUe,
 	msg common.InterfaceMessage) (err error) {
 
-	ue.Log.Traceln("Handling Registration Request Event")
-
 	ueSecurityCapability := ue.GetUESecurityCapability()
 
 	ue.Suci, err = util.SupiToSuci(ue.Supi, ue.Plmn)
@@ -59,8 +57,6 @@ func HandleRegRequestEvent(ue *context.RealUe,
 
 func HandleAuthResponseEvent(ue *context.RealUe,
 	intfcMsg common.InterfaceMessage) (err error) {
-
-	ue.Log.Traceln("Handling Authentication Response Event")
 
 	msg := intfcMsg.(*common.UeMessage)
 	// First process the corresponding Auth Request
@@ -87,8 +83,6 @@ func HandleAuthResponseEvent(ue *context.RealUe,
 
 func HandleSecModCompleteEvent(ue *context.RealUe,
 	msg common.InterfaceMessage) (err error) {
-
-	ue.Log.Traceln("Handling Security Mode Complete Event")
 
 	//TODO: Process corresponding Security Mode Command first
 
@@ -120,8 +114,6 @@ func HandleSecModCompleteEvent(ue *context.RealUe,
 func HandleRegCompleteEvent(ue *context.RealUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
-	ue.Log.Traceln("Handling Registration Complete Event")
-
 	//TODO: Process corresponding Registration Accept first
 	msg := intfcMsg.(*common.UeMessage).NasMsg.RegistrationAccept
 
@@ -149,8 +141,6 @@ func HandleRegCompleteEvent(ue *context.RealUe,
 
 func HandleDeregRequestEvent(ue *context.RealUe,
 	intfcMsg common.InterfaceMessage) (err error) {
-
-	ue.Log.Traceln("Handling UE Initiated Deregistration Request Event")
 
 	if ue.Guti == "" {
 		ue.Log.Errorln("guti not allocated")
@@ -180,8 +170,6 @@ func HandleDeregRequestEvent(ue *context.RealUe,
 func HandlePduSessEstRequestEvent(ue *context.RealUe,
 	msg common.InterfaceMessage) (err error) {
 
-	ue.Log.Traceln("Handling PDU Session Establishment Request Event")
-
 	sNssai := models.Snssai{
 		Sst: 1,
 		Sd:  "010203",
@@ -198,14 +186,11 @@ func HandlePduSessEstRequestEvent(ue *context.RealUe,
 
 	m := formUuMessage(common.PDU_SESS_EST_REQUEST_EVENT, nasPdu)
 	SendToSimUe(ue, m)
-	ue.Log.Traceln("Sent PDU Session Establishment Request Message to SimUe")
 	return nil
 }
 
 func HandlePduSessEstAcceptEvent(ue *context.RealUe,
 	intfcMsg common.InterfaceMessage) (err error) {
-
-	ue.Log.Traceln("Handling PDU Session Establishment Accept Event")
 
 	msg := intfcMsg.(*common.UeMessage)
 	//TODO: create new pdu session var and parse msg to pdu session var
@@ -238,8 +223,6 @@ func HandlePduSessEstAcceptEvent(ue *context.RealUe,
 
 func HandleDataBearerSetupRequestEvent(ue *context.RealUe,
 	intfcMsg common.InterfaceMessage) (err error) {
-
-	ue.Log.Traceln("Handling Data Bearer Setup Request Event")
 
 	msg := intfcMsg.(*common.UuMessage)
 	for _, item := range msg.DBParams {
@@ -277,14 +260,11 @@ func HandleDataBearerSetupRequestEvent(ue *context.RealUe,
 	rsp.DBParams = msg.DBParams
 	rsp.TriggeringEvent = msg.TriggeringEvent
 	ue.WriteSimUeChan <- rsp
-	ue.Log.Infoln("Sent Data Radio Bearer Setup Response event to SimUe")
 	return nil
 }
 
 func HandleDataPktGenRequestEvent(ue *context.RealUe,
 	msg common.InterfaceMessage) (err error) {
-
-	ue.Log.Traceln("Handling Data Packet Generation Request Event")
 
 	for _, v := range ue.PduSessions {
 		v.ReadCmdChan <- msg
@@ -331,8 +311,6 @@ func HandleQuitEvent(ue *context.RealUe, intfcMsg common.InterfaceMessage) (err 
 func HandleDlInfoTransferEvent(ue *context.RealUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
-	ue.Log.Traceln("Handling Downlink Nas Transport Event")
-
 	msg := intfcMsg.(*common.UuMessage)
 	for _, pdu := range msg.NasPdus {
 		nasMsg, err := test.NASDecode(ue, nas.GetSecurityHeaderType(pdu), pdu)
@@ -373,15 +351,12 @@ func HandleDlInfoTransferEvent(ue *context.RealUe,
 		// asynchrously send next event to RealUE informing about what to do with
 		// the received NAS message
 		SendToSimUe(ue, m)
-		ue.Log.Infoln("Notified SimUe for message type:", msgType)
 	}
 	return nil
 }
 
 func HandleServiceRequestEvent(ue *context.RealUe,
 	msg common.InterfaceMessage) (err error) {
-
-	ue.Log.Traceln("Handling Service Request Event")
 
 	nasPdu, err := realue_nas.GetServiceRequest(ue)
 	if err != nil {
@@ -397,6 +372,5 @@ func HandleServiceRequestEvent(ue *context.RealUe,
 
 	m := formUuMessage(common.SERVICE_REQUEST_EVENT, nasPdu)
 	SendToSimUe(ue, m)
-	ue.Log.Traceln("Sent Service Request Message to SimUe")
 	return nil
 }

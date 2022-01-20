@@ -6,8 +6,6 @@
 package gnbamfworker
 
 import (
-	"fmt"
-
 	"gnbsim/common"
 	"gnbsim/util/test"
 
@@ -22,7 +20,7 @@ import (
 // HandleNGSetupResponse processes the NG Setup Response and updates GnbAmf
 // context
 func HandleNgSetupResponse(amf *context.GnbAmf, pdu *ngapType.NGAPPDU) {
-	fmt.Printf("decoded NGSETUP RESPONSE: %#v\n", pdu)
+	amf.Log.Traceln("Processing NG Setup Response")
 	var amfName *ngapType.AMFName
 	var servedGUAMIList *ngapType.ServedGUAMIList
 	var relativeAMFCapacity *ngapType.RelativeAMFCapacity
@@ -161,6 +159,7 @@ func HandleNgSetupResponse(amf *context.GnbAmf, pdu *ngapType.NGAPPDU) {
 }
 
 func HandleNgSetupFailure(amf *context.GnbAmf, pdu *ngapType.NGAPPDU) {
+	amf.Log.Traceln("Processing NG Setup Failure")
 	var cause *ngapType.Cause
 
 	if amf == nil {
@@ -204,6 +203,8 @@ func HandleNgSetupFailure(amf *context.GnbAmf, pdu *ngapType.NGAPPDU) {
 
 func HandleDownlinkNasTransport(gnb *context.GNodeB, amf *context.GnbAmf,
 	pdu *ngapType.NGAPPDU) {
+
+	amf.Log.Traceln("Processing Downlink Nas Transport")
 	var gnbUeNgapId *ngapType.RANUENGAPID
 
 	if amf == nil {
@@ -253,6 +254,8 @@ func HandleDownlinkNasTransport(gnb *context.GNodeB, amf *context.GnbAmf,
 
 func HandleInitialContextSetupRequest(gnb *context.GNodeB, amf *context.GnbAmf,
 	pdu *ngapType.NGAPPDU) {
+
+	amf.Log.Traceln("Processing Initial Context Setup Request")
 	var gnbUeNgapId *ngapType.RANUENGAPID
 
 	if amf == nil {
@@ -302,6 +305,7 @@ func HandleInitialContextSetupRequest(gnb *context.GNodeB, amf *context.GnbAmf,
 // TODO : Much of the code is repeated in each handler
 func HandlePduSessResourceSetupRequest(gnb *context.GNodeB, amf *context.GnbAmf,
 	pdu *ngapType.NGAPPDU) {
+	amf.Log.Traceln("Processing Pdu Session Resource Setup Request")
 	var gnbUeNgapId *ngapType.RANUENGAPID
 
 	if amf == nil {
@@ -351,6 +355,7 @@ func HandlePduSessResourceSetupRequest(gnb *context.GNodeB, amf *context.GnbAmf,
 func HandleUeCtxReleaseCommand(gnb *context.GNodeB, amf *context.GnbAmf,
 	pdu *ngapType.NGAPPDU) {
 
+	amf.Log.Traceln("Processing Ue Context Release Command")
 	if amf == nil {
 		amf.Log.Errorln("ran is nil")
 		return

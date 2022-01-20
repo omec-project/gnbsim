@@ -29,7 +29,7 @@ func HandleMessage(gnb *context.GNodeB, amf *context.GnbAmf, pkt []byte) error {
 	case ngapType.NGAPPDUPresentInitiatingMessage:
 		initiatingMessage := pdu.InitiatingMessage
 		if initiatingMessage == nil {
-			return fmt.Errorf("UnSuccessful Outcome is nil")
+			return fmt.Errorf("Initiatiting Message is nil")
 		}
 		switch initiatingMessage.ProcedureCode.Value {
 		case ngapType.ProcedureCodeDownlinkNASTransport:
