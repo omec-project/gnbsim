@@ -15,15 +15,15 @@ import (
 )
 
 type GnbUpUe struct {
-	PduSessId      int64
-	DlTeid         uint32
-	UlTeid         uint32
-	Snssai         models.Snssai
-	Upf            *GnbUpf
-	Gnb            *GNodeB
-	PduSessType    models.PduSessionType
-	QosFlows       map[int64]*ngapType.QosFlowSetupRequestItem
-	EndMarkerRecvd bool
+	PduSessId        int64
+	DlTeid           uint32
+	UlTeid           uint32
+	Snssai           models.Snssai
+	Upf              *GnbUpf
+	Gnb              *GNodeB
+	PduSessType      models.PduSessionType
+	QosFlows         map[int64]*ngapType.QosFlowSetupRequestItem
+	LastDataPktRecvd bool
 
 	// GnbUpUe writes downlink packets to UE on this channel
 	WriteUeChan chan common.InterfaceMessage
