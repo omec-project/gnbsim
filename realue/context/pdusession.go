@@ -20,17 +20,17 @@ import (
  */
 type PduSession struct {
 	/* Number of UL data packets to be transmitted as requested by Sim UE*/
-	SscMode         uint8
-	PktCount        int
-	PduSessId       uint64
-	Snssai          models.Snssai
-	PduSessType     models.PduSessionType
-	PduAddress      net.IP
-	SeqNum          int
-	ReqDataPktCount int
-	TxDataPktCount  int
-	RxDataPktCount  int
-	EndMarkerRecvd  bool
+	SscMode          uint8
+	PktCount         int
+	PduSessId        uint64
+	Snssai           models.Snssai
+	PduSessType      models.PduSessionType
+	PduAddress       net.IP
+	SeqNum           int
+	ReqDataPktCount  int
+	TxDataPktCount   int
+	RxDataPktCount   int
+	LastDataPktRecvd bool
 	// Inidicates that a Go routine already exists for this PDU Session
 	Launched bool
 	/* uplink packets are written to gNB UE user plane context on this channel */

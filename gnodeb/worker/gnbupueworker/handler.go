@@ -15,9 +15,9 @@ import (
 func HandleUlMessage(gnbue *context.GnbUpUe, msg common.InterfaceMessage) (err error) {
 	gnbue.Log.Traceln("Handling UL Packet from UE")
 
-	if msg.GetEventType() == common.END_MARKER_EVENT {
+	if msg.GetEventType() == common.LAST_DATA_PKT_EVENT {
 		gnbue.Log.Debugln("Received last uplink data packet")
-		gnbue.EndMarkerRecvd = true
+		gnbue.LastDataPktRecvd = true
 		return nil
 	}
 
@@ -58,16 +58,16 @@ func HandleDlMessage(gnbue *context.GnbUpUe, msg common.InterfaceMessage) (err e
 
 func HandleQuitEvent(gnbue *context.GnbUpUe, intfcMsg common.InterfaceMessage) (err error) {
 	userDataMsg := &common.UserDataMessage{}
-	userDataMsg.Event = common.END_MARKER_EVENT
+	userDataMsg.Event = common.LAST_DATA_PKT_EVENT
 	gnbue.WriteUeChan <- userDataMsg
 	gnbue.WriteUeChan = nil
 
 	// Drain all the messages until END MARKER is received.
 	// This ensures that the transmitting go routine is not blocked while
 	// sending data on this channel
-	if gnbue.EndMarkerRecvd != true {
+	if gnbue.LastDataPktRecvd != true {
 		for pkt := range gnbue.ReadUlChan {
-			if pkt.GetEventType() == common.END_MARKER_EVENT {
+			if pkt.GetEventType() == common.LAST_DATA_PKT_EVENT {
 				gnbue.Log.Debugln("Received last uplink data packet")
 				break
 			}
