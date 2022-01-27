@@ -139,6 +139,10 @@ func HandleDlMessage(pduSess *context.PduSession,
 
 	dataMsg := msg.(*common.UserDataMessage)
 
+	if dataMsg.Qfi != nil {
+		pduSess.Log.Infoln("Received QFI value in downlink user data packet:", *dataMsg.Qfi)
+	}
+
 	ipv4Hdr, err := ipv4.ParseHeader(dataMsg.Payload)
 	if err != nil {
 		pduSess.Log.Errorln("ipv4.ParseHeader() returned:", err)

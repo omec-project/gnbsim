@@ -15,7 +15,7 @@ import (
  * context
  */
 func HandleDlGpduMessage(gnbUpf *context.GnbUpf, gtpHdr *test.GtpHdr,
-	optHdr *test.GtpHdrOpt, payload []byte) error {
+	gtpHdrOpt *test.GtpHdrOpt, payload []byte) error {
 
 	gnbUpf.Log.Traceln("Processing downlink G-PDU packet")
 	gnbUpUe := gnbUpf.GnbUpUes.GetGnbUpUe(gtpHdr.Teid, true)
@@ -26,6 +26,7 @@ func HandleDlGpduMessage(gnbUpf *context.GnbUpf, gtpHdr *test.GtpHdr,
 	userDataMsg := &common.UserDataMessage{}
 	userDataMsg.Event = common.DL_UE_DATA_TRANSPORT_EVENT
 	userDataMsg.Payload = payload
+	userDataMsg.OptHdr = gtpHdrOpt
 	gnbUpUe.ReadDlChan <- userDataMsg
 
 	return nil

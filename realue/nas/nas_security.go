@@ -3,16 +3,67 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-package test
+package nas
 
 import (
 	"fmt"
 	"gnbsim/realue/context"
 	"reflect"
 
+	"github.com/free5gc/nas/nasMessage"
+	"github.com/free5gc/nas/security"
+	"github.com/free5gc/ngap/ngapType"
 	"github.com/omec-project/nas"
-	"github.com/omec-project/nas/security"
 )
+
+func EncodeNasPduWithSecurity(ue *context.RealUe, pdu []byte, securityHeaderType uint8,
+	securityContextAvailable bool) ([]byte, error) {
+	m := nas.NewMessage()
+	err := m.PlainNasDecode(&pdu)
+	if err != nil {
+		return nil, err
+	}
+	m.SecurityHeader = nas.SecurityHeader{
+		ProtocolDiscriminator: nasMessage.Epd5GSMobilityManagementMessage,
+		SecurityHeaderType:    securityHeaderType,
+	}
+	return NASEncode(ue, m, securityContextAvailable)
+}
+
+func GetNasPdu(ue *context.RealUe, msg *ngapType.DownlinkNASTransport) (m *nas.Message) {
+	for _, ie := range msg.ProtocolIEs.List {
+		if ie.Id.Value == ngapType.ProtocolIEIDNASPDU {
+			pkg := []byte(ie.Value.NASPDU.Value)
+			m, err := NASDecode(ue, nas.GetSecurityHeaderType(pkg), pkg)
+			if err != nil {
+				return nil
+			}
+			return m
+		}
+	}
+	return nil
+}
+
+func GetNasPduSetupRequest(ue *context.RealUe, msg *ngapType.PDUSessionResourceSetupRequest) (m *nas.Message) {
+	for _, ie := range msg.ProtocolIEs.List {
+		if ie.Id.Value == ngapType.ProtocolIEIDPDUSessionResourceSetupListSUReq {
+			x := ie.Value.PDUSessionResourceSetupListSUReq
+			for _, ie1 := range x.List {
+				if ie1.PDUSessionNASPDU != nil {
+					fmt.Println("Found NAS PDU inside ResourceSEtupList")
+					pkg := []byte(ie1.PDUSessionNASPDU.Value)
+					m, err := NASDecode(ue, nas.GetSecurityHeaderType(pkg), pkg)
+					fmt.Println("UE address - ", m.GmmMessage.DLNASTransport.Ipaddr)
+					if err != nil {
+						return nil
+					}
+					return m
+				}
+			}
+		}
+	}
+	return nil
+}
 
 func NASEncode(ue *context.RealUe, msg *nas.Message, securityContextAvailable bool) (
 	payload []byte, err error) {

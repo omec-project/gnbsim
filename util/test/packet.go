@@ -7,13 +7,10 @@ package test
 
 import (
 	"github.com/free5gc/ngap"
-	"github.com/omec-project/nas"
-	"github.com/omec-project/nas/nasMessage"
 
 	// Nausf_UEAU_Client "github.com/free5gc/openapi/Nausf_UEAuthentication"
 	// "github.com/free5gc/openapi/models"
 
-	"gnbsim/realue/context"
 	"gnbsim/util/ngapTestpacket"
 )
 
@@ -63,20 +60,6 @@ func GetPDUSessionResourceSetupResponse(pduSessions []*ngapTestpacket.PduSession
 
 	message := ngapTestpacket.BuildPDUSessionResourceSetupResponseForRegistrationTest(pduSessions, amfUeNgapID, ranUeNgapID, ipv4)
 	return ngap.Encoder(message)
-}
-
-func EncodeNasPduWithSecurity(ue *context.RealUe, pdu []byte, securityHeaderType uint8,
-	securityContextAvailable bool) ([]byte, error) {
-	m := nas.NewMessage()
-	err := m.PlainNasDecode(&pdu)
-	if err != nil {
-		return nil, err
-	}
-	m.SecurityHeader = nas.SecurityHeader{
-		ProtocolDiscriminator: nasMessage.Epd5GSMobilityManagementMessage,
-		SecurityHeaderType:    securityHeaderType,
-	}
-	return NASEncode(ue, m, securityContextAvailable)
 }
 
 func GetUEContextReleaseComplete(amfUeNgapID int64, ranUeNgapID int64, pduSessionIDList []int64) ([]byte, error) {
