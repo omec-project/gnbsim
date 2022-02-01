@@ -82,8 +82,12 @@ type DataBearerParams struct {
 type UserDataMessage struct {
 	DefaultMessage
 	Payload []byte
-	OptHdr  *test.GtpHdrOpt
 	Qfi     *uint8
+}
+
+type N3Message struct {
+	DefaultMessage
+	Pdu *test.GtpPdu
 }
 
 // TransportMessage is used to carry raw message received over the transport

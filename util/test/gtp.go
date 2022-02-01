@@ -53,6 +53,17 @@ type GtpHdrOpt struct {
 	NextHdrType uint8  //Next Extenstion Header Type
 }
 
+type GtpPdu struct {
+	Hdr     *GtpHdr
+	OptHdr  *GtpHdrOpt
+	Payload []uint8
+}
+
+type PduSessContainerExtHeader struct {
+	Qfi               uint8
+	NextExtHeaderType uint8
+}
+
 func BuildGTPv1Header(extHdrFlag bool, snFlag bool, nPduFlag bool,
 	nExtHdrType uint8, sn uint16, nPduNum uint8, msgType uint8,
 	payloadLen uint16, teID uint32) ([]byte, error) {
@@ -108,35 +119,35 @@ func BuildGTPv1Header(extHdrFlag bool, snFlag bool, nPduFlag bool,
 	return bb, nil
 }
 
-func DecodeGTPv1Header(pkt []byte) (pdu []byte, hdr *GtpHdr, optHdr *GtpHdrOpt,
-	err error) {
-	hdr = &GtpHdr{}
+func DecodeGTPv1Header(pkt []byte) (gtpPdu *GtpPdu, err error) {
+	gtpPdu = &GtpPdu{}
+	gtpPdu.Hdr = &GtpHdr{}
+
 	buf := bytes.NewReader(pkt)
-	err = binary.Read(buf, binary.BigEndian, hdr)
+	err = binary.Read(buf, binary.BigEndian, gtpPdu.Hdr)
 	if err != nil {
 		return
 	}
 
-	if (hdr.Flags & FLAG_REQUIRED) != FLAG_REQUIRED {
+	if (gtpPdu.Hdr.Flags & FLAG_REQUIRED) != FLAG_REQUIRED {
 		err = fmt.Errorf("invalid gtp version or protocol type")
 		return
 	}
 
-	logger.GtpLog.Traceln("Header field - Length:", hdr.Len)
-	logger.GtpLog.Traceln("Header field - TEID:", hdr.Teid)
+	logger.GtpLog.Traceln("Header field - Length:", gtpPdu.Hdr.Len)
+	logger.GtpLog.Traceln("Header field - TEID:", gtpPdu.Hdr.Teid)
 
 	payloadStart := GTPU_HEADER_LENGTH
-	payloadEnd := hdr.Len + GTPU_HEADER_LENGTH
+	payloadEnd := gtpPdu.Hdr.Len + GTPU_HEADER_LENGTH
 
-	if (hdr.Flags & FLAG_OPTIONAL) != 0 {
+	if (gtpPdu.Hdr.Flags & FLAG_OPTIONAL) != 0 {
 		logger.GtpLog.Traceln("Optional header present")
-		optHdr = &GtpHdrOpt{}
-		err = binary.Read(buf, binary.BigEndian, optHdr)
+		gtpPdu.OptHdr = &GtpHdrOpt{}
+		err = binary.Read(buf, binary.BigEndian, gtpPdu.OptHdr)
 		if err != nil {
 			return
 		}
 		payloadStart += OPT_GTPU_HEADER_LENGTH
-		payloadEnd += OPT_GTPU_HEADER_LENGTH
 	}
 
 	if len(pkt) != int(payloadEnd) {
@@ -144,7 +155,7 @@ func DecodeGTPv1Header(pkt []byte) (pdu []byte, hdr *GtpHdr, optHdr *GtpHdrOpt,
 		return
 	}
 
-	pdu = pkt[payloadStart:payloadEnd]
+	gtpPdu.Payload = pkt[payloadStart:payloadEnd]
 	return
 }
 
@@ -154,19 +165,18 @@ func BuildPduSessContainerExtHeader(qfi uint8) []uint8 {
 	// Octet count for Ext Header Length + Ext Header Count + Next Ext Header Type
 	octetCount := 2 + len(pdu)
 
-	var totalOctetCount int
 	// The length of Extension Header shall be defined in variable length of 4
 	// octets (5.2.1 TS 29.281)
 	if r := (octetCount % 4); r != 0 {
 		spareOctetCount := 4 - r
-		totalOctetCount = octetCount + spareOctetCount
+		octetCount += spareOctetCount
 		spareOctets := make([]uint8, spareOctetCount)
 		pdu = append(pdu, spareOctets...)
-
 	}
-	extHeaderLen := uint8(totalOctetCount / 4)
 
-	pduSessContainer := make([]uint8, 0, totalOctetCount)
+	extHeaderLen := uint8(octetCount / 4)
+
+	pduSessContainer := make([]uint8, 0, octetCount)
 	pduSessContainer = append(pduSessContainer, extHeaderLen)
 	pduSessContainer = append(pduSessContainer, pdu...)
 	// appending NextExtHeaderType as 0
@@ -176,34 +186,36 @@ func BuildPduSessContainerExtHeader(qfi uint8) []uint8 {
 }
 
 // Currently processing QFI only
-func DecodePduSessContainerExtHeader(hdr []uint8) (pdu []uint8, qfi,
-	nextExtHdrType uint8, err error) {
+func DecodePduSessContainerExtHeader(pkt []uint8) (payload []uint8,
+	extHdr *PduSessContainerExtHeader, err error) {
 
-	bufLen := len(hdr)
-
+	bufLen := len(pkt)
 	if bufLen == 0 {
 		err = fmt.Errorf("extension header is nil")
 		return
 	}
 
+	logger.GtpLog.Info("PDU Session Container Extension header length:", pkt[0])
+
 	// First octet is Extension Header Length
-	octetCount := hdr[0] * 4
+	octetCount := pkt[0] * 4
 	if octetCount == 0 || bufLen < int(octetCount) {
-		err = fmt.Errorf("incomplete extension header - buffer length: %v, extension header length value: %v", bufLen, hdr[0])
+		err = fmt.Errorf("incomplete extension header - buffer length: %v, extension header length value: %v", bufLen, pkt[0])
 		return
 	}
 
+	extHdr = &PduSessContainerExtHeader{}
 	// Last octet of Extension header is Next Extension Header Type
-	qfi, err = DecodeDlPduSessInformation(hdr[1:(octetCount - 1)])
+	extHdr.Qfi, err = DecodeDlPduSessInformation(pkt[1:(octetCount - 1)])
 	if err != nil {
 		err = fmt.Errorf("failed to decode downlink pdu sessioon information:%v", err)
 		return
 	}
 
-	nextExtHdrType = hdr[octetCount-1]
+	extHdr.NextExtHeaderType = pkt[octetCount-1]
 
 	if bufLen > int(octetCount) {
-		pdu = hdr[octetCount:]
+		payload = pkt[octetCount:]
 	}
 
 	return

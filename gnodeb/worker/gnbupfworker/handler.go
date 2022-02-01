@@ -14,20 +14,17 @@ import (
 /* HandleNGSetupResponse processes the NG Setup Response and updates GnbAmf
  * context
  */
-func HandleDlGpduMessage(gnbUpf *context.GnbUpf, gtpHdr *test.GtpHdr,
-	gtpHdrOpt *test.GtpHdrOpt, payload []byte) error {
-
+func HandleDlGpduMessage(gnbUpf *context.GnbUpf, gtpPdu *test.GtpPdu) error {
 	gnbUpf.Log.Traceln("Processing downlink G-PDU packet")
-	gnbUpUe := gnbUpf.GnbUpUes.GetGnbUpUe(gtpHdr.Teid, true)
+	gnbUpUe := gnbUpf.GnbUpUes.GetGnbUpUe(gtpPdu.Hdr.Teid, true)
 	if gnbUpUe == nil {
 		return nil
 		/* TODO: Send ErrorIndication message to upf*/
 	}
-	userDataMsg := &common.UserDataMessage{}
-	userDataMsg.Event = common.DL_UE_DATA_TRANSPORT_EVENT
-	userDataMsg.Payload = payload
-	userDataMsg.OptHdr = gtpHdrOpt
-	gnbUpUe.ReadDlChan <- userDataMsg
+	msg := &common.N3Message{}
+	msg.Event = common.DL_UE_DATA_TRANSPORT_EVENT
+	msg.Pdu = gtpPdu
+	gnbUpUe.ReadDlChan <- msg
 
 	return nil
 }

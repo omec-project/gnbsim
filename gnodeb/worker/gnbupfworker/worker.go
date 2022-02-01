@@ -34,15 +34,15 @@ func Init(gnbUpf *context.GnbUpf) {
 func HandleMessage(gnbUpf *context.GnbUpf, msg common.InterfaceMessage) error {
 	// decoding the incoming packet
 	tMsg := msg.(*common.TransportMessage)
-	pdu, gtpHdr, gtpOptHdr, err := test.DecodeGTPv1Header(tMsg.RawPkt)
+	gtpPdu, err := test.DecodeGTPv1Header(tMsg.RawPkt)
 	if err != nil {
 		gnbUpf.Log.Errorln("DecodeGTPv1Header() returned:", err)
 		return fmt.Errorf("failed to decode gtp-u header")
 	}
-	switch gtpHdr.MsgType {
+	switch gtpPdu.Hdr.MsgType {
 	case test.TYPE_GPDU:
 		/* A G-PDU is T-PDU encapsulated with GTP-U header*/
-		err = HandleDlGpduMessage(gnbUpf, gtpHdr, gtpOptHdr, pdu)
+		err = HandleDlGpduMessage(gnbUpf, gtpPdu)
 		if err != nil {
 			gnbUpf.Log.Errorln("HandleDlGpduMessage() returned:", err)
 			return fmt.Errorf("failed to handle downling gpdu message")
