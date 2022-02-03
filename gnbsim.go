@@ -1,14 +1,12 @@
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+//
 
 package main
 
 import (
 	"fmt"
-	"github.com/free5gc/MongoDBLibrary"
-	"gnbsim/register"
 	"gnbsim/deregister"
 	"gnbsim/duplicateregistration"
 	"gnbsim/gutiregistration"
@@ -16,11 +14,14 @@ import (
 	"gnbsim/n2handover"
 	"gnbsim/paging"
 	"gnbsim/pdusessionrelease"
+	"gnbsim/register"
 	"gnbsim/resynchronisation"
 	"gnbsim/servicereq"
 	"gnbsim/xnhandover"
 	"net"
 	"os"
+
+	"github.com/free5gc/MongoDBLibrary"
 )
 
 func main() {
@@ -68,7 +69,7 @@ func main() {
 	dbUrl := "mongodb://mongodb:27017"
 	MongoDBLibrary.SetMongoDB(dbName, dbUrl)
 	fmt.Println("Connected to MongoDB ")
-    ranUIpAddr := "192.168.251.5"
+	ranUIpAddr := "192.168.251.5"
 
 	switch testcase {
 	case "register":
@@ -126,12 +127,12 @@ func main() {
 			fmt.Println("test xnhandover")
 			xnhandover.Xnhandover_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr)
 		}
-    case "loadsubs":
+	case "loadsubs":
 		{
 			fmt.Println("loading subscribers in DB")
 			loadsub.LoadSubscriberData(10)
 		}
-    }
+	}
 
 	return
 }

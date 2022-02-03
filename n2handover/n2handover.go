@@ -1,27 +1,28 @@
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+//
 
 package n2handover
 
 import (
 	"encoding/hex"
 	"fmt"
+	"gnbsim/util/test" // AJAY - Change required
+	"net"
+	"time"
+
 	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
+	"github.com/free5gc/ngap"
+	"github.com/free5gc/openapi/models"
+	"github.com/mohae/deepcopy"
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasTestpacket"
 	"github.com/omec-project/nas/nasType"
 	"github.com/omec-project/nas/security"
-	"github.com/free5gc/ngap"
-	"github.com/free5gc/openapi/models"
-    "gnbsim/util/test" // AJAY - Change required 
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
-	"net"
-	"time"
-	"github.com/mohae/deepcopy"
 )
 
 // Registration -> PDU Session Establishment -> Source RAN Send Handover Required -> N2 Handover (Preparation Phase -> Execution Phase)
@@ -34,7 +35,7 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	amfConn1, err := test.ConnectToAmf(amfIpAddr, ranIpAddr, 38412, 9487)
 	if err != nil {
 		fmt.Println("Failed to connect to AMF ", amfIpAddr)
-        return
+		return
 	} else {
 		fmt.Println("Success - connected to AMF ", amfIpAddr)
 	}
@@ -43,7 +44,7 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	upfConn, err := test.ConnectToUpf(ranIpAddr, upfIpAddr, 2152, 2152)
 	if err != nil {
 		fmt.Println("Failed to connect to UPF ", upfIpAddr)
-        return
+		return
 	} else {
 		fmt.Println("Success - connected to UPF ", upfIpAddr)
 	}
@@ -80,7 +81,7 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	amfConn2, err := test.ConnectToAmf(amfIpAddr, ranIpAddr, 38412, 9488)
 	if err != nil {
 		fmt.Println("Failed to connect to AMF ", amfIpAddr)
-        return
+		return
 	} else {
 		fmt.Println("Success - connected to AMF ", amfIpAddr)
 	}
@@ -88,7 +89,7 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	upfConn2, err := test.ConnectToUpf(ranIpAddr, upfIpAddr, 2152, 2152)
 	if err != nil {
 		fmt.Println("Failed to connect to UPF ", upfIpAddr)
-        return
+		return
 	} else {
 		fmt.Println("Success - connected to UPF ", upfIpAddr)
 	}
@@ -96,19 +97,19 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	// RAN2 send Second NGSetupRequest Msg
 	sendMsg, err = test.GetNGSetupRequest([]byte("\x00\x01\x02"), 24, "nctu")
 	if err != nil {
-        fmt.Println("GetNGSetupRequest failed")
+		fmt.Println("GetNGSetupRequest failed")
 		return
 	}
 	_, err = amfConn2.Write(sendMsg)
 	if err != nil {
-        fmt.Println("GetNGSetupRequest write failed")
+		fmt.Println("GetNGSetupRequest write failed")
 		return
 	}
 
 	// RAN2 receive Second NGSetupResponse Msg
 	n, err = amfConn2.Read(recvMsg)
 	if err != nil {
-        fmt.Println("NGSetupResponse Msg")
+		fmt.Println("NGSetupResponse Msg")
 		return
 	}
 	_, err = ngap.Decoder(recvMsg[:n])
@@ -134,19 +135,19 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 		nasMessage.RegistrationType5GSInitialRegistration, mobileIdentity5GS, nil, ueSecurityCapability, nil, nil, nil)
 	sendMsg, err = test.GetInitialUEMessage(ue.RanUeNgapId, registrationRequest, "")
 	if err != nil {
-        fmt.Println("GetInitialUEMessage failed")
+		fmt.Println("GetInitialUEMessage failed")
 		return
 	}
 	_, err = amfConn1.Write(sendMsg)
 	if err != nil {
-        fmt.Println("GetInitialUEMessage write failed")
+		fmt.Println("GetInitialUEMessage write failed")
 		return
 	}
 
 	// receive NAS Authentication Request Msg
 	n, err = amfConn1.Read(recvMsg)
 	if err != nil {
-        fmt.Println("failed to NAS Authentication Request Msg ")
+		fmt.Println("failed to NAS Authentication Request Msg ")
 		return
 	}
 	ngapMsg, err := ngap.Decoder(recvMsg[:n])
@@ -158,9 +159,9 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	// Calculate for RES*
 	nasPdu := test.GetNasPdu(ue, ngapMsg.InitiatingMessage.Value.DownlinkNASTransport)
 	if nasPdu == nil {
-        fmt.Println("GetNasPdu failed")
-        return
-    }
+		fmt.Println("GetNasPdu failed")
+		return
+	}
 	rand := nasPdu.AuthenticationRequest.GetRANDValue()
 	resStat := ue.DeriveRESstarAndSetKey(ue.AuthenticationSubs, rand[:], "5G:mnc093.mcc208.3gppnetwork.org")
 
@@ -168,19 +169,19 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	pdu := nasTestpacket.GetAuthenticationResponse(resStat, "")
 	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
 	if err != nil {
-        fmt.Println("GetUplinkNASTransport failed")
+		fmt.Println("GetUplinkNASTransport failed")
 		return
 	}
 	_, err = amfConn1.Write(sendMsg)
 	if err != nil {
-        fmt.Println("GetUplinkNASTransport write failed")
+		fmt.Println("GetUplinkNASTransport write failed")
 		return
 	}
 
 	// receive NAS Security Mode Command Msg
 	n, err = amfConn1.Read(recvMsg)
 	if err != nil {
-        fmt.Println("failed to Read Security Mode Command Msg ")
+		fmt.Println("failed to Read Security Mode Command Msg ")
 		return
 	}
 	_, err = ngap.Decoder(recvMsg[:n])
@@ -195,17 +196,17 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	pdu = nasTestpacket.GetSecurityModeComplete(registrationRequestWith5GMM)
 	pdu, err = test.EncodeNasPduWithSecurity(ue, pdu, nas.SecurityHeaderTypeIntegrityProtectedAndCipheredWithNew5gNasSecurityContext, true, true)
 	if err != nil {
-        fmt.Println("failure EncodeNasPduWithSecurity ")
+		fmt.Println("failure EncodeNasPduWithSecurity ")
 		return
 	}
 	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
 	if err != nil {
-        fmt.Println("failure GetUplinkNASTransport")
+		fmt.Println("failure GetUplinkNASTransport")
 		return
 	}
 	_, err = amfConn1.Write(sendMsg)
 	if err != nil {
-        fmt.Println("failure GetUplinkNASTransport write 3")
+		fmt.Println("failure GetUplinkNASTransport write 3")
 		return
 	}
 
@@ -224,12 +225,12 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	// send ngap Initial Context Setup Response Msg
 	sendMsg, err = test.GetInitialContextSetupResponse(ue.AmfUeNgapId, ue.RanUeNgapId)
 	if err != nil {
-        fmt.Println("failure 4")
+		fmt.Println("failure 4")
 		return
 	}
 	_, err = amfConn1.Write(sendMsg)
 	if err != nil {
-        fmt.Println("failure 5")
+		fmt.Println("failure 5")
 		return
 	}
 
@@ -237,17 +238,17 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	pdu = nasTestpacket.GetRegistrationComplete(nil)
 	pdu, err = test.EncodeNasPduWithSecurity(ue, pdu, nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
 	if err != nil {
-        fmt.Println("failure 6")
+		fmt.Println("failure 6")
 		return
 	}
 	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
 	if err != nil {
-        fmt.Println("failure 7")
+		fmt.Println("failure 7")
 		return
 	}
 	_, err = amfConn1.Write(sendMsg)
 	if err != nil {
-        fmt.Println("failure 8")
+		fmt.Println("failure 8")
 		return
 	}
 
@@ -259,17 +260,17 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	pdu = nasTestpacket.GetUlNasTransport_PduSessionEstablishmentRequest(10, nasMessage.ULNASTransportRequestTypeInitialRequest, "internet", &sNssai)
 	pdu, err = test.EncodeNasPduWithSecurity(ue, pdu, nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
 	if err != nil {
-        fmt.Println("failure 9")
+		fmt.Println("failure 9")
 		return
 	}
 	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
 	if err != nil {
-        fmt.Println("failure 10")
+		fmt.Println("failure 10")
 		return
 	}
 	_, err = amfConn1.Write(sendMsg)
 	if err != nil {
-        fmt.Println("failure 11")
+		fmt.Println("failure 11")
 		return
 	}
 
@@ -284,21 +285,21 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 		fmt.Println("Failed to decode PDU session Resource setup req message")
 		return
 	}
-    nasPdu = test.GetNasPduSetupRequest(ue, ngapPdu.InitiatingMessage.Value.PDUSessionResourceSetupRequest)
-    fmt.Println("Assigne address to UE address ", nasPdu.GmmMessage.DLNASTransport.Ipaddr)
-    ueIpaddr := nasPdu.GmmMessage.DLNASTransport.Ipaddr
+	nasPdu = test.GetNasPduSetupRequest(ue, ngapPdu.InitiatingMessage.Value.PDUSessionResourceSetupRequest)
+	fmt.Println("Assigne address to UE address ", nasPdu.GmmMessage.DLNASTransport.Ipaddr)
+	ueIpaddr := nasPdu.GmmMessage.DLNASTransport.Ipaddr
 
 	// send 14. NGAP-PDU Session Resource Setup Response
-    var pduSessionId int64
-    pduSessionId = 10
+	var pduSessionId int64
+	pduSessionId = 10
 	sendMsg, err = test.GetPDUSessionResourceSetupResponse(pduSessionId, ue.AmfUeNgapId, ue.RanUeNgapId, ranIpAddr)
 	if err != nil {
-        fmt.Println("failure 12")
+		fmt.Println("failure 12")
 		return
 	}
 	_, err = amfConn1.Write(sendMsg)
 	if err != nil {
-        fmt.Println("failure 13")
+		fmt.Println("failure 13")
 		return
 	}
 
@@ -308,12 +309,12 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	// ping IP(tunnel IP) from 60.60.0.1(127.0.0.1) to 60.60.0.100(127.0.0.8)
 	gtpHdr, err := hex.DecodeString("32ff00340000000100000000")
 	if err != nil {
-        fmt.Println("failure 14")
+		fmt.Println("failure 14")
 		return
 	}
 	icmpData, err := hex.DecodeString("8c870d0000000000101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3031323334353637")
 	if err != nil {
-        fmt.Println("failure 15")
+		fmt.Println("failure 15")
 		return
 	}
 
@@ -324,7 +325,7 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 		Flags:    0,
 		TotalLen: 48,
 		TTL:      64,
-		Src:      net.ParseIP(ueIpaddr).To4(),    // ue IP address
+		Src:      net.ParseIP(ueIpaddr).To4(),        // ue IP address
 		Dst:      net.ParseIP("192.168.250.1").To4(), // upstream router interface connected to Gi
 		ID:       1,
 	}
@@ -333,12 +334,12 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 
 	v4HdrBuf, err := ipv4hdr.Marshal()
 	if err != nil {
-        fmt.Println("failure 16")
+		fmt.Println("failure 16")
 		return
 	}
 	tt := append(gtpHdr, v4HdrBuf...)
 	if err != nil {
-        fmt.Println("failure 17")
+		fmt.Println("failure 17")
 		return
 	}
 
@@ -351,14 +352,14 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	}
 	b, err := m.Marshal(nil)
 	if err != nil {
-        fmt.Println("failure 18")
+		fmt.Println("failure 18")
 		return
 	}
 	b[2] = 0xaf
 	b[3] = 0x88
 	_, err = upfConn.Write(append(tt, b...))
 	if err != nil {
-        fmt.Println("failure 19")
+		fmt.Println("failure 19")
 		return
 	}
 
@@ -369,12 +370,12 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	// Source RAN send ngap Handover Required Msg
 	sendMsg, err = test.GetHandoverRequired(ue.AmfUeNgapId, ue.RanUeNgapId, []byte{0x00, 0x01, 0x02}, []byte{0x01, 0x20})
 	if err != nil {
-        fmt.Println("failure 20")
+		fmt.Println("failure 20")
 		return
 	}
 	_, err = amfConn1.Write(sendMsg)
 	if err != nil {
-        fmt.Println("failure 21")
+		fmt.Println("failure 21")
 		return
 	}
 
@@ -399,12 +400,12 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	// Target RAN send ngap Handover Request Acknowledge Msg
 	sendMsg, err = test.GetHandoverRequestAcknowledge(targetUe.AmfUeNgapId, targetUe.RanUeNgapId)
 	if err != nil {
-        fmt.Println("failure 22")
+		fmt.Println("failure 22")
 		return
 	}
 	_, err = amfConn2.Write(sendMsg)
 	if err != nil {
-        fmt.Println("failure 23")
+		fmt.Println("failure 23")
 		return
 	}
 
@@ -428,12 +429,12 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	// Target RAN send ngap Handover Notify
 	sendMsg, err = test.GetHandoverNotify(targetUe.AmfUeNgapId, targetUe.RanUeNgapId)
 	if err != nil {
-        fmt.Println("failure 24")
+		fmt.Println("failure 24")
 		return
 	}
 	_, err = amfConn2.Write(sendMsg)
 	if err != nil {
-        fmt.Println("failure 25")
+		fmt.Println("failure 25")
 		return
 	}
 
@@ -453,12 +454,12 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	pduSessionIDList := []int64{10}
 	sendMsg, err = test.GetUEContextReleaseComplete(ue.AmfUeNgapId, ue.RanUeNgapId, pduSessionIDList)
 	if err != nil {
-        fmt.Println("failure 26")
+		fmt.Println("failure 26")
 		return
 	}
 	_, err = amfConn1.Write(sendMsg)
 	if err != nil {
-        fmt.Println("failure 27")
+		fmt.Println("failure 27")
 		return
 	}
 
@@ -475,17 +476,17 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 		mobileIdentity5GS, nil, ueSecurityCapability, ue.Get5GMMCapability(), nil, uplinkDataStatus)
 	pdu, err = test.EncodeNasPduWithSecurity(targetUe, pdu, nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
 	if err != nil {
-        fmt.Println("failure EncodeNasPduWithSecurity")
+		fmt.Println("failure EncodeNasPduWithSecurity")
 		return
 	}
 	sendMsg, err = test.GetInitialUEMessage(targetUe.RanUeNgapId, pdu, "")
 	if err != nil {
-        fmt.Println("failure GetInitialUEMessage ")
+		fmt.Println("failure GetInitialUEMessage ")
 		return
 	}
 	_, err = amfConn2.Write(sendMsg)
 	if err != nil {
-        fmt.Println("failure write to socket 1")
+		fmt.Println("failure write to socket 1")
 		return
 	}
 
@@ -508,7 +509,7 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	}
 	_, err = amfConn2.Write(sendMsg)
 	if err != nil {
-        fmt.Println("failure 1")
+		fmt.Println("failure 1")
 		return
 	}
 
@@ -516,17 +517,17 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	pdu = nasTestpacket.GetRegistrationComplete(nil)
 	pdu, err = test.EncodeNasPduWithSecurity(targetUe, pdu, nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
 	if err != nil {
-        fmt.Println("failure 1")
+		fmt.Println("failure 1")
 		return
 	}
 	sendMsg, err = test.GetUplinkNASTransport(targetUe.AmfUeNgapId, targetUe.RanUeNgapId, pdu)
 	if err != nil {
-        fmt.Println("failure GetUplinkNASTransport")
+		fmt.Println("failure GetUplinkNASTransport")
 		return
 	}
 	_, err = amfConn2.Write(sendMsg)
 	if err != nil {
-        fmt.Println("failure Writing UplinkNASTrasport")
+		fmt.Println("failure Writing UplinkNASTrasport")
 		return
 	}
 
@@ -537,7 +538,7 @@ func N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	// ping IP(tunnel IP) from 60.60.0.2(127.0.0.1) to 60.60.0.20(127.0.0.8)
 	_, err = upfConn2.Write(append(tt, b...))
 	if err != nil {
-        fmt.Println("failure sending dummy GTPU packet ")
+		fmt.Println("failure sending dummy GTPU packet ")
 		return
 	}
 

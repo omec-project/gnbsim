@@ -1,22 +1,23 @@
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+//
 
 package xnhandover
 
 import (
 	"fmt"
+	"gnbsim/util/test" // AJAY - Change required
+	"time"
+
 	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
+	"github.com/free5gc/ngap"
+	"github.com/free5gc/openapi/models"
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasTestpacket"
 	"github.com/omec-project/nas/nasType"
 	"github.com/omec-project/nas/security"
-	"github.com/free5gc/ngap"
-	"github.com/free5gc/openapi/models"
-    "gnbsim/util/test" // AJAY - Change required 
-	"time"
 )
 
 // Registration -> Pdu Session Establishment -> Path Switch(Xn Handover)
@@ -65,7 +66,7 @@ func Xnhandover_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr string) {
 	amfConn2, err1 := test.ConnectToAmf(amfIpAddr, ranIpAddr, 38412, 9488)
 	if err1 != nil {
 		fmt.Println("Failed to connect to AMF ", amfIpAddr)
-        return
+		return
 	} else {
 		fmt.Println("Success - connected to AMF ", amfIpAddr)
 	}
@@ -110,12 +111,12 @@ func Xnhandover_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr string) {
 		nasMessage.RegistrationType5GSInitialRegistration, mobileIdentity5GS, nil, ueSecurityCapability, nil, nil, nil)
 	sendMsg, err = test.GetInitialUEMessage(ue.RanUeNgapId, registrationRequest, "")
 	if err != nil {
-	    fmt.Println("Failed to get Initial UE Registration Request Message")
+		fmt.Println("Failed to get Initial UE Registration Request Message")
 		return
 	}
 	_, err = amfConn.Write(sendMsg)
 	if err != nil {
-	    fmt.Println("Failed to write Initial UE Registration Request Message")
+		fmt.Println("Failed to write Initial UE Registration Request Message")
 		return
 	}
 	fmt.Println("Sent Initial UE Registration Request Message")
@@ -137,8 +138,8 @@ func Xnhandover_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr string) {
 	// Calculate for RES*
 	nasPdu := test.GetNasPdu(ue, ngapMsg.InitiatingMessage.Value.DownlinkNASTransport)
 	if nasPdu == nil {
-        return
-    }
+		return
+	}
 	rand := nasPdu.AuthenticationRequest.GetRANDValue()
 	resStat := ue.DeriveRESstarAndSetKey(ue.AuthenticationSubs, rand[:], "5G:mnc093.mcc208.3gppnetwork.org")
 
@@ -275,11 +276,11 @@ func Xnhandover_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr string) {
 	}
 
 	// send 14. NGAP-PDU Session Resource Setup Response
-    var pduSessionId int64
-    pduSessionId = 10
+	var pduSessionId int64
+	pduSessionId = 10
 	sendMsg, err = test.GetPDUSessionResourceSetupResponse(pduSessionId,
-                                                           ue.AmfUeNgapId,
-                                                           ue.RanUeNgapId, ranUIpAddr)
+		ue.AmfUeNgapId,
+		ue.RanUeNgapId, ranUIpAddr)
 	if err != nil {
 		fmt.Println("Failed to create - NGAP-PDU Session Resource Setup Response")
 		return
@@ -295,30 +296,29 @@ func Xnhandover_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr string) {
 	// send Path Switch Request (XnHandover)
 	sendMsg, err = test.GetPathSwitchRequest(ue.AmfUeNgapId, ue.RanUeNgapId)
 	if err != nil {
-        fmt.Println("GetPathSwitchRequest failed")
+		fmt.Println("GetPathSwitchRequest failed")
 		return
 	}
 	_, err = amfConn2.Write(sendMsg)
 	if err != nil {
-        fmt.Println("Failed to write PathSwitchRequest ")
+		fmt.Println("Failed to write PathSwitchRequest ")
 		return
 	}
 
-    fmt.Println("Sent PathSwitchRequest ")
+	fmt.Println("Sent PathSwitchRequest ")
 	// receive Path Switch Request (XnHandover)
 	n, err = amfConn2.Read(recvMsg)
 	if err != nil {
-	    fmt.Println("Failed to read - Path Switch Request (XnHandover)")
+		fmt.Println("Failed to read - Path Switch Request (XnHandover)")
 		return
 	}
 	_, err = ngap.Decoder(recvMsg[:n])
 	if err != nil {
-	    fmt.Println("Failed to decode - Path Switch Request (XnHandover)")
+		fmt.Println("Failed to decode - Path Switch Request (XnHandover)")
 		return
 	}
 
 	time.Sleep(10 * time.Millisecond)
-
 
 	time.Sleep(10000 * time.Millisecond)
 	// close Connection

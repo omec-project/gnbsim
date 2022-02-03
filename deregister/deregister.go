@@ -1,23 +1,24 @@
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+//
 
 package deregister
 
 import (
 	"fmt"
+	"gnbsim/util/test" // AJAY - Change required
+	"strconv"
+	"time"
+
 	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
+	"github.com/free5gc/ngap"
+	"github.com/free5gc/ngap/ngapType"
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasTestpacket"
 	"github.com/omec-project/nas/nasType"
 	"github.com/omec-project/nas/security"
-	"github.com/free5gc/ngap"
-	"github.com/free5gc/ngap/ngapType"
-    "gnbsim/util/test" // AJAY - Change required 
-	"strconv"
-	"time"
 )
 
 func Deregister_test(ranIpAddr, amfIpAddr string) {
@@ -36,7 +37,6 @@ func Deregister_test(ranIpAddr, amfIpAddr string) {
 	ue.AmfUeNgapId = 1
 	ue.AuthenticationSubs = test.GetAuthSubscription(TestGenAuthData.MilenageTestSet19.K,
 		TestGenAuthData.MilenageTestSet19.OPC, "")
-
 
 	// send NGSetupRequest Msg
 	fmt.Println("Send NGSetupRequest Message")
@@ -293,7 +293,6 @@ func Deregister_test(ranIpAddr, amfIpAddr string) {
 	fmt.Println("sent UE Context Release Complete failed")
 
 	time.Sleep(100 * time.Millisecond)
-
 
 	// close Connection
 	amfConn.Close()

@@ -1,32 +1,33 @@
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+//
 
 package resynchronisation
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"gnbsim/util/test" // AJAY - Change required
+	"net"
+	"time"
+
 	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
+	"github.com/free5gc/milenage"
+	"github.com/free5gc/ngap"
+	"github.com/free5gc/openapi/models"
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasTestpacket"
 	"github.com/omec-project/nas/nasType"
 	"github.com/omec-project/nas/security"
-	"github.com/free5gc/ngap"
-	"github.com/free5gc/openapi/models"
-    "gnbsim/util/test" // AJAY - Change required 
-    "github.com/free5gc/milenage"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
-	"net"
-	"time"
-	"bytes"
-	"encoding/binary"
 )
 
-func Resychronisation_test(ranIpAddr, upfIpAddr,  amfIpAddr string) {
+func Resychronisation_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	var n int
 	var sendMsg []byte
 	var recvMsg = make([]byte, 2048)
@@ -35,7 +36,7 @@ func Resychronisation_test(ranIpAddr, upfIpAddr,  amfIpAddr string) {
 	amfConn, err := test.ConnectToAmf(amfIpAddr, ranIpAddr, 38412, 9487)
 	if err != nil {
 		fmt.Println("Failed to connect to AMF ", amfIpAddr)
-        return
+		return
 	} else {
 		fmt.Println("Success - connected to AMF ", amfIpAddr)
 	}
@@ -44,7 +45,7 @@ func Resychronisation_test(ranIpAddr, upfIpAddr,  amfIpAddr string) {
 	upfConn, err := test.ConnectToUpf(ranIpAddr, upfIpAddr, 2152, 2152)
 	if err != nil {
 		fmt.Println("Failed to connect to UPF ", upfIpAddr)
-        return
+		return
 	} else {
 		fmt.Println("Success - connected to UPF ", upfIpAddr)
 	}
@@ -77,7 +78,6 @@ func Resychronisation_test(ranIpAddr, upfIpAddr,  amfIpAddr string) {
 	ue.AuthenticationSubs = test.GetAuthSubscription(TestGenAuthData.MilenageTestSet19.K,
 		TestGenAuthData.MilenageTestSet19.OPC, "")
 	// insert UE data to MongoDB
-
 
 	// send InitialUeMessage(Registration Request)(imsi-2089300007487)
 	mobileIdentity5GS := nasType.MobileIdentity5GS{
@@ -227,14 +227,13 @@ func Resychronisation_test(ranIpAddr, upfIpAddr,  amfIpAddr string) {
 	n, err = amfConn.Read(recvMsg)
 	ngapPdu, err := ngap.Decoder(recvMsg[:n])
 
-    nasPdu = test.GetNasPduSetupRequest(ue, ngapPdu.InitiatingMessage.Value.PDUSessionResourceSetupRequest)
-    fmt.Println("Assigne address to UE address ", nasPdu.GmmMessage.DLNASTransport.Ipaddr)
-    ueIpaddr := nasPdu.GmmMessage.DLNASTransport.Ipaddr
-
+	nasPdu = test.GetNasPduSetupRequest(ue, ngapPdu.InitiatingMessage.Value.PDUSessionResourceSetupRequest)
+	fmt.Println("Assigne address to UE address ", nasPdu.GmmMessage.DLNASTransport.Ipaddr)
+	ueIpaddr := nasPdu.GmmMessage.DLNASTransport.Ipaddr
 
 	// send 14. NGAP-PDU Session Resource Setup Response
-    var pduSessionId int64
-    pduSessionId = 10
+	var pduSessionId int64
+	pduSessionId = 10
 	sendMsg, err = test.GetPDUSessionResourceSetupResponse(pduSessionId, ue.AmfUeNgapId, ue.RanUeNgapId, ranIpAddr)
 	_, err = amfConn.Write(sendMsg)
 
@@ -253,7 +252,7 @@ func Resychronisation_test(ranIpAddr, upfIpAddr,  amfIpAddr string) {
 		Flags:    0,
 		TotalLen: 48,
 		TTL:      64,
-		Src:      net.ParseIP(ueIpaddr).To4(),    // ue IP address
+		Src:      net.ParseIP(ueIpaddr).To4(),        // ue IP address
 		Dst:      net.ParseIP("192.168.250.1").To4(), // upstream router interface connected to Gi
 		ID:       1,
 	}
@@ -276,7 +275,6 @@ func Resychronisation_test(ranIpAddr, upfIpAddr,  amfIpAddr string) {
 	_, err = upfConn.Write(append(tt, b...))
 
 	time.Sleep(1 * time.Second)
-
 
 	// close Connection
 	amfConn.Close()

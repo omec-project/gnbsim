@@ -1,21 +1,22 @@
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+//
 
 package loadsub
 
 import (
 	"fmt"
-    "gnbsim/util/test" // AJAY - Change required 
+	"gnbsim/util/test" // AJAY - Change required
+	"strconv"
+
 	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
 	"github.com/omec-project/nas/security"
-	"strconv"
 )
 
 func LoadSubscriberData(num int) {
 	var baseImsi int = 2089300007487
-    var i int
+	var i int
 	for i = 0; i < num; i++ {
 		servingPlmnId := "20893"
 		imsi := baseImsi + i

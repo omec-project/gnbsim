@@ -1,27 +1,28 @@
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+//
 
-package  pdusessionrelease
+package pdusessionrelease
 
 import (
 	"fmt"
+	"gnbsim/util/test" // AJAY - Change required
+	"time"
+
 	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
+	"github.com/free5gc/ngap"
 	"github.com/free5gc/ngap/ngapType"
+	"github.com/free5gc/openapi/models"
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasTestpacket"
 	"github.com/omec-project/nas/nasType"
 	"github.com/omec-project/nas/security"
-	"github.com/free5gc/ngap"
-	"github.com/free5gc/openapi/models"
-    "gnbsim/util/test" // AJAY - Change required 
-	"time"
 )
 
 // Registration -> Pdu Session Establishment -> Pdu Session Release
-func PduSessionRelease_test(ranIpAddr,  amfIpAddr string) {
+func PduSessionRelease_test(ranIpAddr, amfIpAddr string) {
 	var n int
 	var sendMsg []byte
 	var recvMsg = make([]byte, 2048)
@@ -34,18 +35,18 @@ func PduSessionRelease_test(ranIpAddr,  amfIpAddr string) {
 	_, err = amfConn.Write(sendMsg)
 
 	// receive NGSetupResponse Msg
-    fmt.Println("Read NGSetupResponse Msg")
+	fmt.Println("Read NGSetupResponse Msg")
 	n, err = amfConn.Read(recvMsg)
-    if err != nil {
-        fmt.Println("failed to read message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to read message")
+		return
+	}
 
 	_, err = ngap.Decoder(recvMsg[:n])
-    if err != nil {
-        fmt.Println("failed to decode message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to decode message")
+		return
+	}
 
 	// New UE
 	ue := test.NewRanUeContext("imsi-2089300007487", 1, security.AlgCiphering128NEA0, security.AlgIntegrity128NIA2)
@@ -65,17 +66,17 @@ func PduSessionRelease_test(ranIpAddr,  amfIpAddr string) {
 	_, err = amfConn.Write(sendMsg)
 
 	// receive NAS Authentication Request Msg
-    fmt.Println("Read Authentication Request Msg")
+	fmt.Println("Read Authentication Request Msg")
 	n, err = amfConn.Read(recvMsg)
-    if err != nil {
-        fmt.Println("failed to read message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to read message")
+		return
+	}
 	ngapMsg, err := ngap.Decoder(recvMsg[:n])
-    if err != nil {
-        fmt.Println("failed to decode message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to decode message")
+		return
+	}
 
 	// Calculate for RES*
 	nasPdu := test.GetNasPdu(ue, ngapMsg.InitiatingMessage.Value.DownlinkNASTransport)
@@ -86,24 +87,24 @@ func PduSessionRelease_test(ranIpAddr,  amfIpAddr string) {
 	pdu := nasTestpacket.GetAuthenticationResponse(resStat, "")
 	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
 	_, err = amfConn.Write(sendMsg)
-    if err != nil {
-        fmt.Println("failed to write message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to write message")
+		return
+	}
 
 	// receive NAS Security Mode Command Msg
-    fmt.Println("Read NAS Security Mode Command Msg")
+	fmt.Println("Read NAS Security Mode Command Msg")
 	n, err = amfConn.Read(recvMsg)
-    if err != nil {
-        fmt.Println("failed to read message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to read message")
+		return
+	}
 
 	_, err = ngap.Decoder(recvMsg[:n])
-    if err != nil {
-        fmt.Println("failed to decode message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to decode message")
+		return
+	}
 
 	// send NAS Security Mode Complete Msg
 	registrationRequestWith5GMM := nasTestpacket.GetRegistrationRequest(nasMessage.RegistrationType5GSInitialRegistration,
@@ -112,42 +113,42 @@ func PduSessionRelease_test(ranIpAddr,  amfIpAddr string) {
 	pdu, err = test.EncodeNasPduWithSecurity(ue, pdu, nas.SecurityHeaderTypeIntegrityProtectedAndCipheredWithNew5gNasSecurityContext, true, true)
 	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
 	_, err = amfConn.Write(sendMsg)
-    if err != nil {
-        fmt.Println("failed to write message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to write message")
+		return
+	}
 
 	// receive ngap Initial Context Setup Request Msg
-    fmt.Println("Read Initial Context Setup Request Msg")
+	fmt.Println("Read Initial Context Setup Request Msg")
 	n, err = amfConn.Read(recvMsg)
-    if err != nil {
-        fmt.Println("failed to read message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to read message")
+		return
+	}
 
 	_, err = ngap.Decoder(recvMsg[:n])
-    if err != nil {
-        fmt.Println("failed to decode message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to decode message")
+		return
+	}
 
 	// send ngap Initial Context Setup Response Msg
 	sendMsg, err = test.GetInitialContextSetupResponse(ue.AmfUeNgapId, ue.RanUeNgapId)
 	_, err = amfConn.Write(sendMsg)
-    if err != nil {
-        fmt.Println("failed to write message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to write message")
+		return
+	}
 
 	// send NAS Registration Complete Msg
 	pdu = nasTestpacket.GetRegistrationComplete(nil)
 	pdu, err = test.EncodeNasPduWithSecurity(ue, pdu, nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
 	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
 	_, err = amfConn.Write(sendMsg)
-    if err != nil {
-        fmt.Println("failed to write message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to write message")
+		return
+	}
 
 	// send PduSessionEstablishmentRequest Msg
 
@@ -159,53 +160,53 @@ func PduSessionRelease_test(ranIpAddr,  amfIpAddr string) {
 	pdu, err = test.EncodeNasPduWithSecurity(ue, pdu, nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
 	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
 	_, err = amfConn.Write(sendMsg)
-    if err != nil {
-        fmt.Println("failed to write message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to write message")
+		return
+	}
 
 	// receive 12. NGAP-PDU Session Resource Setup Request(DL nas transport((NAS msg-PDU session setup Accept)))
-    fmt.Println("Read NAS PDU Session Resource setup Request Msg")
+	fmt.Println("Read NAS PDU Session Resource setup Request Msg")
 	n, err = amfConn.Read(recvMsg)
-    if err != nil {
-        fmt.Println("failed to read message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to read message")
+		return
+	}
 
 	_, err = ngap.Decoder(recvMsg[:n])
-    if err != nil {
-        fmt.Println("failed to decode message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to decode message")
+		return
+	}
 
 	// send 14. NGAP-PDU Session Resource Setup Response
-    var pduSessionId int64
-    pduSessionId = 10
+	var pduSessionId int64
+	pduSessionId = 10
 	sendMsg, err = test.GetPDUSessionResourceSetupResponse(pduSessionId, ue.AmfUeNgapId, ue.RanUeNgapId, ranIpAddr)
 	_, err = amfConn.Write(sendMsg)
-    if err != nil {
-        fmt.Println("failed to write message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to write message")
+		return
+	}
 
 	// Send Pdu Session Establishment Release Request
 	pdu = nasTestpacket.GetUlNasTransport_PduSessionReleaseRequest(10)
 	pdu, err = test.EncodeNasPduWithSecurity(ue, pdu, nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
 	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
 	_, err = amfConn.Write(sendMsg)
-    if err != nil {
-        fmt.Println("failed to write message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to write message")
+		return
+	}
 
 	time.Sleep(1000 * time.Millisecond)
 	// send N2 Resource Release Ack(PDUSession Resource Release Response)
 	sendMsg, err = test.GetPDUSessionResourceReleaseResponse(ue.AmfUeNgapId, ue.RanUeNgapId)
 	_, err = amfConn.Write(sendMsg)
-    if err != nil {
-        fmt.Println("failed to write message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to write message")
+		return
+	}
 
 	// wait 10 ms
 	time.Sleep(1000 * time.Millisecond)
@@ -215,10 +216,10 @@ func PduSessionRelease_test(ranIpAddr,  amfIpAddr string) {
 	pdu, err = test.EncodeNasPduWithSecurity(ue, pdu, nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
 	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
 	_, err = amfConn.Write(sendMsg)
-    if err != nil {
-        fmt.Println("failed to write message")
-        return
-    }
+	if err != nil {
+		fmt.Println("failed to write message")
+		return
+	}
 
 	// wait result
 	time.Sleep(1 * time.Second)
@@ -313,8 +314,6 @@ func PduSessionRelease_test(ranIpAddr,  amfIpAddr string) {
 	fmt.Println("sent UE Context Release Complete")
 
 	time.Sleep(100 * time.Millisecond)
-
-
 
 	// close Connection
 	amfConn.Close()

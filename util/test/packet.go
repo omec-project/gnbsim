@@ -1,14 +1,15 @@
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+//
 
 package test
 
 import (
+	"github.com/free5gc/ngap"
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasMessage"
-	"github.com/free5gc/ngap"
+
 	// Nausf_UEAU_Client "github.com/free5gc/openapi/Nausf_UEAuthentication"
 	// "github.com/free5gc/openapi/models"
 

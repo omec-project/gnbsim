@@ -1,26 +1,27 @@
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+//
 
 package gutiregistration
 
 import (
 	"fmt"
+	"gnbsim/util/test" // AJAY - Change required
+	"time"
+
 	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
+	"github.com/free5gc/ngap"
+	"github.com/free5gc/ngap/ngapType"
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasTestpacket"
 	"github.com/omec-project/nas/nasType"
 	"github.com/omec-project/nas/security"
-	"github.com/free5gc/ngap"
-	"github.com/free5gc/ngap/ngapType"
-    "gnbsim/util/test" // AJAY - Change required 
-	"time"
 )
 
 // Registration -> DeRegistration(UE Originating)
-func Gutiregistration_test(ranIpAddr,  amfIpAddr string) {
+func Gutiregistration_test(ranIpAddr, amfIpAddr string) {
 	var n int
 	var sendMsg []byte
 	var recvMsg = make([]byte, 2048)
@@ -116,45 +117,45 @@ func Gutiregistration_test(ranIpAddr,  amfIpAddr string) {
 	n, err = amfConn.Read(recvMsg)
 	ngapMsg, err = ngap.Decoder(recvMsg[:n])
 	if ngapType.NGAPPDUPresentInitiatingMessage != ngapMsg.Present {
-        return
-    }
+		return
+	}
 	if ngapType.ProcedureCodeDownlinkNASTransport != ngapMsg.InitiatingMessage.ProcedureCode.Value {
-        return
-    }
+		return
+	}
 	if ngapType.InitiatingMessagePresentDownlinkNASTransport != ngapMsg.InitiatingMessage.Value.Present {
-        return
-    }
+		return
+	}
 	nasPdu = test.GetNasPdu(ue, ngapMsg.InitiatingMessage.Value.DownlinkNASTransport)
-    if nasPdu == nil {
-        return;
-    }
-    if nasPdu.GmmMessage == nil {
-        return
-    }
+	if nasPdu == nil {
+		return
+	}
+	if nasPdu.GmmMessage == nil {
+		return
+	}
 
 	if nas.MsgTypeDeregistrationAcceptUEOriginatingDeregistration != nasPdu.GmmMessage.GmmHeader.GetMessageType() {
-        return
-    }
+		return
+	}
 
 	// receive ngap UE Context Release Command
 	n, err = amfConn.Read(recvMsg)
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 	_, err = ngap.Decoder(recvMsg[:n])
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 
 	// send ngap UE Context Release Complete
 	sendMsg, err = test.GetUEContextReleaseComplete(ue.AmfUeNgapId, ue.RanUeNgapId, nil)
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 	_, err = amfConn.Write(sendMsg)
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 
 	time.Sleep(200 * time.Millisecond)
 
@@ -167,194 +168,193 @@ func Gutiregistration_test(ranIpAddr,  amfIpAddr string) {
 	//registrationRequest = nasTestpacket.GetRegistrationRequest(nasMessage.RegistrationType5GSInitialRegistration,
 	//	GUTI5GS, nil, ueSecurityCapability, nil, innerRegistrationRequest, nil)
 	pdu, err = test.EncodeNasPduWithSecurity(ue, innerRegistrationRequest, nas.SecurityHeaderTypeIntegrityProtected, true, false)
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 	sendMsg, err = test.GetInitialUEMessage(ue.RanUeNgapId, pdu, "")
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 	_, err = amfConn.Write(sendMsg)
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 
 	// receive NAS Identity Request
 	n, err = amfConn.Read(recvMsg)
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 	ngapMsg, err = ngap.Decoder(recvMsg[:n])
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 	if ngapType.NGAPPDUPresentInitiatingMessage != ngapMsg.Present {
-        return
-    }
+		return
+	}
 	if ngapType.ProcedureCodeDownlinkNASTransport != ngapMsg.InitiatingMessage.ProcedureCode.Value {
-        return
-    }
+		return
+	}
 	if ngapType.InitiatingMessagePresentDownlinkNASTransport != ngapMsg.InitiatingMessage.Value.Present {
-        return
-    }
+		return
+	}
 	nasPdu = test.GetNasPdu(ue, ngapMsg.InitiatingMessage.Value.DownlinkNASTransport)
 	if nasPdu == nil {
-        return
-    }
+		return
+	}
 	if nasPdu.GmmMessage == nil {
-        return
-    }
+		return
+	}
 
 	if nas.MsgTypeRegistrationAccept != nasPdu.GmmMessage.GmmHeader.GetMessageType() {
-        return
-    }
-/*
-	// send NAS Identity Response
-	mobileIdentity := nasType.MobileIdentity{
-		Len:    SUCI5GS.Len,
-		Buffer: SUCI5GS.Buffer,
+		return
 	}
-	pdu = nasTestpacket.GetIdentityResponse(mobileIdentity)
-	if err != nil {
-        return
-    }
-	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
-	if err != nil {
-        return
-    }
-	_, err = amfConn.Write(sendMsg)
-	if err != nil {
-        return
-    }
+	/*
+	   	// send NAS Identity Response
+	   	mobileIdentity := nasType.MobileIdentity{
+	   		Len:    SUCI5GS.Len,
+	   		Buffer: SUCI5GS.Buffer,
+	   	}
+	   	pdu = nasTestpacket.GetIdentityResponse(mobileIdentity)
+	   	if err != nil {
+	           return
+	       }
+	   	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
+	   	if err != nil {
+	           return
+	       }
+	   	_, err = amfConn.Write(sendMsg)
+	   	if err != nil {
+	           return
+	       }
 
-	// receive NAS Authentication Request Msg
-	n, err = amfConn.Read(recvMsg)
-	if err != nil {
-        return
-    }
-	ngapMsg, err = ngap.Decoder(recvMsg[:n])
-    if err != nil {
-        return
-    }
-	if ngapType.NGAPPDUPresentInitiatingMessage != ngapMsg.Present {
-        return
-    }
-	if ngapType.ProcedureCodeDownlinkNASTransport != ngapMsg.InitiatingMessage.ProcedureCode.Value {
-        return
-    }
-	if ngapType.InitiatingMessagePresentDownlinkNASTransport != ngapMsg.InitiatingMessage.Value.Present {
-        return
-    }
-	nasPdu = test.GetNasPdu(ue, ngapMsg.InitiatingMessage.Value.DownlinkNASTransport)
-	if nasPdu == nil {
-        return
-    }
-	if nasPdu.GmmMessage == nil {
-        return
-    }
-	if nas.MsgTypeAuthenticationRequest != nasPdu.GmmMessage.GmmHeader.GetMessageType() {
-        return
-    }
+	   	// receive NAS Authentication Request Msg
+	   	n, err = amfConn.Read(recvMsg)
+	   	if err != nil {
+	           return
+	       }
+	   	ngapMsg, err = ngap.Decoder(recvMsg[:n])
+	       if err != nil {
+	           return
+	       }
+	   	if ngapType.NGAPPDUPresentInitiatingMessage != ngapMsg.Present {
+	           return
+	       }
+	   	if ngapType.ProcedureCodeDownlinkNASTransport != ngapMsg.InitiatingMessage.ProcedureCode.Value {
+	           return
+	       }
+	   	if ngapType.InitiatingMessagePresentDownlinkNASTransport != ngapMsg.InitiatingMessage.Value.Present {
+	           return
+	       }
+	   	nasPdu = test.GetNasPdu(ue, ngapMsg.InitiatingMessage.Value.DownlinkNASTransport)
+	   	if nasPdu == nil {
+	           return
+	       }
+	   	if nasPdu.GmmMessage == nil {
+	           return
+	       }
+	   	if nas.MsgTypeAuthenticationRequest != nasPdu.GmmMessage.GmmHeader.GetMessageType() {
+	           return
+	       }
 
-	// Calculate for RES*
-	rand = nasPdu.AuthenticationRequest.GetRANDValue()
-	sqn, _ := strconv.ParseUint(ue.AuthenticationSubs.SequenceNumber, 16, 48)
-	sqn++
-	ue.AuthenticationSubs.SequenceNumber = strconv.FormatUint(sqn, 16)
-	resStat = ue.DeriveRESstarAndSetKey(ue.AuthenticationSubs, rand[:], "5G:mnc093.mcc208.3gppnetwork.org")
+	   	// Calculate for RES*
+	   	rand = nasPdu.AuthenticationRequest.GetRANDValue()
+	   	sqn, _ := strconv.ParseUint(ue.AuthenticationSubs.SequenceNumber, 16, 48)
+	   	sqn++
+	   	ue.AuthenticationSubs.SequenceNumber = strconv.FormatUint(sqn, 16)
+	   	resStat = ue.DeriveRESstarAndSetKey(ue.AuthenticationSubs, rand[:], "5G:mnc093.mcc208.3gppnetwork.org")
 
-	// send NAS Authentication Response
-	pdu = nasTestpacket.GetAuthenticationResponse(resStat, "")
-	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
-    if err != nil {
-        return
-    }
-	_, err = amfConn.Write(sendMsg)
-    if err != nil {
-        return
-    }
+	   	// send NAS Authentication Response
+	   	pdu = nasTestpacket.GetAuthenticationResponse(resStat, "")
+	   	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
+	       if err != nil {
+	           return
+	       }
+	   	_, err = amfConn.Write(sendMsg)
+	       if err != nil {
+	           return
+	       }
 
-	// receive NAS Security Mode Command Msg
-	n, err = amfConn.Read(recvMsg)
-    if err != nil {
-        return
-    }
-	ngapMsg, err = ngap.Decoder(recvMsg[:n])
-    if err != nil {
-        return
-    }
-	if ngapType.NGAPPDUPresentInitiatingMessage != ngapMsg.Present {
-        return;
-    }
-	if ngapType.ProcedureCodeDownlinkNASTransport != ngapMsg.InitiatingMessage.ProcedureCode.Value {
-        return;
-    }
-	if ngapType.InitiatingMessagePresentDownlinkNASTransport != ngapMsg.InitiatingMessage.Value.Present {
-        return;
-    }
-	nasPdu = test.GetNasPdu(ue, ngapMsg.InitiatingMessage.Value.DownlinkNASTransport)
-    if nasPdu == nil {
-        return
-    }
-    if nasPdu.GmmMessage == nil {
-        return
-    }
-	if nas.MsgTypeSecurityModeCommand != nasPdu.GmmMessage.GmmHeader.GetMessageType() {
-        return
-    }
+	   	// receive NAS Security Mode Command Msg
+	   	n, err = amfConn.Read(recvMsg)
+	       if err != nil {
+	           return
+	       }
+	   	ngapMsg, err = ngap.Decoder(recvMsg[:n])
+	       if err != nil {
+	           return
+	       }
+	   	if ngapType.NGAPPDUPresentInitiatingMessage != ngapMsg.Present {
+	           return;
+	       }
+	   	if ngapType.ProcedureCodeDownlinkNASTransport != ngapMsg.InitiatingMessage.ProcedureCode.Value {
+	           return;
+	       }
+	   	if ngapType.InitiatingMessagePresentDownlinkNASTransport != ngapMsg.InitiatingMessage.Value.Present {
+	           return;
+	       }
+	   	nasPdu = test.GetNasPdu(ue, ngapMsg.InitiatingMessage.Value.DownlinkNASTransport)
+	       if nasPdu == nil {
+	           return
+	       }
+	       if nasPdu.GmmMessage == nil {
+	           return
+	       }
+	   	if nas.MsgTypeSecurityModeCommand != nasPdu.GmmMessage.GmmHeader.GetMessageType() {
+	           return
+	       }
 
-	// send NAS Security Mode Complete Msg
-	pdu = nasTestpacket.GetSecurityModeComplete(nil)
-	pdu, err = test.EncodeNasPduWithSecurity(ue, pdu, nas.SecurityHeaderTypeIntegrityProtectedAndCipheredWithNew5gNasSecurityContext, true, true)
-    if err != nil {
-        return
-    }
-	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
-    if err != nil {
-        return
-    }
-	_, err = amfConn.Write(sendMsg)
-    if err != nil {
-        return
-    }
+	   	// send NAS Security Mode Complete Msg
+	   	pdu = nasTestpacket.GetSecurityModeComplete(nil)
+	   	pdu, err = test.EncodeNasPduWithSecurity(ue, pdu, nas.SecurityHeaderTypeIntegrityProtectedAndCipheredWithNew5gNasSecurityContext, true, true)
+	       if err != nil {
+	           return
+	       }
+	   	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
+	       if err != nil {
+	           return
+	       }
+	   	_, err = amfConn.Write(sendMsg)
+	       if err != nil {
+	           return
+	       }
 
-	// receive ngap Initial Context Setup Request Msg
-	n, err = amfConn.Read(recvMsg)
-    if err != nil {
-        return
-    }
-	_, err = ngap.Decoder(recvMsg[:n])
-    if err != nil {
-        return
-    }
-*/
+	   	// receive ngap Initial Context Setup Request Msg
+	   	n, err = amfConn.Read(recvMsg)
+	       if err != nil {
+	           return
+	       }
+	   	_, err = ngap.Decoder(recvMsg[:n])
+	       if err != nil {
+	           return
+	       }
+	*/
 	// send ngap Initial Context Setup Response Msg
 	sendMsg, err = test.GetInitialContextSetupResponse(ue.AmfUeNgapId, ue.RanUeNgapId)
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 	_, err = amfConn.Write(sendMsg)
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 
 	// send NAS Registration Complete Msg
 	pdu = nasTestpacket.GetRegistrationComplete(nil)
 	pdu, err = test.EncodeNasPduWithSecurity(ue, pdu, nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 	sendMsg, err = test.GetUplinkNASTransport(ue.AmfUeNgapId, ue.RanUeNgapId, pdu)
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 	_, err = amfConn.Write(sendMsg)
-    if err != nil {
-        return
-    }
+	if err != nil {
+		return
+	}
 	time.Sleep(1000 * time.Millisecond)
 
 	// close Connection
 	amfConn.Close()
 }
-

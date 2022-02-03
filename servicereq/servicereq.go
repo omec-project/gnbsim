@@ -1,23 +1,24 @@
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+//
 
 package servicereq
 
 import (
 	"fmt"
+	"gnbsim/util/test" // AJAY - Change required
+	"time"
+
 	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
+	"github.com/free5gc/ngap"
 	"github.com/free5gc/ngap/ngapType"
+	"github.com/free5gc/openapi/models"
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasTestpacket"
 	"github.com/omec-project/nas/nasType"
 	"github.com/omec-project/nas/security"
-	"github.com/free5gc/ngap"
-	"github.com/free5gc/openapi/models"
-    "gnbsim/util/test" // AJAY - Change required 
-	"time"
 )
 
 // Registration -> Pdu Session Establishment -> AN Release due to UE Idle -> UE trigger Service Request Procedure
@@ -198,8 +199,8 @@ func Servicereq_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	}
 
 	// send 14. NGAP-PDU Session Resource Setup Response
-    var pduSessionId int64
-    pduSessionId = 10
+	var pduSessionId int64
+	pduSessionId = 10
 	sendMsg, err = test.GetPDUSessionResourceSetupResponse(pduSessionId, ue.AmfUeNgapId, ue.RanUeNgapId, ranIpAddr)
 	if err != nil {
 		return
@@ -299,7 +300,6 @@ func Servicereq_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 
 	time.Sleep(100 * time.Millisecond)
 
-
 	// send ngap UE Context Release Request
 	/*pduSessionIDList := []int64{10}
 	sendMsg, err = test.GetUEContextReleaseRequest(ue.AmfUeNgapId, ue.RanUeNgapId, pduSessionIDList)
@@ -334,7 +334,7 @@ func Servicereq_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	// UE is CM-IDLE now
 
 	time.Sleep(1 * time.Second)
-    */
+	*/
 	// send NAS Service Request
 	pdu = nasTestpacket.GetServiceRequest(nasMessage.ServiceTypeData)
 	pdu, err = test.EncodeNasPduWithSecurity(ue, pdu, nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true, false)
@@ -554,8 +554,8 @@ func Servicereq_macfail_test(ranIpAddr, upfIpAddr, amfIpAddr string) {
 	}
 
 	// send 14. NGAP-PDU Session Resource Setup Response
-    var pduSessionId int64
-    pduSessionId = 10
+	var pduSessionId int64
+	pduSessionId = 10
 	sendMsg, err = test.GetPDUSessionResourceSetupResponse(pduSessionId, ue.AmfUeNgapId, ue.RanUeNgapId, ranIpAddr)
 	if err != nil {
 		return
