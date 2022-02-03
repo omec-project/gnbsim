@@ -25,6 +25,7 @@ var (
 	UtilLog    *logrus.Entry
 	GtpLog     *logrus.Entry
 	NgapLog    *logrus.Entry
+	PsuppLog   *logrus.Entry
 )
 
 const (
@@ -65,6 +66,7 @@ func init() {
 	UtilLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Util"})
 	GtpLog = UtilLog.WithField("subcategory", "GTP")
 	NgapLog = UtilLog.WithField("subcategory", "NGAP")
+	PsuppLog = UtilLog.WithField("subcategory", "PSUPP")
 }
 
 func SetLogLevel(level string) {

@@ -36,21 +36,35 @@ func HandleUlMessage(gnbue *context.GnbUpUe, msg common.InterfaceMessage) (err e
 	return nil
 }
 
-func HandleDlMessage(gnbue *context.GnbUpUe, msg common.InterfaceMessage) (err error) {
+func HandleDlMessage(gnbue *context.GnbUpUe, intfcMsg common.InterfaceMessage) (err error) {
 	gnbue.Log.Traceln("Handling DL Packet from UPF Worker")
 
-	userDataMsg := msg.(*common.UserDataMessage)
-
-	if len(userDataMsg.Payload) == 0 {
+	msg := intfcMsg.(*common.N3Message)
+	ueDataMsg := &common.UserDataMessage{}
+	if len(msg.Pdu.Payload) == 0 {
 		return fmt.Errorf("empty t-pdu")
 	}
 
-	/* TODO: Parse QFI and check if it exists in GnbUpUe. In real world,
-	   gNb may use the QFI to find a corresponding DRB
-	*/
+	optHdr := msg.Pdu.OptHdr
+	if optHdr != nil {
+		if optHdr.NextHdrType == test.PDU_SESS_CONTAINER_EXT_HEADER_TYPE {
+			// TODO: Write a generic function to process all the extension
+			// headers and return a map(ext header type - ext headers)
+			// and user data
+			var extHdr *test.PduSessContainerExtHeader
+			ueDataMsg.Payload, extHdr, err =
+				test.DecodePduSessContainerExtHeader(msg.Pdu.Payload)
+			if err != nil {
+				return fmt.Errorf("failed to decode pdu session container extension header:%v", err)
+			}
+			ueDataMsg.Qfi = new(uint8)
+			*ueDataMsg.Qfi = extHdr.Qfi
+			gnbue.Log.Infoln("Received QFI value in downlink G-PDU:", extHdr.Qfi)
+		}
+	}
 
-	userDataMsg.Event = common.DL_UE_DATA_TRANSFER_EVENT
-	gnbue.WriteUeChan <- userDataMsg
+	ueDataMsg.Event = common.DL_UE_DATA_TRANSFER_EVENT
+	gnbue.WriteUeChan <- ueDataMsg
 	gnbue.Log.Infoln("Sent DL user data packet to UE")
 
 	return nil

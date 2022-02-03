@@ -11,7 +11,6 @@ import (
 	"gnbsim/realue/context"
 	"gnbsim/realue/util"
 	"gnbsim/realue/worker/pdusessworker"
-	"gnbsim/util/test"
 	"net"
 
 	realue_nas "gnbsim/realue/nas"
@@ -97,7 +96,7 @@ func HandleSecModCompleteEvent(ue *context.RealUe,
 	ue.Log.Traceln("Generating Security Mode Complete Message")
 	nasPdu := nasTestpacket.GetSecurityModeComplete(registrationRequestWith5GMM)
 
-	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu,
+	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCipheredWithNew5gNasSecurityContext,
 		true)
 	if err != nil {
@@ -126,7 +125,7 @@ func HandleRegCompleteEvent(ue *context.RealUe,
 
 	ue.Log.Traceln("Generating Registration Complete Message")
 	nasPdu := nasTestpacket.GetRegistrationComplete(nil)
-	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu,
+	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
 	if err != nil {
 		ue.Log.Errorln("EncodeNasPduWithSecurity() returned:", err)
@@ -154,7 +153,7 @@ func HandleDeregRequestEvent(ue *context.RealUe,
 
 	nasPdu := nasTestpacket.GetDeregistrationRequest(nasMessage.AccessType3GPP,
 		SWITCH_OFF, uint8(ue.NgKsi.Ksi), mobileIdentity5GS)
-	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu,
+	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
 	if err != nil {
 		ue.Log.Errorln("EncodeNasPduWithSecurity() returned:", err)
@@ -177,7 +176,7 @@ func HandlePduSessEstRequestEvent(ue *context.RealUe,
 	nasPdu := nasTestpacket.GetUlNasTransport_PduSessionEstablishmentRequest(10,
 		nasMessage.ULNASTransportRequestTypeInitialRequest, "internet", &sNssai)
 
-	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu,
+	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
 	if err != nil {
 		fmt.Println("Failed to encrypt PDU Session Establishment Request Message", err)
@@ -313,7 +312,7 @@ func HandleDlInfoTransferEvent(ue *context.RealUe,
 
 	msg := intfcMsg.(*common.UuMessage)
 	for _, pdu := range msg.NasPdus {
-		nasMsg, err := test.NASDecode(ue, nas.GetSecurityHeaderType(pdu), pdu)
+		nasMsg, err := realue_nas.NASDecode(ue, nas.GetSecurityHeaderType(pdu), pdu)
 		if err != nil {
 			ue.Log.Errorln("Failed to decode dowlink NAS Message due to", err)
 			return err
@@ -364,7 +363,7 @@ func HandleServiceRequestEvent(ue *context.RealUe,
 	}
 
 	// TS 24.501 Section 4.4.6 - Protection of Initial NAS signalling messages
-	nasPdu, err = test.EncodeNasPduWithSecurity(ue, nasPdu,
+	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtected, true)
 	if err != nil {
 		return fmt.Errorf("failed to encode with security:", err)

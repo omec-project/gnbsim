@@ -7,6 +7,7 @@ package common
 
 import (
 	"gnbsim/util/ngapTestpacket"
+	"gnbsim/util/test"
 
 	"github.com/free5gc/ngap/ngapType"
 	"github.com/omec-project/nas"
@@ -81,7 +82,12 @@ type DataBearerParams struct {
 type UserDataMessage struct {
 	DefaultMessage
 	Payload []byte
-	Qfi     int64
+	Qfi     *uint8
+}
+
+type N3Message struct {
+	DefaultMessage
+	Pdu *test.GtpPdu
 }
 
 // TransportMessage is used to carry raw message received over the transport
