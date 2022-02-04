@@ -123,7 +123,6 @@ func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe,
 
 	pdu := msg.NgapPdu
 
-	// Null checks are already performed at gnbamfworker level
 	initiatingMessage := pdu.InitiatingMessage
 	initialContextSetupRequest := initiatingMessage.Value.InitialContextSetupRequest
 
@@ -293,7 +292,6 @@ func HandleUeCtxReleaseCommand(gnbue *context.GnbCpUe,
 
 	pdu := msg.NgapPdu
 
-	// Null checks are already performed at gnbamfworker level
 	initiatingMessage := pdu.InitiatingMessage
 	ueCtxRelCmd := initiatingMessage.Value.UEContextReleaseCommand
 
@@ -362,8 +360,8 @@ func HandleUeCtxReleaseCommand(gnbue *context.GnbCpUe,
 func HandleRanConnectionRelease(gnbue *context.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
 
-	// Todo: The cause for the RAN connection release should
-	// be sent by the Sim-UE and inturn through configuration
+	// Todo: The cause for the RAN connection release should be sent by the
+	// Sim-UE, which should receive it through configuration
 	gnbue.Log.Traceln("Handling RAN Connection Release Event")
 
 	gnbue.Log.Traceln("Creating UE Context Release Request")
@@ -389,7 +387,6 @@ func ProcessPduSessResourceSetupList(gnbue *context.GnbCpUe,
 
 	var nasPdus common.NasPduList
 
-	// supporting only one pdu session currently
 	for _, item := range lst {
 
 		resourceSetupRequestTransfer := ngapType.PDUSessionResourceSetupRequestTransfer{}
@@ -500,7 +497,7 @@ func ProcessPduSessResourceSetupList(gnbue *context.GnbCpUe,
 		gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
 	}
 
-	/* TODO: To be fixed, currently Data Berer Setup Event may get processed
+	/* TODO: To be fixed, currently Data Bearer Setup Event may get processed
 	 * before the pdu sessions are established on the UE side
 	 */
 	time.Sleep(500 * time.Millisecond)

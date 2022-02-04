@@ -117,8 +117,6 @@ func PerformNgSetup(gnb *context.GNodeB, amf *context.GnbAmf) (bool, error) {
 
 // RequestConnection should be called by UE that is willing to connect to this GNodeB
 func RequestConnection(gnb *context.GNodeB, uemsg *common.UuMessage) (chan common.InterfaceMessage, error) {
-	//TODO : Should have a map of supi and with the help of it check if same
-	// SimUe sent a connection request
 	ranUeNgapID, err := gnb.AllocateRanUeNgapID()
 	if err != nil {
 		gnb.Log.Errorln("AllocateRanUeNgapID returned:", err)

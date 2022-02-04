@@ -90,46 +90,6 @@ func action(c *cli.Context) error {
 				{
 					deregister.Deregister_test(profileCtx)
 				}
-			case "pdusessionrelease":
-				{
-					//pdusessionrelease.PduSessionRelease_test(ranIpAddr, amfIpAddr)
-				}
-			case "duplicateregistration":
-				{
-					//duplicateregistration.DuplicateRegistration_test(ranIpAddr, upfIpAddr, amfIpAddr)
-				}
-			case "gutiregistration":
-				{
-					//gutiregistration.Gutiregistration_test(ranIpAddr, amfIpAddr)
-				}
-			case "n2handover":
-				{
-					//n2handover.N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr)
-				}
-			case "paging":
-				{
-					//paging.Paging_test(ranIpAddr, amfIpAddr)
-				}
-			case "resynchronisation":
-				{
-					//resynchronisation.Resychronisation_test(ranIpAddr, upfIpAddr, amfIpAddr)
-				}
-			case "servicereqmacfail":
-				{
-					//servicereq.Servicereq_macfail_test(ranIpAddr, upfIpAddr, amfIpAddr)
-				}
-			case "servicereq":
-				{
-					//servicereq.Servicereq_test(ranIpAddr, upfIpAddr, amfIpAddr)
-				}
-			case "xnhandover":
-				{
-					//xnhandover.Xnhandover_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr)
-				}
-			case "loadsubs":
-				{
-					//loadsub.LoadSubscriberData(10)
-				}
 			}
 		}
 	}

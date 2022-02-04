@@ -208,7 +208,6 @@ func NASDecode(ue *context.RealUe, securityHeaderType uint8, payload []byte) (ms
 
 		// remove sequece Number
 		payload = payload[1:]
-		// TODO: Support for ue has nas connection in both accessType
 		if ciphered {
 			if err = security.NASEncrypt(ue.CipheringAlg, ue.KnasEnc, ue.DLCount.Get(), security.Bearer3GPP,
 				security.DirectionDownlink, payload); err != nil {

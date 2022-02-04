@@ -14,7 +14,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-	// AJAY - Change required
 )
 
 func PduSessEst_test(profile *profctx.Profile) {

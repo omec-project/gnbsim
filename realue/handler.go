@@ -191,7 +191,6 @@ func HandlePduSessEstAcceptEvent(ue *context.RealUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	msg := intfcMsg.(*common.UeMessage)
-	//TODO: create new pdu session var and parse msg to pdu session var
 	nasMsg := msg.NasMsg.PDUSessionEstablishmentAccept
 	if nasMsg == nil {
 		ue.Log.Errorln("PDUSessionEstablishmentAccept is nil")

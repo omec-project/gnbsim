@@ -14,7 +14,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-	// AJAY - Change required
 )
 
 func Deregister_test(profile *profctx.Profile) {
