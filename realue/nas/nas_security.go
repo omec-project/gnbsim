@@ -1,4 +1,5 @@
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
+// Copyright 2019 free5GC.org
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -208,7 +209,6 @@ func NASDecode(ue *context.RealUe, securityHeaderType uint8, payload []byte) (ms
 
 		// remove sequece Number
 		payload = payload[1:]
-		// TODO: Support for ue has nas connection in both accessType
 		if ciphered {
 			if err = security.NASEncrypt(ue.CipheringAlg, ue.KnasEnc, ue.DLCount.Get(), security.Bearer3GPP,
 				security.DirectionDownlink, payload); err != nil {

@@ -60,5 +60,3 @@ func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile) *SimUe 
 	simue.Log.Traceln("Created new context")
 	return &simue
 }
-
-//2089300007487
