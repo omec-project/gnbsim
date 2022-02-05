@@ -15,13 +15,11 @@ require (
 	github.com/free5gc/idgenerator v1.0.0
 	github.com/free5gc/logger_util v1.0.0
 	github.com/free5gc/milenage v1.0.0
-	github.com/free5gc/nas v1.0.0
 	github.com/free5gc/ngap v1.0.1
 	github.com/free5gc/openapi v1.0.0
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/klauspost/compress v1.11.6 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/omec-project/nas v1.0.3-gnbsim
 	github.com/sirupsen/logrus v1.7.0

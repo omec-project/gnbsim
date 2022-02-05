@@ -10,8 +10,8 @@ import (
 	"gnbsim/realue/context"
 	"reflect"
 
-	"github.com/free5gc/nas/nasMessage"
-	"github.com/free5gc/nas/security"
+	"github.com/omec-project/nas/nasMessage"
+	"github.com/omec-project/nas/security"
 	"github.com/free5gc/ngap/ngapType"
 	"github.com/omec-project/nas"
 )

@@ -12,7 +12,7 @@ import (
 	realuectx "gnbsim/realue/context"
 	"sync"
 
-	"github.com/free5gc/nas/security"
+	"github.com/omec-project/nas/security"
 	"github.com/sirupsen/logrus"
 )
 
