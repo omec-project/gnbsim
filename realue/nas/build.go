@@ -10,8 +10,8 @@ import (
 	"gnbsim/realue/context"
 	"gnbsim/util/nastestpacket"
 
-	"github.com/free5gc/nas/nasConvert"
-	"github.com/free5gc/nas/nasMessage"
+	"github.com/omec-project/nas/nasConvert"
+	"github.com/omec-project/nas/nasMessage"
 )
 
 func GetServiceRequest(ue *context.RealUe) ([]byte, error) {

@@ -14,9 +14,9 @@ import (
 
 	realue_nas "gnbsim/realue/nas"
 
-	"github.com/free5gc/nas/nasMessage"
-	"github.com/free5gc/nas/nasTestpacket"
-	"github.com/free5gc/nas/nasType"
+	"github.com/omec-project/nas/nasMessage"
+	"github.com/omec-project/nas/nasTestpacket"
+	"github.com/omec-project/nas/nasType"
 	"github.com/free5gc/openapi/models"
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasConvert"
