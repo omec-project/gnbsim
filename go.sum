@@ -259,8 +259,8 @@ github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe/go.mod h1:wL8QJ
 github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32/go.mod h1:9wM+0iRr9ahx58uYLpLIr5fm8diHn0JbqRycJi6w0Ms=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
-github.com/omec-project/nas v1.0.3-gnbsim h1:vQTRg7/pcqm4rIGahgxZMl6CWSwqvUxy5jhKITDkQdw=
-github.com/omec-project/nas v1.0.3-gnbsim/go.mod h1:OlEP2jBLIm23u1zmD5wNWAlrhjo2hWemG1jDwCENRcc=
+github.com/omec-project/nas v1.0.6-gnbsim h1:oBy0617EzqQ0/5+NiULGoD0UyYhAS/lgzK8xwJyhA3E=
+github.com/omec-project/nas v1.0.6-gnbsim/go.mod h1:GcWPVuyPUKjySRLvC2wAJaeE8J3o/63DUx0f4Cu0nag=
 github.com/pelletier/go-toml v1.7.0/go.mod h1:vwGMzjaWMwyfHwgIBhI2YUM4fB6nL6lVAvS1LBMMhTE=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

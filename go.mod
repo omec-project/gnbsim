@@ -21,7 +21,7 @@ require (
 	github.com/klauspost/compress v1.11.6 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
-	github.com/omec-project/nas v1.0.3-gnbsim
+	github.com/omec-project/nas v1.0.6-gnbsim
 	github.com/sirupsen/logrus v1.7.0
 	github.com/ugorji/go v1.2.3 // indirect
 	github.com/urfave/cli v1.22.4
