@@ -71,6 +71,18 @@ Please refer to the official SD-Core documentation for more details:
       
 ## Step 3: Run gNBSim
     
+    If you want to run gNBSim as a standalone tool then deploy gNBSim using helm charts. If you want to run gNBSim along with 
+    other SD-Core Network Functions then you AIAB to deploy all network functions including gNBSim. 
+    
+    1. Clone AIAB
+    2. Run "make 5gc"
+    3. Trigger call flow testing using following commands
+    All these steps are explained in detail on SD-Core documentation 
+   
+   <https://docs.sd-core.opennetworking.org/master/developer/aiab.html> 
+    
+    Enter gnbsim pod using kubectl exec command run following commands, 
+    
     $ ./gnbsim
     
     Note: By default, the gNB Sim reads the configuration from 
