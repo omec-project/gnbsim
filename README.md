@@ -20,9 +20,8 @@ It is also capable to generate and send user data packets (ICMP echo request)
 and process downlink user data (ICMP echo response) over the established data 
 plane path (N3 Tunnel). 
 
-Please refer to the official SD-Core documentation for more details: 
+Please refer to the official [SD-Core documentation](https://docs.sd-core.opennetworking.org/master/developer/gnbsim.html#gnb-simulator) for more details. 
 
-<https://docs.sd-core.opennetworking.org/master/developer/gnbsim.html#gnb-simulator>
 
 ## gNodeB Simulator Block Diagram
 
@@ -82,9 +81,7 @@ Please refer to the official SD-Core documentation for more details:
     1. Clone AIAB
     2. Run "make 5gc"
     3. Trigger call flow testing using following commands
-    All these steps are explained in detail on SD-Core documentation 
-   
-   <https://docs.sd-core.opennetworking.org/master/developer/aiab.html> 
+    
     
     Enter gnbsim pod using kubectl exec command run following commands, 
     
@@ -95,3 +92,6 @@ Please refer to the official SD-Core documentation for more details:
     use the below command
 
     $ ./gnbsim --cfg config/gnbsim.yaml
+
+All these steps are explained in detail on [AIAB documentation](https://docs.sd-core.opennetworking.org/master/developer/aiab.html)
+
