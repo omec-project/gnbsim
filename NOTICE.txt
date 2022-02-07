@@ -1,9 +1,7 @@
 gnbsim
 Copyright 2021 Open Networking Foundation
 SPDX-License-Identifier: Apache-2.0
-SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
-The Initial Developer of some of the work is free5GC (https://www.free5gc.org/).
-At the time of forking, no copyright statements were found
-in the free5GC files or directories.
+
+Some part of the code was reused from free5GC (https://www.free5gc.org/).
 Copyright 2019 free5GC.org.

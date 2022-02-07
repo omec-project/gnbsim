@@ -1,0 +1,88 @@
+# SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
+#
+# SPDX-License-Identifier: Apache-2.0
+
+
+---
+info:
+  version: 1.0.0
+  description: GNBSIM initial local configuration
+
+configuration:
+  gnbs: # pool of gNodeBs
+    gnb1:
+      n2IpAddr: # gNB N2 interface IP address used to connect to AMF 
+      n2Port: 9487 # gNB N2 Port used to connect to AMF
+      n3IpAddr: 192.168.251.5 # gNB N3 interface IP address used to connect to UPF
+      n3Port: 2152 # gNB N3 Port used to connect to UPF
+      name: gnb1 # gNB name that uniquely identify a gNB within application
+      globalRanId:
+        plmnId:
+          mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
+          mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+        gNbId: 
+          bitLength: 24
+          gNBValue: 000102 # gNB identifier (3 bytes hex string, range: 000000~FFFFFF)
+      supportedTaList:
+        - tac: 000001 # Tracking Area Code (3 bytes hex string, range: 000000~FFFFFF)
+          broadcastPlmnList:
+            - plmnId:
+                mcc: 208
+                mnc: 93
+              taiSliceSupportList:
+                - sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+                  sd: 010203 # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+      defaultAmf:
+        hostName: amf # Host name of AMF
+        ipAddr: # AMF IP address
+        port: 38412 # AMF port
+  profiles: # profile information
+    - profileType: register # profile type
+      profileName: profile1 # uniqely identifies a profile within application
+      enable: false # Set true to execute the profile, false otherwise.
+      gnbName: gnb1 # gNB to be used for this profile
+      startImsi: 208930100007487
+      ueCount: 5
+      plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>
+        mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
+        mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+    - profileType: pdusessest # profile type
+      profileName: profile2 # uniqely identifies a profile within application
+      enable: true # Set true to execute the profile, false otherwise.
+      gnbName: gnb1 # gNB to be used for this profile
+      startImsi: 208930100007492 # First IMSI. Subsequent values will be used if ueCount is more than 1
+      ueCount: 5 # Number of UEs for for which the profile will be executed
+      plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
+        mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
+        mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+      dataPktCount: 5 # Number of UL user data packets to be transmitted. Common for all UEs
+    - profileType: anrelease # profile type
+      profileName: profile3 # uniqely identifies a profile within application
+      enable: false # Set true to execute the profile, false otherwise.
+      gnbName: gnb1 # gNB to be used for this profile
+      startImsi: 208930100007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
+      ueCount: 5 # Number of UEs for for which the profile will be executed
+      plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
+        mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
+        mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+    - profileType: uetriggservicereq # profile type
+      profileName: profile4 # uniqely identifies a profile within application
+      enable: false # Set true to execute the profile, false otherwise.
+      gnbName: gnb1 # gNB to be used for this profile
+      startImsi: 208930100007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
+      ueCount: 5 # Number of UEs for for which the profile will be executed
+      plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
+        mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
+        mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)  
+    - profileType: deregister # profile type
+      profileName: profile5 # uniqely identifies a profile within application
+      enable: false # Set true to execute the profile, false otherwise.
+      gnbName: gnb1 # gNB to be used for this profile
+      startImsi: 208930100007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
+      ueCount: 5 # Number of UEs for for which the profile will be executed
+      plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
+        mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
+        mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
+
+logger:
+  logLevel: info # how detailed the log will be, values: trace, debug, info, warn, error, fatal, panic

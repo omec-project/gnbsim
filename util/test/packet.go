@@ -1,21 +1,19 @@
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 package test
 
 import (
-	"github.com/omec-project/nas"
-	"github.com/omec-project/nas/nasMessage"
 	"github.com/free5gc/ngap"
+
 	// Nausf_UEAU_Client "github.com/free5gc/openapi/Nausf_UEAuthentication"
 	// "github.com/free5gc/openapi/models"
 
 	"gnbsim/util/ngapTestpacket"
 )
 
-func GetNGSetupRequest(gnbId []byte, bitlength uint64, name string) ([]byte, error) {
+func GetNGSetupRequest(tac, gnbId []byte, bitlength uint64, name string) ([]byte, error) {
 	message := ngapTestpacket.BuildNGSetupRequest()
 	// GlobalRANNodeID
 	ie := message.InitiatingMessage.Value.NGSetupRequest.ProtocolIEs.List[0]
@@ -25,6 +23,9 @@ func GetNGSetupRequest(gnbId []byte, bitlength uint64, name string) ([]byte, err
 	// RANNodeName
 	ie = message.InitiatingMessage.Value.NGSetupRequest.ProtocolIEs.List[1]
 	ie.Value.RANNodeName.Value = name
+	// TAC
+	ie = message.InitiatingMessage.Value.NGSetupRequest.ProtocolIEs.List[2]
+	ie.Value.SupportedTAList.List[0].TAC.Value = tac
 
 	return ngap.Encoder(message)
 }
@@ -46,27 +47,18 @@ func GetInitialContextSetupResponse(amfUeNgapID int64, ranUeNgapID int64) ([]byt
 }
 
 func GetInitialContextSetupResponseForServiceRequest(
-	amfUeNgapID int64, ranUeNgapID int64, ipv4 string) ([]byte, error) {
-	message := ngapTestpacket.BuildInitialContextSetupResponse(amfUeNgapID, ranUeNgapID, ipv4, nil)
+	pduSessions []*ngapTestpacket.PduSession, amfUeNgapID int64,
+	ranUeNgapID int64, ipv4 string) ([]byte, error) {
+
+	message := ngapTestpacket.BuildInitialContextSetupResponse(pduSessions, amfUeNgapID, ranUeNgapID, ipv4, nil)
 	return ngap.Encoder(message)
 }
 
-func GetPDUSessionResourceSetupResponse(pduSessionId int64, amfUeNgapID int64, ranUeNgapID int64, ipv4 string) ([]byte, error) {
-	message := ngapTestpacket.BuildPDUSessionResourceSetupResponseForRegistrationTest(pduSessionId, amfUeNgapID, ranUeNgapID, ipv4)
+func GetPDUSessionResourceSetupResponse(pduSessions []*ngapTestpacket.PduSession,
+	amfUeNgapID int64, ranUeNgapID int64, ipv4 string) ([]byte, error) {
+
+	message := ngapTestpacket.BuildPDUSessionResourceSetupResponseForRegistrationTest(pduSessions, amfUeNgapID, ranUeNgapID, ipv4)
 	return ngap.Encoder(message)
-}
-func EncodeNasPduWithSecurity(ue *RanUeContext, pdu []byte, securityHeaderType uint8,
-	securityContextAvailable, newSecurityContext bool) ([]byte, error) {
-	m := nas.NewMessage()
-	err := m.PlainNasDecode(&pdu)
-	if err != nil {
-		return nil, err
-	}
-	m.SecurityHeader = nas.SecurityHeader{
-		ProtocolDiscriminator: nasMessage.Epd5GSMobilityManagementMessage,
-		SecurityHeaderType:    securityHeaderType,
-	}
-	return NASEncode(ue, m, securityContextAvailable, newSecurityContext)
 }
 
 func GetUEContextReleaseComplete(amfUeNgapID int64, ranUeNgapID int64, pduSessionIDList []int64) ([]byte, error) {
@@ -106,7 +98,10 @@ func GetHandoverNotify(amfUeNgapID int64, ranUeNgapID int64) ([]byte, error) {
 	return ngap.Encoder(message)
 }
 
-func GetPDUSessionResourceSetupResponseForPaging(amfUeNgapID int64, ranUeNgapID int64, ipv4 string) ([]byte, error) {
-	message := ngapTestpacket.BuildPDUSessionResourceSetupResponseForPaging(amfUeNgapID, ranUeNgapID, ipv4)
+func GetPDUSessionResourceSetupResponseForPaging(pduSessions []*ngapTestpacket.PduSession,
+	amfUeNgapID int64, ranUeNgapID int64, ipv4 string) ([]byte, error) {
+
+	message := ngapTestpacket.BuildPDUSessionResourceSetupResponseForPaging(
+		pduSessions, amfUeNgapID, ranUeNgapID, ipv4)
 	return ngap.Encoder(message)
 }

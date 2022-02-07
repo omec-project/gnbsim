@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
+// Copyright 2019 free5GC.org
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 package ngapTestpacket
 
 import (
+	"encoding/binary"
 	"encoding/hex"
 
 	"github.com/calee0219/fatal"
@@ -17,6 +18,17 @@ import (
 
 // TODO: check test data
 var TestPlmn ngapType.PLMNIdentity
+
+type PduSession struct {
+	PduSessId      int64
+	Teid           uint32
+	SuccessQfiList []int64
+	FailedQfiList  []int64
+
+	/* indicates whether  the pdu session was successfully established in Real
+	   UE or not*/
+	Success bool
+}
 
 func init() {
 	TestPlmn.Value = aper.OctetString("\x02\xf8\x39")
@@ -732,7 +744,7 @@ func BuildUplinkNasTransport(amfUeNgapID, ranUeNgapID int64, nasPdu []byte) (pdu
 	return pdu
 }
 
-func BuildInitialContextSetupResponse(amfUeNgapID, ranUeNgapID int64, ipv4 string,
+func BuildInitialContextSetupResponse(pduSessions []*PduSession, amfUeNgapID, ranUeNgapID int64, ipv4 string,
 	pduSessionFailedList *ngapType.PDUSessionResourceFailedToSetupListCxtRes) (pdu ngapType.NGAPPDU) {
 
 	pdu.Present = ngapType.NGAPPDUPresentSuccessfulOutcome
@@ -781,14 +793,16 @@ func BuildInitialContextSetupResponse(amfUeNgapID, ranUeNgapID int64, ipv4 strin
 
 	pDUSessionResourceSetupListCxtRes := ie.Value.PDUSessionResourceSetupListCxtRes
 
-	// PDU Session Resource Setup Response Item in PDU Session Resource Setup Response List
-	pDUSessionResourceSetupItemCxtRes := ngapType.PDUSessionResourceSetupItemCxtRes{}
-	pDUSessionResourceSetupItemCxtRes.PDUSessionID.Value = 10
-	pDUSessionResourceSetupItemCxtRes.PDUSessionResourceSetupResponseTransfer =
-		GetPDUSessionResourceSetupResponseTransfer(ipv4)
+	for _, pduSess := range pduSessions {
+		// PDU Session Resource Setup Response Item in PDU Session Resource Setup Response List
+		pDUSessionResourceSetupItemCxtRes := ngapType.PDUSessionResourceSetupItemCxtRes{}
+		pDUSessionResourceSetupItemCxtRes.PDUSessionID.Value = pduSess.PduSessId
+		pDUSessionResourceSetupItemCxtRes.PDUSessionResourceSetupResponseTransfer =
+			GetPDUSessionResourceSetupResponseTransfer(pduSess, ipv4)
 
-	pDUSessionResourceSetupListCxtRes.List =
-		append(pDUSessionResourceSetupListCxtRes.List, pDUSessionResourceSetupItemCxtRes)
+		pDUSessionResourceSetupListCxtRes.List =
+			append(pDUSessionResourceSetupListCxtRes.List, pDUSessionResourceSetupItemCxtRes)
+	}
 
 	initialContextSetupResponseIEs.List = append(initialContextSetupResponseIEs.List, ie)
 
@@ -1494,7 +1508,7 @@ func BuildLocationReportingFailureIndication() (pdu ngapType.NGAPPDU) {
 	return pdu
 }
 
-func BuildPDUSessionResourceSetupResponse(amfUeNgapID, ranUeNgapID int64, ipv4 string) (pdu ngapType.NGAPPDU) {
+func BuildPDUSessionResourceSetupResponse(pduSessions []*PduSession, amfUeNgapID, ranUeNgapID int64, ipv4 string) (pdu ngapType.NGAPPDU) {
 
 	pdu.Present = ngapType.NGAPPDUPresentSuccessfulOutcome
 	pdu.SuccessfulOutcome = new(ngapType.SuccessfulOutcome)
@@ -1542,15 +1556,16 @@ func BuildPDUSessionResourceSetupResponse(amfUeNgapID, ranUeNgapID int64, ipv4 s
 
 	pDUSessionResourceSetupListSURes := ie.Value.PDUSessionResourceSetupListSURes
 
-	// PDU Session Resource Setup Response Item in PDU Session Resource Setup Response List
-	pDUSessionResourceSetupItemSURes := ngapType.PDUSessionResourceSetupItemSURes{}
-	pDUSessionResourceSetupItemSURes.PDUSessionID.Value = 10
+	for _, pduSess := range pduSessions {
+		// PDU Session Resource Setup Response Item in PDU Session Resource Setup Response List
+		pDUSessionResourceSetupItemSURes := ngapType.PDUSessionResourceSetupItemSURes{}
+		pDUSessionResourceSetupItemSURes.PDUSessionID.Value = pduSess.PduSessId
 
-	pDUSessionResourceSetupItemSURes.PDUSessionResourceSetupResponseTransfer =
-		GetPDUSessionResourceSetupResponseTransfer(ipv4)
+		pDUSessionResourceSetupItemSURes.PDUSessionResourceSetupResponseTransfer =
+			GetPDUSessionResourceSetupResponseTransfer(pduSess, ipv4)
 
-	pDUSessionResourceSetupListSURes.List = append(pDUSessionResourceSetupListSURes.List, pDUSessionResourceSetupItemSURes)
-
+		pDUSessionResourceSetupListSURes.List = append(pDUSessionResourceSetupListSURes.List, pDUSessionResourceSetupItemSURes)
+	}
 	pDUSessionResourceSetupResponseIEs.List = append(pDUSessionResourceSetupResponseIEs.List, ie)
 
 	// PDU Sessuin Resource Failed to Setup List
@@ -1576,7 +1591,7 @@ func BuildPDUSessionResourceSetupResponse(amfUeNgapID, ranUeNgapID int64, ipv4 s
 	return pdu
 }
 
-func BuildPDUSessionResourceSetupResponseForPaging(amfUeNgapID, ranUeNgapID int64, ipv4 string) (pdu ngapType.NGAPPDU) {
+func BuildPDUSessionResourceSetupResponseForPaging(pduSessions []*PduSession, amfUeNgapID, ranUeNgapID int64, ipv4 string) (pdu ngapType.NGAPPDU) {
 
 	pdu.Present = ngapType.NGAPPDUPresentSuccessfulOutcome
 	pdu.SuccessfulOutcome = new(ngapType.SuccessfulOutcome)
@@ -1624,14 +1639,16 @@ func BuildPDUSessionResourceSetupResponseForPaging(amfUeNgapID, ranUeNgapID int6
 
 	pDUSessionResourceSetupListSURes := ie.Value.PDUSessionResourceSetupListSURes
 
-	// PDU Session Resource Setup Response Item in PDU Session Resource Setup Response List
-	pDUSessionResourceSetupItemSURes := ngapType.PDUSessionResourceSetupItemSURes{}
-	pDUSessionResourceSetupItemSURes.PDUSessionID.Value = 10
+	for _, pduSess := range pduSessions {
+		// PDU Session Resource Setup Response Item in PDU Session Resource Setup Response List
+		pDUSessionResourceSetupItemSURes := ngapType.PDUSessionResourceSetupItemSURes{}
+		pDUSessionResourceSetupItemSURes.PDUSessionID.Value = pduSess.PduSessId
 
-	pDUSessionResourceSetupItemSURes.PDUSessionResourceSetupResponseTransfer =
-		GetPDUSessionResourceSetupResponseTransfer(ipv4)
+		pDUSessionResourceSetupItemSURes.PDUSessionResourceSetupResponseTransfer =
+			GetPDUSessionResourceSetupResponseTransfer(pduSess, ipv4)
 
-	pDUSessionResourceSetupListSURes.List = append(pDUSessionResourceSetupListSURes.List, pDUSessionResourceSetupItemSURes)
+		pDUSessionResourceSetupListSURes.List = append(pDUSessionResourceSetupListSURes.List, pDUSessionResourceSetupItemSURes)
+	}
 
 	pDUSessionResourceSetupResponseIEs.List = append(pDUSessionResourceSetupResponseIEs.List, ie)
 
@@ -3232,7 +3249,8 @@ func BuildCellTrafficTrace(amfUeNgapID, ranUeNgapID int64) (pdu ngapType.NGAPPDU
 	return pdu
 }
 
-func buildPDUSessionResourceSetupResponseTransfer(ipv4 string) (data ngapType.PDUSessionResourceSetupResponseTransfer) {
+func buildPDUSessionResourceSetupResponseTransfer(pduSession *PduSession,
+	ipv4 string) (data ngapType.PDUSessionResourceSetupResponseTransfer) {
 
 	// QoS Flow per TNL Information
 	qosFlowPerTNLInformation := &data.DLQosFlowPerTNLInformation
@@ -3242,16 +3260,19 @@ func buildPDUSessionResourceSetupResponseTransfer(ipv4 string) (data ngapType.PD
 	upTransportLayerInformation := &qosFlowPerTNLInformation.UPTransportLayerInformation
 	upTransportLayerInformation.Present = ngapType.UPTransportLayerInformationPresentGTPTunnel
 	upTransportLayerInformation.GTPTunnel = new(ngapType.GTPTunnel)
-	upTransportLayerInformation.GTPTunnel.GTPTEID.Value = aper.OctetString("\x00\x00\x00\x01")
+	teidOct := make([]byte, 4)
+	binary.BigEndian.PutUint32(teidOct, pduSession.Teid)
+	upTransportLayerInformation.GTPTunnel.GTPTEID.Value = teidOct
 	upTransportLayerInformation.GTPTunnel.TransportLayerAddress = ngapConvert.IPAddressToNgap(ipv4, "")
 
 	// Associated QoS Flow List in QoS Flow per TNL Information
 	associatedQosFlowList := &qosFlowPerTNLInformation.AssociatedQosFlowList
 
-	associatedQosFlowItem := ngapType.AssociatedQosFlowItem{}
-	associatedQosFlowItem.QosFlowIdentifier.Value = 1
-	associatedQosFlowList.List = append(associatedQosFlowList.List, associatedQosFlowItem)
-
+	for _, qfi := range pduSession.SuccessQfiList {
+		associatedQosFlowItem := ngapType.AssociatedQosFlowItem{}
+		associatedQosFlowItem.QosFlowIdentifier.Value = qfi
+		associatedQosFlowList.List = append(associatedQosFlowList.List, associatedQosFlowItem)
+	}
 	return data
 }
 
@@ -3522,8 +3543,8 @@ func buildSourceToTargetTransparentTransfer(
 	return data
 }
 
-func GetPDUSessionResourceSetupResponseTransfer(ipv4 string) []byte {
-	data := buildPDUSessionResourceSetupResponseTransfer(ipv4)
+func GetPDUSessionResourceSetupResponseTransfer(pduSession *PduSession, ipv4 string) []byte {
+	data := buildPDUSessionResourceSetupResponseTransfer(pduSession, ipv4)
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
 		fatal.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceSetupResponseTransfer: %+v", err)
@@ -3717,8 +3738,8 @@ func BuildInitialContextSetupResponseForRegistraionTest(amfUeNgapID, ranUeNgapID
 	return pdu
 }
 
-func BuildPDUSessionResourceSetupResponseForRegistrationTest(
-	pduSessionId int64, amfUeNgapID, ranUeNgapID int64, ipv4 string) (pdu ngapType.NGAPPDU) {
+func BuildPDUSessionResourceSetupResponseForRegistrationTest(pduSessions []*PduSession,
+	amfUeNgapID, ranUeNgapID int64, ipv4 string) (pdu ngapType.NGAPPDU) {
 
 	pdu.Present = ngapType.NGAPPDUPresentSuccessfulOutcome
 	pdu.SuccessfulOutcome = new(ngapType.SuccessfulOutcome)
@@ -3766,14 +3787,16 @@ func BuildPDUSessionResourceSetupResponseForRegistrationTest(
 
 	pDUSessionResourceSetupListSURes := ie.Value.PDUSessionResourceSetupListSURes
 
-	// PDU Session Resource Setup Response Item in PDU Session Resource Setup Response List
-	pDUSessionResourceSetupItemSURes := ngapType.PDUSessionResourceSetupItemSURes{}
-	pDUSessionResourceSetupItemSURes.PDUSessionID.Value = pduSessionId
+	for _, pduSess := range pduSessions {
+		// PDU Session Resource Setup Response Item in PDU Session Resource Setup Response List
+		pDUSessionResourceSetupItemSURes := ngapType.PDUSessionResourceSetupItemSURes{}
+		pDUSessionResourceSetupItemSURes.PDUSessionID.Value = pduSess.PduSessId
 
-	pDUSessionResourceSetupItemSURes.PDUSessionResourceSetupResponseTransfer =
-		GetPDUSessionResourceSetupResponseTransfer(ipv4)
+		pDUSessionResourceSetupItemSURes.PDUSessionResourceSetupResponseTransfer =
+			GetPDUSessionResourceSetupResponseTransfer(pduSess, ipv4)
 
-	pDUSessionResourceSetupListSURes.List = append(pDUSessionResourceSetupListSURes.List, pDUSessionResourceSetupItemSURes)
+		pDUSessionResourceSetupListSURes.List = append(pDUSessionResourceSetupListSURes.List, pDUSessionResourceSetupItemSURes)
+	}
 
 	pDUSessionResourceSetupResponseIEs.List = append(pDUSessionResourceSetupResponseIEs.List, ie)
 

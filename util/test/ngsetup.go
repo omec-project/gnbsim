@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 package test
 
@@ -13,7 +12,7 @@ import (
 	"github.com/calee0219/fatal"
 )
 
-const ngapPPID uint32 = 0x3c000000
+const NgapPPID uint32 = 0x3c000000
 
 func getNgapIp(amfIP, ranIP string, amfPort, ranPort int) (amfAddr, ranAddr *sctp.SCTPAddr, err error) {
 	ips := []net.IPAddr{}
@@ -54,7 +53,7 @@ func ConnectToAmf(amfIP, ranIP string, amfPort, ranPort int) (*sctp.SCTPConn, er
 	if err != nil {
 		fatal.Fatalf("conn GetDefaultSentParam error in ConnectToAmf: %+v", err)
 	}
-	info.PPID = ngapPPID
+	info.PPID = NgapPPID
 	err = conn.SetDefaultSentParam(info)
 	if err != nil {
 		return nil, err

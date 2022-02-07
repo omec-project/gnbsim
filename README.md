@@ -2,29 +2,91 @@
 SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 
 SPDX-License-Identifier: Apache-2.0
-SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
+
 -->
 
-## How to Use
-1. Clone gnbSim
-2. Create image - sudo make docker-build
-3. Use newly created image in the aiab oerride file (make 5gc)
+This repository is part of the SD-Core project. It provides a tool to simulate
+gNodeB and UE by generating NAS and NGAP messages for the configured UEs and 
+call flows. The tool currently supports simulation profiles for the following
+procedures:
 
-## How to run Testcases 
+    1. Registration
+    2. UE Initiated PDU Session Establishment
+    3. UE Initiated De-registration 
+    4. AN Release
+    5. UE Initiated Service Request 
 
-1. Once gnbsim is started, get into gnbsim pod 
-    kubectl exec -it gnbsim-0 -n omec bash
-2. cd src/gnbsim
-3. Now you can run multiple testcases in this running container
+It is also capable to generate and send user data packets (ICMP echo request) 
+and process downlink user data (ICMP echo response) over the established data 
+plane path (N3 Tunnel). 
 
-    Register Testcase    - ./gnbsim register  
+Please refer to the official SD-Core documentation for more details: 
+
+<https://docs.sd-core.opennetworking.org/master/developer/gnbsim.html#gnb-simulator>
+
+## Step 1: Configure gNBSim
     
-    DeRegister Testcase    - ./gnbsim deregister  
+    1. The config file for gNBSim can be found at <repo dir>/config/gnbsim.yaml
+        
+        Note: The configuration has following major fields (Read the comments in
+        the config file for more details)
+            
+            - gnbs: 
+                List of gNB's to be simulated. Each item in the list holds 
+                configuration specific to a gNB.
+            - profiles:
+                List of test/simulation profiles. Each item in the list holds 
+                configuration specific to a profile. Each profile executes   
+                required set of systems procedures for the configured set of 
+                IMSI's 
+        
+    2. Enable or disable a specific profile using the "enable" field. 
+        
+        Currently following profiles are supported :
+            - register: 
+                Registration procedure
+            - pdusessest (Default configured): 
+                Registration + UE initiated PDU Session Establishment + User Data
+                 packets
+            - deregister:
+                Registration + UE initiated PDU Session Establishment + User Data
+                packets + Deregister
+            - anrelease:
+                Registration + UE initiated PDU Session Establishment + User Data
+                packets + AN Release
+            - uetriggservicereq:
+                Registration + UE initiated PDU Session Establishment + User Data
+                packets + AN Release + UE Initiated Service Request
+
+      
+## Step 2: Build gNBSim
+    1. Build gNBSim
+
+        $ go build
     
-    xnhandover Testcase - ./gnbsim xnhandover 
+    2.  Build a docker image for gNBSim
+        
+        $ make docker-build
+      
+      
+## Step 3: Run gNBSim
+    
+    If you want to run gNBSim as a standalone tool then deploy gNBSim using helm charts. If you want to run gNBSim along with 
+    other SD-Core Network Functions then you AIAB to deploy all network functions including gNBSim. 
+    
+    1. Clone AIAB
+    2. Run "make 5gc"
+    3. Trigger call flow testing using following commands
+    All these steps are explained in detail on SD-Core documentation 
+   
+   <https://docs.sd-core.opennetworking.org/master/developer/aiab.html> 
+    
+    Enter gnbsim pod using kubectl exec command run following commands, 
+    
+    $ ./gnbsim
+    
+    Note: By default, the gNB Sim reads the configuration from 
+    /gnbsim/config/gnb.conf file. To provide a different configuration file,
+    use the below command
 
-    n2handover Testcase - ./gnbsim n2handover 
-
-## Code Change in running container
-If any code is changed within container then use following command 
-root@gnbsim-0:/go/src/gnbsim# go build gnbsim.go
+    $ ./gnbsim --cfg config/gnbsim.yaml

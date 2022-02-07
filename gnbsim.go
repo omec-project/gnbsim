@@ -1,137 +1,107 @@
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
+// Copyright 2019 free5GC.org
 //
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-License-Identifier: LicenseRef-ONF-Member-Only-1.0
 
 package main
 
 import (
-	"fmt"
-	"github.com/free5gc/MongoDBLibrary"
-	"gnbsim/register"
-	"gnbsim/deregister"
-	"gnbsim/duplicateregistration"
-	"gnbsim/gutiregistration"
-	"gnbsim/loadsub"
-	"gnbsim/n2handover"
-	"gnbsim/paging"
-	"gnbsim/pdusessionrelease"
-	"gnbsim/resynchronisation"
-	"gnbsim/servicereq"
-	"gnbsim/xnhandover"
-	"net"
+	"gnbsim/factory"
+	"gnbsim/gnodeb"
+	"gnbsim/logger"
+	"gnbsim/profile"
+	"gnbsim/profile/anrelease"
+	"gnbsim/profile/deregister"
+	"gnbsim/profile/ngsetup"
+	"gnbsim/profile/pdusessest"
+	"gnbsim/profile/register"
+	"gnbsim/profile/uetriggservicereq"
 	"os"
+
+	"github.com/urfave/cli"
 )
 
 func main() {
-	fmt.Println("Main function")
-	if len(os.Args) != 2 {
-		fmt.Println("Usage:", os.Args[0], "(loadsubs | register|deregister|xnhandover|paging|n2handover|servicereq|servicereqmacfail|resynchronisation|gutiregistration|duplicateregistration|pdusessionrelease)")
+	app := cli.NewApp()
+	app.Name = "GNBSIM"
+	app.Usage = "./gnbsim -cfg [gnbsim configuration file]"
+	app.Action = action
+	app.Flags = getCliFlags()
+
+	logger.AppLog.Infoln("App Name:", app.Name)
+
+	if err := app.Run(os.Args); err != nil {
+		logger.AppLog.Errorln("Failed to run GNBSIM:", err)
 		return
 	}
-	testcase := os.Args[1]
+}
 
-	fmt.Println("argsWithoutProg ", testcase)
+func action(c *cli.Context) error {
+	cfg := c.String("cfg")
+	if cfg == "" {
+		logger.AppLog.Warnln("No configuration file provided. Using default configuration file:", factory.GNBSIM_DEFAULT_CONFIG_PATH)
+		logger.AppLog.Infoln("Application Usage:", c.App.Usage)
+		cfg = factory.GNBSIM_DEFAULT_CONFIG_PATH
+	}
 
-	ranIpAddr := os.Getenv("POD_IP")
-	fmt.Println("Hello World from RAN - ", ranIpAddr)
+	if err := factory.InitConfigFactory(cfg); err != nil {
+		logger.AppLog.Errorln("Failed to initialize config factory:", err)
+		return err
+	}
 
-	// RAN connect to AMF
-	addrs, err := net.LookupHost("amf")
+	config := factory.AppConfig
+	lvl := config.Logger.LogLevel
+	logger.AppLog.Infoln("Setting log level to:", lvl)
+	logger.SetLogLevel(lvl)
+
+	profile.InitializeAllProfiles()
+	err := gnodeb.InitializeAllGnbs()
 	if err != nil {
-		fmt.Println("Failed to resolve amf")
-		return
+		logger.AppLog.Errorln("Failed to initialize gNodeBs:", err)
+		return err
 	}
-	amfIpAddr := addrs[0]
-	fmt.Println("AMF address - ", amfIpAddr)
 
-	addrs, err = net.LookupHost("upf")
-	if err != nil {
-		fmt.Println("Failed to resolve upf")
-		return
+	for _, profileCtx := range config.Configuration.Profiles {
+		if profileCtx.Enable {
+			logger.AppLog.Infoln("executing profile:", profileCtx.Name,
+				", profile type:", profileCtx.ProfileType)
+
+			switch profileCtx.ProfileType {
+			case "ngsetup":
+				{
+					ngsetup.NgSetup_test(profileCtx)
+				}
+			case "register":
+				{
+					register.Register_test(profileCtx)
+				}
+			case "pdusessest":
+				{
+					pdusessest.PduSessEst_test(profileCtx)
+				}
+			case "anrelease":
+				{
+					anrelease.AnRelease_test(profileCtx)
+				}
+			case "uetriggservicereq":
+				{
+					uetriggservicereq.UeTriggServiceReq_test(profileCtx)
+				}
+			case "deregister":
+				{
+					deregister.Deregister_test(profileCtx)
+				}
+			}
+		}
 	}
-	upfIpAddr := addrs[0]
-	fmt.Println("UPF address - ", upfIpAddr)
+	return nil
+}
 
-	upfIpAddr = "192.168.252.3"
-	fmt.Println("UPF address - ", upfIpAddr)
-
-	addrs, err = net.LookupHost("mongodb")
-	if err != nil {
-		fmt.Println("Failed to resolve mongodb")
-		return
+func getCliFlags() []cli.Flag {
+	return []cli.Flag{
+		cli.StringFlag{
+			Name:  "cfg",
+			Usage: "GNBSIM config file",
+		},
 	}
-	mongodbIpAddr := addrs[0]
-	fmt.Println("mongodb address - ", mongodbIpAddr)
-
-	dbName := "free5gc"
-	dbUrl := "mongodb://mongodb:27017"
-	MongoDBLibrary.SetMongoDB(dbName, dbUrl)
-	fmt.Println("Connected to MongoDB ")
-    ranUIpAddr := "192.168.251.5"
-
-	switch testcase {
-	case "register":
-		{
-			fmt.Println("test register")
-			register.Register_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr)
-		}
-	case "deregister":
-		{
-			fmt.Println("test deregister")
-			deregister.Deregister_test(ranIpAddr, amfIpAddr)
-		}
-	case "pdusessionrelease":
-		{
-			fmt.Println("test pdusessionrelease")
-			pdusessionrelease.PduSessionRelease_test(ranIpAddr, amfIpAddr)
-		}
-	case "duplicateregistration":
-		{
-			fmt.Println("test duplicateregistration")
-			duplicateregistration.DuplicateRegistration_test(ranIpAddr, upfIpAddr, amfIpAddr)
-		}
-	case "gutiregistration":
-		{
-			fmt.Println("test gutiregistration")
-			gutiregistration.Gutiregistration_test(ranIpAddr, amfIpAddr)
-		}
-	case "n2handover":
-		{
-			fmt.Println("test n2handover")
-			n2handover.N2Handover_test(ranIpAddr, upfIpAddr, amfIpAddr)
-		}
-	case "paging":
-		{
-			fmt.Println("test paging")
-			paging.Paging_test(ranIpAddr, amfIpAddr)
-		}
-	case "resynchronisation":
-		{
-			fmt.Println("test resynchronisation")
-			resynchronisation.Resychronisation_test(ranIpAddr, upfIpAddr, amfIpAddr)
-		}
-	case "servicereqmacfail":
-		{
-			fmt.Println("test servicereq macfail")
-			servicereq.Servicereq_macfail_test(ranIpAddr, upfIpAddr, amfIpAddr)
-		}
-	case "servicereq":
-		{
-			fmt.Println("test servicereq")
-			servicereq.Servicereq_test(ranIpAddr, upfIpAddr, amfIpAddr)
-		}
-	case "xnhandover":
-		{
-			fmt.Println("test xnhandover")
-			xnhandover.Xnhandover_test(ranUIpAddr, ranIpAddr, upfIpAddr, amfIpAddr)
-		}
-    case "loadsubs":
-		{
-			fmt.Println("loading subscribers in DB")
-			loadsub.LoadSubscriberData(10)
-		}
-    }
-
-	return
 }
