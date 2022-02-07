@@ -24,6 +24,11 @@ Please refer to the official SD-Core documentation for more details:
 
 <https://docs.sd-core.opennetworking.org/master/developer/gnbsim.html#gnb-simulator>
 
+## gNodeB Simulator Block Diagram
+
+![gNBSim](/docs/gnbsim_flow_diagram.png)
+
+
 ## Step 1: Configure gNBSim
     
     1. The config file for gNBSim can be found at <repo dir>/config/gnbsim.yaml
