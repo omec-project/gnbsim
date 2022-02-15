@@ -95,8 +95,7 @@ func HandleIcmpMessage(pduSess *context.PduSession,
 	icmpPkt []byte) (err error) {
 	icmpMsg, err := icmp.ParseMessage(1, icmpPkt)
 	if err != nil {
-		pduSess.Log.Errorln("icmp.ParseMessage() returned:", err)
-		return fmt.Errorf("invalid icmp message")
+		return fmt.Errorf("failed to parse icmp message:%v", err)
 	}
 
 	switch icmpMsg.Type {
@@ -144,8 +143,7 @@ func HandleDlMessage(pduSess *context.PduSession,
 
 	ipv4Hdr, err := ipv4.ParseHeader(dataMsg.Payload)
 	if err != nil {
-		pduSess.Log.Errorln("ipv4.ParseHeader() returned:", err)
-		return fmt.Errorf("invalid ipv4 header")
+		return fmt.Errorf("failed to parse ipv4 header:%v", err)
 	}
 
 	switch ipv4Hdr.Protocol {
@@ -153,8 +151,7 @@ func HandleDlMessage(pduSess *context.PduSession,
 	case 1:
 		err = HandleIcmpMessage(pduSess, dataMsg.Payload[ipv4Hdr.Len:])
 		if err != nil {
-			pduSess.Log.Errorln("HandleIcmpMessage() returned:", err)
-			return fmt.Errorf("failed to handle icmp message")
+			return fmt.Errorf("failed to handle icmp message:%v", err)
 		}
 	default:
 		return fmt.Errorf("unsupported ipv4 protocol:%v", ipv4Hdr.Protocol)
@@ -169,8 +166,7 @@ func HandleDataPktGenRequestEvent(pduSess *context.PduSession,
 	pduSess.ReqDataPktCount = cmd.UserDataPktCount
 	err = SendIcmpEchoRequest(pduSess)
 	if err != nil {
-		pduSess.Log.Errorln("SendIcmpEchoRequest() returned:", err)
-		return fmt.Errorf("failed to send icmp echo req")
+		return fmt.Errorf("failed to send icmp echo req:%v", err)
 	}
 	return nil
 }
