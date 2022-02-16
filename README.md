@@ -25,7 +25,7 @@ Please refer to the official [SD-Core documentation](https://docs.sd-core.openne
 
 ## gNodeB Simulator Block Diagram
 
-![gNBSim](/docs/gnbsim_flow_diagram.png)
+![gNBSim](/docs/images/gnbsim_flow_diagram.png)
 
 
 ## Step 1: Configure gNBSim
