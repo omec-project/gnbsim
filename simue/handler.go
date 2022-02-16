@@ -308,7 +308,7 @@ func HandleErrorEvent(ue *context.SimUe,
 
 	msg := &common.UuMessage{}
 	msg.Event = common.QUIT_EVENT
-	ue.ReadChan <- msg
+	HandleQuitEvent(ue, msg)
 	return nil
 }
 

@@ -6,7 +6,6 @@ package context
 
 import (
 	"gnbsim/logger"
-	"log"
 	"sync"
 
 	"github.com/sirupsen/logrus"
@@ -37,12 +36,12 @@ func NewGnbUeDao() *GnbUeDao {
 
 // GetGnbCpUe returns the GnbCpUe instance corresponding to provided NGAP ID
 func (dao *GnbUeDao) GetGnbCpUe(gnbUeNgapId int64) *GnbCpUe {
-	log.Println("Fetching GnbCpUe for RANUENGAPID:", gnbUeNgapId)
+	dao.Log.Infoln("Fetching GnbCpUe for RANUENGAPID:", gnbUeNgapId)
 	val, ok := dao.ngapIdGnbCpUeMap.Load(gnbUeNgapId)
 	if ok {
 		return val.(*GnbCpUe)
 	} else {
-		log.Println("key not present:", gnbUeNgapId)
+		dao.Log.Warnln("key not present:", gnbUeNgapId)
 		return nil
 	}
 }
@@ -68,7 +67,7 @@ func (dao *GnbUeDao) GetGnbUpUe(teid uint32, downlink bool) *GnbUpUe {
 	if ok {
 		return val.(*GnbUpUe)
 	} else {
-		log.Println("key not present:", teid, "Downlink TEID :", downlink)
+		dao.Log.Warnln("key not present:", teid, "Downlink TEID :", downlink)
 		return nil
 	}
 }

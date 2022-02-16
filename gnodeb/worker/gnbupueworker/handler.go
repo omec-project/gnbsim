@@ -39,10 +39,12 @@ func HandleDlMessage(gnbue *context.GnbUpUe, intfcMsg common.InterfaceMessage) (
 	gnbue.Log.Traceln("Handling DL Packet from UPF Worker")
 
 	msg := intfcMsg.(*common.N3Message)
-	ueDataMsg := &common.UserDataMessage{}
 	if len(msg.Pdu.Payload) == 0 {
 		return fmt.Errorf("empty t-pdu")
 	}
+
+	ueDataMsg := &common.UserDataMessage{}
+	ueDataMsg.Payload = msg.Pdu.Payload
 
 	optHdr := msg.Pdu.OptHdr
 	if optHdr != nil {

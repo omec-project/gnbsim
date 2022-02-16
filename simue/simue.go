@@ -102,6 +102,7 @@ func HandleEvents(ue *context.SimUe) {
 			err = HandleConnectionReleaseRequestEvent(ue, msg)
 		case common.ERROR_EVENT:
 			HandleErrorEvent(ue, msg)
+			return
 		case common.QUIT_EVENT:
 			HandleQuitEvent(ue, msg)
 			return
@@ -113,6 +114,7 @@ func HandleEvents(ue *context.SimUe) {
 			ue.Log.Errorln("Failed to handle event:", evtStr, "Error:", err)
 			msg := &common.UeMessage{}
 			msg.Error = err
+			err = nil
 			msg.Event = common.ERROR_EVENT
 			HandleErrorEvent(ue, msg)
 		}

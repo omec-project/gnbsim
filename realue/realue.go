@@ -71,6 +71,7 @@ func HandleEvents(ue *context.RealUe) (err error) {
 			msg := &common.UeMessage{}
 			msg.Error = err
 			msg.Event = common.ERROR_EVENT
+			err = nil
 			HandleErrorEvent(ue, msg)
 		}
 	}

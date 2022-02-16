@@ -46,6 +46,7 @@ func HandleEvents(pduSess *context.PduSession) {
 			msg.Error = fmt.Errorf("pdu session failed:%v", err)
 			msg.Event = common.ERROR_EVENT
 			pduSess.WriteUeChan <- msg
+			err = nil
 		}
 	}
 }
