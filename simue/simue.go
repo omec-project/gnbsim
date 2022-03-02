@@ -52,8 +52,7 @@ func HandleEvents(ue *context.SimUe) {
 	var err error
 	for msg := range ue.ReadChan {
 		event := msg.GetEventType()
-		evtStr := common.GetEvtString(event)
-		ue.Log.Infoln("Handling event:", evtStr)
+		ue.Log.Infoln("Handling event:", event)
 
 		switch event {
 		case common.REG_REQUEST_EVENT:
@@ -107,11 +106,11 @@ func HandleEvents(ue *context.SimUe) {
 			HandleQuitEvent(ue, msg)
 			return
 		default:
-			ue.Log.Infoln("Event:", evtStr, "is not supported")
+			ue.Log.Infoln("Event:", event, "is not supported")
 		}
 
 		if err != nil {
-			ue.Log.Errorln("Failed to handle event:", evtStr, "Error:", err)
+			ue.Log.Errorln("Failed to handle event:", event, "Error:", err)
 			msg := &common.UeMessage{}
 			msg.Error = err
 			err = nil
@@ -124,17 +123,17 @@ func HandleEvents(ue *context.SimUe) {
 }
 
 func SendToRealUe(ue *context.SimUe, msg common.InterfaceMessage) {
-	ue.Log.Traceln("Sending", common.GetEvtString(msg.GetEventType()), "to RealUe")
+	ue.Log.Traceln("Sending", msg.GetEventType(), "to RealUe")
 	ue.WriteRealUeChan <- msg
 }
 
 func SendToGnbUe(ue *context.SimUe, msg common.InterfaceMessage) {
-	ue.Log.Traceln("Sending", common.GetEvtString(msg.GetEventType()), "to GnbUe")
+	ue.Log.Traceln("Sending", msg.GetEventType(), "to GnbUe")
 	ue.WriteGnbUeChan <- msg
 }
 
 func SendToProfile(ue *context.SimUe, event common.EventType, errMsg error) {
-	ue.Log.Traceln("Sending", common.GetEvtString(event), "to Profile routine")
+	ue.Log.Traceln("Sending", event, "to Profile routine")
 	msg := &common.ProfileMessage{}
 	msg.Event = event
 	msg.Supi = ue.Supi

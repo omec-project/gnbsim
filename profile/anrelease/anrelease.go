@@ -5,6 +5,7 @@
 package anrelease
 
 import (
+	"fmt"
 	"gnbsim/common"
 	"gnbsim/factory"
 	profctx "gnbsim/profile/context"
@@ -16,7 +17,7 @@ import (
 	"time"
 )
 
-func AnRelease_test(profile *profctx.Profile) {
+func AnRelease_test(profile *profctx.Profile, summaryChan chan common.InterfaceMessage) {
 	initEventMap(profile)
 	initProcedureList(profile)
 
@@ -30,6 +31,8 @@ func AnRelease_test(profile *profctx.Profile) {
 		profile.Log.Fatalln("invalid imsi value")
 	}
 	var wg sync.WaitGroup
+	summary := &common.SummaryMessage{}
+
 	// Currently executing profile for one IMSI at a time
 	for count := 1; count <= profile.UeCount; count++ {
 		simUe := simuectx.NewSimUe("imsi-"+strconv.Itoa(imsi), gnb, profile)
@@ -41,15 +44,19 @@ func AnRelease_test(profile *profctx.Profile) {
 		msg := <-profile.ReadChan
 		switch msg.Event {
 		case common.PROFILE_PASS_EVENT:
-			profile.Log.Infoln("Result: PASS, SimUe:", msg.Supi)
+			profile.Log.Infoln("Result: PASS, imsi:", msg.Supi)
+			summary.UePassedCount++
 		case common.PROFILE_FAIL_EVENT:
-			profile.Log.Infoln("Result: FAIL, SimUe:", msg.Supi, "Failed Procedure:",
-				msg.Proc, "Error:", msg.Error)
+			err := fmt.Errorf("imsi:%v, procedure:%v, error:%v", msg.Supi, msg.Proc, msg.Error)
+			profile.Log.Infoln("Result: FAIL,", err)
+			summary.UeFailedCount++
+			summary.ErrorList = append(summary.ErrorList, err)
 		}
 		time.Sleep(2 * time.Second)
 		imsi++
 	}
 
+	summaryChan <- summary
 	wg.Wait()
 }
 

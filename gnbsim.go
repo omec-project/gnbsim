@@ -6,16 +6,13 @@
 package main
 
 import (
+	"gnbsim/common"
 	"gnbsim/factory"
 	"gnbsim/gnodeb"
 	"gnbsim/logger"
 	"gnbsim/profile"
-	"gnbsim/profile/anrelease"
-	"gnbsim/profile/deregister"
-	"gnbsim/profile/ngsetup"
-	"gnbsim/profile/pdusessest"
-	"gnbsim/profile/register"
-	"gnbsim/profile/uetriggservicereq"
+	"net/http"
+	_ "net/http/pprof" //Using package only for invoking initialization.
 	"os"
 
 	"github.com/urfave/cli"
@@ -49,6 +46,14 @@ func action(c *cli.Context) error {
 		return err
 	}
 
+	//Initiating a server for profiling
+	go func() {
+		err := http.ListenAndServe(":5000", nil)
+		if err != nil {
+			logger.AppLog.Errorln("Failed to start profiling server")
+		}
+	}()
+
 	config := factory.AppConfig
 	lvl := config.Logger.LogLevel
 	logger.AppLog.Infoln("Setting log level to:", lvl)
@@ -61,39 +66,40 @@ func action(c *cli.Context) error {
 		return err
 	}
 
+	summaryChan := make(chan common.InterfaceMessage)
+	result := "PASS"
+
 	for _, profileCtx := range config.Configuration.Profiles {
 		if profileCtx.Enable {
 			logger.AppLog.Infoln("executing profile:", profileCtx.Name,
 				", profile type:", profileCtx.ProfileType)
 
-			switch profileCtx.ProfileType {
-			case "ngsetup":
-				{
-					ngsetup.NgSetup_test(profileCtx)
-				}
-			case "register":
-				{
-					register.Register_test(profileCtx)
-				}
-			case "pdusessest":
-				{
-					pdusessest.PduSessEst_test(profileCtx)
-				}
-			case "anrelease":
-				{
-					anrelease.AnRelease_test(profileCtx)
-				}
-			case "uetriggservicereq":
-				{
-					uetriggservicereq.UeTriggServiceReq_test(profileCtx)
-				}
-			case "deregister":
-				{
-					deregister.Deregister_test(profileCtx)
+			go profile.ExecuteProfile(profileCtx, summaryChan)
+
+			// Waiting for execution summary from profile routine
+			msg, ok := (<-summaryChan).(*common.SummaryMessage)
+			if !ok {
+				logger.AppLog.Fatalln("Invalid Message Type")
+			}
+
+			logger.AppSummaryLog.Infoln("Profile Name:", msg.ProfileName, ", Profile Type:", msg.ProfileType)
+			logger.AppSummaryLog.Infoln("Ue's Passed:", msg.UePassedCount, ", Ue's Failed:", msg.UeFailedCount)
+
+			if msg.UeFailedCount != 0 {
+				result = "FAIL"
+			}
+
+			if len(msg.ErrorList) != 0 {
+				logger.AppSummaryLog.Infoln("Profile Errors:")
+				for _, err := range msg.ErrorList {
+					logger.AppSummaryLog.Errorln(err)
 				}
 			}
 		}
 	}
+
+	logger.AppSummaryLog.Infoln("Simulation Result:", result)
+
 	return nil
 }
 

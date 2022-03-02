@@ -56,7 +56,7 @@ func HandleAuthRequestEvent(ue *context.SimUe,
 		ue.Log.Errorln("GetNextEvent returned:", err)
 		return err
 	}
-	ue.Log.Infoln("Next Event:", common.GetEvtString(nextEvent))
+	ue.Log.Infoln("Next Event:", nextEvent)
 	msg.Event = nextEvent
 	SendToRealUe(ue, msg)
 	return nil
@@ -188,7 +188,7 @@ func HandlePduSessEstAcceptEvent(ue *context.SimUe,
 		ue.Log.Errorln("GetNextEvent returned:", err)
 		return err
 	}
-	ue.Log.Infoln("Next Event:", common.GetEvtString(nextEvent))
+	ue.Log.Infoln("Next Event:", nextEvent)
 	msg.Event = nextEvent
 	SendToRealUe(ue, msg)
 	return nil
@@ -328,7 +328,7 @@ func ChangeProcedure(ue *context.SimUe) {
 	nextProcedure := ue.ProfileCtx.GetNextProcedure(ue.Procedure)
 	if nextProcedure != 0 {
 		ue.Procedure = nextProcedure
-		ue.Log.Infoln("Updated procedure to", common.GetProcString(nextProcedure))
+		ue.Log.Infoln("Updated procedure to", nextProcedure)
 		HandleProcedure(ue)
 	} else {
 		SendToProfile(ue, common.PROFILE_PASS_EVENT, nil)

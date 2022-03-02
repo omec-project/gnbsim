@@ -26,7 +26,7 @@ var procStrMap = map[ProcedureType]string{
 	UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE: "UE-TRIGGERED-SERVICE-REQUEST-PROCEDURE",
 }
 
-func GetProcString(id ProcedureType) string {
+func (id ProcedureType) String() string {
 	procStr, ok := procStrMap[id]
 	if !ok {
 		logger.AppLog.Fatalln("Invaid Procedure ID:", id)

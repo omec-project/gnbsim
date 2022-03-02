@@ -15,17 +15,19 @@ import (
 )
 
 var (
-	log        *logrus.Logger
-	AppLog     *logrus.Entry
-	RealUeLog  *logrus.Entry
-	SimUeLog   *logrus.Entry
-	ProfileLog *logrus.Entry
-	GNodeBLog  *logrus.Entry
-	CfgLog     *logrus.Entry
-	UtilLog    *logrus.Entry
-	GtpLog     *logrus.Entry
-	NgapLog    *logrus.Entry
-	PsuppLog   *logrus.Entry
+	log           *logrus.Logger
+	summaryLog    *logrus.Logger
+	AppLog        *logrus.Entry
+	AppSummaryLog *logrus.Entry
+	RealUeLog     *logrus.Entry
+	SimUeLog      *logrus.Entry
+	ProfileLog    *logrus.Entry
+	GNodeBLog     *logrus.Entry
+	CfgLog        *logrus.Entry
+	UtilLog       *logrus.Entry
+	GtpLog        *logrus.Entry
+	NgapLog       *logrus.Entry
+	PsuppLog      *logrus.Entry
 )
 
 const (
@@ -40,7 +42,9 @@ const (
 
 func init() {
 	log = logrus.New()
+	summaryLog = logrus.New()
 	log.SetReportCaller(false)
+	summaryLog.SetReportCaller(false)
 
 	log.Formatter = &formatter.Formatter{
 		TimestampFormat: time.RFC3339,
@@ -51,13 +55,28 @@ func init() {
 			FieldProfile, FieldSupi, FieldGnb, FieldGnbUeNgapId},
 	}
 
+	summaryLog.Formatter = &formatter.Formatter{
+		TimestampFormat: time.RFC3339,
+		TrimMessages:    true,
+		NoFieldsSpace:   true,
+		HideKeys:        true,
+		FieldsOrder:     []string{"component", "category"},
+	}
+
 	selfLogHook, err := logger_util.NewFileHook("gnbsim.log",
 		os.O_CREATE|os.O_APPEND|os.O_RDWR, 0o666)
 	if err == nil {
 		log.Hooks.Add(selfLogHook)
 	}
 
+	summaryLogHook, err := logger_util.NewFileHook("summary.log",
+		os.O_CREATE|os.O_APPEND|os.O_RDWR, 0o666)
+	if err == nil {
+		summaryLog.Hooks.Add(summaryLogHook)
+	}
+
 	AppLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "App"})
+	AppSummaryLog = summaryLog.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Summary"})
 	RealUeLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "RealUe"})
 	SimUeLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "SimUe"})
 	ProfileLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Profile"})
