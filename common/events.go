@@ -219,7 +219,7 @@ var evtStrMap map[EventType]string = map[EventType]string{
 	DL_UE_DATA_TRANSPORT_EVENT:            "DL-UE-DATA-TRANSPORT-EVENT",
 }
 
-func GetEvtString(id EventType) string {
+func (id EventType) String() string {
 	evtStr, ok := evtStrMap[id]
 	if !ok {
 		logger.AppLog.Fatalln("Invaid Event ID:", id)

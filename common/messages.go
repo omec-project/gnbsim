@@ -67,6 +67,17 @@ type ProfileMessage struct {
 	Proc ProcedureType
 }
 
+// SummaryMessage is used to carry profile execution summary. Sent by profile
+// routines to main routine
+type SummaryMessage struct {
+	DefaultMessage
+	ProfileType   string
+	ProfileName   string
+	UePassedCount uint
+	UeFailedCount uint
+	ErrorList     []error
+}
+
 // DataBearerParams hold information require to setup data bearer(path) between
 // RealUe and gNB
 type DataBearerParams struct {

@@ -36,7 +36,7 @@ func HandleEvents(gnbue *context.GnbUpUe) {
 		/* Reading commands from GnbCpUe (Control plane context)*/
 		case msg := <-gnbue.ReadCmdChan:
 			evt := msg.GetEventType()
-			gnbue.Log.Infoln("Handling:", common.GetEvtString(evt))
+			gnbue.Log.Infoln("Handling:", evt)
 			switch evt {
 			case common.QUIT_EVENT:
 				HandleQuitEvent(gnbue, msg)
