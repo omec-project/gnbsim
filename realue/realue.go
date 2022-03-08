@@ -5,10 +5,11 @@
 package realue
 
 import (
-	"gnbsim/common"
-	"gnbsim/realue/context"
-	"gnbsim/util/test"
 	"sync"
+
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/realue/context"
+	"github.com/omec-project/gnbsim/util/test"
 
 	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
 )

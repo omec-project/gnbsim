@@ -6,10 +6,10 @@
 package gnbamfworker
 
 import (
-	"gnbsim/common"
-	"gnbsim/util/test"
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/util/test"
 
-	"gnbsim/gnodeb/context"
+	"github.com/omec-project/gnbsim/gnodeb/context"
 
 	amfctx "github.com/free5gc/amf/context"
 	"github.com/free5gc/ngap/ngapConvert"

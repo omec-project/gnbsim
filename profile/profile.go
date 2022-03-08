@@ -6,15 +6,16 @@ package profile
 
 import (
 	"fmt"
-	"gnbsim/common"
-	"gnbsim/factory"
-	"gnbsim/profile/context"
-	"gnbsim/profile/util"
-	"gnbsim/simue"
-	simuectx "gnbsim/simue/context"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/factory"
+	"github.com/omec-project/gnbsim/profile/context"
+	"github.com/omec-project/gnbsim/profile/util"
+	"github.com/omec-project/gnbsim/simue"
+	simuectx "github.com/omec-project/gnbsim/simue/context"
 )
 
 //profile names

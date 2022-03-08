@@ -6,12 +6,13 @@ package transport
 
 import (
 	"fmt"
-	"gnbsim/common"
-	"gnbsim/gnodeb/context"
-	"gnbsim/logger"
-	"gnbsim/transportcommon"
 	"net"
 	"strconv"
+
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/gnodeb/context"
+	"github.com/omec-project/gnbsim/logger"
+	"github.com/omec-project/gnbsim/transportcommon"
 
 	"github.com/sirupsen/logrus"
 )

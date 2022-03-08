@@ -7,15 +7,16 @@ package gnbcpueworker
 import (
 	"encoding/binary"
 	"fmt"
-	"gnbsim/common"
-	"gnbsim/gnodeb/context"
-	"gnbsim/gnodeb/ngap"
-	"gnbsim/gnodeb/worker/gnbupfworker"
-	"gnbsim/gnodeb/worker/gnbupueworker"
-	"gnbsim/util/ngapTestpacket"
-	"gnbsim/util/test"
 	"sync"
 	"time"
+
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/gnodeb/context"
+	"github.com/omec-project/gnbsim/gnodeb/ngap"
+	"github.com/omec-project/gnbsim/gnodeb/worker/gnbupfworker"
+	"github.com/omec-project/gnbsim/gnodeb/worker/gnbupueworker"
+	"github.com/omec-project/gnbsim/util/ngapTestpacket"
+	"github.com/omec-project/gnbsim/util/test"
 
 	"github.com/free5gc/aper"
 	"github.com/free5gc/ngap/ngapConvert"

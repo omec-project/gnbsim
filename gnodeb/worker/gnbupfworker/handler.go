@@ -5,9 +5,9 @@
 package gnbupfworker
 
 import (
-	"gnbsim/common"
-	"gnbsim/gnodeb/context"
-	"gnbsim/util/test"
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/gnodeb/context"
+	"github.com/omec-project/gnbsim/util/test"
 )
 
 /* HandleNGSetupResponse processes the NG Setup Response and updates GnbAmf

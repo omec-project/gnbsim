@@ -6,8 +6,9 @@ package gnbamfworker
 
 import (
 	"fmt"
-	"gnbsim/common"
-	"gnbsim/gnodeb/context"
+
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/gnodeb/context"
 
 	"github.com/free5gc/ngap"
 	"github.com/free5gc/ngap/ngapType"

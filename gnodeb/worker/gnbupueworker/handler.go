@@ -6,9 +6,10 @@ package gnbupueworker
 
 import (
 	"fmt"
-	"gnbsim/common"
-	"gnbsim/gnodeb/context"
-	"gnbsim/util/test"
+
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/gnodeb/context"
+	"github.com/omec-project/gnbsim/util/test"
 )
 
 func HandleUlMessage(gnbue *context.GnbUpUe, msg common.InterfaceMessage) (err error) {

@@ -6,17 +6,18 @@ package gnodeb
 
 import (
 	"fmt"
-	"gnbsim/common"
-	"gnbsim/factory"
-	"gnbsim/gnodeb/context"
-	"gnbsim/gnodeb/idrange"
-	"gnbsim/gnodeb/ngap"
-	"gnbsim/gnodeb/transport"
-	"gnbsim/gnodeb/worker/gnbamfworker"
-	"gnbsim/gnodeb/worker/gnbcpueworker"
-	"gnbsim/logger"
 	"log"
 	"sync"
+
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/factory"
+	"github.com/omec-project/gnbsim/gnodeb/context"
+	"github.com/omec-project/gnbsim/gnodeb/idrange"
+	"github.com/omec-project/gnbsim/gnodeb/ngap"
+	"github.com/omec-project/gnbsim/gnodeb/transport"
+	"github.com/omec-project/gnbsim/gnodeb/worker/gnbamfworker"
+	"github.com/omec-project/gnbsim/gnodeb/worker/gnbcpueworker"
+	"github.com/omec-project/gnbsim/logger"
 
 	"github.com/free5gc/idgenerator"
 )

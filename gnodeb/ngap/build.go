@@ -7,8 +7,9 @@ package ngap
 import (
 	"encoding/hex"
 	"fmt"
-	"gnbsim/gnodeb/context"
-	"gnbsim/util/ngapTestpacket"
+
+	"github.com/omec-project/gnbsim/gnodeb/context"
+	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 
 	"github.com/free5gc/ngap"
 	"github.com/free5gc/ngap/ngapConvert"

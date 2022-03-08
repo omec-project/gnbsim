@@ -7,10 +7,11 @@ package pdusessworker
 import (
 	"encoding/hex"
 	"fmt"
-	"gnbsim/common"
-	"gnbsim/realue/context"
-	"gnbsim/util/test"
 	"net"
+
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/realue/context"
+	"github.com/omec-project/gnbsim/util/test"
 
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"

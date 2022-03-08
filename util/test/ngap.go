@@ -6,7 +6,7 @@
 package test
 
 import (
-	"gnbsim/logger"
+	"github.com/omec-project/gnbsim/logger"
 
 	"github.com/free5gc/aper"
 	"github.com/free5gc/ngap/ngapType"

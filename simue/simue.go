@@ -6,11 +6,12 @@ package simue
 
 import (
 	"fmt"
-	"gnbsim/common"
-	"gnbsim/gnodeb"
-	"gnbsim/realue"
-	"gnbsim/simue/context"
 	"sync"
+
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/gnodeb"
+	"github.com/omec-project/gnbsim/realue"
+	"github.com/omec-project/gnbsim/simue/context"
 )
 
 func Init(simUe *context.SimUe, wg *sync.WaitGroup) {

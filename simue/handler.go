@@ -6,9 +6,10 @@ package simue
 
 import (
 	"fmt"
-	"gnbsim/common"
-	"gnbsim/simue/context"
 	"time"
+
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/simue/context"
 )
 
 func HandleProfileStartEvent(ue *context.SimUe,

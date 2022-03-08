@@ -5,8 +5,9 @@
 package context
 
 import (
-	"gnbsim/logger"
 	"net"
+
+	"github.com/omec-project/gnbsim/logger"
 
 	"github.com/free5gc/amf/context"
 	"github.com/free5gc/amf/factory"

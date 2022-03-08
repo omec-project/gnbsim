@@ -5,8 +5,8 @@
 package context
 
 import (
-	"gnbsim/common"
-	"gnbsim/logger"
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/logger"
 
 	"github.com/free5gc/ngap/ngapType"
 	"github.com/free5gc/openapi/models"

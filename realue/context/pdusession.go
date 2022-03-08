@@ -5,9 +5,10 @@
 package context
 
 import (
-	"gnbsim/common"
-	"gnbsim/logger"
 	"net"
+
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/logger"
 
 	"github.com/free5gc/openapi/models"
 	"github.com/sirupsen/logrus"

@@ -6,11 +6,12 @@ package ngsetup
 
 import (
 	"fmt"
-	"gnbsim/factory"
-	"gnbsim/gnodeb"
-	"gnbsim/gnodeb/context"
-	profCtx "gnbsim/profile/context"
 	"net"
+
+	"github.com/omec-project/gnbsim/factory"
+	"github.com/omec-project/gnbsim/gnodeb"
+	"github.com/omec-project/gnbsim/gnodeb/context"
+	profCtx "github.com/omec-project/gnbsim/profile/context"
 )
 
 func NgSetup_test(profile *profCtx.Profile) {

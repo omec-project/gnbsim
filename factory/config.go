@@ -11,9 +11,9 @@ package factory
 
 import (
 	"fmt"
-	"gnbsim/gnodeb/context"
-	gnbctx "gnbsim/gnodeb/context"
-	profctx "gnbsim/profile/context"
+
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
+	profctx "github.com/omec-project/gnbsim/profile/context"
 )
 
 const (
@@ -69,7 +69,7 @@ func (c *Config) Validate() (err error) {
 	return nil
 }
 
-func (c *Configuration) GetGNodeB(name string) (*context.GNodeB, error) {
+func (c *Configuration) GetGNodeB(name string) (*gnbctx.GNodeB, error) {
 	var err error
 	gnb, ok := c.Gnbs[name]
 	if !ok {

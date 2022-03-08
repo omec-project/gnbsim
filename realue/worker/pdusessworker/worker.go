@@ -6,9 +6,10 @@ package pdusessworker
 
 import (
 	"fmt"
-	"gnbsim/common"
-	"gnbsim/realue/context"
 	"sync"
+
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/realue/context"
 )
 
 func Init(pduSess *context.PduSession, wg *sync.WaitGroup) {

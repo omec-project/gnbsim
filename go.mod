@@ -1,4 +1,4 @@
-module gnbsim
+module github.com/omec-project/gnbsim
 
 go 1.15
 

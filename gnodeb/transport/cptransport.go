@@ -6,14 +6,15 @@ package transport
 
 import (
 	"fmt"
-	"gnbsim/gnodeb/context"
-	"gnbsim/gnodeb/worker/gnbamfworker"
-	"gnbsim/logger"
-	"gnbsim/transportcommon"
-	"gnbsim/util/test"
 	"io"
 	"net"
 	"syscall"
+
+	"github.com/omec-project/gnbsim/gnodeb/context"
+	"github.com/omec-project/gnbsim/gnodeb/worker/gnbamfworker"
+	"github.com/omec-project/gnbsim/logger"
+	"github.com/omec-project/gnbsim/transportcommon"
+	"github.com/omec-project/gnbsim/util/test"
 
 	"git.cs.nctu.edu.tw/calee/sctp"
 	"github.com/sirupsen/logrus"

@@ -5,9 +5,10 @@
 package idrange
 
 import (
-	"gnbsim/logger"
 	"math/rand"
 	"time"
+
+	"github.com/omec-project/gnbsim/logger"
 )
 
 /*

@@ -5,9 +5,10 @@
 package gnbupueworker
 
 import (
-	"gnbsim/common"
-	"gnbsim/gnodeb/context"
 	"sync"
+
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/gnodeb/context"
 )
 
 func Init(gnbue *context.GnbUpUe, wg *sync.WaitGroup) {

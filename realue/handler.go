@@ -6,20 +6,21 @@ package realue
 
 import (
 	"fmt"
-	"gnbsim/common"
-	"gnbsim/realue/context"
-	"gnbsim/realue/util"
-	"gnbsim/realue/worker/pdusessworker"
 	"net"
 
-	realue_nas "gnbsim/realue/nas"
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/realue/context"
+	"github.com/omec-project/gnbsim/realue/util"
+	"github.com/omec-project/gnbsim/realue/worker/pdusessworker"
 
-	"github.com/omec-project/nas/nasMessage"
-	"github.com/omec-project/nas/nasTestpacket"
-	"github.com/omec-project/nas/nasType"
+	realue_nas "github.com/omec-project/gnbsim/realue/nas"
+
 	"github.com/free5gc/openapi/models"
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasConvert"
+	"github.com/omec-project/nas/nasMessage"
+	"github.com/omec-project/nas/nasTestpacket"
+	"github.com/omec-project/nas/nasType"
 )
 
 //TODO Remove the hardcoding
