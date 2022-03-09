@@ -5,8 +5,6 @@
 package realue
 
 import (
-	"sync"
-
 	"github.com/omec-project/gnbsim/common"
 	realuectx "github.com/omec-project/gnbsim/realue/context"
 	"github.com/omec-project/gnbsim/util/test"
@@ -14,14 +12,13 @@ import (
 	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
 )
 
-func Init(ue *realuectx.RealUe, wg *sync.WaitGroup) {
+func Init(ue *realuectx.RealUe) {
 
 	ue.AuthenticationSubs = test.GetAuthSubscription(TestGenAuthData.MilenageTestSet19.K,
 		TestGenAuthData.MilenageTestSet19.OPC,
 		"")
 
 	HandleEvents(ue)
-	wg.Done()
 }
 
 func HandleEvents(ue *realuectx.RealUe) (err error) {
@@ -57,6 +54,8 @@ func HandleEvents(ue *realuectx.RealUe) (err error) {
 			err = HandleServiceRequestEvent(ue, msg)
 		case common.CONNECTION_RELEASE_REQUEST_EVENT:
 			err = HandleConnectionReleaseRequestEvent(ue, msg)
+		case common.DEREG_ACCEPT_UE_TERM_EVENT:
+			err = HandleDeregAcceptEvent(ue, msg)
 		case common.ERROR_EVENT:
 			HandleErrorEvent(ue, msg)
 		case common.QUIT_EVENT:

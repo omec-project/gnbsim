@@ -71,30 +71,31 @@ func action(c *cli.Context) error {
 	result := "PASS"
 
 	for _, profileCtx := range config.Configuration.Profiles {
-		if profileCtx.Enable {
-			logger.AppLog.Infoln("executing profile:", profileCtx.Name,
-				", profile type:", profileCtx.ProfileType)
+		if !profileCtx.Enable {
+			continue
+		}
+		logger.AppLog.Infoln("executing profile:", profileCtx.Name,
+			", profile type:", profileCtx.ProfileType)
 
-			go profile.ExecuteProfile(profileCtx, summaryChan)
+		go profile.ExecuteProfile(profileCtx, summaryChan)
 
-			// Waiting for execution summary from profile routine
-			msg, ok := (<-summaryChan).(*common.SummaryMessage)
-			if !ok {
-				logger.AppLog.Fatalln("Invalid Message Type")
-			}
+		// Waiting for execution summary from profile routine
+		msg, ok := (<-summaryChan).(*common.SummaryMessage)
+		if !ok {
+			logger.AppLog.Fatalln("Invalid Message Type")
+		}
 
-			logger.AppSummaryLog.Infoln("Profile Name:", msg.ProfileName, ", Profile Type:", msg.ProfileType)
-			logger.AppSummaryLog.Infoln("Ue's Passed:", msg.UePassedCount, ", Ue's Failed:", msg.UeFailedCount)
+		logger.AppSummaryLog.Infoln("Profile Name:", msg.ProfileName, ", Profile Type:", msg.ProfileType)
+		logger.AppSummaryLog.Infoln("Ue's Passed:", msg.UePassedCount, ", Ue's Failed:", msg.UeFailedCount)
 
-			if msg.UeFailedCount != 0 {
-				result = "FAIL"
-			}
+		if msg.UeFailedCount != 0 {
+			result = "FAIL"
+		}
 
-			if len(msg.ErrorList) != 0 {
-				logger.AppSummaryLog.Infoln("Profile Errors:")
-				for _, err := range msg.ErrorList {
-					logger.AppSummaryLog.Errorln(err)
-				}
+		if len(msg.ErrorList) != 0 {
+			logger.AppSummaryLog.Infoln("Profile Errors:")
+			for _, err := range msg.ErrorList {
+				logger.AppSummaryLog.Errorln(err)
 			}
 		}
 	}
