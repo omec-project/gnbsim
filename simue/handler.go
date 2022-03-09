@@ -6,12 +6,13 @@ package simue
 
 import (
 	"fmt"
-	"gnbsim/common"
-	"gnbsim/simue/context"
 	"time"
+
+	"github.com/omec-project/gnbsim/common"
+	simuectx "github.com/omec-project/gnbsim/simue/context"
 )
 
-func HandleProfileStartEvent(ue *context.SimUe,
+func HandleProfileStartEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	ue.Procedure = ue.ProfileCtx.GetFirstProcedure()
@@ -20,14 +21,14 @@ func HandleProfileStartEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleRegRequestEvent(ue *context.SimUe,
+func HandleRegRequestEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	SendToGnbUe(ue, intfcMsg)
 	return nil
 }
 
-func HandleRegRejectEvent(ue *context.SimUe,
+func HandleRegRejectEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	err = ue.ProfileCtx.CheckCurrentEvent(common.REG_REQUEST_EVENT,
@@ -40,7 +41,7 @@ func HandleRegRejectEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleAuthRequestEvent(ue *context.SimUe,
+func HandleAuthRequestEvent(ue *simuectx.SimUe,
 	intfMsg common.InterfaceMessage) (err error) {
 
 	msg := intfMsg.(*common.UeMessage)
@@ -62,7 +63,7 @@ func HandleAuthRequestEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleAuthResponseEvent(ue *context.SimUe,
+func HandleAuthResponseEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	msg := intfcMsg.(*common.UuMessage)
@@ -80,7 +81,7 @@ func HandleAuthResponseEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleSecModCommandEvent(ue *context.SimUe,
+func HandleSecModCommandEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	// TODO: Should check if SecModCommandEvent event is expected
@@ -96,7 +97,7 @@ func HandleSecModCommandEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleSecModCompleteEvent(ue *context.SimUe,
+func HandleSecModCompleteEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	ue.Log.Traceln("Handling Security Mode Complete Event")
@@ -115,7 +116,7 @@ func HandleSecModCompleteEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleRegAcceptEvent(ue *context.SimUe,
+func HandleRegAcceptEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	msg := intfcMsg.(*common.UeMessage)
@@ -130,7 +131,7 @@ func HandleRegAcceptEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleRegCompleteEvent(ue *context.SimUe,
+func HandleRegCompleteEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	msg := intfcMsg.(*common.UuMessage)
@@ -148,7 +149,7 @@ func HandleRegCompleteEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleDeregRequestEvent(ue *context.SimUe,
+func HandleDeregRequestEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	msg := intfcMsg.(*common.UuMessage)
@@ -159,13 +160,13 @@ func HandleDeregRequestEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleDeregAcceptEvent(ue *context.SimUe,
+func HandleDeregAcceptEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	return nil
 }
 
-func HandlePduSessEstRequestEvent(ue *context.SimUe,
+func HandlePduSessEstRequestEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	msg := intfcMsg.(*common.UuMessage)
@@ -174,7 +175,7 @@ func HandlePduSessEstRequestEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandlePduSessEstAcceptEvent(ue *context.SimUe,
+func HandlePduSessEstAcceptEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	msg := intfcMsg.(*common.UeMessage)
@@ -194,7 +195,7 @@ func HandlePduSessEstAcceptEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandlePduSessEstRejectEvent(ue *context.SimUe,
+func HandlePduSessEstRejectEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	err = ue.ProfileCtx.CheckCurrentEvent(common.PDU_SESS_EST_REQUEST_EVENT,
@@ -207,21 +208,21 @@ func HandlePduSessEstRejectEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleDlInfoTransferEvent(ue *context.SimUe,
+func HandleDlInfoTransferEvent(ue *simuectx.SimUe,
 	msg common.InterfaceMessage) (err error) {
 
 	SendToRealUe(ue, msg)
 	return nil
 }
 
-func HandleDataBearerSetupRequestEvent(ue *context.SimUe,
+func HandleDataBearerSetupRequestEvent(ue *simuectx.SimUe,
 	msg common.InterfaceMessage) (err error) {
 
 	SendToRealUe(ue, msg)
 	return nil
 }
 
-func HandleDataBearerSetupResponseEvent(ue *context.SimUe,
+func HandleDataBearerSetupResponseEvent(ue *simuectx.SimUe,
 	msg common.InterfaceMessage) (err error) {
 
 	SendToGnbUe(ue, msg)
@@ -230,21 +231,21 @@ func HandleDataBearerSetupResponseEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleDataPktGenSuccessEvent(ue *context.SimUe,
+func HandleDataPktGenSuccessEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	ChangeProcedure(ue)
 	return nil
 }
 
-func HandleDataPktGenFailureEvent(ue *context.SimUe,
+func HandleDataPktGenFailureEvent(ue *simuectx.SimUe,
 	msg common.InterfaceMessage) (err error) {
 
 	SendToProfile(ue, common.PROFILE_FAIL_EVENT, msg.GetErrorMsg())
 	return nil
 }
 
-func HandleServiceRequestEvent(ue *context.SimUe,
+func HandleServiceRequestEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	err = ConnectToGnb(ue)
@@ -258,7 +259,7 @@ func HandleServiceRequestEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleServiceAcceptEvent(ue *context.SimUe,
+func HandleServiceAcceptEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	err = ue.ProfileCtx.CheckCurrentEvent(common.SERVICE_REQUEST_EVENT,
@@ -271,7 +272,7 @@ func HandleServiceAcceptEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleConnectionReleaseRequestEvent(ue *context.SimUe,
+func HandleConnectionReleaseRequestEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 	msg := intfcMsg.(*common.UuMessage)
 
@@ -301,7 +302,7 @@ func HandleConnectionReleaseRequestEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleErrorEvent(ue *context.SimUe,
+func HandleErrorEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	SendToProfile(ue, common.PROFILE_FAIL_EVENT, intfcMsg.GetErrorMsg())
@@ -312,7 +313,7 @@ func HandleErrorEvent(ue *context.SimUe,
 	return nil
 }
 
-func HandleQuitEvent(ue *context.SimUe,
+func HandleQuitEvent(ue *simuectx.SimUe,
 	msg common.InterfaceMessage) (err error) {
 	if ue.WriteGnbUeChan != nil {
 		SendToGnbUe(ue, msg)
@@ -324,7 +325,7 @@ func HandleQuitEvent(ue *context.SimUe,
 	return nil
 }
 
-func ChangeProcedure(ue *context.SimUe) {
+func ChangeProcedure(ue *simuectx.SimUe) {
 	nextProcedure := ue.ProfileCtx.GetNextProcedure(ue.Procedure)
 	if nextProcedure != 0 {
 		ue.Procedure = nextProcedure
@@ -345,7 +346,7 @@ func ChangeProcedure(ue *context.SimUe) {
 	}
 }
 
-func HandleProcedure(ue *context.SimUe) {
+func HandleProcedure(ue *simuectx.SimUe) {
 	switch ue.Procedure {
 	case common.REGISTRATION_PROCEDURE:
 		ue.Log.Infoln("Initiating Registration Procedure")

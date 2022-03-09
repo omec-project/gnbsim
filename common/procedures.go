@@ -4,7 +4,7 @@
 
 package common
 
-import "gnbsim/logger"
+import "github.com/omec-project/gnbsim/logger"
 
 type ProcedureType uint8
 

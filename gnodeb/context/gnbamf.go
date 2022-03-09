@@ -5,10 +5,11 @@
 package context
 
 import (
-	"gnbsim/logger"
 	"net"
 
-	"github.com/free5gc/amf/context"
+	"github.com/omec-project/gnbsim/logger"
+
+	amfctx "github.com/free5gc/amf/context"
 	"github.com/free5gc/amf/factory"
 	"github.com/free5gc/openapi/models"
 	"github.com/sirupsen/logrus"
@@ -78,9 +79,9 @@ func (amf *GnbAmf) GetNgSetupStatus() bool {
 }
 
 func NewServedGUAMIList() []models.Guami {
-	return make([]models.Guami, 0, context.MaxNumOfServedGuamiList)
+	return make([]models.Guami, 0, amfctx.MaxNumOfServedGuamiList)
 }
 
 func NewPlmnSupportList() []factory.PlmnSupportItem {
-	return make([]factory.PlmnSupportItem, 0, context.MaxNumOfPLMNs)
+	return make([]factory.PlmnSupportItem, 0, amfctx.MaxNumOfPLMNs)
 }

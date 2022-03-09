@@ -5,17 +5,18 @@
 package gnbcpueworker
 
 import (
-	"gnbsim/common"
-	"gnbsim/gnodeb/context"
 	"sync"
+
+	"github.com/omec-project/gnbsim/common"
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 )
 
-func Init(gnbue *context.GnbCpUe, wg *sync.WaitGroup) {
+func Init(gnbue *gnbctx.GnbCpUe, wg *sync.WaitGroup) {
 	HandleEvents(gnbue)
 	wg.Done()
 }
 
-func HandleEvents(gnbue *context.GnbCpUe) (err error) {
+func HandleEvents(gnbue *gnbctx.GnbCpUe) (err error) {
 
 	for msg := range gnbue.ReadChan {
 		evt := msg.GetEventType()
@@ -52,7 +53,7 @@ func HandleEvents(gnbue *context.GnbCpUe) (err error) {
 	return nil
 }
 
-func SendToUe(gnbue *context.GnbCpUe, event common.EventType, nasPdus common.NasPduList) {
+func SendToUe(gnbue *gnbctx.GnbCpUe, event common.EventType, nasPdus common.NasPduList) {
 	gnbue.Log.Traceln("Sending event", event, "to SimUe")
 	uemsg := common.UuMessage{}
 	uemsg.Event = event

@@ -5,15 +5,16 @@
 package realue
 
 import (
-	"gnbsim/common"
-	"gnbsim/realue/context"
-	"gnbsim/util/test"
 	"sync"
+
+	"github.com/omec-project/gnbsim/common"
+	realuectx "github.com/omec-project/gnbsim/realue/context"
+	"github.com/omec-project/gnbsim/util/test"
 
 	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
 )
 
-func Init(ue *context.RealUe, wg *sync.WaitGroup) {
+func Init(ue *realuectx.RealUe, wg *sync.WaitGroup) {
 
 	ue.AuthenticationSubs = test.GetAuthSubscription(TestGenAuthData.MilenageTestSet19.K,
 		TestGenAuthData.MilenageTestSet19.OPC,
@@ -23,7 +24,7 @@ func Init(ue *context.RealUe, wg *sync.WaitGroup) {
 	wg.Done()
 }
 
-func HandleEvents(ue *context.RealUe) (err error) {
+func HandleEvents(ue *realuectx.RealUe) (err error) {
 
 	for msg := range ue.ReadChan {
 		event := msg.GetEventType()
@@ -85,7 +86,7 @@ func formUuMessage(event common.EventType, nasPdu []byte) *common.UuMessage {
 	return msg
 }
 
-func SendToSimUe(ue *context.RealUe,
+func SendToSimUe(ue *realuectx.RealUe,
 	msg common.InterfaceMessage) {
 
 	ue.Log.Traceln("Sending", msg.GetEventType(), "to SimUe")

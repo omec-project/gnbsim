@@ -7,10 +7,11 @@ package pdusessworker
 import (
 	"encoding/hex"
 	"fmt"
-	"gnbsim/common"
-	"gnbsim/realue/context"
-	"gnbsim/util/test"
 	"net"
+
+	"github.com/omec-project/gnbsim/common"
+	realuectx "github.com/omec-project/gnbsim/realue/context"
+	"github.com/omec-project/gnbsim/util/test"
 
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
@@ -25,7 +26,7 @@ const (
 	IPV4_MIN_HEADER_LEN int = 20
 )
 
-func HandleInitEvent(pduSess *context.PduSession,
+func HandleInitEvent(pduSess *realuectx.PduSession,
 	intfcMsg common.InterfaceMessage) (err error) {
 	msg := intfcMsg.(*common.UeMessage)
 	pduSess.WriteGnbChan = msg.CommChan
@@ -33,7 +34,7 @@ func HandleInitEvent(pduSess *context.PduSession,
 	return nil
 }
 
-func SendIcmpEchoRequest(pduSess *context.PduSession) (err error) {
+func SendIcmpEchoRequest(pduSess *realuectx.PduSession) (err error) {
 
 	pduSess.Log.Traceln("Sending UL ICMP ping message")
 
@@ -91,7 +92,7 @@ func SendIcmpEchoRequest(pduSess *context.PduSession) (err error) {
 	return nil
 }
 
-func HandleIcmpMessage(pduSess *context.PduSession,
+func HandleIcmpMessage(pduSess *realuectx.PduSession,
 	icmpPkt []byte) (err error) {
 	icmpMsg, err := icmp.ParseMessage(1, icmpPkt)
 	if err != nil {
@@ -124,7 +125,7 @@ func HandleIcmpMessage(pduSess *context.PduSession,
 	return nil
 }
 
-func HandleDlMessage(pduSess *context.PduSession,
+func HandleDlMessage(pduSess *realuectx.PduSession,
 	msg common.InterfaceMessage) (err error) {
 
 	pduSess.Log.Traceln("Handling DL user data packet from gNb")
@@ -160,7 +161,7 @@ func HandleDlMessage(pduSess *context.PduSession,
 	return nil
 }
 
-func HandleDataPktGenRequestEvent(pduSess *context.PduSession,
+func HandleDataPktGenRequestEvent(pduSess *realuectx.PduSession,
 	intfcMsg common.InterfaceMessage) (err error) {
 	cmd := intfcMsg.(*common.UeMessage)
 	pduSess.ReqDataPktCount = cmd.UserDataPktCount
@@ -171,7 +172,7 @@ func HandleDataPktGenRequestEvent(pduSess *context.PduSession,
 	return nil
 }
 
-func HandleConnectionReleaseRequestEvent(pduSess *context.PduSession,
+func HandleConnectionReleaseRequestEvent(pduSess *realuectx.PduSession,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	userDataMsg := &common.UserDataMessage{}
@@ -182,7 +183,7 @@ func HandleConnectionReleaseRequestEvent(pduSess *context.PduSession,
 	return nil
 }
 
-func HandleQuitEvent(pduSess *context.PduSession,
+func HandleQuitEvent(pduSess *realuectx.PduSession,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	if pduSess.WriteGnbChan != nil {

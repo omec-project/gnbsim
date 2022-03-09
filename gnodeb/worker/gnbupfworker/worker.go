@@ -6,15 +6,16 @@ package gnbupfworker
 
 import (
 	"fmt"
-	"gnbsim/common"
-	"gnbsim/gnodeb/context"
-	"gnbsim/logger"
-	"gnbsim/util/test"
+
+	"github.com/omec-project/gnbsim/common"
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
+	"github.com/omec-project/gnbsim/logger"
+	"github.com/omec-project/gnbsim/util/test"
 
 	"github.com/free5gc/ngap/ngapType"
 )
 
-func Init(gnbUpf *context.GnbUpf) {
+func Init(gnbUpf *gnbctx.GnbUpf) {
 	if gnbUpf == nil {
 		logger.GNodeBLog.Errorln("GnbUpf context is nil")
 		return
@@ -30,7 +31,7 @@ func Init(gnbUpf *context.GnbUpf) {
 
 // HandleMessage decodes an incoming GTP-U message and routes it to the corresponding
 // handlers.
-func HandleMessage(gnbUpf *context.GnbUpf, msg common.InterfaceMessage) error {
+func HandleMessage(gnbUpf *gnbctx.GnbUpf, msg common.InterfaceMessage) error {
 	// decoding the incoming packet
 	tMsg := msg.(*common.TransportMessage)
 	gtpPdu, err := test.DecodeGTPv1Header(tMsg.RawPkt)
@@ -53,7 +54,7 @@ func HandleMessage(gnbUpf *context.GnbUpf, msg common.InterfaceMessage) error {
 	return nil
 }
 
-func SendToGnbUe(gnbue *context.GnbCpUe, event common.EventType, ngapPdu *ngapType.NGAPPDU) {
+func SendToGnbUe(gnbue *gnbctx.GnbCpUe, event common.EventType, ngapPdu *ngapType.NGAPPDU) {
 	gnbue.Log.Traceln("Sending:", event)
 	amfmsg := common.N2Message{}
 	amfmsg.Event = event

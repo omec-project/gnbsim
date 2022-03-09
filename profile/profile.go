@@ -6,15 +6,16 @@ package profile
 
 import (
 	"fmt"
-	"gnbsim/common"
-	"gnbsim/factory"
-	"gnbsim/profile/context"
-	"gnbsim/profile/util"
-	"gnbsim/simue"
-	simuectx "gnbsim/simue/context"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/factory"
+	profctx "github.com/omec-project/gnbsim/profile/context"
+	"github.com/omec-project/gnbsim/profile/util"
+	"github.com/omec-project/gnbsim/simue"
+	simuectx "github.com/omec-project/gnbsim/simue/context"
 )
 
 //profile names
@@ -32,7 +33,7 @@ func InitializeAllProfiles() {
 	}
 }
 
-func ExecuteProfile(profile *context.Profile, summaryChan chan common.InterfaceMessage) {
+func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMessage) {
 	initEventMap(profile)
 	initProcedureList(profile)
 
@@ -79,7 +80,7 @@ func ExecuteProfile(profile *context.Profile, summaryChan chan common.InterfaceM
 	wg.Wait()
 }
 
-func initEventMap(profile *context.Profile) {
+func initEventMap(profile *profctx.Profile) {
 	switch profile.ProfileType {
 	case REGISTER:
 		profile.Events = map[common.EventType]common.EventType{
@@ -136,7 +137,7 @@ func initEventMap(profile *context.Profile) {
 	}
 }
 
-func initProcedureList(profile *context.Profile) {
+func initProcedureList(profile *profctx.Profile) {
 	switch profile.ProfileType {
 	case REGISTER:
 		profile.Procedures = []common.ProcedureType{common.REGISTRATION_PROCEDURE}

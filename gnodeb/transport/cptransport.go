@@ -6,14 +6,15 @@ package transport
 
 import (
 	"fmt"
-	"gnbsim/gnodeb/context"
-	"gnbsim/gnodeb/worker/gnbamfworker"
-	"gnbsim/logger"
-	"gnbsim/transportcommon"
-	"gnbsim/util/test"
 	"io"
 	"net"
 	"syscall"
+
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
+	"github.com/omec-project/gnbsim/gnodeb/worker/gnbamfworker"
+	"github.com/omec-project/gnbsim/logger"
+	"github.com/omec-project/gnbsim/transportcommon"
+	"github.com/omec-project/gnbsim/util/test"
 
 	"git.cs.nctu.edu.tw/calee/sctp"
 	"github.com/sirupsen/logrus"
@@ -27,13 +28,13 @@ var MAX_SCTP_PKT_LEN int = 2048
 
 // GnbCpTransport represents the control plane transport of the GNodeB
 type GnbCpTransport struct {
-	GnbInstance *context.GNodeB
+	GnbInstance *gnbctx.GNodeB
 
 	/* logger */
 	Log *logrus.Entry
 }
 
-func NewGnbCpTransport(gnb *context.GNodeB) *GnbCpTransport {
+func NewGnbCpTransport(gnb *gnbctx.GNodeB) *GnbCpTransport {
 	transport := &GnbCpTransport{}
 	transport.GnbInstance = gnb
 	transport.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "ControlPlaneTransport"})
@@ -45,7 +46,7 @@ func NewGnbCpTransport(gnb *context.GNodeB) *GnbCpTransport {
 func (cpTprt *GnbCpTransport) ConnectToPeer(peer transportcommon.TransportPeer) (err error) {
 	cpTprt.Log.Traceln("Connecting to AMF")
 
-	amf := peer.(*context.GnbAmf)
+	amf := peer.(*gnbctx.GnbAmf)
 	gnb := cpTprt.GnbInstance
 
 	if amf.AmfIp == "" {
@@ -84,7 +85,7 @@ func (cpTprt *GnbCpTransport) SendToPeerBlock(peer transportcommon.TransportPeer
 		return nil, fmt.Errorf("failed to send packet")
 	}
 
-	amf := peer.(*context.GnbAmf)
+	amf := peer.(*gnbctx.GnbAmf)
 
 	recvMsg := make([]byte, MAX_SCTP_PKT_LEN)
 	conn := amf.Conn.(*sctp.SCTPConn)
@@ -109,7 +110,7 @@ func (cpTprt *GnbCpTransport) SendToPeer(peer transportcommon.TransportPeer,
 		return err
 	}
 
-	amf := peer.(*context.GnbAmf)
+	amf := peer.(*gnbctx.GnbAmf)
 
 	defer func() {
 		recerr := recover()
@@ -132,7 +133,7 @@ func (cpTprt *GnbCpTransport) SendToPeer(peer transportcommon.TransportPeer,
 // ReceiveFromPeer continuously waits for an incoming message from the AMF
 // It then routes the message to the GnbAmfWorker
 func (cpTprt *GnbCpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer) {
-	amf := peer.(*context.GnbAmf)
+	amf := peer.(*gnbctx.GnbAmf)
 
 	defer func() {
 		if err := amf.Conn.Close(); err != nil && err != syscall.EBADF {
@@ -170,7 +171,7 @@ func (cpTprt *GnbCpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 }
 
 func (cpTprt *GnbCpTransport) CheckTransportParam(peer transportcommon.TransportPeer, pkt []byte) error {
-	amf := peer.(*context.GnbAmf)
+	amf := peer.(*gnbctx.GnbAmf)
 
 	if amf == nil {
 		return fmt.Errorf("AMF is nil")

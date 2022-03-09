@@ -10,7 +10,7 @@ import (
 	// Nausf_UEAU_Client "github.com/free5gc/openapi/Nausf_UEAuthentication"
 	// "github.com/free5gc/openapi/models"
 
-	"gnbsim/util/ngapTestpacket"
+	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 )
 
 func GetNGSetupRequest(tac, gnbId []byte, bitlength uint64, name string) ([]byte, error) {

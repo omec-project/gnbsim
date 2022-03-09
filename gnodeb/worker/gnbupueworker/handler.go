@@ -6,12 +6,13 @@ package gnbupueworker
 
 import (
 	"fmt"
-	"gnbsim/common"
-	"gnbsim/gnodeb/context"
-	"gnbsim/util/test"
+
+	"github.com/omec-project/gnbsim/common"
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
+	"github.com/omec-project/gnbsim/util/test"
 )
 
-func HandleUlMessage(gnbue *context.GnbUpUe, msg common.InterfaceMessage) (err error) {
+func HandleUlMessage(gnbue *gnbctx.GnbUpUe, msg common.InterfaceMessage) (err error) {
 	gnbue.Log.Traceln("Handling UL Packet from UE")
 
 	if msg.GetEventType() == common.LAST_DATA_PKT_EVENT {
@@ -35,7 +36,7 @@ func HandleUlMessage(gnbue *context.GnbUpUe, msg common.InterfaceMessage) (err e
 	return nil
 }
 
-func HandleDlMessage(gnbue *context.GnbUpUe, intfcMsg common.InterfaceMessage) (err error) {
+func HandleDlMessage(gnbue *gnbctx.GnbUpUe, intfcMsg common.InterfaceMessage) (err error) {
 	gnbue.Log.Traceln("Handling DL Packet from UPF Worker")
 
 	msg := intfcMsg.(*common.N3Message)
@@ -71,7 +72,7 @@ func HandleDlMessage(gnbue *context.GnbUpUe, intfcMsg common.InterfaceMessage) (
 	return nil
 }
 
-func HandleQuitEvent(gnbue *context.GnbUpUe, intfcMsg common.InterfaceMessage) (err error) {
+func HandleQuitEvent(gnbue *gnbctx.GnbUpUe, intfcMsg common.InterfaceMessage) (err error) {
 	userDataMsg := &common.UserDataMessage{}
 	userDataMsg.Event = common.LAST_DATA_PKT_EVENT
 	gnbue.WriteUeChan <- userDataMsg

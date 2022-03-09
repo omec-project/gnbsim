@@ -6,14 +6,15 @@
 package main
 
 import (
-	"gnbsim/common"
-	"gnbsim/factory"
-	"gnbsim/gnodeb"
-	"gnbsim/logger"
-	"gnbsim/profile"
 	"net/http"
 	_ "net/http/pprof" //Using package only for invoking initialization.
 	"os"
+
+	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/factory"
+	"github.com/omec-project/gnbsim/gnodeb"
+	"github.com/omec-project/gnbsim/logger"
+	"github.com/omec-project/gnbsim/profile"
 
 	"github.com/urfave/cli"
 )
