@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/omec-project/gnbsim/common"
-	"github.com/omec-project/gnbsim/gnodeb/context"
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 
 	"github.com/free5gc/ngap"
 	"github.com/free5gc/ngap/ngapType"
@@ -17,7 +17,7 @@ import (
 /* HandleMessage decodes an incoming NGAP message and routes it to the
  * corresponding handlers
  */
-func HandleMessage(gnb *context.GNodeB, amf *context.GnbAmf, pkt []byte) error {
+func HandleMessage(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf, pkt []byte) error {
 	// decoding the incoming packet
 	pdu, err := ngap.Decoder(pkt)
 	if err != nil {
@@ -64,7 +64,7 @@ func HandleMessage(gnb *context.GNodeB, amf *context.GnbAmf, pkt []byte) error {
 	return nil
 }
 
-func SendToGnbUe(gnbue *context.GnbCpUe, event common.EventType, ngapPdu *ngapType.NGAPPDU) {
+func SendToGnbUe(gnbue *gnbctx.GnbCpUe, event common.EventType, ngapPdu *ngapType.NGAPPDU) {
 	amfmsg := common.N2Message{}
 	amfmsg.Event = event
 	amfmsg.NgapPdu = ngapPdu

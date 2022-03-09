@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/omec-project/gnbsim/common"
-	"github.com/omec-project/gnbsim/gnodeb/context"
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/gnodeb/ngap"
 	"github.com/omec-project/gnbsim/gnodeb/worker/gnbupfworker"
 	"github.com/omec-project/gnbsim/gnodeb/worker/gnbupueworker"
@@ -30,7 +30,7 @@ type pduSessResourceSetupItem struct {
 	PDUSessionResourceSetupRequestTransfer aper.OctetString
 }
 
-func HandleConnectRequest(gnbue *context.GnbCpUe,
+func HandleConnectRequest(gnbue *gnbctx.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
 
 	msg := intfcMsg.(*common.UuMessage)
@@ -38,7 +38,7 @@ func HandleConnectRequest(gnbue *context.GnbCpUe,
 	gnbue.WriteUeChan = msg.CommChan
 }
 
-func HandleInitialUEMessage(gnbue *context.GnbCpUe,
+func HandleInitialUEMessage(gnbue *gnbctx.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
 
 	msg := intfcMsg.(*common.UuMessage)
@@ -56,7 +56,7 @@ func HandleInitialUEMessage(gnbue *context.GnbCpUe,
 	gnbue.Log.Traceln("Sent Initial UE Message to AMF")
 }
 
-func HandleDownlinkNasTransport(gnbue *context.GnbCpUe,
+func HandleDownlinkNasTransport(gnbue *gnbctx.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
 
 	msg := intfcMsg.(*common.N2Message)
@@ -95,7 +95,7 @@ func HandleDownlinkNasTransport(gnbue *context.GnbCpUe,
 	SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, pdus)
 }
 
-func HandleUlInfoTransfer(gnbue *context.GnbCpUe,
+func HandleUlInfoTransfer(gnbue *gnbctx.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
 
 	msg := intfcMsg.(*common.UuMessage)
@@ -114,7 +114,7 @@ func HandleUlInfoTransfer(gnbue *context.GnbCpUe,
 	gnbue.Log.Traceln("Sent Uplink NAS Transport Message to AMF")
 }
 
-func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe,
+func HandleInitialContextSetupRequest(gnbue *gnbctx.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
 
 	msg := intfcMsg.(*common.N2Message)
@@ -191,7 +191,7 @@ func HandleInitialContextSetupRequest(gnbue *context.GnbCpUe,
 }
 
 // TODO: Error handling
-func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe,
+func HandlePduSessResourceSetupRequest(gnbue *gnbctx.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
 
 	msg := intfcMsg.(*common.N2Message)
@@ -234,7 +234,7 @@ func HandlePduSessResourceSetupRequest(gnbue *context.GnbCpUe,
 		common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT)
 }
 
-func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe,
+func HandleDataBearerSetupResponse(gnbue *gnbctx.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
 
 	msg := intfcMsg.(*common.UuMessage)
@@ -283,7 +283,7 @@ func HandleDataBearerSetupResponse(gnbue *context.GnbCpUe,
 	gnbue.Log.Traceln("Sent PDU Session Resource Setup Response Message to AMF")
 }
 
-func HandleUeCtxReleaseCommand(gnbue *context.GnbCpUe,
+func HandleUeCtxReleaseCommand(gnbue *gnbctx.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
 
 	msg := intfcMsg.(*common.N2Message)
@@ -358,7 +358,7 @@ func HandleUeCtxReleaseCommand(gnbue *context.GnbCpUe,
 	gnbue.WriteUeChan <- req
 }
 
-func HandleRanConnectionRelease(gnbue *context.GnbCpUe,
+func HandleRanConnectionRelease(gnbue *gnbctx.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
 
 	// Todo: The cause for the RAN connection release should be sent by the
@@ -381,7 +381,7 @@ func HandleRanConnectionRelease(gnbue *context.GnbCpUe,
 	gnbue.Log.Traceln("Sent Uplink NAS Transport Message to AMF")
 }
 
-func ProcessPduSessResourceSetupList(gnbue *context.GnbCpUe,
+func ProcessPduSessResourceSetupList(gnbue *gnbctx.GnbCpUe,
 	lst []pduSessResourceSetupItem, event common.EventType) {
 	//var pduSessions []ngapTestpacket.PduSession
 	var dbParamSet []*common.DataBearerParams
@@ -432,7 +432,7 @@ func ProcessPduSessResourceSetupList(gnbue *context.GnbCpUe,
 		}
 		upfIp, _ := ngapConvert.IPAddressToString(gtpTunnel.TransportLayerAddress)
 
-		gnbupue := context.NewGnbUpUe(uint32(dlteid), ulteid, gnbue.Gnb)
+		gnbupue := gnbctx.NewGnbUpUe(uint32(dlteid), ulteid, gnbue.Gnb)
 		gnbupue.Snssai = ngapConvert.SNssaiToModels(item.SNSSAI)
 		gnbupue.PduSessId = item.PDUSessionID.Value
 		gnbupue.PduSessType = test.PDUSessionTypeToModels(*pduSessType)
@@ -509,16 +509,16 @@ func ProcessPduSessResourceSetupList(gnbue *context.GnbCpUe,
 	gnbue.WriteUeChan <- &uemsg
 }
 
-func HandleQuitEvent(gnbue *context.GnbCpUe, intfcMsg common.InterfaceMessage) {
+func HandleQuitEvent(gnbue *gnbctx.GnbCpUe, intfcMsg common.InterfaceMessage) {
 	releaseUpUeContexts(gnbue)
 	gnbue.Gnb.RanUeNGAPIDGenerator.FreeID(gnbue.GnbUeNgapId)
 	gnbue.WaitGrp.Wait()
 	gnbue.Log.Infoln("gNB Control-Plane UE context terminated")
 }
 
-func releaseUpUeContexts(gnbue *context.GnbCpUe) {
+func releaseUpUeContexts(gnbue *gnbctx.GnbCpUe) {
 	f := func(key, value interface{}) bool {
-		ctx := value.(*context.GnbUpUe)
+		ctx := value.(*gnbctx.GnbUpUe)
 		msg := &common.DefaultMessage{}
 		msg.Event = common.QUIT_EVENT
 		ctx.ReadCmdChan <- msg

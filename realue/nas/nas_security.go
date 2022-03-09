@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/omec-project/gnbsim/realue/context"
+	realuectx "github.com/omec-project/gnbsim/realue/context"
 
 	"github.com/free5gc/ngap/ngapType"
 	"github.com/omec-project/nas"
@@ -17,7 +17,7 @@ import (
 	"github.com/omec-project/nas/security"
 )
 
-func EncodeNasPduWithSecurity(ue *context.RealUe, pdu []byte, securityHeaderType uint8,
+func EncodeNasPduWithSecurity(ue *realuectx.RealUe, pdu []byte, securityHeaderType uint8,
 	securityContextAvailable bool) ([]byte, error) {
 	m := nas.NewMessage()
 	err := m.PlainNasDecode(&pdu)
@@ -31,7 +31,7 @@ func EncodeNasPduWithSecurity(ue *context.RealUe, pdu []byte, securityHeaderType
 	return NASEncode(ue, m, securityContextAvailable)
 }
 
-func GetNasPdu(ue *context.RealUe, msg *ngapType.DownlinkNASTransport) (m *nas.Message) {
+func GetNasPdu(ue *realuectx.RealUe, msg *ngapType.DownlinkNASTransport) (m *nas.Message) {
 	for _, ie := range msg.ProtocolIEs.List {
 		if ie.Id.Value == ngapType.ProtocolIEIDNASPDU {
 			pkg := []byte(ie.Value.NASPDU.Value)
@@ -45,7 +45,7 @@ func GetNasPdu(ue *context.RealUe, msg *ngapType.DownlinkNASTransport) (m *nas.M
 	return nil
 }
 
-func GetNasPduSetupRequest(ue *context.RealUe, msg *ngapType.PDUSessionResourceSetupRequest) (m *nas.Message) {
+func GetNasPduSetupRequest(ue *realuectx.RealUe, msg *ngapType.PDUSessionResourceSetupRequest) (m *nas.Message) {
 	for _, ie := range msg.ProtocolIEs.List {
 		if ie.Id.Value == ngapType.ProtocolIEIDPDUSessionResourceSetupListSUReq {
 			x := ie.Value.PDUSessionResourceSetupListSUReq
@@ -66,7 +66,7 @@ func GetNasPduSetupRequest(ue *context.RealUe, msg *ngapType.PDUSessionResourceS
 	return nil
 }
 
-func NASEncode(ue *context.RealUe, msg *nas.Message, securityContextAvailable bool) (
+func NASEncode(ue *realuectx.RealUe, msg *nas.Message, securityContextAvailable bool) (
 	payload []byte, err error) {
 
 	if ue == nil {
@@ -136,7 +136,7 @@ func NASEncode(ue *context.RealUe, msg *nas.Message, securityContextAvailable bo
 	return payload, err
 }
 
-func NASDecode(ue *context.RealUe, securityHeaderType uint8, payload []byte) (msg *nas.Message, err error) {
+func NASDecode(ue *realuectx.RealUe, securityHeaderType uint8, payload []byte) (msg *nas.Message, err error) {
 	if ue == nil {
 		err = fmt.Errorf("amfUe is nil")
 		return

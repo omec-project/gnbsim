@@ -9,7 +9,7 @@ import (
 	"net"
 
 	"github.com/omec-project/gnbsim/common"
-	"github.com/omec-project/gnbsim/realue/context"
+	realuectx "github.com/omec-project/gnbsim/realue/context"
 	"github.com/omec-project/gnbsim/realue/util"
 	"github.com/omec-project/gnbsim/realue/worker/pdusessworker"
 
@@ -29,7 +29,7 @@ const (
 	SWITCH_OFF uint8  = 0
 )
 
-func HandleRegRequestEvent(ue *context.RealUe,
+func HandleRegRequestEvent(ue *realuectx.RealUe,
 	msg common.InterfaceMessage) (err error) {
 
 	ueSecurityCapability := ue.GetUESecurityCapability()
@@ -54,7 +54,7 @@ func HandleRegRequestEvent(ue *context.RealUe,
 	return nil
 }
 
-func HandleAuthResponseEvent(ue *context.RealUe,
+func HandleAuthResponseEvent(ue *realuectx.RealUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	msg := intfcMsg.(*common.UeMessage)
@@ -80,7 +80,7 @@ func HandleAuthResponseEvent(ue *context.RealUe,
 	return nil
 }
 
-func HandleSecModCompleteEvent(ue *context.RealUe,
+func HandleSecModCompleteEvent(ue *realuectx.RealUe,
 	msg common.InterfaceMessage) (err error) {
 
 	//TODO: Process corresponding Security Mode Command first
@@ -110,7 +110,7 @@ func HandleSecModCompleteEvent(ue *context.RealUe,
 	return nil
 }
 
-func HandleRegCompleteEvent(ue *context.RealUe,
+func HandleRegCompleteEvent(ue *realuectx.RealUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	//TODO: Process corresponding Registration Accept first
@@ -138,7 +138,7 @@ func HandleRegCompleteEvent(ue *context.RealUe,
 	return nil
 }
 
-func HandleDeregRequestEvent(ue *context.RealUe,
+func HandleDeregRequestEvent(ue *realuectx.RealUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	if ue.Guti == "" {
@@ -166,7 +166,7 @@ func HandleDeregRequestEvent(ue *context.RealUe,
 	return nil
 }
 
-func HandlePduSessEstRequestEvent(ue *context.RealUe,
+func HandlePduSessEstRequestEvent(ue *realuectx.RealUe,
 	msg common.InterfaceMessage) (err error) {
 
 	sNssai := models.Snssai{
@@ -188,7 +188,7 @@ func HandlePduSessEstRequestEvent(ue *context.RealUe,
 	return nil
 }
 
-func HandlePduSessEstAcceptEvent(ue *context.RealUe,
+func HandlePduSessEstAcceptEvent(ue *realuectx.RealUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	msg := intfcMsg.(*common.UeMessage)
@@ -205,7 +205,7 @@ func HandlePduSessEstAcceptEvent(ue *context.RealUe,
 		pduAddr = net.IPv4(ip[0], ip[1], ip[2], ip[3])
 	}
 
-	pduSess := context.NewPduSession(ue, uint64(nasMsg.PDUSessionID.Octet))
+	pduSess := realuectx.NewPduSession(ue, uint64(nasMsg.PDUSessionID.Octet))
 	pduSess.PduSessType = pduSessType
 	pduSess.SscMode = nasMsg.GetSSCMode()
 	pduSess.PduAddress = pduAddr
@@ -219,7 +219,7 @@ func HandlePduSessEstAcceptEvent(ue *context.RealUe,
 	return nil
 }
 
-func HandleDataBearerSetupRequestEvent(ue *context.RealUe,
+func HandleDataBearerSetupRequestEvent(ue *realuectx.RealUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	msg := intfcMsg.(*common.UuMessage)
@@ -261,7 +261,7 @@ func HandleDataBearerSetupRequestEvent(ue *context.RealUe,
 	return nil
 }
 
-func HandleDataPktGenRequestEvent(ue *context.RealUe,
+func HandleDataPktGenRequestEvent(ue *realuectx.RealUe,
 	msg common.InterfaceMessage) (err error) {
 
 	for _, v := range ue.PduSessions {
@@ -271,13 +271,13 @@ func HandleDataPktGenRequestEvent(ue *context.RealUe,
 	return nil
 }
 
-func HandleDataPktGenSuccessEvent(ue *context.RealUe,
+func HandleDataPktGenSuccessEvent(ue *realuectx.RealUe,
 	msg common.InterfaceMessage) (err error) {
 	ue.WriteSimUeChan <- msg
 	return nil
 }
 
-func HandleConnectionReleaseRequestEvent(ue *context.RealUe,
+func HandleConnectionReleaseRequestEvent(ue *realuectx.RealUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 	msg := intfcMsg.(*common.UuMessage)
 
@@ -288,14 +288,14 @@ func HandleConnectionReleaseRequestEvent(ue *context.RealUe,
 	return nil
 }
 
-func HandleErrorEvent(ue *context.RealUe,
+func HandleErrorEvent(ue *realuectx.RealUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	SendToSimUe(ue, intfcMsg)
 	return nil
 }
 
-func HandleQuitEvent(ue *context.RealUe, intfcMsg common.InterfaceMessage) (err error) {
+func HandleQuitEvent(ue *realuectx.RealUe, intfcMsg common.InterfaceMessage) (err error) {
 	ue.WriteSimUeChan = nil
 	for _, pdusess := range ue.PduSessions {
 		pdusess.ReadCmdChan <- intfcMsg
@@ -306,7 +306,7 @@ func HandleQuitEvent(ue *context.RealUe, intfcMsg common.InterfaceMessage) (err 
 	return nil
 }
 
-func HandleDlInfoTransferEvent(ue *context.RealUe,
+func HandleDlInfoTransferEvent(ue *realuectx.RealUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	msg := intfcMsg.(*common.UuMessage)
@@ -353,7 +353,7 @@ func HandleDlInfoTransferEvent(ue *context.RealUe,
 	return nil
 }
 
-func HandleServiceRequestEvent(ue *context.RealUe,
+func HandleServiceRequestEvent(ue *realuectx.RealUe,
 	msg common.InterfaceMessage) (err error) {
 
 	nasPdu, err := realue_nas.GetServiceRequest(ue)

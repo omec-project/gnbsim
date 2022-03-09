@@ -8,14 +8,14 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/omec-project/gnbsim/realue/context"
+	realuectx "github.com/omec-project/gnbsim/realue/context"
 	"github.com/omec-project/gnbsim/util/nastestpacket"
 
 	"github.com/omec-project/nas/nasConvert"
 	"github.com/omec-project/nas/nasMessage"
 )
 
-func GetServiceRequest(ue *context.RealUe) ([]byte, error) {
+func GetServiceRequest(ue *realuectx.RealUe) ([]byte, error) {
 
 	nasMsg := nastestpacket.BuildServiceRequest(nasMessage.ServiceTypeData)
 	serviceRequest := nasMsg.GmmMessage.ServiceRequest

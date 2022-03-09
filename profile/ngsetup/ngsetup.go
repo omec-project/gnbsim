@@ -10,11 +10,11 @@ import (
 
 	"github.com/omec-project/gnbsim/factory"
 	"github.com/omec-project/gnbsim/gnodeb"
-	"github.com/omec-project/gnbsim/gnodeb/context"
-	profCtx "github.com/omec-project/gnbsim/profile/context"
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
+	profctx "github.com/omec-project/gnbsim/profile/context"
 )
 
-func NgSetup_test(profile *profCtx.Profile) {
+func NgSetup_test(profile *profctx.Profile) {
 	// create amf
 
 	gnb, err := factory.AppConfig.Configuration.GetGNodeB(profile.GnbName)
@@ -28,7 +28,7 @@ func NgSetup_test(profile *profCtx.Profile) {
 		return
 	}
 
-	gnbamf := context.NewGnbAmf(addrs[0], context.NGAP_SCTP_PORT)
+	gnbamf := gnbctx.NewGnbAmf(addrs[0], gnbctx.NGAP_SCTP_PORT)
 
 	err = gnb.CpTransport.ConnectToPeer(gnbamf)
 	if err != nil {

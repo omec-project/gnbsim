@@ -6,14 +6,14 @@ package gnbupfworker
 
 import (
 	"github.com/omec-project/gnbsim/common"
-	"github.com/omec-project/gnbsim/gnodeb/context"
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/util/test"
 )
 
 /* HandleNGSetupResponse processes the NG Setup Response and updates GnbAmf
  * context
  */
-func HandleDlGpduMessage(gnbUpf *context.GnbUpf, gtpPdu *test.GtpPdu) error {
+func HandleDlGpduMessage(gnbUpf *gnbctx.GnbUpf, gtpPdu *test.GtpPdu) error {
 	gnbUpf.Log.Traceln("Processing downlink G-PDU packet")
 	gnbUpUe := gnbUpf.GnbUpUes.GetGnbUpUe(gtpPdu.Hdr.Teid, true)
 	if gnbUpUe == nil {

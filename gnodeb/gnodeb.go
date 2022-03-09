@@ -11,7 +11,7 @@ import (
 
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/factory"
-	"github.com/omec-project/gnbsim/gnodeb/context"
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/gnodeb/idrange"
 	"github.com/omec-project/gnbsim/gnodeb/ngap"
 	"github.com/omec-project/gnbsim/gnodeb/transport"
@@ -35,7 +35,7 @@ func InitializeAllGnbs() error {
 }
 
 // Init initializes the GNodeB struct var and connects to the default AMF
-func Init(gnb *context.GNodeB) error {
+func Init(gnb *gnbctx.GNodeB) error {
 	gnb.Log = logger.GNodeBLog.WithField(logger.FieldGnb, gnb.GnbName)
 	gnb.Log.Traceln("Inititializing GNodeB")
 	gnb.Log.Infoln("GNodeB IP:", gnb.GnbN2Ip, "GNodeB Port:", gnb.GnbN2Port)
@@ -47,8 +47,8 @@ func Init(gnb *context.GNodeB) error {
 		gnb.Log.Errorln("GnbUpTransport.Init returned", err)
 		return fmt.Errorf("failed to initialize user plane transport")
 	}
-	gnb.GnbUes = context.NewGnbUeDao()
-	gnb.GnbPeers = context.NewGnbPeerDao()
+	gnb.GnbUes = gnbctx.NewGnbUeDao()
+	gnb.GnbPeers = gnbctx.NewGnbPeerDao()
 	start, end := idrange.GetIdRange()
 	gnb.RanUeNGAPIDGenerator = idgenerator.NewGenerator(int64(start), int64(end))
 	gnb.DlTeidGenerator = idgenerator.NewGenerator(int64(start), int64(end))
@@ -78,7 +78,7 @@ func Init(gnb *context.GNodeB) error {
 	return nil
 }
 
-func QuitGnb(gnb *context.GNodeB) {
+func QuitGnb(gnb *gnbctx.GNodeB) {
 	log.Println("Shutting Down GNodeB:", gnb.GnbName)
 	close(gnb.Quit)
 }
@@ -86,7 +86,7 @@ func QuitGnb(gnb *context.GNodeB) {
 // PerformNGSetup sends the NGSetupRequest to the provided GnbAmf.
 // It waits for the response, process the response and informs whether it was
 // SuccessfulOutcome or UnsuccessfulOutcome
-func PerformNgSetup(gnb *context.GNodeB, amf *context.GnbAmf) (bool, error) {
+func PerformNgSetup(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf) (bool, error) {
 	gnb.Log.Traceln("Performing NG Setup Procedure")
 
 	var status bool
@@ -117,14 +117,14 @@ func PerformNgSetup(gnb *context.GNodeB, amf *context.GnbAmf) (bool, error) {
 }
 
 // RequestConnection should be called by UE that is willing to connect to this GNodeB
-func RequestConnection(gnb *context.GNodeB, uemsg *common.UuMessage) (chan common.InterfaceMessage, error) {
+func RequestConnection(gnb *gnbctx.GNodeB, uemsg *common.UuMessage) (chan common.InterfaceMessage, error) {
 	ranUeNgapID, err := gnb.AllocateRanUeNgapID()
 	if err != nil {
 		gnb.Log.Errorln("AllocateRanUeNgapID returned:", err)
 		return nil, fmt.Errorf("failed to allocate ran ue ngap id")
 	}
 
-	gnbUe := context.NewGnbCpUe(ranUeNgapID, gnb, gnb.DefaultAmf)
+	gnbUe := gnbctx.NewGnbCpUe(ranUeNgapID, gnb, gnb.DefaultAmf)
 	gnb.GnbUes.AddGnbCpUe(ranUeNgapID, gnbUe)
 
 	// TODO: Launching a GO Routine for gNB and handling the waitgroup

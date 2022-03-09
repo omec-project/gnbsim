@@ -10,7 +10,7 @@ import (
 	"strconv"
 
 	"github.com/omec-project/gnbsim/common"
-	"github.com/omec-project/gnbsim/gnodeb/context"
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/logger"
 	"github.com/omec-project/gnbsim/transportcommon"
 
@@ -25,7 +25,7 @@ var MAX_UDP_PKT_LEN int = 65507
 
 // GnbUpTransport represents the User Plane transport of the GNodeB
 type GnbUpTransport struct {
-	GnbInstance *context.GNodeB
+	GnbInstance *gnbctx.GNodeB
 
 	/* UDP Connection without any association with peers */
 	Conn *net.UDPConn
@@ -34,7 +34,7 @@ type GnbUpTransport struct {
 	Log *logrus.Entry
 }
 
-func NewGnbUpTransport(gnb *context.GNodeB) *GnbUpTransport {
+func NewGnbUpTransport(gnb *gnbctx.GNodeB) *GnbUpTransport {
 	transport := &GnbUpTransport{}
 	transport.GnbInstance = gnb
 	transport.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "UserPlaneTransport"})
@@ -72,7 +72,7 @@ func (upTprt *GnbUpTransport) SendToPeer(peer transportcommon.TransportPeer,
 		return err
 	}
 
-	upf := peer.(*context.GnbUpf)
+	upf := peer.(*gnbctx.GnbUpf)
 
 	pktLen := len(pkt)
 	n, err := upTprt.Conn.WriteTo(pkt, upf.UpfAddr)
@@ -116,7 +116,7 @@ func (upTprt *GnbUpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 func (upTprt *GnbUpTransport) CheckTransportParam(peer transportcommon.TransportPeer,
 	pkt []byte) error {
 
-	upf := peer.(*context.GnbUpf)
+	upf := peer.(*gnbctx.GnbUpf)
 
 	if upf == nil {
 		return fmt.Errorf("UPF is nil")

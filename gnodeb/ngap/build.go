@@ -8,7 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/omec-project/gnbsim/gnodeb/context"
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 
 	"github.com/free5gc/ngap"
@@ -16,7 +16,7 @@ import (
 	"github.com/free5gc/ngap/ngapType"
 )
 
-func GetNGSetupRequest(gnb *context.GNodeB) ([]byte, error) {
+func GetNGSetupRequest(gnb *gnbctx.GNodeB) ([]byte, error) {
 
 	message := ngapTestpacket.BuildNGSetupRequest()
 
@@ -65,7 +65,7 @@ func GetNGSetupRequest(gnb *context.GNodeB) ([]byte, error) {
 	return ngap.Encoder(message)
 }
 
-func GetUEContextReleaseRequest(gnbue *context.GnbCpUe) ([]byte, error) {
+func GetUEContextReleaseRequest(gnbue *gnbctx.GnbCpUe) ([]byte, error) {
 	var pduSessIds []int64
 	f := func(k interface{}, v interface{}) bool {
 		pduSessIds = append(pduSessIds, k.(int64))

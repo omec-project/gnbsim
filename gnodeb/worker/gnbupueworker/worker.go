@@ -8,15 +8,15 @@ import (
 	"sync"
 
 	"github.com/omec-project/gnbsim/common"
-	"github.com/omec-project/gnbsim/gnodeb/context"
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 )
 
-func Init(gnbue *context.GnbUpUe, wg *sync.WaitGroup) {
+func Init(gnbue *gnbctx.GnbUpUe, wg *sync.WaitGroup) {
 	HandleEvents(gnbue)
 	wg.Done()
 }
 
-func HandleEvents(gnbue *context.GnbUpUe) {
+func HandleEvents(gnbue *gnbctx.GnbUpUe) {
 	var err error
 	for {
 		select {

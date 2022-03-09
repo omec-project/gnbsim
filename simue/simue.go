@@ -11,10 +11,10 @@ import (
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/gnodeb"
 	"github.com/omec-project/gnbsim/realue"
-	"github.com/omec-project/gnbsim/simue/context"
+	simuectx "github.com/omec-project/gnbsim/simue/context"
 )
 
-func Init(simUe *context.SimUe, wg *sync.WaitGroup) {
+func Init(simUe *simuectx.SimUe, wg *sync.WaitGroup) {
 
 	err := ConnectToGnb(simUe)
 	if err != nil {
@@ -31,7 +31,7 @@ func Init(simUe *context.SimUe, wg *sync.WaitGroup) {
 	wg.Done()
 }
 
-func ConnectToGnb(simUe *context.SimUe) error {
+func ConnectToGnb(simUe *simuectx.SimUe) error {
 	uemsg := common.UuMessage{}
 	uemsg.Event = common.CONNECTION_REQUEST_EVENT
 	uemsg.CommChan = simUe.ReadChan
@@ -49,7 +49,7 @@ func ConnectToGnb(simUe *context.SimUe) error {
 	return nil
 }
 
-func HandleEvents(ue *context.SimUe) {
+func HandleEvents(ue *simuectx.SimUe) {
 	var err error
 	for msg := range ue.ReadChan {
 		event := msg.GetEventType()
@@ -123,17 +123,17 @@ func HandleEvents(ue *context.SimUe) {
 	return
 }
 
-func SendToRealUe(ue *context.SimUe, msg common.InterfaceMessage) {
+func SendToRealUe(ue *simuectx.SimUe, msg common.InterfaceMessage) {
 	ue.Log.Traceln("Sending", msg.GetEventType(), "to RealUe")
 	ue.WriteRealUeChan <- msg
 }
 
-func SendToGnbUe(ue *context.SimUe, msg common.InterfaceMessage) {
+func SendToGnbUe(ue *simuectx.SimUe, msg common.InterfaceMessage) {
 	ue.Log.Traceln("Sending", msg.GetEventType(), "to GnbUe")
 	ue.WriteGnbUeChan <- msg
 }
 
-func SendToProfile(ue *context.SimUe, event common.EventType, errMsg error) {
+func SendToProfile(ue *simuectx.SimUe, event common.EventType, errMsg error) {
 	ue.Log.Traceln("Sending", event, "to Profile routine")
 	msg := &common.ProfileMessage{}
 	msg.Event = event

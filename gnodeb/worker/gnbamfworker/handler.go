@@ -9,7 +9,7 @@ import (
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/util/test"
 
-	"github.com/omec-project/gnbsim/gnodeb/context"
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 
 	amfctx "github.com/free5gc/amf/context"
 	"github.com/free5gc/ngap/ngapConvert"
@@ -19,7 +19,7 @@ import (
 
 // HandleNGSetupResponse processes the NG Setup Response and updates GnbAmf
 // context
-func HandleNgSetupResponse(amf *context.GnbAmf, pdu *ngapType.NGAPPDU) {
+func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 	amf.Log.Traceln("Processing NG Setup Response")
 	var amfName *ngapType.AMFName
 	var servedGUAMIList *ngapType.ServedGUAMIList
@@ -87,7 +87,7 @@ func HandleNgSetupResponse(amf *context.GnbAmf, pdu *ngapType.NGAPPDU) {
 	// Initializing the ServedGuamiList slice in GnbAmf if not already initialized
 	// This will also clear any existing contents of ServedGuamiList within GnbAmf
 	if len(amf.ServedGuamiList) != 0 || cap(amf.ServedGuamiList) == 0 {
-		amf.ServedGuamiList = context.NewServedGUAMIList()
+		amf.ServedGuamiList = gnbctx.NewServedGUAMIList()
 	}
 
 	capOfGuamiList := cap(amf.ServedGuamiList)
@@ -122,7 +122,7 @@ func HandleNgSetupResponse(amf *context.GnbAmf, pdu *ngapType.NGAPPDU) {
 	// Initializing the PlmnSuportList slice in GnbAmf if not already initialized
 	// This will also clear any existing contents of PlmnSupportList within GnbAmf
 	if len(amf.PlmnSupportList) != 0 || cap(amf.PlmnSupportList) == 0 {
-		amf.PlmnSupportList = context.NewPlmnSupportList()
+		amf.PlmnSupportList = gnbctx.NewPlmnSupportList()
 	}
 	capOfPlmnSupportList := cap(amf.PlmnSupportList)
 	for _, plmnSupportItem := range plmnSupportList.List {
@@ -158,7 +158,7 @@ func HandleNgSetupResponse(amf *context.GnbAmf, pdu *ngapType.NGAPPDU) {
 	amf.Log.Traceln("Processed NG Setup Response")
 }
 
-func HandleNgSetupFailure(amf *context.GnbAmf, pdu *ngapType.NGAPPDU) {
+func HandleNgSetupFailure(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 	amf.Log.Traceln("Processing NG Setup Failure")
 	var cause *ngapType.Cause
 
@@ -201,7 +201,7 @@ func HandleNgSetupFailure(amf *context.GnbAmf, pdu *ngapType.NGAPPDU) {
 	amf.Log.Traceln("Processed NG Setup Failure")
 }
 
-func HandleDownlinkNasTransport(gnb *context.GNodeB, amf *context.GnbAmf,
+func HandleDownlinkNasTransport(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU) {
 
 	amf.Log.Traceln("Processing Downlink Nas Transport")
@@ -252,7 +252,7 @@ func HandleDownlinkNasTransport(gnb *context.GNodeB, amf *context.GnbAmf,
 	SendToGnbUe(gnbue, common.DOWNLINK_NAS_TRANSPORT_EVENT, pdu)
 }
 
-func HandleInitialContextSetupRequest(gnb *context.GNodeB, amf *context.GnbAmf,
+func HandleInitialContextSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU) {
 
 	amf.Log.Traceln("Processing Initial Context Setup Request")
@@ -303,7 +303,7 @@ func HandleInitialContextSetupRequest(gnb *context.GNodeB, amf *context.GnbAmf,
 }
 
 // TODO : Much of the code is repeated in each handler
-func HandlePduSessResourceSetupRequest(gnb *context.GNodeB, amf *context.GnbAmf,
+func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU) {
 	amf.Log.Traceln("Processing Pdu Session Resource Setup Request")
 	var gnbUeNgapId *ngapType.RANUENGAPID
@@ -352,7 +352,7 @@ func HandlePduSessResourceSetupRequest(gnb *context.GNodeB, amf *context.GnbAmf,
 	SendToGnbUe(gnbue, common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT, pdu)
 }
 
-func HandleUeCtxReleaseCommand(gnb *context.GNodeB, amf *context.GnbAmf,
+func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU) {
 
 	amf.Log.Traceln("Processing Ue Context Release Command")
