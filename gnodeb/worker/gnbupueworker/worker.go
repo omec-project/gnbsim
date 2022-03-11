@@ -5,15 +5,12 @@
 package gnbupueworker
 
 import (
-	"sync"
-
 	"github.com/omec-project/gnbsim/common"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 )
 
-func Init(gnbue *gnbctx.GnbUpUe, wg *sync.WaitGroup) {
+func Init(gnbue *gnbctx.GnbUpUe) {
 	HandleEvents(gnbue)
-	wg.Done()
 }
 
 func HandleEvents(gnbue *gnbctx.GnbUpUe) {

@@ -17,7 +17,7 @@ func Init(simUe *simuectx.SimUe) {
 
 	err := ConnectToGnb(simUe)
 	if err != nil {
-		err = fmt.Errorf("failed to connect to gnodeb:", err)
+		err = fmt.Errorf("failed to connect to gnodeb: %v", err)
 		SendToProfile(simUe, common.PROFILE_FAIL_EVENT, err)
 		simUe.Log.Infoln("Sent Profile Fail Event to Profile routine")
 		return
@@ -80,16 +80,24 @@ func HandleEvents(ue *simuectx.SimUe) {
 			err = HandleDeregAcceptEvent(ue, msg)
 		case common.PDU_SESS_EST_REQUEST_EVENT:
 			err = HandlePduSessEstRequestEvent(ue, msg)
+		case common.PDU_SESS_REL_REQUEST_EVENT:
+			err = HandlePduSessReleaseRequestEvent(ue, msg)
+		case common.PDU_SESS_REL_COMMAND_EVENT:
+			err = HandlePduSessReleaseCommandEvent(ue, msg)
 		case common.PDU_SESS_EST_ACCEPT_EVENT:
 			err = HandlePduSessEstAcceptEvent(ue, msg)
 		case common.PDU_SESS_EST_REJECT_EVENT:
 			err = HandlePduSessEstRejectEvent(ue, msg)
+		case common.PDU_SESS_REL_COMPLETE_EVENT:
+			err = HandlePduSessReleaseCompleteEvent(ue, msg)
 		case common.DL_INFO_TRANSFER_EVENT:
 			err = HandleDlInfoTransferEvent(ue, msg)
 		case common.DATA_BEARER_SETUP_REQUEST_EVENT:
 			err = HandleDataBearerSetupRequestEvent(ue, msg)
 		case common.DATA_BEARER_SETUP_RESPONSE_EVENT:
 			err = HandleDataBearerSetupResponseEvent(ue, msg)
+		case common.DATA_BEARER_RELEASE_REQUEST_EVENT:
+			err = HandleDataBearerReleaseRequestEvent(ue, msg)
 		case common.DATA_PKT_GEN_SUCCESS_EVENT:
 			err = HandleDataPktGenSuccessEvent(ue, msg)
 		case common.DATA_PKT_GEN_FAILURE_EVENT:
@@ -113,7 +121,7 @@ func HandleEvents(ue *simuectx.SimUe) {
 			HandleQuitEvent(ue, msg)
 			return
 		default:
-			ue.Log.Infoln("Event:", event, "is not supported")
+			ue.Log.Warnln("Event:", event, "is not supported")
 		}
 
 		if err != nil {

@@ -5,6 +5,7 @@
 package context
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/omec-project/gnbsim/common"
@@ -48,14 +49,13 @@ func NewGnbCpUe(ngapId int64, gnb *GNodeB, amf *GnbAmf) *GnbCpUe {
 }
 
 // GetGnbUpUe returns the GnbUpUe instance corresponding to provided PDU Sess ID
-func (ctx *GnbCpUe) GetGnbUpUe(pduSessId int64) *GnbUpUe {
+func (ctx *GnbCpUe) GetGnbUpUe(pduSessId int64) (*GnbUpUe, error) {
 	ctx.Log.Infoln("Fetching GnbUpUe for pduSessId:", pduSessId)
 	val, ok := ctx.GnbUpUes.Load(pduSessId)
 	if ok {
-		return val.(*GnbUpUe)
+		return val.(*GnbUpUe), nil
 	} else {
-		ctx.Log.Errorln("key not present:", pduSessId)
-		return nil
+		return nil, fmt.Errorf("key not present: %v", pduSessId)
 	}
 }
 

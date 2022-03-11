@@ -22,7 +22,7 @@ type PduSession struct {
 	/* Number of UL data packets to be transmitted as requested by Sim UE*/
 	SscMode          uint8
 	PktCount         int
-	PduSessId        uint64
+	PduSessId        int64
 	Snssai           models.Snssai
 	PduSessType      models.PduSessionType
 	PduAddress       net.IP
@@ -49,7 +49,7 @@ type PduSession struct {
 	Log *logrus.Entry
 }
 
-func NewPduSession(realUe *RealUe, pduSessId uint64) *PduSession {
+func NewPduSession(realUe *RealUe, pduSessId int64) *PduSession {
 	pduSess := PduSession{}
 	pduSess.PduSessId = pduSessId
 	pduSess.ReadDlChan = make(chan common.InterfaceMessage, 10)

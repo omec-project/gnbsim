@@ -7,6 +7,7 @@ package context
 
 import (
 	"encoding/hex"
+	"fmt"
 	"regexp"
 	"sync"
 
@@ -234,14 +235,13 @@ func (ue *RealUe) Get5GMMCapability() (capability5GMM *nasType.Capability5GMM) {
 }
 
 // GetPduSession returns the PduSession instance corresponding to provided PDU Sess ID
-func (ctx *RealUe) GetPduSession(pduSessId int64) *PduSession {
+func (ctx *RealUe) GetPduSession(pduSessId int64) (*PduSession, error) {
 	ctx.Log.Infoln("Fetching PDU Session for pduSessId:", pduSessId)
 	val, ok := ctx.PduSessions[pduSessId]
 	if ok {
-		return val
+		return val, nil
 	} else {
-		ctx.Log.Errorln("key not present:", pduSessId)
-		return nil
+		return nil, fmt.Errorf("key not present: %v", pduSessId)
 	}
 }
 

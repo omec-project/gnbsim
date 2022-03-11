@@ -42,6 +42,10 @@ func HandleEvents(ue *realuectx.RealUe) (err error) {
 			err = HandleDlInfoTransferEvent(ue, msg)
 		case common.PDU_SESS_EST_REQUEST_EVENT:
 			err = HandlePduSessEstRequestEvent(ue, msg)
+		case common.PDU_SESS_REL_REQUEST_EVENT:
+			err = HandlePduSessReleaseRequestEvent(ue, msg)
+		case common.PDU_SESS_REL_COMPLETE_EVENT:
+			err = HandlePduSessReleaseCompleteEvent(ue, msg)
 		case common.PDU_SESS_EST_ACCEPT_EVENT:
 			err = HandlePduSessEstAcceptEvent(ue, msg)
 		case common.DATA_BEARER_SETUP_REQUEST_EVENT:
@@ -55,7 +59,7 @@ func HandleEvents(ue *realuectx.RealUe) (err error) {
 		case common.CONNECTION_RELEASE_REQUEST_EVENT:
 			err = HandleConnectionReleaseRequestEvent(ue, msg)
 		case common.DEREG_ACCEPT_UE_TERM_EVENT:
-			err = HandleDeregAcceptEvent(ue, msg)
+			err = HandleNwDeregAcceptEvent(ue, msg)
 		case common.ERROR_EVENT:
 			HandleErrorEvent(ue, msg)
 		case common.QUIT_EVENT:

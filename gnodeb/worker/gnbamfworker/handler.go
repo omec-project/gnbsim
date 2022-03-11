@@ -191,6 +191,7 @@ func HandleNgSetupFailure(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 				amf.Log.Errorln("Cause is nil")
 				return
 			}
+			break
 		}
 		// TODO handle TimeToWait IE
 	}
@@ -216,7 +217,7 @@ func HandleDownlinkNasTransport(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 		return
 	}
 	if gnb == nil {
-		amf.Log.Errorln("GNodeB Message is nil")
+		amf.Log.Errorln("gNodeB context is nil")
 		return
 	}
 	initiatingMessage := pdu.InitiatingMessage
@@ -240,6 +241,7 @@ func HandleDownlinkNasTransport(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 				amf.Log.Errorln("RANUENGAPID is nil")
 				return
 			}
+			break
 		}
 	}
 	ngapId := gnbUeNgapId.Value
@@ -267,7 +269,7 @@ func HandleInitialContextSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 		return
 	}
 	if gnb == nil {
-		amf.Log.Errorln("GNodeB Message is nil")
+		amf.Log.Errorln("gNodeB context is nil")
 		return
 	}
 	initiatingMessage := pdu.InitiatingMessage
@@ -290,6 +292,7 @@ func HandleInitialContextSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 				amf.Log.Errorln("RANUENGAPID is nil")
 				return
 			}
+			break
 		}
 	}
 	ngapId := gnbUeNgapId.Value
@@ -317,7 +320,7 @@ func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 		return
 	}
 	if gnb == nil {
-		amf.Log.Errorln("GNodeB Message is nil")
+		amf.Log.Errorln("gNodeB context is nil")
 		return
 	}
 	initiatingMessage := pdu.InitiatingMessage
@@ -327,11 +330,10 @@ func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	}
 	pduSessResourceSetupReq := initiatingMessage.Value.PDUSessionResourceSetupRequest
 	if pduSessResourceSetupReq == nil {
-		amf.Log.Errorln("InitialContextSetupRequest is nil")
+		amf.Log.Errorln("PDUSessionResourceSetupRequest is nil")
 		return
 	}
 
-	amf.Log.Traceln("InitialContextSetupRequest")
 	for _, ie := range pduSessResourceSetupReq.ProtocolIEs.List {
 		if ie.Id.Value == ngapType.ProtocolIEIDRANUENGAPID {
 			gnbUeNgapId = ie.Value.RANUENGAPID
@@ -340,6 +342,7 @@ func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 				amf.Log.Errorln("RANUENGAPID is nil")
 				return
 			}
+			break
 		}
 	}
 	ngapId := gnbUeNgapId.Value
@@ -350,6 +353,55 @@ func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	}
 
 	SendToGnbUe(gnbue, common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT, pdu)
+}
+
+func HandlePduSessResourceReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
+	pdu *ngapType.NGAPPDU) {
+	amf.Log.Traceln("Processing Pdu Session Resource Release Command")
+	var gnbUeNgapId *ngapType.RANUENGAPID
+
+	if amf == nil {
+		amf.Log.Errorln("ran is nil")
+		return
+	}
+	if pdu == nil {
+		amf.Log.Errorln("NGAP Message is nil")
+		return
+	}
+	if gnb == nil {
+		amf.Log.Errorln("gNodeB context is nil")
+		return
+	}
+	initiatingMessage := pdu.InitiatingMessage
+	if initiatingMessage == nil {
+		amf.Log.Errorln("Initiating Message is nil")
+		return
+	}
+	pduSessResourceReleaseCmd := initiatingMessage.Value.PDUSessionResourceReleaseCommand
+	if pduSessResourceReleaseCmd == nil {
+		amf.Log.Errorln("PDUSessionResourceReleaseCommand is nil")
+		return
+	}
+
+	for _, ie := range pduSessResourceReleaseCmd.ProtocolIEs.List {
+		if ie.Id.Value == ngapType.ProtocolIEIDRANUENGAPID {
+			gnbUeNgapId = ie.Value.RANUENGAPID
+			amf.Log.Traceln("Decode IE RANUENGAPID")
+			if gnbUeNgapId == nil {
+				amf.Log.Errorln("RANUENGAPID is nil")
+				return
+			}
+			break
+		}
+	}
+	ngapId := gnbUeNgapId.Value
+	gnbue := gnb.GnbUes.GetGnbCpUe(ngapId)
+	if gnbue == nil {
+		amf.Log.Errorln("No GnbUe found corresponding to RANUENGAPID:")
+		return
+	}
+
+	SendToGnbUe(gnbue, common.PDU_SESS_RESOURCE_RELEASE_COMMAND_EVENT, pdu)
 }
 
 func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
@@ -365,7 +417,7 @@ func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 		return
 	}
 	if gnb == nil {
-		amf.Log.Errorln("GNodeB Message is nil")
+		amf.Log.Errorln("gNodeB context is nil")
 		return
 	}
 
@@ -392,6 +444,7 @@ func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 				amf.Log.Errorln("UENGAPIDs is nil")
 				return
 			}
+			break
 		}
 	}
 

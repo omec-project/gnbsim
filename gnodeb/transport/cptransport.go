@@ -164,7 +164,7 @@ func (cpTprt *GnbCpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 			}
 		}
 
-		cpTprt.Log.Infof("Read %v bytes from %v\n", n, conn)
+		cpTprt.Log.Infof("Read %v bytes from %v\n", n, amf.GetIpAddr())
 		//TODO Post to gnbamfworker channel
 		gnbamfworker.HandleMessage(cpTprt.GnbInstance, amf, recvMsg[:n])
 	}
