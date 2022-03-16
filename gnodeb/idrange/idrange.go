@@ -26,6 +26,7 @@ const (
 	MAX_RANGE_BITS uint8 = 8
 )
 
+// TODO : add UT
 func GetIdRange() (start, end uint32) {
 	maxRangeSelectVal := (1 << MAX_RANGE_BITS) - 1
 	idBitCount := MAX_ID_BITS - MAX_RANGE_BITS

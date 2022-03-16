@@ -372,3 +372,21 @@ func HandleServiceRequestEvent(ue *realuectx.RealUe,
 	SendToSimUe(ue, m)
 	return nil
 }
+
+func HandleDeregAcceptEvent(ue *realuectx.RealUe, msg common.InterfaceMessage) (err error) {
+	ue.Log.Traceln("Generating Dereg Accept Message")
+	nasPdu := nasTestpacket.GetDeregistrationAccept()
+
+	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
+		nas.SecurityHeaderTypeIntegrityProtectedAndCipheredWithNew5gNasSecurityContext,
+		true)
+	if err != nil {
+		ue.Log.Errorln("EncodeNasPduWithSecurity() returned:", err)
+		return fmt.Errorf("failed to encrypt security mode complete message")
+	}
+
+	m := formUuMessage(common.DEREG_ACCEPT_UE_TERM_EVENT, nasPdu)
+	SendToSimUe(ue, m)
+	ue.Log.Traceln("Sent Dereg Accept UE Terminated Message to SimUe")
+	return nil
+}

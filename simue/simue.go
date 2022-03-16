@@ -6,7 +6,6 @@ package simue
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/gnodeb"
@@ -14,7 +13,7 @@ import (
 	simuectx "github.com/omec-project/gnbsim/simue/context"
 )
 
-func Init(simUe *simuectx.SimUe, wg *sync.WaitGroup) {
+func Init(simUe *simuectx.SimUe) {
 
 	err := ConnectToGnb(simUe)
 	if err != nil {
@@ -25,10 +24,13 @@ func Init(simUe *simuectx.SimUe, wg *sync.WaitGroup) {
 	}
 
 	simUe.WaitGrp.Add(1)
-	go realue.Init(simUe.RealUe, &simUe.WaitGrp)
+	go func() {
+		defer simUe.WaitGrp.Done()
+		realue.Init(simUe.RealUe)
+	}()
 
 	HandleEvents(simUe)
-	wg.Done()
+	simUe.Log.Infoln("SIM UE go routine complete")
 }
 
 func ConnectToGnb(simUe *simuectx.SimUe) error {
@@ -100,6 +102,10 @@ func HandleEvents(ue *simuectx.SimUe) {
 			err = HandleProfileStartEvent(ue, msg)
 		case common.CONNECTION_RELEASE_REQUEST_EVENT:
 			err = HandleConnectionReleaseRequestEvent(ue, msg)
+		case common.DEREG_REQUEST_UE_TERM_EVENT:
+			err = HandleNwDeregRequestEvent(ue, msg)
+		case common.DEREG_ACCEPT_UE_TERM_EVENT:
+			err = HandleNwDeregAcceptEvent(ue, msg)
 		case common.ERROR_EVENT:
 			HandleErrorEvent(ue, msg)
 			return
@@ -117,6 +123,7 @@ func HandleEvents(ue *simuectx.SimUe) {
 			err = nil
 			msg.Event = common.ERROR_EVENT
 			HandleErrorEvent(ue, msg)
+			return
 		}
 	}
 
@@ -141,4 +148,5 @@ func SendToProfile(ue *simuectx.SimUe, event common.EventType, errMsg error) {
 	msg.Proc = ue.Procedure
 	msg.Error = errMsg
 	ue.WriteProfileChan <- msg
+	ue.Log.Traceln("Sent ", event, "to Profile routine")
 }

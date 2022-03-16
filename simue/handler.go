@@ -302,6 +302,41 @@ func HandleConnectionReleaseRequestEvent(ue *simuectx.SimUe,
 	return nil
 }
 
+func HandleNwDeregRequestEvent(ue *simuectx.SimUe, intfcMsg common.InterfaceMessage) (err error) {
+
+	msg := intfcMsg.(*common.UeMessage)
+
+	nextEvent, err := ue.ProfileCtx.GetNextEvent(msg.Event)
+	if err != nil {
+		ue.Log.Errorln("GetNextEvent returned:", err)
+		return err
+	}
+	ue.Log.Infoln("Next Event:", nextEvent)
+	msg.Event = nextEvent
+	SendToRealUe(ue, msg)
+
+	return nil
+}
+
+func HandleNwDeregAcceptEvent(ue *simuectx.SimUe, intfcMsg common.InterfaceMessage) (err error) {
+
+	ue.Log.Traceln("Handling Dereg Accept Event")
+
+	msg := intfcMsg.(*common.UuMessage)
+	err = ue.ProfileCtx.CheckCurrentEvent(common.DEREG_REQUEST_UE_TERM_EVENT,
+		msg.Event)
+	if err != nil {
+		ue.Log.Errorln("CheckCurrentEvent returned:", err)
+		return err
+	}
+
+	msg.Event = common.UL_INFO_TRANSFER_EVENT
+	SendToGnbUe(ue, msg)
+	ue.Log.Traceln("Sent Dereg Accept to the network")
+	ChangeProcedure(ue)
+	return nil
+}
+
 func HandleErrorEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
@@ -364,7 +399,6 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		msg.UserDataPktCount = ue.ProfileCtx.DataPktCount
 		msg.Event = common.DATA_PKT_GEN_REQUEST_EVENT
 
-		time.Sleep(500 * time.Millisecond)
 		/* TODO: Solve timing issue. Currently UE may start sending user data
 		 * before gnb has successfuly sent PDU Session Resource Setup Response
 		 * or before 5g core has processed it
@@ -388,5 +422,7 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		msg := &common.UeMessage{}
 		msg.Event = common.SERVICE_REQUEST_EVENT
 		SendToRealUe(ue, msg)
+	case common.NW_TRIGGERED_UE_DEREGISTRATION_PROCEDURE:
+		ue.Log.Infoln("Waiting for N/W Triggered De-registration Procedure")
 	}
 }

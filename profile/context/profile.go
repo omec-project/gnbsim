@@ -14,17 +14,20 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const PER_USER_TIMEOUT uint32 = 100 //seconds
+
 type Profile struct {
-	ProfileType  string `yaml:"profileType"`
-	Name         string `yaml:"profileName"`
-	Enable       bool   `yanl:"enable"`
-	Events       map[common.EventType]common.EventType
-	Procedures   []common.ProcedureType
-	GnbName      string         `yaml:"gnbName"`
-	StartImsi    string         `yaml:"startImsi"`
-	UeCount      int            `yaml:"ueCount"`
-	Plmn         *models.PlmnId `yaml:"plmnId"`
-	DataPktCount int            `yaml:"dataPktCount"`
+	ProfileType    string `yaml:"profileType"`
+	Name           string `yaml:"profileName"`
+	Enable         bool   `yanl:"enable"`
+	Events         map[common.EventType]common.EventType
+	Procedures     []common.ProcedureType
+	GnbName        string         `yaml:"gnbName"`
+	StartImsi      string         `yaml:"startImsi"`
+	UeCount        int            `yaml:"ueCount"`
+	Plmn           *models.PlmnId `yaml:"plmnId"`
+	DataPktCount   int            `yaml:"dataPktCount"`
+	PerUserTimeout uint32         `yaml:"perUserTimeout"`
 
 	// Profile routine reads messages from other entities on this channel
 	// Entities can be SimUe, Main routine.
@@ -80,7 +83,6 @@ func (p *Profile) GetNextProcedure(currentProcedure common.ProcedureType) common
 				nextProcedure = p.Procedures[i+1]
 				break
 			}
-
 			p.Log.Infoln("No more procedures left")
 		}
 	}

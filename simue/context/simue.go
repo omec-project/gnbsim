@@ -58,6 +58,6 @@ func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile) *SimUe 
 
 	simue.Log = logger.SimUeLog.WithField(logger.FieldSupi, supi)
 
-	simue.Log.Traceln("Created new context")
+	simue.Log.Traceln("Created new SimUe context")
 	return &simue
 }
