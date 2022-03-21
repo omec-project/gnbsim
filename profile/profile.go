@@ -6,15 +6,16 @@ package profile
 
 import (
 	"fmt"
+	"strconv"
+	"sync"
+	"time"
+
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/factory"
 	profctx "github.com/omec-project/gnbsim/profile/context"
 	"github.com/omec-project/gnbsim/profile/util"
 	"github.com/omec-project/gnbsim/simue"
 	simuectx "github.com/omec-project/gnbsim/simue/context"
-	"strconv"
-	"sync"
-	"time"
 )
 
 //profile names
@@ -25,6 +26,7 @@ const (
 	AN_RELEASE            string = "anrelease"
 	UE_TRIGG_SERVICE_REQ  string = "uetriggservicereq"
 	NW_TRIGG_UE_DEREG_REQ string = "nwtriggeruedereg"
+	UE_REQ_PDU_SESS_REL   string = "uereqpdusessrelease"
 )
 
 func InitializeAllProfiles() {
@@ -120,6 +122,18 @@ func initEventMap(profile *profctx.Profile) {
 			common.PDU_SESS_EST_ACCEPT_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
 			common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
 		}
+	case UE_REQ_PDU_SESS_REL:
+		profile.Events = map[common.EventType]common.EventType{
+			common.REG_REQUEST_EVENT:          common.AUTH_REQUEST_EVENT,
+			common.AUTH_REQUEST_EVENT:         common.AUTH_RESPONSE_EVENT,
+			common.SEC_MOD_COMMAND_EVENT:      common.SEC_MOD_COMPLETE_EVENT,
+			common.REG_ACCEPT_EVENT:           common.REG_COMPLETE_EVENT,
+			common.PDU_SESS_EST_REQUEST_EVENT: common.PDU_SESS_EST_ACCEPT_EVENT,
+			common.PDU_SESS_EST_ACCEPT_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
+			common.PDU_SESS_REL_REQUEST_EVENT: common.PDU_SESS_REL_COMMAND_EVENT,
+			common.PDU_SESS_REL_COMMAND_EVENT: common.PDU_SESS_REL_COMPLETE_EVENT,
+			common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
+		}
 	case DEREGISTER:
 		profile.Events = map[common.EventType]common.EventType{
 			common.REG_REQUEST_EVENT:           common.AUTH_REQUEST_EVENT,
@@ -208,7 +222,13 @@ func initProcedureList(profile *profctx.Profile) {
 			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
 			common.USER_DATA_PKT_GENERATION_PROCEDURE,
 			common.NW_TRIGGERED_UE_DEREGISTRATION_PROCEDURE,
-			common.AMF_RELEASE_PROCEDURE,
+		}
+	case UE_REQ_PDU_SESS_REL:
+		profile.Procedures = []common.ProcedureType{
+			common.REGISTRATION_PROCEDURE,
+			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
+			common.USER_DATA_PKT_GENERATION_PROCEDURE,
+			common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE,
 		}
 	}
 }

@@ -25,8 +25,9 @@ import (
 
 //TODO Remove the hardcoding
 const (
-	SN_NAME    string = "5G:mnc093.mcc208.3gppnetwork.org"
-	SWITCH_OFF uint8  = 0
+	SN_NAME                        string = "5G:mnc093.mcc208.3gppnetwork.org"
+	SWITCH_OFF                     uint8  = 0
+	REQUEST_TYPE_EXISTING_PDU_SESS uint8  = 0x02
 )
 
 func HandleRegRequestEvent(ue *realuectx.RealUe,
@@ -205,7 +206,7 @@ func HandlePduSessEstAcceptEvent(ue *realuectx.RealUe,
 		pduAddr = net.IPv4(ip[0], ip[1], ip[2], ip[3])
 	}
 
-	pduSess := realuectx.NewPduSession(ue, uint64(nasMsg.PDUSessionID.Octet))
+	pduSess := realuectx.NewPduSession(ue, int64(nasMsg.PDUSessionID.Octet))
 	pduSess.PduSessType = pduSessType
 	pduSess.SscMode = nasMsg.GetSSCMode()
 	pduSess.PduAddress = pduAddr
@@ -216,6 +217,60 @@ func HandlePduSessEstAcceptEvent(ue *realuectx.RealUe,
 	ue.Log.Infoln("SSC Mode:", pduSess.SscMode)
 	ue.Log.Infoln("PDU Address:", pduAddr.String())
 
+	return nil
+}
+
+func HandlePduSessReleaseRequestEvent(ue *realuectx.RealUe,
+	msg common.InterfaceMessage) (err error) {
+
+	nasPdu := nasTestpacket.GetUlNasTransport_PduSessionReleaseRequest(10)
+
+	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
+		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
+	if err != nil {
+		fmt.Println("Failed to encrypt PDU Session Release Request Message", err)
+		return
+	}
+
+	m := formUuMessage(common.PDU_SESS_REL_REQUEST_EVENT, nasPdu)
+	SendToSimUe(ue, m)
+	return nil
+}
+
+func HandlePduSessReleaseCompleteEvent(ue *realuectx.RealUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	msg := intfcMsg.(*common.UeMessage)
+	nasMsg := msg.NasMsg.PDUSessionReleaseCommand
+	if nasMsg == nil {
+		ue.Log.Errorln("PDUSessionReleaseCommand is nil")
+		return fmt.Errorf("invalid NAS Message")
+	}
+
+	pduSessId := nasMsg.PDUSessionID.Octet
+	ue.Log.Infoln("PDU Session Release Command, PDU Session ID:", pduSessId)
+
+	pduSess, err := ue.GetPduSession(int64(pduSessId))
+	if err != nil {
+		return fmt.Errorf("failed to fetch PDU session:%v", err)
+	}
+
+	quitMsg := &common.UeMessage{}
+	quitMsg.Event = common.QUIT_EVENT
+	pduSess.ReadCmdChan <- quitMsg
+
+	nasPdu := nasTestpacket.GetUlNasTransport_PduSessionReleaseComplete(pduSessId,
+		REQUEST_TYPE_EXISTING_PDU_SESS, "", nil)
+
+	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
+		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
+	if err != nil {
+		fmt.Println("Failed to encrypt PDU Session Release Request Message", err)
+		return
+	}
+
+	m := formUuMessage(common.PDU_SESS_REL_COMPLETE_EVENT, nasPdu)
+	SendToSimUe(ue, m)
 	return nil
 }
 
@@ -231,8 +286,9 @@ func HandleDataBearerSetupRequestEvent(ue *realuectx.RealUe,
 		   PDUSession Resource Setup/Failed To Setup Response list
 		*/
 		if item.PduSess.Success {
-			pduSess := ue.GetPduSession(item.PduSess.PduSessId)
-			if pduSess == nil {
+			pduSess, err := ue.GetPduSession(item.PduSess.PduSessId)
+			if err != nil {
+				ue.Log.Warnln("Failed to fetch PDU Session:", err)
 				item.PduSess.Success = false
 				continue
 			}
@@ -358,14 +414,14 @@ func HandleServiceRequestEvent(ue *realuectx.RealUe,
 
 	nasPdu, err := realue_nas.GetServiceRequest(ue)
 	if err != nil {
-		return fmt.Errorf("failed to handle service request event:", err)
+		return fmt.Errorf("failed to handle service request event: %v", err)
 	}
 
 	// TS 24.501 Section 4.4.6 - Protection of Initial NAS signalling messages
 	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtected, true)
 	if err != nil {
-		return fmt.Errorf("failed to encode with security:", err)
+		return fmt.Errorf("failed to encode with security: %v", err)
 	}
 
 	m := formUuMessage(common.SERVICE_REQUEST_EVENT, nasPdu)
@@ -373,7 +429,7 @@ func HandleServiceRequestEvent(ue *realuectx.RealUe,
 	return nil
 }
 
-func HandleDeregAcceptEvent(ue *realuectx.RealUe, msg common.InterfaceMessage) (err error) {
+func HandleNwDeregAcceptEvent(ue *realuectx.RealUe, msg common.InterfaceMessage) (err error) {
 	ue.Log.Traceln("Generating Dereg Accept Message")
 	nasPdu := nasTestpacket.GetDeregistrationAccept()
 

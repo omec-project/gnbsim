@@ -5,15 +5,12 @@
 package gnbcpueworker
 
 import (
-	"sync"
-
 	"github.com/omec-project/gnbsim/common"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 )
 
-func Init(gnbue *gnbctx.GnbCpUe, wg *sync.WaitGroup) {
+func Init(gnbue *gnbctx.GnbCpUe) {
 	HandleEvents(gnbue)
-	wg.Done()
 }
 
 func HandleEvents(gnbue *gnbctx.GnbCpUe) (err error) {
@@ -37,6 +34,8 @@ func HandleEvents(gnbue *gnbctx.GnbCpUe) (err error) {
 			HandleInitialContextSetupRequest(gnbue, msg)
 		case common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT:
 			HandlePduSessResourceSetupRequest(gnbue, msg)
+		case common.PDU_SESS_RESOURCE_RELEASE_COMMAND_EVENT:
+			HandlePduSessResourceReleaseCommand(gnbue, msg)
 		case common.UE_CTX_RELEASE_COMMAND_EVENT:
 			HandleUeCtxReleaseCommand(gnbue, msg)
 		case common.TRIGGER_AN_RELEASE_EVENT:

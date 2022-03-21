@@ -208,6 +208,44 @@ func HandlePduSessEstRejectEvent(ue *simuectx.SimUe,
 	return nil
 }
 
+func HandlePduSessReleaseRequestEvent(ue *simuectx.SimUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	msg := intfcMsg.(*common.UuMessage)
+	msg.Event = common.UL_INFO_TRANSFER_EVENT
+	SendToGnbUe(ue, msg)
+	return nil
+}
+
+func HandlePduSessReleaseCommandEvent(ue *simuectx.SimUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	msg := intfcMsg.(*common.UeMessage)
+	err = ue.ProfileCtx.CheckCurrentEvent(common.PDU_SESS_REL_REQUEST_EVENT, msg.Event)
+	if err != nil {
+		ue.Log.Errorln("CheckCurrentEvent returned:", err)
+		return err
+	}
+	nextEvent, err := ue.ProfileCtx.GetNextEvent(msg.Event)
+	if err != nil {
+		ue.Log.Errorln("GetNextEvent returned:", err)
+		return err
+	}
+	ue.Log.Infoln("Next Event:", nextEvent)
+	msg.Event = nextEvent
+	SendToRealUe(ue, msg)
+	return nil
+}
+
+func HandlePduSessReleaseCompleteEvent(ue *simuectx.SimUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	msg := intfcMsg.(*common.UuMessage)
+	msg.Event = common.UL_INFO_TRANSFER_EVENT
+	SendToGnbUe(ue, msg)
+	return nil
+}
+
 func HandleDlInfoTransferEvent(ue *simuectx.SimUe,
 	msg common.InterfaceMessage) (err error) {
 
@@ -231,6 +269,17 @@ func HandleDataBearerSetupResponseEvent(ue *simuectx.SimUe,
 	return nil
 }
 
+func HandleDataBearerReleaseRequestEvent(ue *simuectx.SimUe,
+	msg common.InterfaceMessage) (err error) {
+	// This event is sent by gNB component after it has sent
+	// PDU Session Resource Release Complete over N2, However the PDU Sesson
+	// routines in the RealUE will be terminated while processing PDU Session
+	// Release Complete which will also release the communication links
+	// (go channels) with the gNB
+	ChangeProcedure(ue)
+	return nil
+}
+
 func HandleDataPktGenSuccessEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
@@ -250,7 +299,7 @@ func HandleServiceRequestEvent(ue *simuectx.SimUe,
 
 	err = ConnectToGnb(ue)
 	if err != nil {
-		return fmt.Errorf("failed to connect gnb:", err)
+		return fmt.Errorf("failed to connect gnb %v:", err)
 	}
 
 	SendToGnbUe(ue, intfcMsg)
@@ -287,7 +336,7 @@ func HandleConnectionReleaseRequestEvent(ue *simuectx.SimUe,
 	ue.WriteGnbUeChan = nil
 
 	if msg.TriggeringEvent == common.DEREG_REQUEST_UE_ORIG_EVENT {
-		msg := &common.UuMessage{}
+		msg := &common.UeMessage{}
 		msg.Event = common.QUIT_EVENT
 		ue.ReadChan <- msg
 		// Once UE is deregistered, Sim UE is not expecting any further
@@ -333,7 +382,6 @@ func HandleNwDeregAcceptEvent(ue *simuectx.SimUe, intfcMsg common.InterfaceMessa
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
 	ue.Log.Traceln("Sent Dereg Accept to the network")
-	ChangeProcedure(ue)
 	return nil
 }
 
@@ -392,6 +440,11 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		ue.Log.Infoln("Initiating UE Requested PDU Session Establishment Procedure")
 		msg := &common.UeMessage{}
 		msg.Event = common.PDU_SESS_EST_REQUEST_EVENT
+		SendToRealUe(ue, msg)
+	case common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE:
+		ue.Log.Infoln("Initiating UE Requested PDU Session Release Procedure")
+		msg := &common.UeMessage{}
+		msg.Event = common.PDU_SESS_REL_REQUEST_EVENT
 		SendToRealUe(ue, msg)
 	case common.USER_DATA_PKT_GENERATION_PROCEDURE:
 		ue.Log.Infoln("Initiating User Data Packet Generation Procedure")

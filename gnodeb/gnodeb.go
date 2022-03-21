@@ -130,7 +130,10 @@ func RequestConnection(gnb *gnbctx.GNodeB, uemsg *common.UuMessage) (chan common
 	// TODO: Launching a GO Routine for gNB and handling the waitgroup
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go gnbcpueworker.Init(gnbUe, &wg)
+	go func() {
+		defer wg.Done()
+		gnbcpueworker.Init(gnbUe)
+	}()
 	//Channel on which UE can write message to GnbUe and from which GnbUe will
 	//be reading.
 	ch := gnbUe.ReadChan

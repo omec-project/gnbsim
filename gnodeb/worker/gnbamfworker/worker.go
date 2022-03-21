@@ -38,6 +38,8 @@ func HandleMessage(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf, pkt []byte) error {
 			HandleInitialContextSetupRequest(gnb, amf, pdu)
 		case ngapType.ProcedureCodePDUSessionResourceSetup:
 			HandlePduSessResourceSetupRequest(gnb, amf, pdu)
+		case ngapType.ProcedureCodePDUSessionResourceRelease:
+			HandlePduSessResourceReleaseCommand(gnb, amf, pdu)
 		case ngapType.ProcedureCodeUEContextRelease:
 			HandleUeCtxReleaseCommand(gnb, amf, pdu)
 		}
