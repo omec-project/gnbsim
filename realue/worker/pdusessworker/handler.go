@@ -53,8 +53,8 @@ func SendIcmpEchoRequest(pduSess *realuectx.PduSession) (err error) {
 		Flags:    0,
 		TotalLen: IPV4_MIN_HEADER_LEN + ICMP_HEADER_LEN + icmpPayloadLen,
 		TTL:      64,
-		Src:      pduSess.PduAddress,                 // ue IP address
-		Dst:      net.ParseIP("192.168.250.1").To4(), // upstream router interface connected to Gi
+		Src:      pduSess.PduAddress,                   // ue IP address
+		Dst:      net.ParseIP(pduSess.DefaultAs).To4(), // upstream router interface connected to Gi
 		ID:       1,
 	}
 	checksum := test.CalculateIpv4HeaderChecksum(&ipv4hdr)
@@ -165,6 +165,7 @@ func HandleDataPktGenRequestEvent(pduSess *realuectx.PduSession,
 	intfcMsg common.InterfaceMessage) (err error) {
 	cmd := intfcMsg.(*common.UeMessage)
 	pduSess.ReqDataPktCount = cmd.UserDataPktCount
+	pduSess.DefaultAs = cmd.DefaultAs
 	err = SendIcmpEchoRequest(pduSess)
 	if err != nil {
 		return fmt.Errorf("failed to send icmp echo req:%v", err)

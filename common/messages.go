@@ -117,5 +117,8 @@ type UeMessage struct {
 	// Number of user data packets to be generated as directed by profile
 	UserDataPktCount int
 
+	// default destination of data pkt
+	DefaultAs string
+
 	CommChan chan InterfaceMessage
 }
