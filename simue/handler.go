@@ -450,6 +450,10 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		ue.Log.Infoln("Initiating User Data Packet Generation Procedure")
 		msg := &common.UeMessage{}
 		msg.UserDataPktCount = ue.ProfileCtx.DataPktCount
+		if ue.ProfileCtx.DefaultAs == "" {
+			ue.ProfileCtx.DefaultAs = "192.168.250.1" // default destination for AIAB
+		}
+		msg.DefaultAs = ue.ProfileCtx.DefaultAs
 		msg.Event = common.DATA_PKT_GEN_REQUEST_EVENT
 
 		/* TODO: Solve timing issue. Currently UE may start sending user data

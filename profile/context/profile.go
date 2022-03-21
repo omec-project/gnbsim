@@ -28,6 +28,7 @@ type Profile struct {
 	Plmn           *models.PlmnId `yaml:"plmnId"`
 	DataPktCount   int            `yaml:"dataPktCount"`
 	PerUserTimeout uint32         `yaml:"perUserTimeout"`
+	DefaultAs      string         `yaml:"defaultAs"`
 
 	// Profile routine reads messages from other entities on this channel
 	// Entities can be SimUe, Main routine.

@@ -11,6 +11,7 @@ package factory
 
 import (
 	"fmt"
+	"os"
 
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	profctx "github.com/omec-project/gnbsim/profile/context"
@@ -33,8 +34,9 @@ type Info struct {
 }
 
 type Configuration struct {
-	Gnbs     map[string]*gnbctx.GNodeB `yaml:"gnbs"`
-	Profiles []*profctx.Profile        `yaml:"profiles"`
+	Gnbs            map[string]*gnbctx.GNodeB `yaml:"gnbs"`
+	Profiles        []*profctx.Profile        `yaml:"profiles"`
+	SingleInterface bool                      `yaml:"singleInterface"`
 }
 
 type Logger struct {
@@ -60,6 +62,14 @@ func (c *Config) Validate() (err error) {
 
 	if len(c.Configuration.Gnbs) == 0 {
 		return fmt.Errorf("no gnbs configured")
+	}
+
+	if c.Configuration.SingleInterface == true {
+		for _, gnb := range c.Configuration.Gnbs {
+			if gnb.GnbN3Ip == "POD_IP" {
+				gnb.GnbN3Ip = os.Getenv("POD_IP")
+			}
+		}
 	}
 
 	if len(c.Configuration.Profiles) == 0 {
