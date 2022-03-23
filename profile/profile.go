@@ -20,13 +20,14 @@ import (
 
 //profile names
 const (
-	REGISTER              string = "register"
-	PDU_SESS_EST          string = "pdusessest"
-	DEREGISTER            string = "deregister"
-	AN_RELEASE            string = "anrelease"
-	UE_TRIGG_SERVICE_REQ  string = "uetriggservicereq"
-	NW_TRIGG_UE_DEREG_REQ string = "nwtriggeruedereg"
-	UE_REQ_PDU_SESS_REL   string = "uereqpdusessrelease"
+	REGISTER                string = "register"
+	PDU_SESS_EST            string = "pdusessest"
+	DEREGISTER              string = "deregister"
+	AN_RELEASE              string = "anrelease"
+	UE_TRIGG_SERVICE_REQ    string = "uetriggservicereq"
+	NW_TRIGG_UE_DEREG       string = "nwtriggeruedereg"
+	UE_REQ_PDU_SESS_RELEASE string = "uereqpdusessrelease"
+	NW_REQ_PDU_SESS_RELEASE string = "nwreqpdusessrelease"
 )
 
 func InitializeAllProfiles() {
@@ -122,7 +123,7 @@ func initEventMap(profile *profctx.Profile) {
 			common.PDU_SESS_EST_ACCEPT_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
 			common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
 		}
-	case UE_REQ_PDU_SESS_REL:
+	case UE_REQ_PDU_SESS_RELEASE:
 		profile.Events = map[common.EventType]common.EventType{
 			common.REG_REQUEST_EVENT:          common.AUTH_REQUEST_EVENT,
 			common.AUTH_REQUEST_EVENT:         common.AUTH_RESPONSE_EVENT,
@@ -168,7 +169,7 @@ func initEventMap(profile *profctx.Profile) {
 			common.TRIGGER_AN_RELEASE_EVENT:   common.CONNECTION_RELEASE_REQUEST_EVENT,
 			common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
 		}
-	case NW_TRIGG_UE_DEREG_REQ:
+	case NW_TRIGG_UE_DEREG:
 		profile.Events = map[common.EventType]common.EventType{
 			common.REG_REQUEST_EVENT:           common.AUTH_REQUEST_EVENT,
 			common.AUTH_REQUEST_EVENT:          common.AUTH_RESPONSE_EVENT,
@@ -177,8 +178,18 @@ func initEventMap(profile *profctx.Profile) {
 			common.PDU_SESS_EST_REQUEST_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
 			common.PDU_SESS_EST_ACCEPT_EVENT:   common.PDU_SESS_EST_ACCEPT_EVENT,
 			common.DEREG_REQUEST_UE_TERM_EVENT: common.DEREG_ACCEPT_UE_TERM_EVENT,
-			common.TRIGGER_AN_RELEASE_EVENT:    common.CONNECTION_RELEASE_REQUEST_EVENT,
 			common.PROFILE_PASS_EVENT:          common.QUIT_EVENT,
+		}
+	case NW_REQ_PDU_SESS_RELEASE:
+		profile.Events = map[common.EventType]common.EventType{
+			common.REG_REQUEST_EVENT:          common.AUTH_REQUEST_EVENT,
+			common.AUTH_REQUEST_EVENT:         common.AUTH_RESPONSE_EVENT,
+			common.SEC_MOD_COMMAND_EVENT:      common.SEC_MOD_COMPLETE_EVENT,
+			common.REG_ACCEPT_EVENT:           common.REG_COMPLETE_EVENT,
+			common.PDU_SESS_EST_REQUEST_EVENT: common.PDU_SESS_EST_ACCEPT_EVENT,
+			common.PDU_SESS_EST_ACCEPT_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
+			common.PDU_SESS_REL_COMMAND_EVENT: common.PDU_SESS_REL_COMPLETE_EVENT,
+			common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
 		}
 
 	}
@@ -216,19 +227,26 @@ func initProcedureList(profile *profctx.Profile) {
 			common.AN_RELEASE_PROCEDURE,
 			common.UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE,
 		}
-	case NW_TRIGG_UE_DEREG_REQ:
+	case NW_TRIGG_UE_DEREG:
 		profile.Procedures = []common.ProcedureType{
 			common.REGISTRATION_PROCEDURE,
 			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
 			common.USER_DATA_PKT_GENERATION_PROCEDURE,
 			common.NW_TRIGGERED_UE_DEREGISTRATION_PROCEDURE,
 		}
-	case UE_REQ_PDU_SESS_REL:
+	case UE_REQ_PDU_SESS_RELEASE:
 		profile.Procedures = []common.ProcedureType{
 			common.REGISTRATION_PROCEDURE,
 			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
 			common.USER_DATA_PKT_GENERATION_PROCEDURE,
 			common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE,
+		}
+	case NW_REQ_PDU_SESS_RELEASE:
+		profile.Procedures = []common.ProcedureType{
+			common.REGISTRATION_PROCEDURE,
+			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
+			common.USER_DATA_PKT_GENERATION_PROCEDURE,
+			common.NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE,
 		}
 	}
 }

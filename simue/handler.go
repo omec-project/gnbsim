@@ -221,10 +221,12 @@ func HandlePduSessReleaseCommandEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	msg := intfcMsg.(*common.UeMessage)
-	err = ue.ProfileCtx.CheckCurrentEvent(common.PDU_SESS_REL_REQUEST_EVENT, msg.Event)
-	if err != nil {
-		ue.Log.Errorln("CheckCurrentEvent returned:", err)
-		return err
+	if ue.Procedure == common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE {
+		err = ue.ProfileCtx.CheckCurrentEvent(common.PDU_SESS_REL_REQUEST_EVENT, msg.Event)
+		if err != nil {
+			ue.Log.Errorln("CheckCurrentEvent returned:", err)
+			return err
+		}
 	}
 	nextEvent, err := ue.ProfileCtx.GetNextEvent(msg.Event)
 	if err != nil {
@@ -481,5 +483,7 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		SendToRealUe(ue, msg)
 	case common.NW_TRIGGERED_UE_DEREGISTRATION_PROCEDURE:
 		ue.Log.Infoln("Waiting for N/W Triggered De-registration Procedure")
+	case common.NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE:
+		ue.Log.Infoln("Waiting for N/W Requested PDU Session Release Procedure")
 	}
 }
