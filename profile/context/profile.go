@@ -19,7 +19,7 @@ const PER_USER_TIMEOUT uint32 = 100 //seconds
 type Profile struct {
 	ProfileType    string `yaml:"profileType"`
 	Name           string `yaml:"profileName"`
-	Enable         bool   `yanl:"enable"`
+	Enable         bool   `yaml:"enable"`
 	Events         map[common.EventType]common.EventType
 	Procedures     []common.ProcedureType
 	GnbName        string         `yaml:"gnbName"`
@@ -42,7 +42,7 @@ func (profile *Profile) Init() {
 	profile.ReadChan = make(chan *common.ProfileMessage)
 	profile.Log = logger.ProfileLog.WithField(logger.FieldProfile, profile.Name)
 
-	profile.Log.Traceln("profile initialized")
+	profile.Log.Traceln("profile initialized ", profile.Name, ", Enable ", profile.Enable)
 }
 
 func (p *Profile) GetNextEvent(currentEvent common.EventType) (common.EventType, error) {

@@ -37,6 +37,7 @@ type Configuration struct {
 	Gnbs            map[string]*gnbctx.GNodeB `yaml:"gnbs"`
 	Profiles        []*profctx.Profile        `yaml:"profiles"`
 	SingleInterface bool                      `yaml:"singleInterface"`
+	ExecInParallel  bool                      `yaml:"execInParallel"`
 }
 
 type Logger struct {

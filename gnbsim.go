@@ -9,12 +9,14 @@ import (
 	"net/http"
 	_ "net/http/pprof" //Using package only for invoking initialization.
 	"os"
+	"sync"
 
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/factory"
 	"github.com/omec-project/gnbsim/gnodeb"
 	"github.com/omec-project/gnbsim/logger"
 	"github.com/omec-project/gnbsim/profile"
+	profctx "github.com/omec-project/gnbsim/profile/context"
 
 	"github.com/urfave/cli"
 )
@@ -70,34 +72,52 @@ func action(c *cli.Context) error {
 	summaryChan := make(chan common.InterfaceMessage)
 	result := "PASS"
 
+	var profileWaitGrp sync.WaitGroup
 	for _, profileCtx := range config.Configuration.Profiles {
 		if !profileCtx.Enable {
 			continue
 		}
-		logger.AppLog.Infoln("executing profile:", profileCtx.Name,
-			", profile type:", profileCtx.ProfileType)
+		profileWaitGrp.Add(1)
 
-		go profile.ExecuteProfile(profileCtx, summaryChan)
+		go func(profileCtx *profctx.Profile) {
+			defer profileWaitGrp.Done()
 
-		// Waiting for execution summary from profile routine
-		msg, ok := (<-summaryChan).(*common.SummaryMessage)
-		if !ok {
-			logger.AppLog.Fatalln("Invalid Message Type")
-		}
+			go profile.ExecuteProfile(profileCtx, summaryChan)
 
-		logger.AppSummaryLog.Infoln("Profile Name:", msg.ProfileName, ", Profile Type:", msg.ProfileType)
-		logger.AppSummaryLog.Infoln("Ue's Passed:", msg.UePassedCount, ", Ue's Failed:", msg.UeFailedCount)
+			select {
+			// Waiting for execution summary from profile routine
+			case m, ok := <-summaryChan:
+				if !ok {
+					logger.AppLog.Fatalln("summary Channel closed")
+					break
+				}
+				msg, ok := (m).(*common.SummaryMessage)
+				if !ok {
+					logger.AppLog.Fatalln("Invalid message type")
+					break
+				}
 
-		if msg.UeFailedCount != 0 {
-			result = "FAIL"
-		}
+				logger.AppSummaryLog.Infoln("Profile Name:", msg.ProfileName, ", Profile Type:", msg.ProfileType)
+				logger.AppSummaryLog.Infoln("Ue's Passed:", msg.UePassedCount, ", Ue's Failed:", msg.UeFailedCount)
 
-		if len(msg.ErrorList) != 0 {
-			logger.AppSummaryLog.Infoln("Profile Errors:")
-			for _, err := range msg.ErrorList {
-				logger.AppSummaryLog.Errorln(err)
+				if msg.UeFailedCount != 0 {
+					result = "FAIL"
+				}
+
+				if len(msg.ErrorList) != 0 {
+					logger.AppSummaryLog.Infoln("Profile Errors:")
+					for _, err := range msg.ErrorList {
+						logger.AppSummaryLog.Errorln(err)
+					}
+				}
 			}
+		}(profileCtx)
+		if config.Configuration.ExecInParallel == false {
+			profileWaitGrp.Wait()
 		}
+	}
+	if config.Configuration.ExecInParallel == true {
+		profileWaitGrp.Wait()
 	}
 
 	logger.AppSummaryLog.Infoln("Simulation Result:", result)
