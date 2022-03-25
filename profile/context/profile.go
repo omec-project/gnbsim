@@ -17,18 +17,20 @@ import (
 const PER_USER_TIMEOUT uint32 = 100 //seconds
 
 type Profile struct {
-	ProfileType    string `yaml:"profileType"`
-	Name           string `yaml:"profileName"`
-	Enable         bool   `yaml:"enable"`
-	Events         map[common.EventType]common.EventType
-	Procedures     []common.ProcedureType
-	GnbName        string         `yaml:"gnbName"`
-	StartImsi      string         `yaml:"startImsi"`
-	UeCount        int            `yaml:"ueCount"`
-	Plmn           *models.PlmnId `yaml:"plmnId"`
-	DataPktCount   int            `yaml:"dataPktCount"`
-	PerUserTimeout uint32         `yaml:"perUserTimeout"`
-	DefaultAs      string         `yaml:"defaultAs"`
+	ProfileType      string `yaml:"profileType"`
+	Name             string `yaml:"profileName"`
+	Enable           bool   `yaml:"enable"`
+	Events           map[common.EventType]common.EventType
+	Procedures       []common.ProcedureType
+	GnbName          string         `yaml:"gnbName"`
+	StartImsi        string         `yaml:"startImsi"`
+	UeCount          int            `yaml:"ueCount"`
+	Plmn             *models.PlmnId `yaml:"plmnId"`
+	DataPktCount     int            `yaml:"dataPktCount"`
+	PerUserTimeout   uint32         `yaml:"perUserTimeout"`
+	DefaultAs        string         `yaml:"defaultAs"`
+	DefaultAsSrcPort uint32         `yaml:"defaultAsSrcPort"`
+	DefaultAsDstPort uint32         `yaml:"defaultAsDstPort"`
 
 	// Profile routine reads messages from other entities on this channel
 	// Entities can be SimUe, Main routine.

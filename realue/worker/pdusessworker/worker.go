@@ -32,8 +32,10 @@ func HandleEvents(pduSess *realuectx.PduSession) {
 			switch event {
 			case common.INIT_EVENT:
 				HandleInitEvent(pduSess, msg)
-			case common.DATA_PKT_GEN_REQUEST_EVENT:
-				err = HandleDataPktGenRequestEvent(pduSess, msg)
+			case common.DATA_ICMP_PKT_GEN_REQUEST_EVENT:
+				err = HandleIcmpPktGenRequestEvent(pduSess, msg)
+			case common.DATA_UDP_PKT_GEN_REQUEST_EVENT:
+				err = HandleUdpPktGenRequestEvent(pduSess, msg)
 			case common.CONNECTION_RELEASE_REQUEST_EVENT:
 				err = HandleConnectionReleaseRequestEvent(pduSess, msg)
 			case common.QUIT_EVENT:

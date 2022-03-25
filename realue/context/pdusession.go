@@ -29,6 +29,8 @@ type PduSession struct {
 	SeqNum           int
 	ReqDataPktCount  int
 	DefaultAs        string
+	DefaultAsSrcPort uint32
+	DefaultAsDstPort uint32
 	TxDataPktCount   int
 	RxDataPktCount   int
 	LastDataPktRecvd bool
