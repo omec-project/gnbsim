@@ -118,7 +118,9 @@ type UeMessage struct {
 	UserDataPktCount int
 
 	// default destination of data pkt
-	DefaultAs string
+	DefaultAs        string
+	DefaultAsSrcPort uint32
+	DefaultAsDstPort uint32
 
 	CommChan chan InterfaceMessage
 }

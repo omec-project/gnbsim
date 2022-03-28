@@ -22,6 +22,7 @@ import (
 const (
 	REGISTER                string = "register"
 	PDU_SESS_EST            string = "pdusessest"
+	PDU_SESS_EST_UDP        string = "pdusessestudp"
 	DEREGISTER              string = "deregister"
 	AN_RELEASE              string = "anrelease"
 	UE_TRIGG_SERVICE_REQ    string = "uetriggservicereq"
@@ -125,6 +126,16 @@ func initEventMap(profile *profctx.Profile) {
 			common.PDU_SESS_EST_ACCEPT_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
 			common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
 		}
+	case PDU_SESS_EST_UDP:
+		profile.Events = map[common.EventType]common.EventType{
+			common.REG_REQUEST_EVENT:          common.AUTH_REQUEST_EVENT,
+			common.AUTH_REQUEST_EVENT:         common.AUTH_RESPONSE_EVENT,
+			common.SEC_MOD_COMMAND_EVENT:      common.SEC_MOD_COMPLETE_EVENT,
+			common.REG_ACCEPT_EVENT:           common.REG_COMPLETE_EVENT,
+			common.PDU_SESS_EST_REQUEST_EVENT: common.PDU_SESS_EST_ACCEPT_EVENT,
+			common.PDU_SESS_EST_ACCEPT_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
+			common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
+		}
 	case UE_REQ_PDU_SESS_RELEASE:
 		profile.Events = map[common.EventType]common.EventType{
 			common.REG_REQUEST_EVENT:          common.AUTH_REQUEST_EVENT,
@@ -205,27 +216,33 @@ func initProcedureList(profile *profctx.Profile) {
 		profile.Procedures = []common.ProcedureType{
 			common.REGISTRATION_PROCEDURE,
 			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
-			common.USER_DATA_PKT_GENERATION_PROCEDURE,
+			common.ICMP_DATA_PKT_GENERATION_PROCEDURE,
+		}
+	case PDU_SESS_EST_UDP:
+		profile.Procedures = []common.ProcedureType{
+			common.REGISTRATION_PROCEDURE,
+			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
+			common.UDP_DATA_PKT_GENERATION_PROCEDURE,
 		}
 	case DEREGISTER:
 		profile.Procedures = []common.ProcedureType{
 			common.REGISTRATION_PROCEDURE,
 			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
-			common.USER_DATA_PKT_GENERATION_PROCEDURE,
+			common.ICMP_DATA_PKT_GENERATION_PROCEDURE,
 			common.UE_INITIATED_DEREGISTRATION_PROCEDURE,
 		}
 	case AN_RELEASE:
 		profile.Procedures = []common.ProcedureType{
 			common.REGISTRATION_PROCEDURE,
 			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
-			common.USER_DATA_PKT_GENERATION_PROCEDURE,
+			common.ICMP_DATA_PKT_GENERATION_PROCEDURE,
 			common.AN_RELEASE_PROCEDURE,
 		}
 	case UE_TRIGG_SERVICE_REQ:
 		profile.Procedures = []common.ProcedureType{
 			common.REGISTRATION_PROCEDURE,
 			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
-			common.USER_DATA_PKT_GENERATION_PROCEDURE,
+			common.ICMP_DATA_PKT_GENERATION_PROCEDURE,
 			common.AN_RELEASE_PROCEDURE,
 			common.UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE,
 		}
@@ -233,21 +250,21 @@ func initProcedureList(profile *profctx.Profile) {
 		profile.Procedures = []common.ProcedureType{
 			common.REGISTRATION_PROCEDURE,
 			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
-			common.USER_DATA_PKT_GENERATION_PROCEDURE,
+			common.ICMP_DATA_PKT_GENERATION_PROCEDURE,
 			common.NW_TRIGGERED_UE_DEREGISTRATION_PROCEDURE,
 		}
 	case UE_REQ_PDU_SESS_RELEASE:
 		profile.Procedures = []common.ProcedureType{
 			common.REGISTRATION_PROCEDURE,
 			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
-			common.USER_DATA_PKT_GENERATION_PROCEDURE,
+			common.ICMP_DATA_PKT_GENERATION_PROCEDURE,
 			common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE,
 		}
 	case NW_REQ_PDU_SESS_RELEASE:
 		profile.Procedures = []common.ProcedureType{
 			common.REGISTRATION_PROCEDURE,
 			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
-			common.USER_DATA_PKT_GENERATION_PROCEDURE,
+			common.ICMP_DATA_PKT_GENERATION_PROCEDURE,
 			common.NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE,
 		}
 	}

@@ -50,7 +50,9 @@ func HandleEvents(ue *realuectx.RealUe) (err error) {
 			err = HandlePduSessEstAcceptEvent(ue, msg)
 		case common.DATA_BEARER_SETUP_REQUEST_EVENT:
 			err = HandleDataBearerSetupRequestEvent(ue, msg)
-		case common.DATA_PKT_GEN_REQUEST_EVENT:
+		case common.DATA_ICMP_PKT_GEN_REQUEST_EVENT:
+			err = HandleDataPktGenRequestEvent(ue, msg)
+		case common.DATA_UDP_PKT_GEN_REQUEST_EVENT:
 			err = HandleDataPktGenRequestEvent(ue, msg)
 		case common.DATA_PKT_GEN_SUCCESS_EVENT:
 			err = HandleDataPktGenSuccessEvent(ue, msg)

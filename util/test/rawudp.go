@@ -19,7 +19,7 @@ type iphdr struct {
 	vhl   uint8
 	tos   uint8
 	iplen uint16
-	// id    uint16
+	id    uint16
 	off   uint16
 	ttl   uint8
 	proto uint8
@@ -108,15 +108,28 @@ func (u *udphdr) checksum(ip *iphdr, payload []byte) {
 func BuildRawUdpIp(srcIP, dstIP string, srcPort, dstPort uint16, payload []byte) ([]byte, error) {
 	var err error
 
+	ipSrc := net.ParseIP(srcIP)
+	if ipSrc == nil {
+		fmt.Errorf("Invalid source IP: %v\n", ipSrc)
+		return nil, nil
+	}
+
+	ipDst := net.ParseIP(dstIP)
+	if ipDst == nil {
+		fmt.Errorf("Invalid destination IP: %v\n", ipDst)
+		return nil, nil
+	}
+
 	ip := iphdr{
 		vhl:   0x45,
 		tos:   0,
+		id:    0x1234,
 		off:   0,
 		ttl:   64,
 		proto: unix.IPPROTO_UDP,
 	}
-	copy(ip.src[:], net.ParseIP(srcIP).To4())
-	copy(ip.dst[:], net.ParseIP(dstIP).To4())
+	copy(ip.src[:], ipSrc.To4())
+	copy(ip.dst[:], ipDst.To4())
 	// iplen and csum set later
 
 	udp := udphdr{

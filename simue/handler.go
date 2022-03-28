@@ -448,7 +448,29 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		msg := &common.UeMessage{}
 		msg.Event = common.PDU_SESS_REL_REQUEST_EVENT
 		SendToRealUe(ue, msg)
-	case common.USER_DATA_PKT_GENERATION_PROCEDURE:
+	case common.UDP_DATA_PKT_GENERATION_PROCEDURE:
+		ue.Log.Infoln("Initiating Udp Data Packet Generation Procedure")
+		msg := &common.UeMessage{}
+		msg.UserDataPktCount = ue.ProfileCtx.DataPktCount
+		if ue.ProfileCtx.DefaultAs == "" {
+			ue.ProfileCtx.DefaultAs = "192.168.250.1" // default destination for AIAB
+			ue.ProfileCtx.DefaultAsSrcPort = 6111     // default src port
+			ue.ProfileCtx.DefaultAsDstPort = 6111     // default dst port
+		}
+		msg.DefaultAs = ue.ProfileCtx.DefaultAs
+		msg.DefaultAsSrcPort = ue.ProfileCtx.DefaultAsSrcPort
+		msg.DefaultAsDstPort = ue.ProfileCtx.DefaultAsDstPort
+		msg.Event = common.DATA_UDP_PKT_GEN_REQUEST_EVENT
+
+		/* TODO: Solve timing issue. Currently UE may start sending user data
+		 * before gnb has successfuly sent PDU Session Resource Setup Response
+		 * or before 5g core has processed it
+		 */
+		ue.Log.Infoln("Please wait, initiating uplink user data in 3 seconds ...")
+		time.Sleep(3 * time.Second)
+
+		SendToRealUe(ue, msg)
+	case common.ICMP_DATA_PKT_GENERATION_PROCEDURE:
 		ue.Log.Infoln("Initiating User Data Packet Generation Procedure")
 		msg := &common.UeMessage{}
 		msg.UserDataPktCount = ue.ProfileCtx.DataPktCount
@@ -456,7 +478,7 @@ func HandleProcedure(ue *simuectx.SimUe) {
 			ue.ProfileCtx.DefaultAs = "192.168.250.1" // default destination for AIAB
 		}
 		msg.DefaultAs = ue.ProfileCtx.DefaultAs
-		msg.Event = common.DATA_PKT_GEN_REQUEST_EVENT
+		msg.Event = common.DATA_ICMP_PKT_GEN_REQUEST_EVENT
 
 		/* TODO: Solve timing issue. Currently UE may start sending user data
 		 * before gnb has successfuly sent PDU Session Resource Setup Response
