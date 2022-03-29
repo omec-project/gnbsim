@@ -37,30 +37,49 @@ func InitializeAllProfiles() {
 }
 
 func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMessage) {
-	profile.Log.Infoln("executing profile:", profile.Name,
-		", profile type:", profile.ProfileType)
-	initEventMap(profile)
-	initProcedureList(profile)
-
-	if profile.PerUserTimeout == 0 {
-		profile.PerUserTimeout = profctx.PER_USER_TIMEOUT
-	}
-	gnb, err := factory.AppConfig.Configuration.GetGNodeB(profile.GnbName)
-	if err != nil {
-		profile.Log.Errorln("GetGNodeB returned:", err)
-	}
-
-	imsi, err := strconv.Atoi(profile.StartImsi)
-	if err != nil {
-		profile.Log.Fatalln("invalid imsi value")
-	}
-	var wg sync.WaitGroup
 	summary := &common.SummaryMessage{
 		ProfileType: profile.ProfileType,
 		ProfileName: profile.Name,
 		ErrorList:   make([]error, 0, 10),
 	}
 
+	defer func() {
+		summaryChan <- summary
+	}()
+
+	err := initEventMap(profile)
+	if err != nil {
+		summary.ErrorList = append(summary.ErrorList, err)
+		return
+	}
+	err = initProcedureList(profile)
+	if err != nil {
+		summary.ErrorList = append(summary.ErrorList, err)
+		return
+	}
+
+	gnb, err := factory.AppConfig.Configuration.GetGNodeB(profile.GnbName)
+	if err != nil {
+		err = fmt.Errorf("Failed to fetch gNB context: %v", err)
+		summary.ErrorList = append(summary.ErrorList, err)
+		return
+	}
+
+	imsi, err := strconv.Atoi(profile.StartImsi)
+	if err != nil {
+		err = fmt.Errorf("invalid imsi value:%v", profile.StartImsi)
+		summary.ErrorList = append(summary.ErrorList, err)
+		return
+	}
+
+	profile.Log.Infoln("executing profile:", profile.Name,
+		", profile type:", profile.ProfileType)
+
+	if profile.PerUserTimeout == 0 {
+		profile.PerUserTimeout = profctx.PER_USER_TIMEOUT
+	}
+
+	var wg sync.WaitGroup
 	// Currently executing profile for one IMSI at a time
 	for count := 1; count <= profile.UeCount; count++ {
 		imsiStr := "imsi-" + strconv.Itoa(imsi)
@@ -101,11 +120,10 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 		imsi++
 	}
 
-	summaryChan <- summary
 	wg.Wait()
 }
 
-func initEventMap(profile *profctx.Profile) {
+func initEventMap(profile *profctx.Profile) error {
 	switch profile.ProfileType {
 	case REGISTER:
 		profile.Events = map[common.EventType]common.EventType{
@@ -193,11 +211,13 @@ func initEventMap(profile *profctx.Profile) {
 			common.PDU_SESS_REL_COMMAND_EVENT: common.PDU_SESS_REL_COMPLETE_EVENT,
 			common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
 		}
-
+	default:
+		return fmt.Errorf("profile type not supported: %v", profile.ProfileType)
 	}
+	return nil
 }
 
-func initProcedureList(profile *profctx.Profile) {
+func initProcedureList(profile *profctx.Profile) error {
 	switch profile.ProfileType {
 	case REGISTER:
 		profile.Procedures = []common.ProcedureType{common.REGISTRATION_PROCEDURE}
@@ -250,5 +270,8 @@ func initProcedureList(profile *profctx.Profile) {
 			common.USER_DATA_PKT_GENERATION_PROCEDURE,
 			common.NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE,
 		}
+	default:
+		return fmt.Errorf("profile type not supported: %v", profile.ProfileType)
 	}
+	return nil
 }

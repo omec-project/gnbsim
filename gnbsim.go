@@ -6,17 +6,22 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	_ "net/http/pprof" //Using package only for invoking initialization.
 	"os"
 	"sync"
 
+	"github.com/omec-project/http2_util"
+	"github.com/omec-project/logger_util"
+	"github.com/gin-contrib/cors"
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/factory"
 	"github.com/omec-project/gnbsim/gnodeb"
 	"github.com/omec-project/gnbsim/logger"
-	"github.com/omec-project/gnbsim/profile"
+	prof "github.com/omec-project/gnbsim/profile"
 	profctx "github.com/omec-project/gnbsim/profile/context"
+	"github.com/omec-project/gnbsim/profile/httpserver"
 
 	"github.com/urfave/cli"
 )
@@ -37,6 +42,7 @@ func main() {
 }
 
 func action(c *cli.Context) error {
+
 	cfg := c.String("cfg")
 	if cfg == "" {
 		logger.AppLog.Warnln("No configuration file provided. Using default configuration file:", factory.GNBSIM_DEFAULT_CONFIG_PATH)
@@ -62,56 +68,64 @@ func action(c *cli.Context) error {
 	logger.AppLog.Infoln("Setting log level to:", lvl)
 	logger.SetLogLevel(lvl)
 
-	profile.InitializeAllProfiles()
+	prof.InitializeAllProfiles()
 	err := gnodeb.InitializeAllGnbs()
 	if err != nil {
 		logger.AppLog.Errorln("Failed to initialize gNodeBs:", err)
 		return err
 	}
 
-	summaryChan := make(chan common.InterfaceMessage)
-	result := "PASS"
+	go ListenAndLogSummary()
+
+	router := logger_util.NewGinWithLogrus(logger.GinLog)
+	router.Use(cors.New(cors.Config{
+		AllowMethods: []string{"GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"},
+		AllowHeaders: []string{
+			"Origin", "Content-Length", "Content-Type", "User-Agent", "Referrer", "Host",
+			"Token", "X-Requested-With",
+		},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		AllowAllOrigins:  true,
+		MaxAge:           86400,
+	}))
+
+	httpserver.AddService(router)
+	server, err := http2_util.NewServer("127.0.0.1:8081", "./http2.log", router)
+
+	if server == nil {
+		logger.AppLog.Errorf("Initialize HTTP server failed: %+v", err)
+		return fmt.Errorf("failed to initialize http server, err: %v", err)
+	}
+
+	if err != nil {
+		logger.AppLog.Warnf("Initialize HTTP server: %+v", err)
+		return fmt.Errorf("failed to initialize http server, err: %v", err)
+	}
+
+	serverScheme := "http"
+	if serverScheme == "http" {
+		err = server.ListenAndServe()
+	} else if serverScheme == "https" {
+		//	err = server.ListenAndServeTLS(util.AmfPemPath, util.AmfKeyPath)
+	}
+
+	if err != nil {
+		logger.AppLog.Fatalf("HTTP server setup failed: %+v", err)
+	}
 
 	var profileWaitGrp sync.WaitGroup
-	for _, profileCtx := range config.Configuration.Profiles {
-		if !profileCtx.Enable {
+	for _, profile := range config.Configuration.Profiles {
+		if !profile.Enable {
 			continue
 		}
 		profileWaitGrp.Add(1)
 
 		go func(profileCtx *profctx.Profile) {
 			defer profileWaitGrp.Done()
+			go prof.ExecuteProfile(profileCtx, profctx.SummaryChan)
+		}(profile)
 
-			go profile.ExecuteProfile(profileCtx, summaryChan)
-
-			select {
-			// Waiting for execution summary from profile routine
-			case m, ok := <-summaryChan:
-				if !ok {
-					logger.AppLog.Fatalln("summary Channel closed")
-					break
-				}
-				msg, ok := (m).(*common.SummaryMessage)
-				if !ok {
-					logger.AppLog.Fatalln("Invalid message type")
-					break
-				}
-
-				logger.AppSummaryLog.Infoln("Profile Name:", msg.ProfileName, ", Profile Type:", msg.ProfileType)
-				logger.AppSummaryLog.Infoln("Ue's Passed:", msg.UePassedCount, ", Ue's Failed:", msg.UeFailedCount)
-
-				if msg.UeFailedCount != 0 {
-					result = "FAIL"
-				}
-
-				if len(msg.ErrorList) != 0 {
-					logger.AppSummaryLog.Infoln("Profile Errors:")
-					for _, err := range msg.ErrorList {
-						logger.AppSummaryLog.Errorln(err)
-					}
-				}
-			}
-		}(profileCtx)
 		if config.Configuration.ExecInParallel == false {
 			profileWaitGrp.Wait()
 		}
@@ -119,8 +133,6 @@ func action(c *cli.Context) error {
 	if config.Configuration.ExecInParallel == true {
 		profileWaitGrp.Wait()
 	}
-
-	logger.AppSummaryLog.Infoln("Simulation Result:", result)
 
 	return nil
 }
@@ -131,5 +143,32 @@ func getCliFlags() []cli.Flag {
 			Name:  "cfg",
 			Usage: "GNBSIM config file",
 		},
+	}
+}
+
+func ListenAndLogSummary() {
+	for intfcMsg := range profctx.SummaryChan {
+		if intfcMsg.GetEventType() == common.QUIT_EVENT {
+			return
+		}
+
+		result := "TRUE"
+		// Waiting for execution summary from profile routine
+		msg, ok := intfcMsg.(*common.SummaryMessage)
+		if !ok {
+			logger.AppLog.Fatalln("Invalid Message Type")
+		}
+
+		logger.AppSummaryLog.Infoln("Profile Name:", msg.ProfileName, ", Profile Type:", msg.ProfileType)
+		logger.AppSummaryLog.Infoln("Ue's Passed:", msg.UePassedCount, ", Ue's Failed:", msg.UeFailedCount)
+
+		if len(msg.ErrorList) != 0 {
+			result = "FAIL"
+			logger.AppSummaryLog.Infoln("Profile Errors:")
+			for _, err := range msg.ErrorList {
+				logger.AppSummaryLog.Errorln(err)
+			}
+		}
+		logger.AppSummaryLog.Infoln("Profile Status:", result)
 	}
 }
