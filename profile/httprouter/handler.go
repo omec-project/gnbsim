@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package httpserver
+package httprouter
 
 import (
 	"net/http"
@@ -18,7 +18,7 @@ import (
 
 func HTTPExecuteProfile(c *gin.Context) {
 
-	logger.HttpLog.Warnln("EcecuteProfile API called")
+	logger.HttpLog.Infoln("EcecuteProfile API called")
 	var prof profCtx.Profile
 
 	requestBody, err := c.GetRawData()
@@ -46,23 +46,8 @@ func HTTPExecuteProfile(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
-	logger.HttpLog.Info("%#v", prof)
+	logger.HttpLog.Debugf("%#v", prof)
 
 	prof.Init()
 	go profile.ExecuteProfile(&prof, profCtx.SummaryChan)
-
-	/*rsp := producer.HandleSmContextStatusNotify(req)
-
-	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
-	if err != nil {
-		logger.HttpLog.Errorln(err)
-		problemDetails := models.ProblemDetails{
-			Status: http.StatusInternalServerError,
-			Cause:  "SYSTEM_FAILURE",
-			Detail: err.Error(),
-		}
-		c.JSON(http.StatusInternalServerError, problemDetails)
-	} else {
-		c.Data(rsp.Status, "application/json", responseBody)
-	}*/
 }

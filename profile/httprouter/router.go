@@ -3,24 +3,17 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package httpserver
+package httprouter
 
 import (
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 
 	"github.com/omec-project/logger_util"
 	"github.com/omec-project/gnbsim/logger"
 )
-
-var HttpLog *logrus.Entry
-
-func init() {
-	HttpLog = logger.HttpLog
-}
 
 // Route is the information for every URI.
 type Route struct {
@@ -50,7 +43,6 @@ func AddService(engine *gin.Engine) *gin.RouterGroup {
 	for _, route := range routes {
 		switch route.Method {
 		case "GET":
-			logger.HttpLog.Warnln("Registering GET METHOD")
 			group.GET(route.Pattern, route.HandlerFunc)
 		case "POST":
 			group.POST(route.Pattern, route.HandlerFunc)
@@ -67,7 +59,6 @@ func AddService(engine *gin.Engine) *gin.RouterGroup {
 
 // Index is the index handler.
 func Index(c *gin.Context) {
-	logger.HttpLog.Warnln("INDEX SERVED")
 	c.String(http.StatusOK, "Hello World!")
 }
 

@@ -6,22 +6,21 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	_ "net/http/pprof" //Using package only for invoking initialization.
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
+	"time"
 
-	"github.com/omec-project/http2_util"
-	"github.com/omec-project/logger_util"
-	"github.com/gin-contrib/cors"
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/factory"
 	"github.com/omec-project/gnbsim/gnodeb"
+	"github.com/omec-project/gnbsim/httpserver"
 	"github.com/omec-project/gnbsim/logger"
 	prof "github.com/omec-project/gnbsim/profile"
 	profctx "github.com/omec-project/gnbsim/profile/context"
-	"github.com/omec-project/gnbsim/profile/httpserver"
 
 	"github.com/urfave/cli"
 )
@@ -29,7 +28,7 @@ import (
 func main() {
 	app := cli.NewApp()
 	app.Name = "GNBSIM"
-	app.Usage = "./gnbsim -cfg [gnbsim configuration file]"
+	app.Usage = "./gnbsim --cfg [gnbsim configuration file]"
 	app.Action = action
 	app.Flags = getCliFlags()
 
@@ -77,41 +76,23 @@ func action(c *cli.Context) error {
 
 	go ListenAndLogSummary()
 
-	router := logger_util.NewGinWithLogrus(logger.GinLog)
-	router.Use(cors.New(cors.Config{
-		AllowMethods: []string{"GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"},
-		AllowHeaders: []string{
-			"Origin", "Content-Length", "Content-Type", "User-Agent", "Referrer", "Host",
-			"Token", "X-Requested-With",
-		},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		AllowAllOrigins:  true,
-		MaxAge:           86400,
-	}))
+	var appWaitGrp sync.WaitGroup
+	if config.Configuration.Server.Enable {
+		appWaitGrp.Add(1)
+		go func() {
+			defer appWaitGrp.Done()
+			err := httpserver.StartHttpServer()
+			if err != nil {
+				logger.AppLog.Infoln("StartHttpServer returned :", err)
+			}
+		}()
 
-	httpserver.AddService(router)
-	server, err := http2_util.NewServer("127.0.0.1:8081", "./http2.log", router)
-
-	if server == nil {
-		logger.AppLog.Errorf("Initialize HTTP server failed: %+v", err)
-		return fmt.Errorf("failed to initialize http server, err: %v", err)
-	}
-
-	if err != nil {
-		logger.AppLog.Warnf("Initialize HTTP server: %+v", err)
-		return fmt.Errorf("failed to initialize http server, err: %v", err)
-	}
-
-	serverScheme := "http"
-	if serverScheme == "http" {
-		err = server.ListenAndServe()
-	} else if serverScheme == "https" {
-		//	err = server.ListenAndServeTLS(util.AmfPemPath, util.AmfKeyPath)
-	}
-
-	if err != nil {
-		logger.AppLog.Fatalf("HTTP server setup failed: %+v", err)
+		signalChannel := make(chan os.Signal, 1)
+		signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
+		go func() {
+			<-signalChannel
+			httpserver.StopHttpServer()
+		}()
 	}
 
 	var profileWaitGrp sync.WaitGroup
@@ -123,16 +104,22 @@ func action(c *cli.Context) error {
 
 		go func(profileCtx *profctx.Profile) {
 			defer profileWaitGrp.Done()
-			go prof.ExecuteProfile(profileCtx, profctx.SummaryChan)
+			prof.ExecuteProfile(profileCtx, profctx.SummaryChan)
 		}(profile)
 
 		if config.Configuration.ExecInParallel == false {
 			profileWaitGrp.Wait()
 		}
 	}
+
 	if config.Configuration.ExecInParallel == true {
 		profileWaitGrp.Wait()
 	}
+
+	appWaitGrp.Wait()
+
+	// TODO: To be removed. Allowing summary logger to dump the logs
+	time.Sleep(time.Second * 5)
 
 	return nil
 }
@@ -152,7 +139,7 @@ func ListenAndLogSummary() {
 			return
 		}
 
-		result := "TRUE"
+		result := "PASS"
 		// Waiting for execution summary from profile routine
 		msg, ok := intfcMsg.(*common.SummaryMessage)
 		if !ok {
