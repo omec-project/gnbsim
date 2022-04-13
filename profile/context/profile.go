@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2022 Great Software Laboratory Pvt. Ltd
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -15,23 +16,25 @@ import (
 )
 
 const PER_USER_TIMEOUT uint32 = 100 //seconds
+var SummaryChan = make(chan common.InterfaceMessage)
 
 type Profile struct {
-	ProfileType    string `yaml:"profileType"`
-	Name           string `yaml:"profileName"`
-	Enable         bool   `yaml:"enable"`
-	Events         map[common.EventType]common.EventType
-	Procedures     []common.ProcedureType
-	GnbName        string         `yaml:"gnbName"`
-	StartImsi      string         `yaml:"startImsi"`
-	UeCount        int            `yaml:"ueCount"`
-	Plmn           *models.PlmnId `yaml:"plmnId"`
-	DataPktCount   int            `yaml:"dataPktCount"`
-	PerUserTimeout uint32         `yaml:"perUserTimeout"`
-	DefaultAs      string         `yaml:"defaultAs"`
-	Key            string         `yaml:"key"`
-	Opc            string         `yaml:"opc"`
-	SeqNum         string         `yaml:"sequenceNumber"`
+	ProfileType    string         `yaml:"profileType" json:"profileType"`
+	Name           string         `yaml:"profileName" json:"profileName"`
+	Enable         bool           `yaml:"enable" json:"enable"`
+	GnbName        string         `yaml:"gnbName" json:"gnbName"`
+	StartImsi      string         `yaml:"startImsi" json:"startImsi"`
+	UeCount        int            `yaml:"ueCount" json:"ueCount"`
+	Plmn           *models.PlmnId `yaml:"plmnId" json:"plmnId"`
+	DataPktCount   int            `yaml:"dataPktCount" json:"dataPktCount"`
+	PerUserTimeout uint32         `yaml:"perUserTimeout" json:"perUserTimeout"`
+	DefaultAs      string         `yaml:"defaultAs" json:"defaultAs"`
+	Key            string         `yaml:"key" json:"key"`
+	Opc            string         `yaml:"opc" json:"opc"`
+	SeqNum         string         `yaml:"sequenceNumber" json:"sequenceNumber"`
+
+	Events     map[common.EventType]common.EventType
+	Procedures []common.ProcedureType
 
 	// Profile routine reads messages from other entities on this channel
 	// Entities can be SimUe, Main routine.

@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2022 Great Software Laboratory Pvt. Ltd
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 // Copyright 2019 free5GC.org
 //
@@ -9,13 +10,17 @@ import (
 	"net/http"
 	_ "net/http/pprof" //Using package only for invoking initialization.
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
+	"time"
 
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/factory"
 	"github.com/omec-project/gnbsim/gnodeb"
+	"github.com/omec-project/gnbsim/httpserver"
 	"github.com/omec-project/gnbsim/logger"
-	"github.com/omec-project/gnbsim/profile"
+	prof "github.com/omec-project/gnbsim/profile"
 	profctx "github.com/omec-project/gnbsim/profile/context"
 
 	"github.com/urfave/cli"
@@ -24,7 +29,7 @@ import (
 func main() {
 	app := cli.NewApp()
 	app.Name = "GNBSIM"
-	app.Usage = "./gnbsim -cfg [gnbsim configuration file]"
+	app.Usage = "./gnbsim --cfg [gnbsim configuration file]"
 	app.Action = action
 	app.Flags = getCliFlags()
 
@@ -37,6 +42,7 @@ func main() {
 }
 
 func action(c *cli.Context) error {
+
 	cfg := c.String("cfg")
 	if cfg == "" {
 		logger.AppLog.Warnln("No configuration file provided. Using default configuration file:", factory.GNBSIM_DEFAULT_CONFIG_PATH)
@@ -62,65 +68,59 @@ func action(c *cli.Context) error {
 	logger.AppLog.Infoln("Setting log level to:", lvl)
 	logger.SetLogLevel(lvl)
 
-	profile.InitializeAllProfiles()
+	prof.InitializeAllProfiles()
 	err := gnodeb.InitializeAllGnbs()
 	if err != nil {
 		logger.AppLog.Errorln("Failed to initialize gNodeBs:", err)
 		return err
 	}
 
-	summaryChan := make(chan common.InterfaceMessage)
-	result := "PASS"
+	go ListenAndLogSummary()
+
+	var appWaitGrp sync.WaitGroup
+	if config.Configuration.Server.Enable {
+		appWaitGrp.Add(1)
+		go func() {
+			defer appWaitGrp.Done()
+			err := httpserver.StartHttpServer()
+			if err != nil {
+				logger.AppLog.Infoln("StartHttpServer returned :", err)
+			}
+		}()
+
+		signalChannel := make(chan os.Signal, 1)
+		signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
+		go func() {
+			<-signalChannel
+			httpserver.StopHttpServer()
+		}()
+	}
 
 	var profileWaitGrp sync.WaitGroup
-	for _, profileCtx := range config.Configuration.Profiles {
-		if !profileCtx.Enable {
+	for _, profile := range config.Configuration.Profiles {
+		if !profile.Enable {
 			continue
 		}
 		profileWaitGrp.Add(1)
 
 		go func(profileCtx *profctx.Profile) {
 			defer profileWaitGrp.Done()
+			prof.ExecuteProfile(profileCtx, profctx.SummaryChan)
+		}(profile)
 
-			go profile.ExecuteProfile(profileCtx, summaryChan)
-
-			select {
-			// Waiting for execution summary from profile routine
-			case m, ok := <-summaryChan:
-				if !ok {
-					logger.AppLog.Fatalln("summary Channel closed")
-					break
-				}
-				msg, ok := (m).(*common.SummaryMessage)
-				if !ok {
-					logger.AppLog.Fatalln("Invalid message type")
-					break
-				}
-
-				logger.AppSummaryLog.Infoln("Profile Name:", msg.ProfileName, ", Profile Type:", msg.ProfileType)
-				logger.AppSummaryLog.Infoln("Ue's Passed:", msg.UePassedCount, ", Ue's Failed:", msg.UeFailedCount)
-
-				if msg.UeFailedCount != 0 {
-					result = "FAIL"
-				}
-
-				if len(msg.ErrorList) != 0 {
-					logger.AppSummaryLog.Infoln("Profile Errors:")
-					for _, err := range msg.ErrorList {
-						logger.AppSummaryLog.Errorln(err)
-					}
-				}
-			}
-		}(profileCtx)
 		if config.Configuration.ExecInParallel == false {
 			profileWaitGrp.Wait()
 		}
 	}
+
 	if config.Configuration.ExecInParallel == true {
 		profileWaitGrp.Wait()
 	}
 
-	logger.AppSummaryLog.Infoln("Simulation Result:", result)
+	appWaitGrp.Wait()
+
+	// TODO: To be removed. Allowing summary logger to dump the logs
+	time.Sleep(time.Second * 5)
 
 	return nil
 }
@@ -131,5 +131,32 @@ func getCliFlags() []cli.Flag {
 			Name:  "cfg",
 			Usage: "GNBSIM config file",
 		},
+	}
+}
+
+func ListenAndLogSummary() {
+	for intfcMsg := range profctx.SummaryChan {
+		if intfcMsg.GetEventType() == common.QUIT_EVENT {
+			return
+		}
+
+		result := "PASS"
+		// Waiting for execution summary from profile routine
+		msg, ok := intfcMsg.(*common.SummaryMessage)
+		if !ok {
+			logger.AppLog.Fatalln("Invalid Message Type")
+		}
+
+		logger.AppSummaryLog.Infoln("Profile Name:", msg.ProfileName, ", Profile Type:", msg.ProfileType)
+		logger.AppSummaryLog.Infoln("Ue's Passed:", msg.UePassedCount, ", Ue's Failed:", msg.UeFailedCount)
+
+		if len(msg.ErrorList) != 0 {
+			result = "FAIL"
+			logger.AppSummaryLog.Infoln("Profile Errors:")
+			for _, err := range msg.ErrorList {
+				logger.AppSummaryLog.Errorln(err)
+			}
+		}
+		logger.AppSummaryLog.Infoln("Profile Status:", result)
 	}
 }
