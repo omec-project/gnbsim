@@ -9,9 +9,9 @@ import (
 
 	"github.com/omec-project/gnbsim/logger"
 
-	amfctx "github.com/free5gc/amf/context"
-	"github.com/free5gc/amf/factory"
-	"github.com/free5gc/openapi/models"
+	amfctx "github.com/omec-project/amf/context"
+	"github.com/omec-project/amf/factory"
+	"github.com/omec-project/openapi/models"
 	"github.com/sirupsen/logrus"
 )
 

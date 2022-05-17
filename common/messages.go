@@ -8,7 +8,7 @@ import (
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 	"github.com/omec-project/gnbsim/util/test"
 
-	"github.com/free5gc/ngap/ngapType"
+	"github.com/omec-project/ngap/ngapType"
 	"github.com/omec-project/nas"
 )
 
