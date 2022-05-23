@@ -27,6 +27,7 @@ type Profile struct {
 	UeCount        int            `yaml:"ueCount"`
 	Plmn           *models.PlmnId `yaml:"plmnId"`
 	DataPktCount   int            `yaml:"dataPktCount"`
+	DataPktInt     uint32         `yaml:"dataPktInterval"`
 	PerUserTimeout uint32         `yaml:"perUserTimeout"`
 	DefaultAs      string         `yaml:"defaultAs"`
 

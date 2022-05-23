@@ -452,6 +452,7 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		ue.Log.Infoln("Initiating User Data Packet Generation Procedure")
 		msg := &common.UeMessage{}
 		msg.UserDataPktCount = ue.ProfileCtx.DataPktCount
+		msg.UserDataPktInterval = ue.ProfileCtx.DataPktInt
 		if ue.ProfileCtx.DefaultAs == "" {
 			ue.ProfileCtx.DefaultAs = "192.168.250.1" // default destination for AIAB
 		}

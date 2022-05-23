@@ -117,6 +117,9 @@ type UeMessage struct {
 	// Number of user data packets to be generated as directed by profile
 	UserDataPktCount int
 
+	// User data packets generating interval as directed by profile
+	UserDataPktInterval uint32
+
 	// default destination of data pkt
 	DefaultAs string
 
