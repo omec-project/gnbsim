@@ -58,6 +58,8 @@ func HandleEvents(ue *simuectx.SimUe) {
 		ue.Log.Infoln("Handling event:", event)
 
 		switch event {
+		case common.GUTI_REG_REQUEST_EVENT:
+			err = HandleRegRequestEvent(ue, msg)
 		case common.REG_REQUEST_EVENT:
 			err = HandleRegRequestEvent(ue, msg)
 		case common.REG_REJECT_EVENT:

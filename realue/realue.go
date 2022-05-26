@@ -30,6 +30,8 @@ func HandleEvents(ue *realuectx.RealUe) (err error) {
 		switch event {
 		case common.REG_REQUEST_EVENT:
 			err = HandleRegRequestEvent(ue, msg)
+		case common.GUTI_REG_REQUEST_EVENT:
+			err = HandleGutiRegRequestEvent(ue, msg)
 		case common.AUTH_RESPONSE_EVENT:
 			err = HandleAuthResponseEvent(ue, msg)
 		case common.SEC_MOD_COMPLETE_EVENT:

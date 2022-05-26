@@ -338,13 +338,25 @@ func HandleConnectionReleaseRequestEvent(ue *simuectx.SimUe,
 	ue.WriteGnbUeChan = nil
 
 	if msg.TriggeringEvent == common.DEREG_REQUEST_UE_ORIG_EVENT {
-		msg := &common.UeMessage{}
-		msg.Event = common.QUIT_EVENT
-		ue.ReadChan <- msg
-		// Once UE is deregistered, Sim UE is not expecting any further
-		// procedures
-		SendToProfile(ue, common.PROFILE_PASS_EVENT, nil)
-		return nil
+		// checking nextprocedure in a profile, may exist after deregistration
+		// Ex: Imsi-Registration, Deregistration, Guti-Registration etc
+		nextProcedure := ue.ProfileCtx.GetNextProcedure(ue.Procedure)
+		if nextProcedure != 0 {
+			err := ConnectToGnb(ue)
+			if err != nil {
+				return fmt.Errorf("failed to connect gnb %v:", err)
+			}
+			ChangeProcedure(ue)
+			return nil
+		} else {
+			msg := &common.UeMessage{}
+			msg.Event = common.QUIT_EVENT
+			ue.ReadChan <- msg
+			// Once UE is deregistered, Sim UE is not expecting any further
+			// procedures
+			SendToProfile(ue, common.PROFILE_PASS_EVENT, nil)
+			return nil
+		}
 	}
 
 	SendToRealUe(ue, msg)
@@ -433,6 +445,11 @@ func ChangeProcedure(ue *simuectx.SimUe) {
 
 func HandleProcedure(ue *simuectx.SimUe) {
 	switch ue.Procedure {
+	case common.GUTI_REGISTRATION_PROCEDURE:
+		ue.Log.Infoln("Initiating Guti Registration Procedure")
+		msg := &common.UeMessage{}
+		msg.Event = common.GUTI_REG_REQUEST_EVENT
+		SendToRealUe(ue, msg)
 	case common.REGISTRATION_PROCEDURE:
 		ue.Log.Infoln("Initiating Registration Procedure")
 		msg := &common.UeMessage{}

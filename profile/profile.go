@@ -21,6 +21,7 @@ import (
 //profile names
 const (
 	REGISTER                string = "register"
+	GUTI_REGISTER           string = "gutiregister"
 	PDU_SESS_EST            string = "pdusessest"
 	DEREGISTER              string = "deregister"
 	AN_RELEASE              string = "anrelease"
@@ -115,6 +116,19 @@ func initEventMap(profile *profctx.Profile) {
 			common.REG_ACCEPT_EVENT:      common.REG_COMPLETE_EVENT,
 			common.PROFILE_PASS_EVENT:    common.QUIT_EVENT,
 		}
+	case GUTI_REGISTER:
+		profile.Events = map[common.EventType]common.EventType{
+			common.REG_REQUEST_EVENT:           common.AUTH_REQUEST_EVENT,
+			common.AUTH_REQUEST_EVENT:          common.AUTH_RESPONSE_EVENT,
+			common.SEC_MOD_COMMAND_EVENT:       common.SEC_MOD_COMPLETE_EVENT,
+			common.REG_ACCEPT_EVENT:            common.REG_COMPLETE_EVENT,
+			common.DEREG_REQUEST_UE_ORIG_EVENT: common.DEREG_ACCEPT_UE_ORIG_EVENT,
+			common.GUTI_REG_REQUEST_EVENT:      common.REG_ACCEPT_EVENT,
+			common.PDU_SESS_EST_REQUEST_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
+			common.PDU_SESS_EST_ACCEPT_EVENT:   common.PDU_SESS_EST_ACCEPT_EVENT,
+			common.PROFILE_PASS_EVENT:          common.QUIT_EVENT,
+		}
+
 	case PDU_SESS_EST:
 		profile.Events = map[common.EventType]common.EventType{
 			common.REG_REQUEST_EVENT:          common.AUTH_REQUEST_EVENT,
@@ -201,6 +215,14 @@ func initProcedureList(profile *profctx.Profile) {
 	switch profile.ProfileType {
 	case REGISTER:
 		profile.Procedures = []common.ProcedureType{common.REGISTRATION_PROCEDURE}
+	case GUTI_REGISTER:
+		profile.Procedures = []common.ProcedureType{
+			common.REGISTRATION_PROCEDURE,
+			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
+			common.UE_INITIATED_DEREGISTRATION_PROCEDURE,
+			common.GUTI_REGISTRATION_PROCEDURE,
+			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
+		}
 	case PDU_SESS_EST:
 		profile.Procedures = []common.ProcedureType{
 			common.REGISTRATION_PROCEDURE,

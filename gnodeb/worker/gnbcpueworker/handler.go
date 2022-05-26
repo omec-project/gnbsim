@@ -42,7 +42,9 @@ func HandleInitialUEMessage(gnbue *gnbctx.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
 
 	msg := intfcMsg.(*common.UuMessage)
-	sendMsg, err := test.GetInitialUEMessage(gnbue.GnbUeNgapId, msg.NasPdus[0], "")
+	var sendMsg []byte
+	var err error
+	sendMsg, err = test.GetInitialUEMessage(gnbue.GnbUeNgapId, msg.NasPdus[0], "")
 	if err != nil {
 		gnbue.Log.Errorln("GetInitialUEMessage failed:", err)
 		return

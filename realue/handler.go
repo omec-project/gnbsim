@@ -55,6 +55,27 @@ func HandleRegRequestEvent(ue *realuectx.RealUe,
 	return nil
 }
 
+func HandleGutiRegRequestEvent(ue *realuectx.RealUe,
+	msg common.InterfaceMessage) (err error) {
+
+	ueSecurityCapability := ue.GetUESecurityCapability()
+
+	gutiNas := nasConvert.GutiToNas(ue.Guti)
+	mobileId5GS := nasType.MobileIdentity5GS{
+		Len:    11, // 5g-guti
+		Buffer: gutiNas.Octet[:],
+	}
+
+	ue.Log.Traceln("Generating Guti Registration Request Message")
+	nasPdu := nasTestpacket.GetRegistrationRequest(nasMessage.RegistrationType5GSInitialRegistration,
+		mobileId5GS, nil, ueSecurityCapability, nil, nil, nil)
+
+	m := formUuMessage(common.REG_REQUEST_EVENT, nasPdu)
+	SendToSimUe(ue, m)
+	ue.Log.Traceln("Sent Guti Registration Request Message to SimUe")
+	return nil
+}
+
 func HandleAuthResponseEvent(ue *realuectx.RealUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
