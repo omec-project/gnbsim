@@ -10,7 +10,7 @@ import (
 	"time"
 
 	formatter "github.com/antonfisher/nested-logrus-formatter"
-	"github.com/free5gc/logger_util"
+	"github.com/omec-project/logger_util"
 	"github.com/sirupsen/logrus"
 )
 

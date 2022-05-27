@@ -19,7 +19,7 @@ import (
 	"github.com/omec-project/gnbsim/gnodeb/worker/gnbcpueworker"
 	"github.com/omec-project/gnbsim/logger"
 
-	"github.com/free5gc/idgenerator"
+	"github.com/omec-project/idgenerator"
 )
 
 func InitializeAllGnbs() error {

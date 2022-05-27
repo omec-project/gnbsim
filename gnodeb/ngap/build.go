@@ -11,9 +11,9 @@ import (
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 
-	"github.com/free5gc/ngap"
-	"github.com/free5gc/ngap/ngapConvert"
-	"github.com/free5gc/ngap/ngapType"
+	"github.com/omec-project/ngap"
+	"github.com/omec-project/ngap/ngapConvert"
+	"github.com/omec-project/ngap/ngapType"
 )
 
 func GetNGSetupRequest(gnb *gnbctx.GNodeB) ([]byte, error) {

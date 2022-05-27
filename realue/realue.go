@@ -9,7 +9,7 @@ import (
 	realuectx "github.com/omec-project/gnbsim/realue/context"
 	"github.com/omec-project/gnbsim/util/test"
 
-	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
+	"github.com/omec-project/CommonConsumerTestData/UDM/TestGenAuthData"
 )
 
 func Init(ue *realuectx.RealUe) {
