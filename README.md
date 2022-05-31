@@ -79,7 +79,7 @@ Please refer to the official [SD-Core documentation](https://docs.sd-core.openne
     other SD-Core Network Functions then use AIAB to deploy all network functions including gNBSim. 
     
     1. Clone AIAB
-    2. Run "make 5gc"
+    2. Run "make 5g-core"
     3. Trigger call flow testing using following commands
     
     
