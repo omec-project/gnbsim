@@ -47,6 +47,9 @@ configuration:
       startImsi: 208930100007487
       ueCount: 5
       defaultAs: "192.168.250.1" #default icmp pkt destination
+      opc: "981d464c7c52eb6e5036234984ad0bcf"
+      key: "5122250214c33e723a5dd523fc145fc0"
+      sequenceNumber: "16f3b3f70fc2"
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
@@ -57,6 +60,9 @@ configuration:
       startImsi: 208930100007492 # First IMSI. Subsequent values will be used if ueCount is more than 1
       ueCount: 5 # Number of UEs for for which the profile will be executed
       defaultAs: "192.168.250.1" #default icmp pkt destination
+      opc: "981d464c7c52eb6e5036234984ad0bcf"
+      key: "5122250214c33e723a5dd523fc145fc0"
+      sequenceNumber: "16f3b3f70fc2"
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
@@ -68,6 +74,9 @@ configuration:
       startImsi: 208930100007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
       ueCount: 5 # Number of UEs for for which the profile will be executed
       defaultAs: "192.168.250.1" #default icmp pkt destination
+      opc: "981d464c7c52eb6e5036234984ad0bcf"
+      key: "5122250214c33e723a5dd523fc145fc0"
+      sequenceNumber: "16f3b3f70fc2"
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
@@ -78,6 +87,9 @@ configuration:
       startImsi: 208930100007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
       ueCount: 5 # Number of UEs for for which the profile will be executed
       defaultAs: "192.168.250.1" #default icmp pkt destination
+      opc: "981d464c7c52eb6e5036234984ad0bcf"
+      key: "5122250214c33e723a5dd523fc145fc0"
+      sequenceNumber: "16f3b3f70fc2"
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)  
@@ -88,6 +100,9 @@ configuration:
       startImsi: 208930100007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
       ueCount: 5 # Number of UEs for for which the profile will be executed
       defaultAs: "192.168.250.1" #default icmp pkt destination
+      opc: "981d464c7c52eb6e5036234984ad0bcf"
+      key: "5122250214c33e723a5dd523fc145fc0"
+      sequenceNumber: "16f3b3f70fc2"
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
@@ -99,6 +114,9 @@ configuration:
       ueCount: 1 # Number of UEs for for which the profile will be executed
       defaultAs: "192.168.250.1" #default icmp pkt destination
       perUserTimeout: 10 #if no expected event received in this time then treat it as failure
+      opc: "981d464c7c52eb6e5036234984ad0bcf"
+      key: "5122250214c33e723a5dd523fc145fc0"
+      sequenceNumber: "16f3b3f70fc2"
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
@@ -108,6 +126,9 @@ configuration:
       gnbName: gnb1 # gNB to be used for this profile
       startImsi: 208930100007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
       ueCount: 5 # Number of UEs for for which the profile will be executed
+      opc: "981d464c7c52eb6e5036234984ad0bcf"
+      key: "5122250214c33e723a5dd523fc145fc0"
+      sequenceNumber: "16f3b3f70fc2"
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
@@ -117,6 +138,9 @@ configuration:
       gnbName: gnb1 # gNB to be used for this profile
       startImsi: 208930100007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
       ueCount: 1 # Number of UEs for for which the profile will be executed
+      opc: "981d464c7c52eb6e5036234984ad0bcf"
+      key: "5122250214c33e723a5dd523fc145fc0"
+      sequenceNumber: "16f3b3f70fc2"
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
