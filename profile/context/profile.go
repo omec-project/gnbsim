@@ -29,6 +29,9 @@ type Profile struct {
 	DataPktCount   int            `yaml:"dataPktCount"`
 	PerUserTimeout uint32         `yaml:"perUserTimeout"`
 	DefaultAs      string         `yaml:"defaultAs"`
+	Key            string         `yaml:"key"`
+	Opc            string         `yaml:"opc"`
+	SeqNum         string         `yaml:"sequenceNumber"`
 
 	// Profile routine reads messages from other entities on this channel
 	// Entities can be SimUe, Main routine.
