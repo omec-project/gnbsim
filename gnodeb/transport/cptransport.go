@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2022-present Intel Corporation
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -132,7 +133,7 @@ func (cpTprt *GnbCpTransport) SendToPeer(peer transportcommon.TransportPeer,
 
 // ReceiveFromPeer continuously waits for an incoming message from the AMF
 // It then routes the message to the GnbAmfWorker
-func (cpTprt *GnbCpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer) {
+func (cpTprt *GnbCpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer, amfConnStatus chan bool) {
 	amf := peer.(*gnbctx.GnbAmf)
 
 	defer func() {
@@ -151,6 +152,7 @@ func (cpTprt *GnbCpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 			switch err {
 			case io.EOF, io.ErrUnexpectedEOF:
 				cpTprt.Log.Errorln("Read EOF from client")
+				amfConnStatus <- false
 				return
 			case syscall.EAGAIN:
 				cpTprt.Log.Warnln("SCTP read timeout")
@@ -160,6 +162,7 @@ func (cpTprt *GnbCpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 				continue
 			default:
 				cpTprt.Log.Errorln("Handle connection[addr: %+v] error: %+v\n", amf.Conn.RemoteAddr(), err)
+				amfConnStatus <- false
 				return
 			}
 		}

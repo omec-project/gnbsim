@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2022-present Intel Corporation
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -8,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/factory"
@@ -60,20 +62,34 @@ func Init(gnb *gnbctx.GNodeB) error {
 
 	gnb.DefaultAmf.Init()
 
-	err = gnb.CpTransport.ConnectToPeer(gnb.DefaultAmf)
-	if err != nil {
-		gnb.Log.Errorln("ConnectToPeer returned:", err)
-		return fmt.Errorf("failed to connect to amf")
-	}
+	amfConnStatus := make(chan bool, 2)
+	amfConnStatus <- false
 
-	successfulOutcome, err := PerformNgSetup(gnb, gnb.DefaultAmf)
-	if !successfulOutcome || err != nil {
-		gnb.Log.Errorln("PerformNgSetup returned:", err)
-		return fmt.Errorf("failed to perform ng setup procedure")
-	}
+	go func(amfConnStatus chan bool) {
+		for {
+			select {
+			case status := <-amfConnStatus:
+				gnb.Log.Infoln("Conn status received")
+				if !status {
+					err = gnb.CpTransport.ConnectToPeer(gnb.DefaultAmf)
+					if err != nil {
+						gnb.Log.Errorln("ConnectToPeer returned:", err)
+						return
+					}
 
-	go gnb.CpTransport.ReceiveFromPeer(gnb.DefaultAmf)
+					successfulOutcome, err := PerformNgSetup(gnb, gnb.DefaultAmf)
+					if !successfulOutcome || err != nil {
+						gnb.Log.Errorln("PerformNgSetup returned:", err)
+						return
+					}
 
+					go gnb.CpTransport.ReceiveFromPeer(gnb.DefaultAmf, amfConnStatus)
+				}
+			}
+		}
+	}(amfConnStatus)
+
+	time.Sleep(10 * time.Second)
 	gnb.Log.Traceln("GNodeB Initialized")
 	return nil
 }
