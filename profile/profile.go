@@ -43,6 +43,10 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 		ProfileName: profile.Name,
 		ErrorList:   make([]error, 0, 10),
 	}
+	profile.Log.Infoln("executing profile:", profile.Name,
+		", profile type:", profile.ProfileType)
+	initProcedureEventMap()
+	initProcedureList(profile)
 
 	defer func() {
 		summaryChan <- summary
@@ -124,98 +128,84 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 	wg.Wait()
 }
 
-func initEventMap(profile *profctx.Profile) error {
-	switch profile.ProfileType {
-	case REGISTER:
-		profile.Events = map[common.EventType]common.EventType{
-			common.REG_REQUEST_EVENT:     common.AUTH_REQUEST_EVENT,
-			common.AUTH_REQUEST_EVENT:    common.AUTH_RESPONSE_EVENT,
-			common.SEC_MOD_COMMAND_EVENT: common.SEC_MOD_COMPLETE_EVENT,
-			common.REG_ACCEPT_EVENT:      common.REG_COMPLETE_EVENT,
-			common.PROFILE_PASS_EVENT:    common.QUIT_EVENT,
-		}
-	case PDU_SESS_EST:
-		profile.Events = map[common.EventType]common.EventType{
-			common.REG_REQUEST_EVENT:          common.AUTH_REQUEST_EVENT,
-			common.AUTH_REQUEST_EVENT:         common.AUTH_RESPONSE_EVENT,
-			common.SEC_MOD_COMMAND_EVENT:      common.SEC_MOD_COMPLETE_EVENT,
-			common.REG_ACCEPT_EVENT:           common.REG_COMPLETE_EVENT,
-			common.PDU_SESS_EST_REQUEST_EVENT: common.PDU_SESS_EST_ACCEPT_EVENT,
-			common.PDU_SESS_EST_ACCEPT_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
-			common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
-		}
-	case UE_REQ_PDU_SESS_RELEASE:
-		profile.Events = map[common.EventType]common.EventType{
-			common.REG_REQUEST_EVENT:          common.AUTH_REQUEST_EVENT,
-			common.AUTH_REQUEST_EVENT:         common.AUTH_RESPONSE_EVENT,
-			common.SEC_MOD_COMMAND_EVENT:      common.SEC_MOD_COMPLETE_EVENT,
-			common.REG_ACCEPT_EVENT:           common.REG_COMPLETE_EVENT,
-			common.PDU_SESS_EST_REQUEST_EVENT: common.PDU_SESS_EST_ACCEPT_EVENT,
-			common.PDU_SESS_EST_ACCEPT_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
-			common.PDU_SESS_REL_REQUEST_EVENT: common.PDU_SESS_REL_COMMAND_EVENT,
-			common.PDU_SESS_REL_COMMAND_EVENT: common.PDU_SESS_REL_COMPLETE_EVENT,
-			common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
-		}
-	case DEREGISTER:
-		profile.Events = map[common.EventType]common.EventType{
-			common.REG_REQUEST_EVENT:           common.AUTH_REQUEST_EVENT,
-			common.AUTH_REQUEST_EVENT:          common.AUTH_RESPONSE_EVENT,
-			common.SEC_MOD_COMMAND_EVENT:       common.SEC_MOD_COMPLETE_EVENT,
-			common.REG_ACCEPT_EVENT:            common.REG_COMPLETE_EVENT,
-			common.PDU_SESS_EST_REQUEST_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
-			common.PDU_SESS_EST_ACCEPT_EVENT:   common.PDU_SESS_EST_ACCEPT_EVENT,
-			common.DEREG_REQUEST_UE_ORIG_EVENT: common.DEREG_ACCEPT_UE_ORIG_EVENT,
-			common.PROFILE_PASS_EVENT:          common.QUIT_EVENT,
-		}
-	case AN_RELEASE:
-		profile.Events = map[common.EventType]common.EventType{
-			common.REG_REQUEST_EVENT:          common.AUTH_REQUEST_EVENT,
-			common.AUTH_REQUEST_EVENT:         common.AUTH_RESPONSE_EVENT,
-			common.SEC_MOD_COMMAND_EVENT:      common.SEC_MOD_COMPLETE_EVENT,
-			common.REG_ACCEPT_EVENT:           common.REG_COMPLETE_EVENT,
-			common.PDU_SESS_EST_REQUEST_EVENT: common.PDU_SESS_EST_ACCEPT_EVENT,
-			common.PDU_SESS_EST_ACCEPT_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
-			common.TRIGGER_AN_RELEASE_EVENT:   common.CONNECTION_RELEASE_REQUEST_EVENT,
-			common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
-		}
-	case UE_TRIGG_SERVICE_REQ:
-		profile.Events = map[common.EventType]common.EventType{
-			common.REG_REQUEST_EVENT:          common.AUTH_REQUEST_EVENT,
-			common.AUTH_REQUEST_EVENT:         common.AUTH_RESPONSE_EVENT,
-			common.SEC_MOD_COMMAND_EVENT:      common.SEC_MOD_COMPLETE_EVENT,
-			common.REG_ACCEPT_EVENT:           common.REG_COMPLETE_EVENT,
-			common.PDU_SESS_EST_REQUEST_EVENT: common.PDU_SESS_EST_ACCEPT_EVENT,
-			common.PDU_SESS_EST_ACCEPT_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
-			common.SERVICE_REQUEST_EVENT:      common.SERVICE_ACCEPT_EVENT,
-			common.TRIGGER_AN_RELEASE_EVENT:   common.CONNECTION_RELEASE_REQUEST_EVENT,
-			common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
-		}
-	case NW_TRIGG_UE_DEREG:
-		profile.Events = map[common.EventType]common.EventType{
-			common.REG_REQUEST_EVENT:           common.AUTH_REQUEST_EVENT,
-			common.AUTH_REQUEST_EVENT:          common.AUTH_RESPONSE_EVENT,
-			common.SEC_MOD_COMMAND_EVENT:       common.SEC_MOD_COMPLETE_EVENT,
-			common.REG_ACCEPT_EVENT:            common.REG_COMPLETE_EVENT,
-			common.PDU_SESS_EST_REQUEST_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
-			common.PDU_SESS_EST_ACCEPT_EVENT:   common.PDU_SESS_EST_ACCEPT_EVENT,
-			common.DEREG_REQUEST_UE_TERM_EVENT: common.DEREG_ACCEPT_UE_TERM_EVENT,
-			common.PROFILE_PASS_EVENT:          common.QUIT_EVENT,
-		}
-	case NW_REQ_PDU_SESS_RELEASE:
-		profile.Events = map[common.EventType]common.EventType{
-			common.REG_REQUEST_EVENT:          common.AUTH_REQUEST_EVENT,
-			common.AUTH_REQUEST_EVENT:         common.AUTH_RESPONSE_EVENT,
-			common.SEC_MOD_COMMAND_EVENT:      common.SEC_MOD_COMPLETE_EVENT,
-			common.REG_ACCEPT_EVENT:           common.REG_COMPLETE_EVENT,
-			common.PDU_SESS_EST_REQUEST_EVENT: common.PDU_SESS_EST_ACCEPT_EVENT,
-			common.PDU_SESS_EST_ACCEPT_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
-			common.PDU_SESS_REL_COMMAND_EVENT: common.PDU_SESS_REL_COMPLETE_EVENT,
-			common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
-		}
-	default:
-		return fmt.Errorf("profile type not supported: %v", profile.ProfileType)
+func initProcedureEventMap() {
+	proc1 := profctx.ProcedureEventsDetails{}
+
+	//common.REGISTRATION_PROCEDURE:
+	proc1.Events = map[common.EventType]common.EventType{
+		common.REG_REQUEST_EVENT:     common.AUTH_REQUEST_EVENT,
+		common.AUTH_REQUEST_EVENT:    common.AUTH_RESPONSE_EVENT,
+		common.SEC_MOD_COMMAND_EVENT: common.SEC_MOD_COMPLETE_EVENT,
+		common.REG_ACCEPT_EVENT:      common.REG_COMPLETE_EVENT,
+		common.PROFILE_PASS_EVENT:    common.QUIT_EVENT,
 	}
-	return nil
+	profctx.ProceduresMap[common.REGISTRATION_PROCEDURE] = &proc1
+
+	// common.PDU_SESSION_ESTABLISHMENT_PROCEDURE:
+	proc2 := profctx.ProcedureEventsDetails{}
+	proc2.Events = map[common.EventType]common.EventType{
+		common.PDU_SESS_EST_REQUEST_EVENT: common.PDU_SESS_EST_ACCEPT_EVENT,
+		common.PDU_SESS_EST_ACCEPT_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
+		common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
+	}
+	profctx.ProceduresMap[common.PDU_SESSION_ESTABLISHMENT_PROCEDURE] = &proc2
+
+	//common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE:
+	proc3 := profctx.ProcedureEventsDetails{}
+	proc3.Events = map[common.EventType]common.EventType{
+		common.PDU_SESS_REL_REQUEST_EVENT: common.PDU_SESS_REL_COMMAND_EVENT,
+		common.PDU_SESS_REL_COMMAND_EVENT: common.PDU_SESS_REL_COMPLETE_EVENT,
+		common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
+	}
+	profctx.ProceduresMap[common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE] = &proc3
+
+	// common.UE_INITIATED_DEREGISTRATION_PROCEDURE:
+	proc4 := profctx.ProcedureEventsDetails{}
+	proc4.Events = map[common.EventType]common.EventType{
+		common.DEREG_REQUEST_UE_ORIG_EVENT: common.DEREG_ACCEPT_UE_ORIG_EVENT,
+		common.PROFILE_PASS_EVENT:          common.QUIT_EVENT,
+	}
+	profctx.ProceduresMap[common.UE_INITIATED_DEREGISTRATION_PROCEDURE] = &proc4
+
+	// common.AN_RELEASE_PROCEDURE:
+	proc5 := profctx.ProcedureEventsDetails{}
+	proc5.Events = map[common.EventType]common.EventType{
+		common.TRIGGER_AN_RELEASE_EVENT: common.CONNECTION_RELEASE_REQUEST_EVENT,
+		common.PROFILE_PASS_EVENT:       common.QUIT_EVENT,
+	}
+	profctx.ProceduresMap[common.AN_RELEASE_PROCEDURE] = &proc5
+
+	// common.UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE:
+	proc6 := profctx.ProcedureEventsDetails{}
+	proc6.Events = map[common.EventType]common.EventType{
+		common.SERVICE_REQUEST_EVENT:    common.SERVICE_ACCEPT_EVENT,
+		common.TRIGGER_AN_RELEASE_EVENT: common.CONNECTION_RELEASE_REQUEST_EVENT,
+		common.PROFILE_PASS_EVENT:       common.QUIT_EVENT,
+	}
+	profctx.ProceduresMap[common.UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE] = &proc6
+
+	// common.NW_TRIGGERED_UE_DEREGISTRATION_PROCEDURE:
+	proc7 := profctx.ProcedureEventsDetails{}
+	proc7.Events = map[common.EventType]common.EventType{
+		common.DEREG_REQUEST_UE_TERM_EVENT: common.DEREG_ACCEPT_UE_TERM_EVENT,
+		common.PROFILE_PASS_EVENT:          common.QUIT_EVENT,
+	}
+	profctx.ProceduresMap[common.NW_TRIGGERED_UE_DEREGISTRATION_PROCEDURE] = &proc7
+
+	// common.NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE:
+	proc8 := profctx.ProcedureEventsDetails{}
+	proc8.Events = map[common.EventType]common.EventType{
+		common.PDU_SESS_REL_COMMAND_EVENT: common.PDU_SESS_REL_COMPLETE_EVENT,
+		common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
+	}
+	profctx.ProceduresMap[common.NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE] = &proc8
+
+	// common.USER_DATA_PKT_GENERATION_PROCEDURE:
+	proc9 := profctx.ProcedureEventsDetails{}
+	proc9.Events = map[common.EventType]common.EventType{
+		common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
+	}
+	profctx.ProceduresMap[common.USER_DATA_PKT_GENERATION_PROCEDURE] = &proc9
 }
 
 func initProcedureList(profile *profctx.Profile) error {

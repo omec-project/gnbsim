@@ -18,6 +18,12 @@ import (
 const PER_USER_TIMEOUT uint32 = 100 //seconds
 var SummaryChan = make(chan common.InterfaceMessage)
 
+type ProcedureEventsDetails struct {
+    Events         map[common.EventType]common.EventType
+}
+
+var ProceduresMap map[common.ProcedureType]*ProcedureEventsDetails
+
 type Profile struct {
 	ProfileType    string         `yaml:"profileType" json:"profileType"`
 	Name           string         `yaml:"profileName" json:"profileName"`
@@ -32,8 +38,6 @@ type Profile struct {
 	Key            string         `yaml:"key" json:"key"`
 	Opc            string         `yaml:"opc" json:"opc"`
 	SeqNum         string         `yaml:"sequenceNumber" json:"sequenceNumber"`
-
-	Events     map[common.EventType]common.EventType
 	Procedures []common.ProcedureType
 
 	// Profile routine reads messages from other entities on this channel
@@ -44,6 +48,10 @@ type Profile struct {
 	Log *logrus.Entry
 }
 
+func init() {
+    ProceduresMap = make(map[common.ProcedureType]*ProcedureEventsDetails)
+}
+
 func (profile *Profile) Init() {
 	profile.ReadChan = make(chan *common.ProfileMessage)
 	profile.Log = logger.ProfileLog.WithField(logger.FieldProfile, profile.Name)
@@ -51,17 +59,20 @@ func (profile *Profile) Init() {
 	profile.Log.Traceln("profile initialized ", profile.Name, ", Enable ", profile.Enable)
 }
 
-func (p *Profile) GetNextEvent(currentEvent common.EventType) (common.EventType, error) {
+func (p *Profile) GetNextEvent(Procedure common.ProcedureType, currentEvent common.EventType) (common.EventType, error) {
 	var err error
-	nextEvent, ok := p.Events[currentEvent]
+    proc := ProceduresMap[Procedure]
+
+	nextEvent, ok := proc.Events[currentEvent]
 	if !ok {
 		err = fmt.Errorf("event %v not configured in event map", currentEvent)
 	}
 	return nextEvent, err
 }
 
-func (p *Profile) CheckCurrentEvent(triggerEvent, recvEvent common.EventType) (err error) {
-	expected, ok := p.Events[triggerEvent]
+func (p *Profile) CheckCurrentEvent(Procedure common.ProcedureType, triggerEvent, recvEvent common.EventType) (err error) {
+    proc := ProceduresMap[Procedure]
+	expected, ok := proc.Events[triggerEvent]
 	if !ok {
 		err = fmt.Errorf("triggering event %v not configured in event map",
 			triggerEvent)
