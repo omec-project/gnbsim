@@ -95,3 +95,10 @@ Please refer to the official [SD-Core documentation](https://docs.sd-core.openne
 
 All these steps are explained in detail on [AIAB documentation](https://docs.sd-core.opennetworking.org/master/developer/aiab.html)
 
+## Step 4: Optionally launching profiles through HTTP APIs
+
+    gNBSim can process HTTP Requests to launch profiles. For example running the
+    below curl command will launch a profile in gNBSim
+   
+    $ curl -X POST 127.0.0.1:8081/gnbsim/v1/executeProfile -H 'Content-Type: application/json' -d '{"profileType": "uereqpdusessrelease", "profileName": "profile8", "enable": false, "gnbName": "gnb1", "startImsi": "208930100007497", "ueCount": 1, "plmnId": {"mcc": "208", "mnc": "93"}}'
+

@@ -6,12 +6,15 @@ require (
 	git.cs.nctu.edu.tw/calee/sctp v1.1.0
 	github.com/antonfisher/nested-logrus-formatter v1.3.1
 	github.com/calee0219/fatal v0.0.1
+	github.com/gin-contrib/cors v1.3.1
+	github.com/gin-gonic/gin v1.7.0
 	github.com/kr/text v0.2.0 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/omec-project/CommonConsumerTestData v1.1.0
 	github.com/omec-project/UeauCommon v1.1.0
 	github.com/omec-project/amf v1.1.0
 	github.com/omec-project/aper v1.1.0
+	github.com/omec-project/http2_util v1.1.0
 	github.com/omec-project/idgenerator v1.1.0
 	github.com/omec-project/logger_util v1.1.0
 	github.com/omec-project/milenage v1.1.0
