@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2022 Great Software Laboratory Pvt. Ltd
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 // Copyright 2019 free5GC.org
 //
@@ -28,6 +29,8 @@ var (
 	GtpLog        *logrus.Entry
 	NgapLog       *logrus.Entry
 	PsuppLog      *logrus.Entry
+	GinLog        *logrus.Entry
+	HttpLog       *logrus.Entry
 )
 
 const (
@@ -81,6 +84,8 @@ func init() {
 	SimUeLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "SimUe"})
 	ProfileLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Profile"})
 	GNodeBLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "GNodeB"})
+	GinLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Gin"})
+	HttpLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "HTTP"})
 	CfgLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "CFG"})
 	UtilLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Util"})
 	GtpLog = UtilLog.WithField("subcategory", "GTP")
