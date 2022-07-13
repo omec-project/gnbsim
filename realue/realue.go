@@ -12,7 +12,7 @@ import (
 
 func Init(ue *realuectx.RealUe) {
 
-	ue.AuthenticationSubs = test.GetAuthSubscription(ue.Key,ue.Opc,"", ue.SeqNum)
+	ue.AuthenticationSubs = test.GetAuthSubscription(ue.Key, ue.Opc, "", ue.SeqNum)
 
 	HandleEvents(ue)
 }

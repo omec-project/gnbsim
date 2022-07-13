@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2022-present Intel Corporation
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -480,6 +481,8 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		ue.Log.Infoln("Initiating UE Triggered Service Request Procedure")
 		msg := &common.UeMessage{}
 		msg.Event = common.SERVICE_REQUEST_EVENT
+		ue.Log.Infoln("Waiting for 60 Secs. Restart amf if you want to test amf state store feature ...")
+		time.Sleep(60 * time.Second)
 		SendToRealUe(ue, msg)
 	case common.NW_TRIGGERED_UE_DEREGISTRATION_PROCEDURE:
 		ue.Log.Infoln("Waiting for N/W Triggered De-registration Procedure")

@@ -14,10 +14,10 @@ import (
 	"github.com/omec-project/CommonConsumerTestData/UDR/TestRegistrationProcedure"
 	"github.com/omec-project/UeauCommon"
 	"github.com/omec-project/milenage"
-	"github.com/omec-project/openapi/models"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasType"
 	"github.com/omec-project/nas/security"
+	"github.com/omec-project/openapi/models"
 )
 
 type RanUeContext struct {

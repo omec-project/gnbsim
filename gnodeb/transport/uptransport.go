@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2022-present Intel Corporation
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -57,7 +58,7 @@ func (upTprt *GnbUpTransport) Init() error {
 		return fmt.Errorf("failed to create udp socket: %v", ipPort)
 	}
 
-	go upTprt.ReceiveFromPeer(nil)
+	go upTprt.ReceiveFromPeer(nil, nil)
 
 	upTprt.Log.Infoln("User Plane transport listening on:", ipPort)
 	return nil
@@ -90,7 +91,7 @@ func (upTprt *GnbUpTransport) SendToPeer(peer transportcommon.TransportPeer,
 
 // ReceiveFromPeer continuously waits for an incoming message from the UPF
 // It then routes the message to the GnbUpfWorker
-func (upTprt *GnbUpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer) {
+func (upTprt *GnbUpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer, amfConnStatus chan bool) {
 	for {
 		recvMsg := make([]byte, MAX_UDP_PKT_LEN)
 		//TODO Handle notification, info
