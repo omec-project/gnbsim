@@ -15,12 +15,12 @@ import (
 
 	realue_nas "github.com/omec-project/gnbsim/realue/nas"
 
-	"github.com/omec-project/openapi/models"
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasConvert"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasTestpacket"
 	"github.com/omec-project/nas/nasType"
+	"github.com/omec-project/openapi/models"
 )
 
 //TODO Remove the hardcoding
