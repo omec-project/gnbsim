@@ -255,8 +255,8 @@ github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32/go.mod h1:9wM+0iRr9ahx58uY
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=
-github.com/omec-project/CommonConsumerTestData v1.1.0 h1:qYJwSS2IiBOEKG8h7iafbbiL8pxEwyLYSpA6JpiT3iY=
-github.com/omec-project/CommonConsumerTestData v1.1.0/go.mod h1:dzFsd83yg26DhCXG6XtGouabd9hxlZqcUzymhnMmdoI=
+github.com/omec-project/CommonConsumerTestData v1.1.1 h1:W8GQrDkkrp2QFTefx3YNmv/LU+2v03Pa6Nt7LNSe/aQ=
+github.com/omec-project/CommonConsumerTestData v1.1.1/go.mod h1:BDPGr+mFRKkl+rbS1TQhNALUxEduhPmZsZa9Fo04dhs=
 github.com/omec-project/UeauCommon v1.1.0 h1:ynW22r/Xx/z6saviuzUeNjYlqdJfiMNtNwlv6Ot76Wk=
 github.com/omec-project/UeauCommon v1.1.0/go.mod h1:brKbJNGvDPgHcubWt6G45hVuxZ2Crdp/1tKXWw6zTCY=
 github.com/omec-project/amf v1.1.0 h1:1h9JRyyAvhvI0BPAq1MPUzxhsGcmpyQf1v6+3UihJeg=
@@ -279,9 +279,9 @@ github.com/omec-project/logger_util v1.1.0 h1:R7tT80+ML1HlK4OoTrNv/UK+2H/u2GdIFN
 github.com/omec-project/logger_util v1.1.0/go.mod h1:UkD09amIhlh8P0k82A6Uz/atiZGeFS3C2wd334CKpuY=
 github.com/omec-project/milenage v1.1.0 h1:yVBtBB4hd+SQx4gFkE6mZ8mfzO5na/1d2j31G6jYlCA=
 github.com/omec-project/milenage v1.1.0/go.mod h1:Tw5HLvxWEQN0JA+EXEVwZ17TL9adEZk3kWqKGgsNmHc=
-github.com/omec-project/nas v1.1.0/go.mod h1:CuJ/Vn8qj1cHf+UBBREyyH9NTIpnk2yGANVqNemf7kU=
-github.com/omec-project/nas v1.1.1 h1:NQ3Xa4n5RKWfy6Igh+nTjSkFz723tyX4At6I+e2Uzjg=
 github.com/omec-project/nas v1.1.1/go.mod h1:gXqi/IZwEGXno26X8wg8ITsAUiemRQ7PkIJOWP1NzGA=
+github.com/omec-project/nas v1.1.2 h1:ApgVHVVvxPydy8H5Dd2fuiGafrvjCIgGgf37h824kd8=
+github.com/omec-project/nas v1.1.2/go.mod h1:gXqi/IZwEGXno26X8wg8ITsAUiemRQ7PkIJOWP1NzGA=
 github.com/omec-project/ngap v1.1.0 h1:J9bkPEzzyGd1787nGY/aZVp3gckkZBoJB4tkTo59eyw=
 github.com/omec-project/ngap v1.1.0/go.mod h1:A+T3+JKk+6AuhnMr6W319Tc7E176ig6rIRDVSKQ7E5g=
 github.com/omec-project/openapi v1.0.100-dev/go.mod h1:Fv9ajWROYypcNER+ZwWXPhLCdV4pBz75KqFp/R/2gCw=
@@ -290,7 +290,6 @@ github.com/omec-project/openapi v1.1.0/go.mod h1:Fv9ajWROYypcNER+ZwWXPhLCdV4pBz7
 github.com/omec-project/path_util v1.0.100-dev/go.mod h1:O1ch35al6+FXKmg6+5vOpKusl4fiB0u36oYjxwI4QK4=
 github.com/omec-project/path_util v1.1.0 h1:vzzLsay8+uexyYEqS06th8lMcwp+N+CXcaHhaypZn1Q=
 github.com/omec-project/path_util v1.1.0/go.mod h1:O1ch35al6+FXKmg6+5vOpKusl4fiB0u36oYjxwI4QK4=
-github.com/omec-project/util_3gpp v1.1.0/go.mod h1:r8J8yuEwWeBLlX4ZqsCjbEYxUZDCTWn0H+xZ12kvB/s=
 github.com/omec-project/util_3gpp v1.1.1 h1:lT8J2uvCuKaOrIasZgV7+bXSjBb9/i8FG9ZFQnpx2yE=
 github.com/omec-project/util_3gpp v1.1.1/go.mod h1:r8J8yuEwWeBLlX4ZqsCjbEYxUZDCTWn0H+xZ12kvB/s=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=

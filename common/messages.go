@@ -8,8 +8,8 @@ import (
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 	"github.com/omec-project/gnbsim/util/test"
 
-	"github.com/omec-project/ngap/ngapType"
 	"github.com/omec-project/nas"
+	"github.com/omec-project/ngap/ngapType"
 )
 
 type InterfaceMessage interface {
