@@ -145,7 +145,7 @@ func HandleRegCompleteEvent(ue *simuectx.SimUe,
 	SendToGnbUe(ue, msg)
 	ue.Log.Traceln("Sent Registration Complete to the network")
 
-    //Hmmm..Procedure is complete
+	//Hmmm..Procedure is complete
 	ChangeProcedure(ue)
 	return nil
 }
@@ -418,10 +418,10 @@ func ChangeProcedure(ue *simuectx.SimUe) {
 		ue.Log.Infoln("Updated procedure to", nextProcedure)
 		HandleProcedure(ue)
 	} else {
-        //no procedure to be executed. Send PROFILE_PASS_EVENT
+		//no procedure to be executed. Send PROFILE_PASS_EVENT
 		SendToProfile(ue, common.PROFILE_PASS_EVENT, nil)
 		evt, err := ue.ProfileCtx.GetNextEvent(ue.Procedure, common.PROFILE_PASS_EVENT)
-        // This is suppose to be last event..why do we care to get return error ?
+		// This is suppose to be last event..why do we care to get return error ?
 		if err != nil {
 			ue.Log.Errorln("GetNextEvent failed:", err)
 			return

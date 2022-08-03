@@ -35,29 +35,25 @@ func InitializeAllProfiles() {
 	for _, profile := range factory.AppConfig.Configuration.Profiles {
 		profile.Init()
 	}
+	initProcedureEventMap()
 }
 
 func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMessage) {
+	profile.Log.Infoln("executing profile:", profile.Name,
+		", profile type:", profile.ProfileType)
+
 	summary := &common.SummaryMessage{
 		ProfileType: profile.ProfileType,
 		ProfileName: profile.Name,
 		ErrorList:   make([]error, 0, 10),
 	}
-	profile.Log.Infoln("executing profile:", profile.Name,
-		", profile type:", profile.ProfileType)
-	initProcedureEventMap()
-	initProcedureList(profile)
+
 
 	defer func() {
 		summaryChan <- summary
 	}()
 
-	err := initEventMap(profile)
-	if err != nil {
-		summary.ErrorList = append(summary.ErrorList, err)
-		return
-	}
-	err = initProcedureList(profile)
+	err := initProcedureList(profile)
 	if err != nil {
 		summary.ErrorList = append(summary.ErrorList, err)
 		return
@@ -203,7 +199,7 @@ func initProcedureEventMap() {
 	// common.USER_DATA_PKT_GENERATION_PROCEDURE:
 	proc9 := profctx.ProcedureEventsDetails{}
 	proc9.Events = map[common.EventType]common.EventType{
-		common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
+		common.PROFILE_PASS_EVENT: common.QUIT_EVENT,
 	}
 	profctx.ProceduresMap[common.USER_DATA_PKT_GENERATION_PROCEDURE] = &proc9
 }

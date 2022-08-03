@@ -19,7 +19,7 @@ const PER_USER_TIMEOUT uint32 = 100 //seconds
 var SummaryChan = make(chan common.InterfaceMessage)
 
 type ProcedureEventsDetails struct {
-    Events         map[common.EventType]common.EventType
+	Events map[common.EventType]common.EventType
 }
 
 var ProceduresMap map[common.ProcedureType]*ProcedureEventsDetails
@@ -38,7 +38,7 @@ type Profile struct {
 	Key            string         `yaml:"key" json:"key"`
 	Opc            string         `yaml:"opc" json:"opc"`
 	SeqNum         string         `yaml:"sequenceNumber" json:"sequenceNumber"`
-	Procedures []common.ProcedureType
+	Procedures     []common.ProcedureType
 
 	// Profile routine reads messages from other entities on this channel
 	// Entities can be SimUe, Main routine.
@@ -49,7 +49,7 @@ type Profile struct {
 }
 
 func init() {
-    ProceduresMap = make(map[common.ProcedureType]*ProcedureEventsDetails)
+	ProceduresMap = make(map[common.ProcedureType]*ProcedureEventsDetails)
 }
 
 func (profile *Profile) Init() {
@@ -61,7 +61,7 @@ func (profile *Profile) Init() {
 
 func (p *Profile) GetNextEvent(Procedure common.ProcedureType, currentEvent common.EventType) (common.EventType, error) {
 	var err error
-    proc := ProceduresMap[Procedure]
+	proc := ProceduresMap[Procedure]
 
 	nextEvent, ok := proc.Events[currentEvent]
 	if !ok {
@@ -71,7 +71,7 @@ func (p *Profile) GetNextEvent(Procedure common.ProcedureType, currentEvent comm
 }
 
 func (p *Profile) CheckCurrentEvent(Procedure common.ProcedureType, triggerEvent, recvEvent common.EventType) (err error) {
-    proc := ProceduresMap[Procedure]
+	proc := ProceduresMap[Procedure]
 	expected, ok := proc.Events[triggerEvent]
 	if !ok {
 		err = fmt.Errorf("triggering event %v not configured in event map",
