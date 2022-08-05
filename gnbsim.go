@@ -84,6 +84,7 @@ func action(c *cli.Context) error {
 
 	var appWaitGrp sync.WaitGroup
 	if config.Configuration.Server.Enable {
+		logger.AppLog.Infoln("StartHttpServer")
 		appWaitGrp.Add(1)
 		go func() {
 			defer appWaitGrp.Done()
@@ -116,7 +117,7 @@ func action(c *cli.Context) error {
 
 		go func(profileCtx *profctx.Profile) {
 			defer profileWaitGrp.Done()
-			prof.ExecuteProfile(profileCtx, profctx.SummaryChan)
+			prof.ExecuteProfile(profileCtx, profctx.SummaryChan, nil)
 		}(profile)
 
 		if config.Configuration.ExecInParallel == false {

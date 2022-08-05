@@ -19,4 +19,5 @@ RUN mkdir -p /gnbsim/bin
 
 # Copy executable
 COPY --from=gnb /go/src/gnbsim/gnbsim /gnbsim/bin/
+COPY --from=sim /go/src/gnbsim/gnbsim.gtpl /gnbsim/bin/
 WORKDIR /gnbsim/bin

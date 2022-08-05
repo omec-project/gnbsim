@@ -123,6 +123,9 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 
 	defer func() {
 		summaryChan <- summary
+		if responseChan != nil {
+			responseChan <- summary
+		}
 	}()
 
 	go func() {

@@ -92,6 +92,10 @@ func (c *Config) Validate() (err error) {
 		c.Configuration.Server.IpAddr = os.Getenv("POD_IP")
 	}
 
+	//c.Configuration.Server.IpAddr = "gnbsim"
+	fmt.Println("http ip addr : ", c.Configuration.Server.IpAddr)
+	fmt.Println("http port : ", c.Configuration.Server.Port)
+	fmt.Println("http server enable : ", c.Configuration.Server.Enable)
 	if c.Configuration.SingleInterface == true {
 		for _, gnb := range c.Configuration.Gnbs {
 			if gnb.GnbN3Ip == "POD_IP" {

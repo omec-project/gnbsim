@@ -61,6 +61,7 @@ func StartHttpServer() (err error) {
 
 	serverScheme := "http"
 	if serverScheme == "http" {
+		fmt.Println("listen and serve http server")
 		err = server.ListenAndServe()
 	} else if serverScheme == "https" {
 		//To Do
