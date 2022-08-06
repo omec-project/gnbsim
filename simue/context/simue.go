@@ -52,7 +52,7 @@ func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile) *SimUe 
 	simue.ReadChan = make(chan common.InterfaceMessage, 5)
 	simue.RealUe = realuectx.NewRealUe(supi,
 		security.AlgCiphering128NEA0, security.AlgIntegrity128NIA2,
-		simue.ReadChan, profile.Plmn, profile.Key, profile.Opc, profile.SeqNum)
+		simue.ReadChan, profile.Plmn, profile.Key, profile.Opc, profile.SeqNum, profile.Dnn)
 	simue.WriteRealUeChan = simue.RealUe.ReadChan
 	simue.WriteProfileChan = profile.ReadChan
 

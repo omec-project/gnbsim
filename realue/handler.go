@@ -175,7 +175,7 @@ func HandlePduSessEstRequestEvent(ue *realuectx.RealUe,
 		Sd:  "010203",
 	}
 	nasPdu := nasTestpacket.GetUlNasTransport_PduSessionEstablishmentRequest(10,
-		nasMessage.ULNASTransportRequestTypeInitialRequest, "internet", &sNssai)
+		nasMessage.ULNASTransportRequestTypeInitialRequest, ue.Dnn, &sNssai)
 
 	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)

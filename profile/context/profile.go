@@ -32,6 +32,7 @@ type Profile struct {
 	Key            string         `yaml:"key" json:"key"`
 	Opc            string         `yaml:"opc" json:"opc"`
 	SeqNum         string         `yaml:"sequenceNumber" json:"sequenceNumber"`
+	Dnn            string         `yaml:"dnn" json:"dnn"`
 
 	Events     map[common.EventType]common.EventType
 	Procedures []common.ProcedureType
