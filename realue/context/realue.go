@@ -32,6 +32,7 @@ type RealUe struct {
 	Opc                string
 	SeqNum             string
 	Dnn                string
+	SNssai             *models.Snssai
 	ULCount            security.Count
 	DLCount            security.Count
 	CipheringAlg       uint8
@@ -57,7 +58,7 @@ type RealUe struct {
 
 func NewRealUe(supi string, cipheringAlg, integrityAlg uint8,
 	simuechan chan common.InterfaceMessage, plmnid *models.PlmnId,
-	key string, opc string, seqNum string, Dnn string) *RealUe {
+	key string, opc string, seqNum string, Dnn string, SNssai *models.Snssai) *RealUe {
 
 	ue := RealUe{}
 	ue.Supi = supi
@@ -67,6 +68,7 @@ func NewRealUe(supi string, cipheringAlg, integrityAlg uint8,
 	ue.Opc = opc
 	ue.SeqNum = seqNum
 	ue.Dnn = Dnn
+	ue.SNssai = SNssai
 	ue.Plmn = plmnid
 	ue.WriteSimUeChan = simuechan
 	ue.PduSessions = make(map[int64]*PduSession)

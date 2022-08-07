@@ -40,6 +40,9 @@ configuration:
               taiSliceSupportList:
                 - sst: 1 # Slice/Service Type (uinteger, range: 0~255)
                   sd: 010203 # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
+                - sst: 1
+                  sd: 000001
+                - sst: 2
       defaultAmf:
         hostName: amf # Host name of AMF
         ipAddr: # AMF IP address
@@ -56,6 +59,9 @@ configuration:
       key: "5122250214c33e723a5dd523fc145fc0"
       sequenceNumber: "16f3b3f70fc2"
       dnn: "internet"
+      sNssai:
+        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sd: 010203 # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
@@ -70,6 +76,9 @@ configuration:
       key: "5122250214c33e723a5dd523fc145fc0"
       sequenceNumber: "16f3b3f70fc2"
       dnn: "internet"
+      sNssai:
+        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sd: 010203 # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
@@ -85,6 +94,9 @@ configuration:
       key: "5122250214c33e723a5dd523fc145fc0"
       sequenceNumber: "16f3b3f70fc2"
       dnn: "internet"
+      sNssai:
+        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sd: 010203 # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
@@ -99,6 +111,9 @@ configuration:
       key: "5122250214c33e723a5dd523fc145fc0"
       sequenceNumber: "16f3b3f70fc2"
       dnn: "internet"
+      sNssai:
+        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sd: 010203 # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)  
@@ -113,6 +128,9 @@ configuration:
       key: "5122250214c33e723a5dd523fc145fc0"
       sequenceNumber: "16f3b3f70fc2"
       dnn: "internet"
+      sNssai:
+        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sd: 010203 # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
@@ -128,6 +146,9 @@ configuration:
       key: "5122250214c33e723a5dd523fc145fc0"
       sequenceNumber: "16f3b3f70fc2"
       dnn: "internet"
+      sNssai:
+        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sd: 010203 # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
@@ -141,6 +162,9 @@ configuration:
       key: "5122250214c33e723a5dd523fc145fc0"
       sequenceNumber: "16f3b3f70fc2"
       dnn: "internet"
+      sNssai:
+        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sd: 010203 # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       defaultAs: "192.168.250.1" #default icmp pkt destination
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
@@ -155,6 +179,9 @@ configuration:
       key: "5122250214c33e723a5dd523fc145fc0"
       sequenceNumber: "16f3b3f70fc2"
       dnn: "internet"
+      sNssai:
+        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sd: 010203 # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       defaultAs: "192.168.250.1" #default icmp pkt destination
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
