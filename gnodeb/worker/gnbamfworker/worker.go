@@ -10,8 +10,8 @@ import (
 	"github.com/omec-project/gnbsim/common"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 
-	"github.com/free5gc/ngap"
-	"github.com/free5gc/ngap/ngapType"
+	"github.com/omec-project/ngap"
+	"github.com/omec-project/ngap/ngapType"
 )
 
 /* HandleMessage decodes an incoming NGAP message and routes it to the

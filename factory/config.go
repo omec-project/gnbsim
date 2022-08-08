@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2022 Great Software Laboratory Pvt. Ltd
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 // Copyright 2019 free5GC.org
 //
@@ -25,7 +26,7 @@ const (
 type Config struct {
 	Info          *Info          `yaml:"info"`
 	Configuration *Configuration `yaml:"configuration"`
-	Logger        *Logger        `yaml: "logger"`
+	Logger        *Logger        `yaml:"logger"`
 }
 
 type Info struct {
@@ -38,6 +39,13 @@ type Configuration struct {
 	Profiles        []*profctx.Profile        `yaml:"profiles"`
 	SingleInterface bool                      `yaml:"singleInterface"`
 	ExecInParallel  bool                      `yaml:"execInParallel"`
+	Server          HttpServer                `yaml:"httpServer"`
+}
+
+type HttpServer struct {
+	Enable bool   `yaml:"enable"`
+	IpAddr string `yaml:"ipAddr"`
+	Port   string `yaml:"port"`
 }
 
 type Logger struct {
@@ -63,6 +71,10 @@ func (c *Config) Validate() (err error) {
 
 	if len(c.Configuration.Gnbs) == 0 {
 		return fmt.Errorf("no gnbs configured")
+	}
+
+	if c.Configuration.Server.IpAddr == "POD_IP" {
+		c.Configuration.Server.IpAddr = os.Getenv("POD_IP")
 	}
 
 	if c.Configuration.SingleInterface == true {

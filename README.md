@@ -1,4 +1,6 @@
 <!--
+SPDX-FileCopyrightText: 2022 Great Software Laboratory Pvt. Ltd
+
 SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 
 SPDX-License-Identifier: Apache-2.0
@@ -79,7 +81,7 @@ Please refer to the official [SD-Core documentation](https://docs.sd-core.openne
     other SD-Core Network Functions then use AIAB to deploy all network functions including gNBSim. 
     
     1. Clone AIAB
-    2. Run "make 5gc"
+    2. Run "make 5g-core"
     3. Trigger call flow testing using following commands
     
     
@@ -94,4 +96,11 @@ Please refer to the official [SD-Core documentation](https://docs.sd-core.openne
     $ ./gnbsim --cfg config/gnbsim.yaml
 
 All these steps are explained in detail on [AIAB documentation](https://docs.sd-core.opennetworking.org/master/developer/aiab.html)
+
+## Step 4: Optionally launching profiles through HTTP APIs
+
+    gNBSim can process HTTP Requests to launch profiles. For example running the
+    below curl command will launch a profile in gNBSim
+   
+    $ curl -i -X POST 127.0.0.1:8080/gnbsim/v1/executeProfile -H 'Content-Type: application/json' -d '{"profileType":"nwreqpdusessrelease","profileName":"profile8","enable":true,"gnbName":"gnb1","startImsi":"208930100007497","ueCount":1,"opc":"981d464c7c52eb6e5036234984ad0bcf","key":"5122250214c33e723a5dd523fc145fc0","sequenceNumber":"16f3b3f70fc2","defaultAs":"192.168.250.1","plmnId":{"mcc":"208","mnc":"93"}}'
 

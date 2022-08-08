@@ -11,14 +11,13 @@ import (
 	"github.com/calee0219/fatal"
 	"golang.org/x/net/ipv4"
 
-	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
-	"github.com/free5gc/CommonConsumerTestData/UDR/TestRegistrationProcedure"
-	"github.com/free5gc/UeauCommon"
-	"github.com/free5gc/milenage"
-	"github.com/free5gc/openapi/models"
+	"github.com/omec-project/CommonConsumerTestData/UDR/TestRegistrationProcedure"
+	"github.com/omec-project/UeauCommon"
+	"github.com/omec-project/milenage"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasType"
 	"github.com/omec-project/nas/security"
+	"github.com/omec-project/openapi/models"
 )
 
 type RanUeContext struct {
@@ -52,7 +51,7 @@ func CalculateIpv4HeaderChecksum(hdr *ipv4.Header) uint32 {
 	return ^(Checksum&0xffff0000>>16 + Checksum&0xffff)
 }
 
-func GetAuthSubscription(k, opc, op string) *models.AuthenticationSubscription {
+func GetAuthSubscription(k, opc, op, seqNum string) *models.AuthenticationSubscription {
 	var authSubs models.AuthenticationSubscription
 	authSubs.PermanentKey = &models.PermanentKey{
 		PermanentKeyValue: k,
@@ -67,7 +66,7 @@ func GetAuthSubscription(k, opc, op string) *models.AuthenticationSubscription {
 	}
 	authSubs.AuthenticationManagementField = "8000"
 
-	authSubs.SequenceNumber = TestGenAuthData.MilenageTestSet19.SQN
+	authSubs.SequenceNumber = seqNum
 	authSubs.AuthenticationMethod = models.AuthMethod__5_G_AKA
 	return &authSubs
 }

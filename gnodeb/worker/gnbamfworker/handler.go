@@ -11,10 +11,10 @@ import (
 
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 
-	amfctx "github.com/free5gc/amf/context"
-	"github.com/free5gc/ngap/ngapConvert"
-	"github.com/free5gc/ngap/ngapType"
-	"github.com/free5gc/openapi/models"
+	amfctx "github.com/omec-project/amf/context"
+	"github.com/omec-project/ngap/ngapConvert"
+	"github.com/omec-project/ngap/ngapType"
+	"github.com/omec-project/openapi/models"
 )
 
 // HandleNGSetupResponse processes the NG Setup Response and updates GnbAmf

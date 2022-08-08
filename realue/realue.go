@@ -8,15 +8,11 @@ import (
 	"github.com/omec-project/gnbsim/common"
 	realuectx "github.com/omec-project/gnbsim/realue/context"
 	"github.com/omec-project/gnbsim/util/test"
-
-	"github.com/free5gc/CommonConsumerTestData/UDM/TestGenAuthData"
 )
 
 func Init(ue *realuectx.RealUe) {
 
-	ue.AuthenticationSubs = test.GetAuthSubscription(TestGenAuthData.MilenageTestSet19.K,
-		TestGenAuthData.MilenageTestSet19.OPC,
-		"")
+	ue.AuthenticationSubs = test.GetAuthSubscription(ue.Key, ue.Opc, "", ue.SeqNum)
 
 	HandleEvents(ue)
 }
