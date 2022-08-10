@@ -17,12 +17,32 @@ procedures:
     3. UE Initiated De-registration 
     4. AN Release
     5. UE Initiated Service Request 
+    6. N/W triggered PDU Session Release
+    7. UE Requested PDU Session Release
+    8. N/W triggered UE Deregistration
 
 It is also capable to generate and send user data packets (ICMP echo request) 
 and process downlink user data (ICMP echo response) over the established data 
 plane path (N3 Tunnel). 
 
+
+System level features
+
+    1. Executing all enabled profiles in parallel or in sequential order.
+    2. Timeout for each call flow within profile
+    3. Logging summary result
+    4. HTTP API to execute profile
+    5. Configure number of data packets to be sent
+    6. Configure AS (Application Server) address. This is used to send data packets
+    7. Run gNBSim with single Interface or multi interface
+
+
 Please refer to the official [SD-Core documentation](https://docs.sd-core.opennetworking.org/master/developer/gnbsim.html#gnb-simulator) for more details. 
+
+## Reach out to us thorugh
+
+1. #sdcore-dev channel in [ONF Community Slack](https://onf-community.slack.com/)
+2. Raise Github issues
 
 
 ## gNodeB Simulator Block Diagram
@@ -103,4 +123,3 @@ All these steps are explained in detail on [AIAB documentation](https://docs.sd-
     below curl command will launch a profile in gNBSim
    
     $ curl -i -X POST 127.0.0.1:8080/gnbsim/v1/executeProfile -H 'Content-Type: application/json' -d '{"profileType":"nwreqpdusessrelease","profileName":"profile8","enable":true,"gnbName":"gnb1","startImsi":"208930100007497","ueCount":1,"opc":"981d464c7c52eb6e5036234984ad0bcf","key":"5122250214c33e723a5dd523fc145fc0","sequenceNumber":"16f3b3f70fc2","defaultAs":"192.168.250.1","plmnId":{"mcc":"208","mnc":"93"}}'
-
