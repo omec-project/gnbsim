@@ -170,12 +170,12 @@ func HandleDeregRequestEvent(ue *realuectx.RealUe,
 func HandlePduSessEstRequestEvent(ue *realuectx.RealUe,
 	msg common.InterfaceMessage) (err error) {
 
-	sNssai := models.Snssai{
-		Sst: 1,
-		Sd:  "010203",
-	}
+	// sNssai := models.Snssai{
+	// 	Sst: 1,
+	// 	Sd:  "010203",
+	// }
 	nasPdu := nasTestpacket.GetUlNasTransport_PduSessionEstablishmentRequest(10,
-		nasMessage.ULNASTransportRequestTypeInitialRequest, "internet", &sNssai)
+		nasMessage.ULNASTransportRequestTypeInitialRequest, ue.Dnn, ue.SNssai)
 
 	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
