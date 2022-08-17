@@ -9,7 +9,8 @@ import "github.com/omec-project/gnbsim/logger"
 type ProcedureType uint8
 
 const (
-	REGISTRATION_PROCEDURE ProcedureType = 1 + iota
+	UNKNOWN_PROCEDURE ProcedureType = 0 + iota
+	REGISTRATION_PROCEDURE
 	PDU_SESSION_ESTABLISHMENT_PROCEDURE
 	UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE
 	USER_DATA_PKT_GENERATION_PROCEDURE
@@ -22,6 +23,7 @@ const (
 )
 
 var procStrMap = map[ProcedureType]string{
+	UNKNOWN_PROCEDURE:                          "UNKNOWN-PROCEDURE",
 	REGISTRATION_PROCEDURE:                     "REGISTRATION-PROCEDURE",
 	PDU_SESSION_ESTABLISHMENT_PROCEDURE:        "PDU-SESSION-ESTABLISHMENT-PROCEDURE",
 	USER_DATA_PKT_GENERATION_PROCEDURE:         "USER-DATA-PACKET-GENERATION-PROCEDURE",
@@ -40,4 +42,14 @@ func (id ProcedureType) String() string {
 		logger.AppLog.Fatalf("Invalid Procedure ID: %#v", id)
 	}
 	return procStr
+}
+
+func GetProcId(name string) ProcedureType {
+	var p ProcedureType = UNKNOWN_PROCEDURE
+	for id, v := range procStrMap {
+		if v == name {
+			return id
+		}
+	}
+	return p
 }

@@ -6,12 +6,67 @@ package simue
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/gnodeb"
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
+	profctx "github.com/omec-project/gnbsim/profile/context"
+	"github.com/omec-project/gnbsim/profile/util"
 	"github.com/omec-project/gnbsim/realue"
 	simuectx "github.com/omec-project/gnbsim/simue/context"
 )
+
+func RunProfile(imsiStr string, gnb *gnbctx.GNodeB, profile *profctx.Profile) error {
+	var err error
+	var cont bool
+	var nextItr string = "quit"
+
+	for {
+		simUe := simuectx.NewSimUe(imsiStr, gnb, profile)
+		simUe.CurrentItr = nextItr
+
+		Init(simUe) // Initialize simUE, realUE & wait for events
+
+		if simUe.CurrentItr != "quit" {
+			simUe.Log.Infoln("Sent Profile continue Event ", simUe.CurrentItr)
+			util.SendToSimUe(simUe, common.PROFILE_CONT_EVENT)
+		} else {
+			util.SendToSimUe(simUe, common.PROFILE_START_EVENT)
+		}
+
+		timeout := time.Duration(profile.PerUserTimeout) * time.Second
+		ticker := time.NewTicker(timeout)
+
+		select {
+		case <-ticker.C:
+			err = fmt.Errorf("imsi:%v, profile timeout", imsiStr)
+			profile.Log.Infoln("Result: FAIL,", err)
+			util.SendToSimUe(simUe, common.QUIT_EVENT)
+
+		case msg := <-profile.ReadChan:
+			switch msg.Event {
+			case common.PROFILE_PASS_EVENT:
+				profile.Log.Infoln("Result: PASS, imsi:", msg.Supi)
+				cont = false
+			case common.PROFILE_CONT_EVENT:
+				profile.Log.Infoln("Result: continue ", msg.Supi)
+				nextItr = msg.NextItr
+				cont = true
+			case common.PROFILE_FAIL_EVENT:
+				err := fmt.Errorf("imsi:%v, procedure:%v, error:%v", msg.Supi, msg.Proc, msg.Error)
+				profile.Log.Infoln("Result: FAIL,", err)
+				cont = false
+			}
+		}
+		ticker.Stop()
+		time.Sleep(2 * time.Second)
+		if cont == false {
+			return err
+		}
+	}
+	return err
+}
 
 func Init(simUe *simuectx.SimUe) {
 
@@ -29,7 +84,7 @@ func Init(simUe *simuectx.SimUe) {
 		realue.Init(simUe.RealUe)
 	}()
 
-	HandleEvents(simUe)
+	go HandleEvents(simUe)
 	simUe.Log.Infoln("SIM UE go routine complete")
 }
 
@@ -108,6 +163,8 @@ func HandleEvents(ue *simuectx.SimUe) {
 			err = HandleServiceAcceptEvent(ue, msg)
 		case common.PROFILE_START_EVENT:
 			err = HandleProfileStartEvent(ue, msg)
+		case common.PROFILE_CONT_EVENT:
+			err = HandleProfileContinueEvent(ue, msg)
 		case common.CONNECTION_RELEASE_REQUEST_EVENT:
 			err = HandleConnectionReleaseRequestEvent(ue, msg)
 		case common.DEREG_REQUEST_UE_TERM_EVENT:
@@ -154,7 +211,11 @@ func SendToProfile(ue *simuectx.SimUe, event common.EventType, errMsg error) {
 	msg.Event = event
 	msg.Supi = ue.Supi
 	msg.Proc = ue.Procedure
-	msg.Error = errMsg
+	if event == common.PROFILE_CONT_EVENT {
+		msg.NextItr = errMsg.Error()
+	} else {
+		msg.Error = errMsg
+	}
 	ue.WriteProfileChan <- msg
 	ue.Log.Traceln("Sent ", event, "to Profile routine")
 }

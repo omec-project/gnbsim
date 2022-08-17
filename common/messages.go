@@ -63,8 +63,9 @@ type UuMessage struct {
 // ProfileMessage is used to carry information between the Profile and SimUe
 type ProfileMessage struct {
 	DefaultMessage
-	Supi string
-	Proc ProcedureType
+	Supi    string
+	Proc    ProcedureType
+	NextItr string
 }
 
 // SummaryMessage is used to carry profile execution summary. Sent by profile

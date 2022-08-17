@@ -15,7 +15,32 @@ import (
 func HandleProfileStartEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
-	ue.Procedure = ue.ProfileCtx.GetFirstProcedure()
+	if len(ue.ProfileCtx.PIterations) > 0 {
+		ue.CurrentItr = ue.ProfileCtx.StartIteration
+		pItr := ue.ProfileCtx.PIterations[ue.CurrentItr]
+		ue.Procedure = pItr.ProcMap[1]
+		ue.CurrentProcIndex = 1
+		ue.Repeat = pItr.Repeat
+	} else {
+		ue.Procedure = ue.ProfileCtx.GetFirstProcedure()
+	}
+	ue.Log.Infoln("Updated procedure to", ue.Procedure)
+	HandleProcedure(ue)
+	return nil
+}
+
+func HandleProfileContinueEvent(ue *simuectx.SimUe,
+	intfcMsg common.InterfaceMessage) (err error) {
+
+	if len(ue.ProfileCtx.PIterations) > 0 {
+		pItr := ue.ProfileCtx.PIterations[ue.CurrentItr]
+		ue.Log.Infoln("HandleProfileContinueEvent CurrentItr ", ue.CurrentItr)
+		ue.Procedure = pItr.ProcMap[1]
+		ue.CurrentProcIndex = 1
+		ue.Repeat = pItr.Repeat
+	} else {
+		ue.Procedure = ue.ProfileCtx.GetFirstProcedure()
+	}
 	ue.Log.Infoln("Updated procedure to", ue.Procedure)
 	HandleProcedure(ue)
 	return nil
@@ -31,7 +56,7 @@ func HandleRegRequestEvent(ue *simuectx.SimUe,
 func HandleRegRejectEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
-	err = ue.ProfileCtx.CheckCurrentEvent(common.REG_REQUEST_EVENT,
+	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.REG_REQUEST_EVENT,
 		intfcMsg.GetEventType())
 	if err != nil {
 		ue.Log.Errorln("CheckCurrentEvent returned:", err)
@@ -47,12 +72,12 @@ func HandleAuthRequestEvent(ue *simuectx.SimUe,
 	msg := intfMsg.(*common.UeMessage)
 	// checking as per profile if Authentication Request Message is expected
 	// from 5G Core against Registration Request message sent by RealUE
-	err = ue.ProfileCtx.CheckCurrentEvent(common.REG_REQUEST_EVENT, msg.Event)
+	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.REG_REQUEST_EVENT, msg.Event)
 	if err != nil {
 		ue.Log.Errorln("CheckCurrentEvent returned:", err)
 		return err
 	}
-	nextEvent, err := ue.ProfileCtx.GetNextEvent(msg.Event)
+	nextEvent, err := ue.ProfileCtx.GetNextEvent(ue.Procedure, msg.Event)
 	if err != nil {
 		ue.Log.Errorln("GetNextEvent returned:", err)
 		return err
@@ -69,7 +94,7 @@ func HandleAuthResponseEvent(ue *simuectx.SimUe,
 	msg := intfcMsg.(*common.UuMessage)
 	// Checking if RealUe has sent expected message as per profile against
 	// Authentication Request message recevied from 5G Core
-	err = ue.ProfileCtx.CheckCurrentEvent(common.AUTH_REQUEST_EVENT, msg.Event)
+	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.AUTH_REQUEST_EVENT, msg.Event)
 	if err != nil {
 		ue.Log.Errorln("CheckCurrentEvent returned:", err)
 		return err
@@ -87,7 +112,7 @@ func HandleSecModCommandEvent(ue *simuectx.SimUe,
 	// TODO: Should check if SecModCommandEvent event is expected
 
 	msg := intfcMsg.(*common.UeMessage)
-	nextEvent, err := ue.ProfileCtx.GetNextEvent(msg.Event)
+	nextEvent, err := ue.ProfileCtx.GetNextEvent(ue.Procedure, msg.Event)
 	if err != nil {
 		ue.Log.Errorln("GetNextEvent returned:", err)
 		return err
@@ -103,7 +128,7 @@ func HandleSecModCompleteEvent(ue *simuectx.SimUe,
 	ue.Log.Traceln("Handling Security Mode Complete Event")
 
 	msg := intfcMsg.(*common.UuMessage)
-	err = ue.ProfileCtx.CheckCurrentEvent(common.SEC_MOD_COMMAND_EVENT,
+	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.SEC_MOD_COMMAND_EVENT,
 		msg.Event)
 	if err != nil {
 		ue.Log.Errorln("CheckCurrentEvent returned:", err)
@@ -121,7 +146,7 @@ func HandleRegAcceptEvent(ue *simuectx.SimUe,
 
 	msg := intfcMsg.(*common.UeMessage)
 	// TODO: Should check if Registration Accept event is expected
-	nextEvent, err := ue.ProfileCtx.GetNextEvent(msg.Event)
+	nextEvent, err := ue.ProfileCtx.GetNextEvent(ue.Procedure, msg.Event)
 	if err != nil {
 		ue.Log.Errorln("GetNextEvent returned:", err)
 		return err
@@ -135,7 +160,7 @@ func HandleRegCompleteEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	msg := intfcMsg.(*common.UuMessage)
-	err = ue.ProfileCtx.CheckCurrentEvent(common.REG_ACCEPT_EVENT, msg.Event)
+	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.REG_ACCEPT_EVENT, msg.Event)
 	if err != nil {
 		ue.Log.Errorln("CheckCurrentEvent returned:", err)
 		return err
@@ -145,6 +170,7 @@ func HandleRegCompleteEvent(ue *simuectx.SimUe,
 	SendToGnbUe(ue, msg)
 	ue.Log.Traceln("Sent Registration Complete to the network")
 
+	//Current Procedure is complete. Move to next one
 	ChangeProcedure(ue)
 	return nil
 }
@@ -179,12 +205,12 @@ func HandlePduSessEstAcceptEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
 	msg := intfcMsg.(*common.UeMessage)
-	err = ue.ProfileCtx.CheckCurrentEvent(common.PDU_SESS_EST_REQUEST_EVENT, msg.Event)
+	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.PDU_SESS_EST_REQUEST_EVENT, msg.Event)
 	if err != nil {
 		ue.Log.Errorln("CheckCurrentEvent returned:", err)
 		return err
 	}
-	nextEvent, err := ue.ProfileCtx.GetNextEvent(msg.Event)
+	nextEvent, err := ue.ProfileCtx.GetNextEvent(ue.Procedure, msg.Event)
 	if err != nil {
 		ue.Log.Errorln("GetNextEvent returned:", err)
 		return err
@@ -198,7 +224,7 @@ func HandlePduSessEstAcceptEvent(ue *simuectx.SimUe,
 func HandlePduSessEstRejectEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
-	err = ue.ProfileCtx.CheckCurrentEvent(common.PDU_SESS_EST_REQUEST_EVENT,
+	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.PDU_SESS_EST_REQUEST_EVENT,
 		intfcMsg.GetEventType())
 	if err != nil {
 		ue.Log.Errorln("CheckCurrentEvent returned:", err)
@@ -222,13 +248,13 @@ func HandlePduSessReleaseCommandEvent(ue *simuectx.SimUe,
 
 	msg := intfcMsg.(*common.UeMessage)
 	if ue.Procedure == common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE {
-		err = ue.ProfileCtx.CheckCurrentEvent(common.PDU_SESS_REL_REQUEST_EVENT, msg.Event)
+		err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.PDU_SESS_REL_REQUEST_EVENT, msg.Event)
 		if err != nil {
 			ue.Log.Errorln("CheckCurrentEvent returned:", err)
 			return err
 		}
 	}
-	nextEvent, err := ue.ProfileCtx.GetNextEvent(msg.Event)
+	nextEvent, err := ue.ProfileCtx.GetNextEvent(ue.Procedure, msg.Event)
 	if err != nil {
 		ue.Log.Errorln("GetNextEvent returned:", err)
 		return err
@@ -267,6 +293,7 @@ func HandleDataBearerSetupResponseEvent(ue *simuectx.SimUe,
 
 	SendToGnbUe(ue, msg)
 
+	//Current Procedure is complete. Move to next one
 	ChangeProcedure(ue)
 	return nil
 }
@@ -278,6 +305,7 @@ func HandleDataBearerReleaseRequestEvent(ue *simuectx.SimUe,
 	// routines in the RealUE will be terminated while processing PDU Session
 	// Release Complete which will also release the communication links
 	// (go channels) with the gNB
+	//Current Procedure is complete. Move to next one
 	ChangeProcedure(ue)
 	return nil
 }
@@ -285,6 +313,7 @@ func HandleDataBearerReleaseRequestEvent(ue *simuectx.SimUe,
 func HandleDataPktGenSuccessEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
+	//Current Procedure is complete. Move to next one
 	ChangeProcedure(ue)
 	return nil
 }
@@ -313,7 +342,7 @@ func HandleServiceRequestEvent(ue *simuectx.SimUe,
 func HandleServiceAcceptEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
-	err = ue.ProfileCtx.CheckCurrentEvent(common.SERVICE_REQUEST_EVENT,
+	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.SERVICE_REQUEST_EVENT,
 		intfcMsg.GetEventType())
 	if err != nil {
 		ue.Log.Errorln("CheckCurrentEvent returned:", err)
@@ -328,7 +357,7 @@ func HandleConnectionReleaseRequestEvent(ue *simuectx.SimUe,
 	msg := intfcMsg.(*common.UuMessage)
 
 	if ue.Procedure == common.AN_RELEASE_PROCEDURE {
-		err = ue.ProfileCtx.CheckCurrentEvent(common.TRIGGER_AN_RELEASE_EVENT,
+		err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.TRIGGER_AN_RELEASE_EVENT,
 			common.CONNECTION_RELEASE_REQUEST_EVENT)
 		if err != nil {
 			return err
@@ -341,13 +370,21 @@ func HandleConnectionReleaseRequestEvent(ue *simuectx.SimUe,
 		msg := &common.UeMessage{}
 		msg.Event = common.QUIT_EVENT
 		ue.ReadChan <- msg
-		// Once UE is deregistered, Sim UE is not expecting any further
-		// procedures
+		if len(ue.ProfileCtx.Iterations) > 0 {
+			itp := ue.ProfileCtx.PIterations[ue.CurrentItr]
+			nextItr := itp.NextItr
+			if nextItr != "quit" {
+				nItr := ue.ProfileCtx.PIterations[nextItr]
+				SendToProfile(ue, common.PROFILE_CONT_EVENT, fmt.Errorf("%v", nItr.Name))
+				return nil
+			}
+		}
+		// Nothing else to execute. Tell profile we are done.
 		SendToProfile(ue, common.PROFILE_PASS_EVENT, nil)
 		return nil
 	}
-
 	SendToRealUe(ue, msg)
+	//Current Procedure is complete. Move to next one
 	ChangeProcedure(ue)
 
 	return nil
@@ -357,7 +394,7 @@ func HandleNwDeregRequestEvent(ue *simuectx.SimUe, intfcMsg common.InterfaceMess
 
 	msg := intfcMsg.(*common.UeMessage)
 
-	nextEvent, err := ue.ProfileCtx.GetNextEvent(msg.Event)
+	nextEvent, err := ue.ProfileCtx.GetNextEvent(ue.Procedure, msg.Event)
 	if err != nil {
 		ue.Log.Errorln("GetNextEvent returned:", err)
 		return err
@@ -374,7 +411,7 @@ func HandleNwDeregAcceptEvent(ue *simuectx.SimUe, intfcMsg common.InterfaceMessa
 	ue.Log.Traceln("Handling Dereg Accept Event")
 
 	msg := intfcMsg.(*common.UuMessage)
-	err = ue.ProfileCtx.CheckCurrentEvent(common.DEREG_REQUEST_UE_TERM_EVENT,
+	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.DEREG_REQUEST_UE_TERM_EVENT,
 		msg.Event)
 	if err != nil {
 		ue.Log.Errorln("CheckCurrentEvent returned:", err)
@@ -411,24 +448,72 @@ func HandleQuitEvent(ue *simuectx.SimUe,
 }
 
 func ChangeProcedure(ue *simuectx.SimUe) {
-	nextProcedure := ue.ProfileCtx.GetNextProcedure(ue.Procedure)
-	if nextProcedure != 0 {
-		ue.Procedure = nextProcedure
-		ue.Log.Infoln("Updated procedure to", nextProcedure)
-		HandleProcedure(ue)
-	} else {
-		SendToProfile(ue, common.PROFILE_PASS_EVENT, nil)
-		evt, err := ue.ProfileCtx.GetNextEvent(common.PROFILE_PASS_EVENT)
-		if err != nil {
-			ue.Log.Errorln("GetNextEvent failed:", err)
+	// Check if custom Profile
+	if len(ue.ProfileCtx.Iterations) > 0 {
+		ue.Log.Infoln("Current UE iteration ", ue.CurrentItr)
+		ue.Log.Infoln("CurrentProcIndex  ", ue.CurrentProcIndex)
+		itp := ue.ProfileCtx.PIterations[ue.CurrentItr]
+		if itp.WaitMap[ue.CurrentProcIndex] != 0 {
+			time.Sleep(time.Second * time.Duration(itp.WaitMap[ue.CurrentProcIndex]))
+		}
+		nextProcIndex := ue.CurrentProcIndex + 1
+		nextProcedure, found := itp.ProcMap[nextProcIndex]
+		if found == true {
+			ue.Log.Infoln("Next Procedure Index, Proc ", nextProcIndex, nextProcedure)
+			ue.Procedure = nextProcedure
+			ue.CurrentProcIndex = nextProcIndex
+			ue.Log.Infoln("Updated procedure to", nextProcedure)
+			HandleProcedure(ue)
 			return
 		}
-		if evt == common.QUIT_EVENT {
-			msg := &common.DefaultMessage{}
-			msg.Event = common.QUIT_EVENT
-			ue.ReadChan <- msg
+		if ue.Repeat > 0 {
+			ue.Repeat = ue.Repeat - 1
+			ue.Log.Infoln("Repeat current iteration : ", itp.Name, ", Repeat Count ", ue.Repeat)
+			ue.CurrentProcIndex = 1
+			nextProcedure := itp.ProcMap[1]
+			ue.Procedure = nextProcedure
+			HandleProcedure(ue)
+			return
+		}
+
+		ue.Log.Infoln("Iteration Complete ", ue.CurrentItr)
+		nextItr := itp.NextItr
+		if nextItr != "quit" {
+			nItr := ue.ProfileCtx.PIterations[nextItr]
+			ue.Log.Infoln("Going to next iteration ", nItr.Name)
+			ue.CurrentItr = nItr.Name
+			ue.CurrentProcIndex = 1
+			ue.Repeat = nItr.Repeat
+			nextProcedure := nItr.ProcMap[1]
+			ue.Procedure = nextProcedure
+			HandleProcedure(ue)
+			return
+		}
+		ue.Log.Infoln("QUIT profile ")
+	} else {
+		// basic predefined profiles
+		nextProcedure := ue.ProfileCtx.GetNextProcedure(ue.Procedure)
+		if nextProcedure != 0 {
+			ue.Procedure = nextProcedure
+			ue.Log.Infoln("Updated procedure to", nextProcedure)
+			HandleProcedure(ue)
+			return
 		}
 	}
+	//no procedure to be executed. Send PROFILE_PASS_EVENT
+	SendToProfile(ue, common.PROFILE_PASS_EVENT, nil)
+	evt, err := ue.ProfileCtx.GetNextEvent(ue.Procedure, common.PROFILE_PASS_EVENT)
+	// This is suppose to be last event..why do we care to get return error ?
+	if err != nil {
+		ue.Log.Errorln("GetNextEvent failed:", err)
+		return
+	}
+	if evt == common.QUIT_EVENT {
+		msg := &common.DefaultMessage{}
+		msg.Event = common.QUIT_EVENT
+		ue.ReadChan <- msg
+	}
+	return
 }
 
 func HandleProcedure(ue *simuectx.SimUe) {

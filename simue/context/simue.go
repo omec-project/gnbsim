@@ -20,12 +20,15 @@ import (
 // SimUe controls the flow of messages between RealUe and GnbUe as per the test
 // profile. It is the central entry point for all events
 type SimUe struct {
-	Supi       string
-	GnB        *gnbctx.GNodeB
-	RealUe     *realuectx.RealUe
-	ProfileCtx *profctx.Profile
-	Procedure  common.ProcedureType
-	WaitGrp    sync.WaitGroup
+	Supi             string
+	GnB              *gnbctx.GNodeB
+	RealUe           *realuectx.RealUe
+	ProfileCtx       *profctx.Profile
+	Procedure        common.ProcedureType
+	WaitGrp          sync.WaitGroup
+	CurrentItr       string // used only if UE is part of custom profile
+	CurrentProcIndex int    // current procedure index. Used in custom profile
+	Repeat           int    // used only if UE is part of custom profile
 
 	// SimUe writes messages to Profile routine on this channel
 	WriteProfileChan chan *common.ProfileMessage
@@ -59,5 +62,6 @@ func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile) *SimUe 
 	simue.Log = logger.SimUeLog.WithField(logger.FieldSupi, supi)
 
 	simue.Log.Traceln("Created new SimUe context")
+    simue.CurrentItr = "quit"
 	return &simue
 }

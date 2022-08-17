@@ -29,7 +29,6 @@ func InitConfigFactory(f string) error {
 	}
 
 	AppConfig = &Config{}
-
 	err = yaml.Unmarshal(content, AppConfig)
 	if err != nil {
 		logger.CfgLog.Errorln("Failed to unmarshal:", err)
