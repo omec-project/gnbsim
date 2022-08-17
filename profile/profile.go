@@ -81,47 +81,69 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 	}
 
 	var wg sync.WaitGroup
+	var Mu sync.Mutex
 	// Currently executing profile for one IMSI at a time
 	for count := 1; count <= profile.UeCount; count++ {
 		imsiStr := "imsi-" + strconv.Itoa(imsi)
 		simUe := simuectx.NewSimUe(imsiStr, gnb, profile)
+		imsi++
 
 		wg.Add(1)
-		go func() {
+		go func(simUe *simuectx.SimUe) {
 			defer wg.Done()
 			simue.Init(simUe)
-		}()
-		util.SendToSimUe(simUe, common.PROFILE_START_EVENT)
+		}(simUe)
 
-		timeout := time.Duration(profile.PerUserTimeout) * time.Second
-		ticker := time.NewTicker(timeout)
-
-		select {
-		case <-ticker.C:
-			err := fmt.Errorf("imsi:%v, profile timeout", imsiStr)
-			profile.Log.Infoln("Result: FAIL,", err)
-			summary.UeFailedCount++
-			summary.ErrorList = append(summary.ErrorList, err)
-			util.SendToSimUe(simUe, common.QUIT_EVENT)
-
-		case msg := <-profile.ReadChan:
-			switch msg.Event {
-			case common.PROFILE_PASS_EVENT:
-				profile.Log.Infoln("Result: PASS, imsi:", msg.Supi)
-				summary.UePassedCount++
-			case common.PROFILE_FAIL_EVENT:
-				err := fmt.Errorf("imsi:%v, procedure:%v, error:%v", msg.Supi, msg.Proc, msg.Error)
-				profile.Log.Infoln("Result: FAIL,", err)
+		wg.Add(1)
+		go func(simUe *simuectx.SimUe) {
+			defer wg.Done()
+			err := ExecuteSimUe(profile, simUe, imsiStr)
+			Mu.Lock()
+			if err != nil {
 				summary.UeFailedCount++
 				summary.ErrorList = append(summary.ErrorList, err)
+			} else {
+				summary.UePassedCount++
 			}
-		}
-		ticker.Stop()
-		time.Sleep(2 * time.Second)
-		imsi++
-	}
+			Mu.Unlock()
+		}(simUe)
 
-	wg.Wait()
+		if profile.ExecInParallel == false {
+			wg.Wait()
+		}
+	}
+	if profile.ExecInParallel == true {
+		wg.Wait()
+	}
+}
+
+func ExecuteSimUe(profile *profctx.Profile, simUe *simuectx.SimUe, imsiStr string) error {
+
+	var err error
+
+	util.SendToSimUe(simUe, common.PROFILE_START_EVENT)
+
+	timeout := time.Duration(profile.PerUserTimeout) * time.Second
+	ticker := time.NewTicker(timeout)
+
+	select {
+	case <-ticker.C:
+		err = fmt.Errorf("imsi:%v, profile timeout", imsiStr)
+		profile.Log.Infoln("Result: FAIL,", err)
+		util.SendToSimUe(simUe, common.QUIT_EVENT)
+
+	case msg := <-profile.ReadChan:
+		switch msg.Event {
+		case common.PROFILE_PASS_EVENT:
+			profile.Log.Infoln("Result: PASS, imsi:", msg.Supi)
+		case common.PROFILE_FAIL_EVENT:
+			err := fmt.Errorf("imsi:%v, procedure:%v, error:%v", msg.Supi, msg.Proc, msg.Error)
+			profile.Log.Infoln("Result: FAIL,", err)
+		}
+	}
+	ticker.Stop()
+	time.Sleep(2 * time.Second)
+	return err
 }
 
 func initEventMap(profile *profctx.Profile) error {

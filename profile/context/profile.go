@@ -34,6 +34,7 @@ type Profile struct {
 	SeqNum         string         `yaml:"sequenceNumber" json:"sequenceNumber"`
 	Dnn            string         `yaml:"dnn" json:"dnn"`
 	SNssai         *models.Snssai `yaml:"sNssai" json:"sNssai"`
+	ExecInParallel bool           `yaml:"execInParallel" json:"execInParallel"`
 
 	Events     map[common.EventType]common.EventType
 	Procedures []common.ProcedureType
