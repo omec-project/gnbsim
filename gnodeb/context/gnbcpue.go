@@ -10,7 +10,6 @@ import (
 
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/logger"
-	"github.com/omec-project/ngap/ngapType"
 
 	"github.com/sirupsen/logrus"
 )
@@ -21,7 +20,6 @@ type GnbCpUe struct {
 	AmfUeNgapId int64
 	Amf         *GnbAmf
 	Gnb         *GNodeB
-	UeLocation  *ngapType.UserLocationInformationNR
 
 	// TODO: Sync map is not needed as it is handled single threaded
 	GnbUpUes sync.Map
@@ -38,14 +36,11 @@ type GnbCpUe struct {
 	Log *logrus.Entry
 }
 
-func NewGnbCpUe(ngapId int64, gnb *GNodeB, amf *GnbAmf,
-	ueLoc *ngapType.UserLocationInformationNR) *GnbCpUe {
-
+func NewGnbCpUe(ngapId int64, gnb *GNodeB, amf *GnbAmf) *GnbCpUe {
 	gnbue := GnbCpUe{}
 	gnbue.GnbUeNgapId = ngapId
 	gnbue.Amf = amf
 	gnbue.Gnb = gnb
-	gnbue.UeLocation = ueLoc
 	gnbue.ReadChan = make(chan common.InterfaceMessage, 5)
 	gnbue.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbCpUe",
 		logger.FieldGnbUeNgapId: ngapId})

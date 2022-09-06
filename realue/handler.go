@@ -10,6 +10,7 @@ import (
 
 	"github.com/omec-project/gnbsim/common"
 	realuectx "github.com/omec-project/gnbsim/realue/context"
+	"github.com/omec-project/gnbsim/realue/util"
 	"github.com/omec-project/gnbsim/realue/worker/pdusessworker"
 
 	realue_nas "github.com/omec-project/gnbsim/realue/nas"
@@ -32,10 +33,21 @@ const (
 func HandleRegRequestEvent(ue *realuectx.RealUe,
 	msg common.InterfaceMessage) (err error) {
 
-	nasPdu, err := realue_nas.GetRegistrationRequest(ue)
+	ueSecurityCapability := ue.GetUESecurityCapability()
+
+	ue.Suci, err = util.SupiToSuci(ue.Supi, ue.Plmn)
 	if err != nil {
-		return fmt.Errorf("failed to create registration request:%v", err)
+		ue.Log.Errorln("SupiToSuci returned:", err)
+		return fmt.Errorf("failed to derive suci")
 	}
+	mobileId5GS := nasType.MobileIdentity5GS{
+		Len:    uint16(len(ue.Suci)), // suci
+		Buffer: ue.Suci,
+	}
+
+	ue.Log.Traceln("Generating Registration Request Message")
+	nasPdu := nasTestpacket.GetRegistrationRequest(nasMessage.RegistrationType5GSInitialRegistration,
+		mobileId5GS, nil, ueSecurityCapability, nil, nil, nil)
 
 	m := formUuMessage(common.REG_REQUEST_EVENT, nasPdu)
 	SendToSimUe(ue, m)
