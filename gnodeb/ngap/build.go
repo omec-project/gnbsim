@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/omec-project/gnbsim/common"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 
@@ -61,6 +62,29 @@ func GetNGSetupRequest(gnb *gnbctx.GNodeB) ([]byte, error) {
 		}
 		supportedTaList.List = append(supportedTaList.List, supportedTaItem)
 	}
+
+	return ngap.Encoder(message)
+}
+
+func GetInitialUEMessage(gnbue *gnbctx.GnbCpUe, msg *common.UuMessage) ([]byte, error) {
+
+	message := ngapTestpacket.BuildInitialUEMessage(gnbue.GnbUeNgapId, msg.NasPdus[0], "")
+
+	lst := message.InitiatingMessage.Value.InitialUEMessage.ProtocolIEs.List
+	// User Location Information
+	ie := lst[2]
+	*(ie.Value.UserLocationInformation.UserLocationInformationNR) = *gnbue.UeLocation
+
+	return ngap.Encoder(message)
+}
+
+func GetUplinkNASTransport(gnbue *gnbctx.GnbCpUe, msg *common.UuMessage) ([]byte, error) {
+	message := ngapTestpacket.BuildUplinkNasTransport(gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, msg.NasPdus[0])
+
+	lst := message.InitiatingMessage.Value.InitialUEMessage.ProtocolIEs.List
+	// User Location Information
+	ie := lst[3]
+	*(ie.Value.UserLocationInformation.UserLocationInformationNR) = *gnbue.UeLocation
 
 	return ngap.Encoder(message)
 }
