@@ -42,7 +42,7 @@ func HandleInitialUEMessage(gnbue *gnbctx.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
 
 	msg := intfcMsg.(*common.UuMessage)
-	sendMsg, err := ngap.GetInitialUEMessage(gnbue, msg)
+	sendMsg, err := test.GetInitialUEMessage(gnbue.GnbUeNgapId, msg.NasPdus[0], "")
 	if err != nil {
 		gnbue.Log.Errorln("GetInitialUEMessage failed:", err)
 		return
@@ -100,7 +100,7 @@ func HandleUlInfoTransfer(gnbue *gnbctx.GnbCpUe,
 
 	msg := intfcMsg.(*common.UuMessage)
 	gnbue.Log.Traceln("Creating Uplink NAS Transport Message")
-	sendMsg, err := ngap.GetUplinkNASTransport(gnbue, msg)
+	sendMsg, err := test.GetUplinkNASTransport(gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, msg.NasPdus[0])
 	if err != nil {
 		gnbue.Log.Errorln("GetUplinkNASTransport failed:", err)
 		return

@@ -118,22 +118,13 @@ func PerformNgSetup(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf) (bool, error) {
 
 // RequestConnection should be called by UE that is willing to connect to this GNodeB
 func RequestConnection(gnb *gnbctx.GNodeB, uemsg *common.UuMessage) (chan common.InterfaceMessage, error) {
-
-	// When multiple PLMNs are configured under Supported TA in gNB, the
-	// Selected PLMN sent by UE is used to fetch the corresponding TAI from the
-	// Supported TA list. This can be useful to populate the User Location Info
-	// in the UL NGAP messages.
-	ueLoc, err := gnb.GetUserLocation(uemsg.SelectedPlmnId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to derive user location:%v", err)
-	}
-
 	ranUeNgapID, err := gnb.AllocateRanUeNgapID()
 	if err != nil {
-		return nil, fmt.Errorf("failed to allocate ran ue ngap id:%v", err)
+		gnb.Log.Errorln("AllocateRanUeNgapID returned:", err)
+		return nil, fmt.Errorf("failed to allocate ran ue ngap id")
 	}
 
-	gnbUe := gnbctx.NewGnbCpUe(ranUeNgapID, gnb, gnb.DefaultAmf, ueLoc)
+	gnbUe := gnbctx.NewGnbCpUe(ranUeNgapID, gnb, gnb.DefaultAmf)
 	gnb.GnbUes.AddGnbCpUe(ranUeNgapID, gnbUe)
 
 	// TODO: Launching a GO Routine for gNB and handling the waitgroup

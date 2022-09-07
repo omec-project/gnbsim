@@ -7,7 +7,6 @@ package common
 import (
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 	"github.com/omec-project/gnbsim/util/test"
-	"github.com/omec-project/openapi/models"
 
 	"github.com/omec-project/nas"
 	"github.com/omec-project/ngap/ngapType"
@@ -44,8 +43,7 @@ type NasPduList [][]byte
 // UuMessage is used to carry information between the UE and GNodeB
 type UuMessage struct {
 	DefaultMessage
-	Supi           string
-	SelectedPlmnId *models.PlmnId
+	Supi string
 
 	// Encoded NAS message
 	NasPdus  NasPduList
