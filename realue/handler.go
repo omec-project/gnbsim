@@ -44,8 +44,7 @@ func HandleRegRequestEvent(ue *realuectx.RealUe,
 		Len:    uint16(len(ue.Suci)), // suci
 		Buffer: ue.Suci,
 	}
-
-	ue.Log.Traceln("Generating Registration Request Message")
+	ue.Log.Traceln("Generating SUPI Registration Request Message")
 	nasPdu := nasTestpacket.GetRegistrationRequest(nasMessage.RegistrationType5GSInitialRegistration,
 		mobileId5GS, nil, ueSecurityCapability, nil, nil, nil)
 

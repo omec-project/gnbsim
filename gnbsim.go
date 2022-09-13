@@ -7,6 +7,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	_ "net/http/pprof" //Using package only for invoking initialization.
 	"os"
@@ -55,15 +56,19 @@ func action(c *cli.Context) error {
 		return err
 	}
 
-	//Initiating a server for profiling
-	go func() {
-		err := http.ListenAndServe(":5000", nil)
-		if err != nil {
-			logger.AppLog.Errorln("Failed to start profiling server")
-		}
-	}()
-
 	config := factory.AppConfig
+
+	//Initiating a server for profiling
+	if config.Configuration.GoProfile.Enable == true {
+		go func() {
+			endpt := fmt.Sprintf(":%v", config.Configuration.GoProfile.Port)
+			fmt.Println("endpoint for profile server ", endpt)
+			err := http.ListenAndServe(endpt, nil)
+			if err != nil {
+				logger.AppLog.Errorln("Failed to start profiling server")
+			}
+		}()
+	}
 	lvl := config.Logger.LogLevel
 	logger.AppLog.Infoln("Setting log level to:", lvl)
 	logger.SetLogLevel(lvl)
@@ -92,16 +97,22 @@ func action(c *cli.Context) error {
 		signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
 		go func() {
 			<-signalChannel
+			logger.AppLog.Infoln("StopHttpServer called")
 			httpserver.StopHttpServer()
+			logger.AppLog.Infoln("StopHttpServer returned ")
 		}()
 	}
 
 	var profileWaitGrp sync.WaitGroup
+	// start profile and wait for it to finish (success or failure)
+	// Keep running gnbsim as long as profiles are not finished
 	for _, profile := range config.Configuration.Profiles {
 		if !profile.Enable {
 			continue
 		}
 		profileWaitGrp.Add(1)
+
+		prof.InitProfile(profile, profctx.SummaryChan)
 
 		go func(profileCtx *profctx.Profile) {
 			defer profileWaitGrp.Done()
@@ -134,8 +145,10 @@ func getCliFlags() []cli.Flag {
 	}
 }
 
+// TODO : we don't keep track of how many profiles are started...
 func ListenAndLogSummary() {
 	for intfcMsg := range profctx.SummaryChan {
+		// TODO: do we need this event ?
 		if intfcMsg.GetEventType() == common.QUIT_EVENT {
 			return
 		}

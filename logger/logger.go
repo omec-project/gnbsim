@@ -31,6 +31,7 @@ var (
 	PsuppLog      *logrus.Entry
 	GinLog        *logrus.Entry
 	HttpLog       *logrus.Entry
+	ProfUeCtxLog  *logrus.Entry
 )
 
 const (
@@ -82,6 +83,7 @@ func init() {
 	AppSummaryLog = summaryLog.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Summary"})
 	RealUeLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "RealUe"})
 	SimUeLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "SimUe"})
+	ProfUeCtxLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "ProfUeCtx"})
 	ProfileLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Profile"})
 	GNodeBLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "GNodeB"})
 	GinLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Gin"})

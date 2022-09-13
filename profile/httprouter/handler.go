@@ -6,7 +6,9 @@
 package httprouter
 
 import (
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/omec-project/gnbsim/logger"
@@ -15,6 +17,49 @@ import (
 	"github.com/omec-project/openapi"
 	"github.com/omec-project/openapi/models"
 )
+
+func HTTPStepProfile(c *gin.Context) {
+	logger.HttpLog.Infoln("HTTPStepProfile!")
+	profName, exists := c.Params.Get("profile-name")
+	if exists == false {
+		logger.HttpLog.Printf("Received HTTPStepProfile, but profile-name not found ")
+		c.JSON(http.StatusBadRequest, gin.H{})
+		return
+	}
+	err := profCtx.SendStepEventProfile(profName)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{})
+		log.Println(err)
+	} else {
+		c.JSON(http.StatusOK, gin.H{})
+	}
+}
+
+func HTTPAddNewCallsProfile(c *gin.Context) {
+	logger.HttpLog.Infoln("HTTPAddNewCallsProfile!")
+	profName, exists := c.Params.Get("profile-name")
+	if exists == false {
+		logger.HttpLog.Printf("Received HTTPAddNewCallsProfile, but profile-name not found ")
+		c.JSON(http.StatusBadRequest, gin.H{})
+		return
+	}
+	var number int32
+	n, ok := c.GetQuery("number")
+	if ok == false {
+		number = 1
+	} else {
+		n, _ := strconv.Atoi(n)
+		number = int32(n)
+	}
+
+	err := profCtx.SendAddNewCallsEventProfile(profName, number)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{})
+		log.Println(err)
+	} else {
+		c.JSON(http.StatusOK, gin.H{})
+	}
+}
 
 func HTTPExecuteProfile(c *gin.Context) {
 
@@ -50,4 +95,5 @@ func HTTPExecuteProfile(c *gin.Context) {
 
 	prof.Init()
 	go profile.ExecuteProfile(&prof, profCtx.SummaryChan)
+	c.JSON(http.StatusOK, gin.H{})
 }

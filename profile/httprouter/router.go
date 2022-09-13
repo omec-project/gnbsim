@@ -76,4 +76,16 @@ var routes = Routes{
 		"/executeProfile",
 		HTTPExecuteProfile,
 	},
+	{
+		"StepProfile",
+		strings.ToUpper("Post"),
+		"/:profile-name/stepProfile",
+		HTTPStepProfile,
+	},
+	{
+		"addNewCalls",
+		strings.ToUpper("Post"),
+		"/:profile-name/addNewCalls",
+		HTTPAddNewCallsProfile,
+	},
 }
