@@ -20,6 +20,7 @@ const (
 	PROFILE_SIMUE_EVENT EventType = 0x5000000
 	SIMUE_REALUE_EVENT  EventType = 0x6000000
 	COMMON_EVENT        EventType = 0x7000000
+	PROC_SIMUE_EVENT    EventType = 0x8000000
 )
 
 const (
@@ -33,6 +34,14 @@ const (
 	PROFILE_START_EVENT EventType = PROFILE_SIMUE_EVENT + 1 + iota
 	PROFILE_PASS_EVENT
 	PROFILE_FAIL_EVENT
+	PROFILE_STEP_EVENT
+	PROFILE_ADDCALLS_EVENT
+)
+
+const (
+	PROC_START_EVENT EventType = PROC_SIMUE_EVENT + 1 + iota
+	PROC_PASS_EVENT
+	PROC_FAIL_EVENT
 )
 
 /* Events between SimUe and RealUE */
@@ -158,6 +167,8 @@ var evtStrMap map[EventType]string = map[EventType]string{
 	PROFILE_START_EVENT:                     "PROFILE-START-EVENT",
 	PROFILE_PASS_EVENT:                      "PROFILE-PASS-EVENT",
 	PROFILE_FAIL_EVENT:                      "PROFILE-FAIL-EVENT",
+	PROFILE_STEP_EVENT:                      "PROFILE-STEP-EVENT",
+	PROFILE_ADDCALLS_EVENT:                  "PROFILE-ADDCALLS-EVENT",
 	DATA_PKT_GEN_REQUEST_EVENT:              "DATA-PACKET-GENERATION-REQUEST-EVENT",
 	DATA_PKT_GEN_SUCCESS_EVENT:              "DATA-PACKET-SUCCESS-EVENT",
 	DATA_PKT_GEN_FAILURE_EVENT:              "DATA-PACKET-FAILURE-EVENT",
@@ -221,6 +232,9 @@ var evtStrMap map[EventType]string = map[EventType]string{
 	PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT:   "PDU-SESSION-RESOURCE-SETUP-REQUEST-EVENT",
 	UE_CTX_RELEASE_COMMAND_EVENT:            "UE-CONTEXT-RELEASE-COMMAND-EVENT",
 	DL_UE_DATA_TRANSPORT_EVENT:              "DL-UE-DATA-TRANSPORT-EVENT",
+	PROC_START_EVENT:                        "PROC-START-EVENT",
+	PROC_PASS_EVENT:                         "PROC-PASS-EVENT",
+	PROC_FAIL_EVENT:                         "PROC-FAIL-EVENT",
 }
 
 func (id EventType) String() string {

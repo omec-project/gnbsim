@@ -135,6 +135,7 @@ func HandleInitialContextSetupRequest(gnbue *gnbctx.GnbCpUe,
 				gnbue.Log.Errorln("AMFUENGAPID is nil")
 				return
 			}
+	        gnbue.AmfUeNgapId = amfUeNgapId.Value
 		case ngapType.ProtocolIEIDNASPDU:
 			nasPdu = ie.Value.NASPDU
 			if nasPdu == nil {

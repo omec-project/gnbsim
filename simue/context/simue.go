@@ -17,6 +17,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func init() {
+	SimUeTable = make(map[string]*SimUe)
+}
+
 // SimUe controls the flow of messages between RealUe and GnbUe as per the test
 // profile. It is the central entry point for all events
 type SimUe struct {
@@ -44,7 +48,9 @@ type SimUe struct {
 	Log *logrus.Entry
 }
 
-func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile) *SimUe {
+var SimUeTable map[string]*SimUe
+
+func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile, result chan *common.ProfileMessage) *SimUe {
 	simue := SimUe{}
 	simue.GnB = gnb
 	simue.Supi = supi
@@ -52,12 +58,22 @@ func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile) *SimUe 
 	simue.ReadChan = make(chan common.InterfaceMessage, 5)
 	simue.RealUe = realuectx.NewRealUe(supi,
 		security.AlgCiphering128NEA0, security.AlgIntegrity128NIA2,
-		simue.ReadChan, profile.Plmn, profile.Key, profile.Opc, profile.SeqNum, profile.Dnn, profile.SNssai)
+		simue.ReadChan, profile.Plmn, profile.Key, profile.Opc, profile.SeqNum,
+		profile.Dnn, profile.SNssai)
 	simue.WriteRealUeChan = simue.RealUe.ReadChan
-	simue.WriteProfileChan = profile.ReadChan
+	simue.WriteProfileChan = result
 
 	simue.Log = logger.SimUeLog.WithField(logger.FieldSupi, supi)
 
 	simue.Log.Traceln("Created new SimUe context")
+	SimUeTable[supi] = &simue
 	return &simue
+}
+
+func GetSimUe(supi string) *SimUe {
+	simue, found := SimUeTable[supi]
+	if found == false {
+		return nil
+	}
+	return simue
 }

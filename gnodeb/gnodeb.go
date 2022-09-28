@@ -74,7 +74,7 @@ func Init(gnb *gnbctx.GNodeB) error {
 
 	go gnb.CpTransport.ReceiveFromPeer(gnb.DefaultAmf)
 
-	gnb.Log.Traceln("GNodeB Initialized")
+	gnb.Log.Tracef("GNodeB Initialized %v ", gnb)
 	return nil
 }
 
