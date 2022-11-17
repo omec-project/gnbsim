@@ -446,6 +446,7 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		ue.Log.Infoln("Initiating User Data Packet Generation Procedure")
 		msg := &common.UeMessage{}
 		msg.UserDataPktCount = ue.ProfileCtx.DataPktCount
+		msg.UserDataPktInterval = ue.ProfileCtx.DataPktInt
 		msg.DefaultAs = ue.ProfileCtx.DefaultAs
 		msg.Event = common.DATA_PKT_GEN_REQUEST_EVENT
 
