@@ -42,7 +42,7 @@ call flows.
     3. Timeout for each call flow within profile
     4. Logging summary result
     5. HTTP API to execute profile
-    6. Configure number of data packets to be sent
+    6. Configure number of data packets to be sent and time interval between consecutive packets
     7. Configure AS (Application Server) address. This is used to send data packets
     8. Run gNBSim with single Interface or multi interface
     9. Support of Custom Profiles
