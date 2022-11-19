@@ -28,6 +28,7 @@ type PduSession struct {
 	PduAddress       net.IP
 	SeqNum           int
 	ReqDataPktCount  int
+	ReqDataPktInt    int
 	DefaultAs        string
 	TxDataPktCount   int
 	RxDataPktCount   int
