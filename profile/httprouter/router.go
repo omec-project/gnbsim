@@ -87,13 +87,13 @@ var routes = Routes{
 		strings.ToUpper("Post"),
 		"/:profile-name/addNewCalls",
 		HTTPAddNewCallsProfile,
+	},
 	{
 		"ExecuteGuiProfile",
 		strings.ToUpper("Post"),
 		"/executeGuiProfile",
 		HTTPExecuteGUIProfile,
 	},
-
 	{
 		"ExecuteGuiProfile",
 		"GET",

@@ -109,7 +109,7 @@ func initImsi(profile *profctx.Profile, gnb *gnbctx.GNodeB, imsiStr string) {
 //    - Hold the calls
 //    - We should be able to pass events to profile
 
-func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMessage) {
+func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMessage, responseChan chan common.InterfaceMessage) {
 
 	profile.Log.Infoln("ExecuteProfile started ")
 	var wg sync.WaitGroup

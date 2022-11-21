@@ -6,9 +6,9 @@
 package httprouter
 
 import (
-	"log"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -206,7 +206,7 @@ func HTTPExecuteProfile(c *gin.Context) {
 	logger.HttpLog.Debugf("%#v", prof)
 
 	prof.Init()
-	go profile.ExecuteProfile(&prof, profCtx.SummaryChan)
+	//go profile.ExecuteProfile(&prof, profCtx.SummaryChan)
+	go profile.ExecuteProfile(&prof, profCtx.SummaryChan, nil)
 	c.JSON(http.StatusOK, gin.H{})
-	//go profile.ExecuteProfile(&prof, profCtx.SummaryChan, nil)
 }
