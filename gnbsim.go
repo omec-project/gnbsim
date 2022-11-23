@@ -103,29 +103,35 @@ func action(c *cli.Context) error {
 		}()
 	}
 
-	var profileWaitGrp sync.WaitGroup
-	// start profile and wait for it to finish (success or failure)
-	// Keep running gnbsim as long as profiles are not finished
-	for _, profile := range config.Configuration.Profiles {
-		if !profile.Enable {
-			continue
+	//This configuration enables running the configured profiles
+	//when gnbsim is started. It is enabled by default. If we want no
+	//profiles to run and gnbsim to wait for a command, then we
+	//should disable this config.
+	if config.Configuration.RunConfigProfilesAtStart {
+		var profileWaitGrp sync.WaitGroup
+		// start profile and wait for it to finish (success or failure)
+		// Keep running gnbsim as long as profiles are not finished
+		for _, profile := range config.Configuration.Profiles {
+			if !profile.Enable {
+				continue
+			}
+			profileWaitGrp.Add(1)
+
+			prof.InitProfile(profile, profctx.SummaryChan)
+
+			go func(profileCtx *profctx.Profile) {
+				defer profileWaitGrp.Done()
+				prof.ExecuteProfile(profileCtx, profctx.SummaryChan)
+			}(profile)
+
+			if config.Configuration.ExecInParallel == false {
+				profileWaitGrp.Wait()
+			}
 		}
-		profileWaitGrp.Add(1)
 
-		prof.InitProfile(profile, profctx.SummaryChan)
-
-		go func(profileCtx *profctx.Profile) {
-			defer profileWaitGrp.Done()
-			prof.ExecuteProfile(profileCtx, profctx.SummaryChan)
-		}(profile)
-
-		if config.Configuration.ExecInParallel == false {
+		if config.Configuration.ExecInParallel == true {
 			profileWaitGrp.Wait()
 		}
-	}
-
-	if config.Configuration.ExecInParallel == true {
-		profileWaitGrp.Wait()
 	}
 
 	appWaitGrp.Wait()

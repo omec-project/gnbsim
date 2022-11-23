@@ -38,13 +38,14 @@ type Info struct {
 }
 
 type Configuration struct {
-	Gnbs            map[string]*gnbctx.GNodeB   `yaml:"gnbs"`
-	CustomProfiles  map[string]*profctx.Profile `yaml:"customProfiles"`
-	Profiles        []*profctx.Profile          `yaml:"profiles"`
-	SingleInterface bool                        `yaml:"singleInterface"`
-	ExecInParallel  bool                        `yaml:"execInParallel"`
-	Server          HttpServer                  `yaml:"httpServer"`
-	GoProfile       ProfileServer               `yaml:"goProfile"`
+	Gnbs                     map[string]*gnbctx.GNodeB   `yaml:"gnbs"`
+	CustomProfiles           map[string]*profctx.Profile `yaml:"customProfiles"`
+	Profiles                 []*profctx.Profile          `yaml:"profiles"`
+	SingleInterface          bool                        `yaml:"singleInterface"`
+	ExecInParallel           bool                        `yaml:"execInParallel"`
+	Server                   HttpServer                  `yaml:"httpServer"`
+	GoProfile                ProfileServer               `yaml:"goProfile"`
+	RunConfigProfilesAtStart bool                        `yaml:"runConfigProfilesAtStart"`
 }
 
 type ProfileServer struct {
