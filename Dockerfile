@@ -12,7 +12,7 @@ RUN cd $GOPATH/src && mkdir -p gnbsim
 COPY . $GOPATH/src/gnbsim 
 RUN cd $GOPATH/src/gnbsim && go build -mod=vendor
 
-FROM alpine:3.16 AS gnbsim
+FROM alpine:3.17 AS gnbsim
 RUN apk update && apk add -U gcompat vim strace net-tools curl netcat-openbsd bind-tools bash tcpdump
 
 RUN mkdir -p /gnbsim/bin
