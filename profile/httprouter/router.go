@@ -77,6 +77,12 @@ var routes = Routes{
 		HTTPExecuteProfile,
 	},
 	{
+		"ExecuteConfigProfile",
+		strings.ToUpper("Get"),
+		"/executeConfigProfile",
+		HTTPExecuteConfigProfile,
+	},
+	{
 		"StepProfile",
 		strings.ToUpper("Post"),
 		"/:profile-name/stepProfile",
