@@ -23,12 +23,11 @@ require (
 	github.com/omec-project/openapi v1.1.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/ugorji/go v1.2.3 // indirect
-	github.com/urfave/cli v1.22.4
+	github.com/urfave/cli v1.22.12
 	github.com/yerden/go-util v1.1.4
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
 	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
 	golang.org/x/sys v0.0.0-20210423082822-04245dca01da
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
