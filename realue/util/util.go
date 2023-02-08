@@ -35,11 +35,11 @@ func SupiToSuci(supi string, plmnid *models.PlmnId) ([]byte, error) {
 		return nil, fmt.Errorf("mcc not found in imsi")
 	}
 
-	index = strings.Index(imsi, plmnid.Mnc)
+	index = strings.Index(imsi+plmnid.Mcc, plmnid.Mnc)
 	if index < 0 {
 		return nil, fmt.Errorf("mnc not found in imsi")
 	}
-	index += len(plmnid.Mnc)
+	index = len(plmnid.Mnc + plmnid.Mcc)
 	// extracting msin from imsi
 	msin := imsi[index:]
 
