@@ -7,6 +7,7 @@ FROM golang:1.18.0-stretch AS gnb
 
 LABEL maintainer="ONF <omec-dev@opennetworking.org>"
 
+RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list
 RUN apt-get update && apt-get -y install vim ethtool
 RUN cd $GOPATH/src && mkdir -p gnbsim
 COPY . $GOPATH/src/gnbsim 

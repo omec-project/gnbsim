@@ -10,6 +10,7 @@ info:
   description: GNBSIM initial local configuration
 
 configuration:
+  runConfigProfilesAtStart: true
   singleInterface: false #default value
   execInParallel: false #run all profiles in parallel
   httpServer: # Serves APIs to create/control profiles on the go
