@@ -237,7 +237,7 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 		itp, found := p.PIterations[pCtx.CurrentItr]
 		pCtx.Log.Infoln("Current Iteration map - ", itp)
 		if itp.WaitMap[pCtx.CurrentProcIndex] != 0 {
-			time.Sleep(time.Second * time.Duration(itp.WaitMap[pCtx.CurrentProcIndex]))
+			time.Sleep(time.Millisecond * time.Duration(itp.WaitMap[pCtx.CurrentProcIndex]))
 		}
 		nextProcIndex := pCtx.CurrentProcIndex + 1
 		nextProcedure, found := itp.ProcMap[nextProcIndex]
