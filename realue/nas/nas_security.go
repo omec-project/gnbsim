@@ -18,7 +18,8 @@ import (
 	"github.com/omec-project/ngap/ngapType"
 )
 
-var mutex sync.Mutex
+var decodeMutex sync.Mutex
+var encodeMutex sync.Mutex
 
 func EncodeNasPduWithSecurity(ue *realuectx.RealUe, pdu []byte, securityHeaderType uint8,
 	securityContextAvailable bool) ([]byte, error) {
@@ -71,8 +72,8 @@ func GetNasPduSetupRequest(ue *realuectx.RealUe, msg *ngapType.PDUSessionResourc
 
 func NASEncode(ue *realuectx.RealUe, msg *nas.Message, securityContextAvailable bool) (
 	payload []byte, err error) {
-	mutex.Lock()
-	defer mutex.Unlock()
+	encodeMutex.Lock()
+	defer encodeMutex.Unlock()
 
 	if ue == nil {
 		err = fmt.Errorf("amfUe is nil")
@@ -142,8 +143,8 @@ func NASEncode(ue *realuectx.RealUe, msg *nas.Message, securityContextAvailable 
 }
 
 func NASDecode(ue *realuectx.RealUe, securityHeaderType uint8, payload []byte) (msg *nas.Message, err error) {
-	mutex.Lock()
-	defer mutex.Unlock()
+	decodeMutex.Lock()
+	defer decodeMutex.Unlock()
 
 	if ue == nil {
 		err = fmt.Errorf("amfUe is nil")
