@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-FROM golang:1.18.0-stretch AS gnb
+FROM golang:1.21.3-bookworm AS gnb
 
 LABEL maintainer="ONF <omec-dev@opennetworking.org>"
 
