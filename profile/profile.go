@@ -18,7 +18,7 @@ import (
 	"github.com/omec-project/gnbsim/simue"
 )
 
-//profile names
+// profile names
 const (
 	REGISTER                string = "register"
 	PDU_SESS_EST            string = "pdusessest"
