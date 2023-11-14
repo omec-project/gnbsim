@@ -156,10 +156,10 @@ func (cpTprt *GnbCpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 				cpTprt.Log.Warnln("SCTP read timeout")
 				continue
 			case syscall.EINTR:
-				cpTprt.Log.Warnf("SCTPRead: %+v\n", err)
+				cpTprt.Log.Warnln("SCTPRead: %+v\n", err)
 				continue
 			default:
-				cpTprt.Log.Errorf("Handle connection[addr: %+v] error: %+v\n", amf.Conn.RemoteAddr(), err)
+				cpTprt.Log.Errorln("Handle connection[addr: %+v] error: %+v\n", amf.Conn.RemoteAddr(), err)
 				return
 			}
 		}

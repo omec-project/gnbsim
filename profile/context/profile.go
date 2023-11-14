@@ -120,7 +120,7 @@ func (profile *Profile) Init() {
 func SendStepEventProfile(name string) error {
 	profile, found := ProfileMap[name]
 	if found == false {
-		err := fmt.Errorf("unknown profile:%v", profile)
+		err := fmt.Errorf("unknown profile:%s", profile)
 		log.Println(err)
 		return err
 	}
@@ -144,7 +144,7 @@ func SendStepEventProfile(name string) error {
 func SendAddNewCallsEventProfile(name string, number int32) error {
 	profile, found := ProfileMap[name]
 	if found == false {
-		err := fmt.Errorf("unknown profile:%v", profile)
+		err := fmt.Errorf("unknown profile:%s", profile)
 		return err
 	}
 	msg := &common.ProfileMessage{}
@@ -234,7 +234,7 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 	if len(p.Iterations) > 0 {
 		pCtx.Log.Infoln("Current UE iteration ", pCtx.CurrentItr)
 		pCtx.Log.Infoln("Current UE procedure index  ", pCtx.CurrentProcIndex)
-		itp, found := p.PIterations[pCtx.CurrentItr]
+		itp, _ := p.PIterations[pCtx.CurrentItr]
 		pCtx.Log.Infoln("Current Iteration map - ", itp)
 		if itp.WaitMap[pCtx.CurrentProcIndex] != 0 {
 			time.Sleep(time.Second * time.Duration(itp.WaitMap[pCtx.CurrentProcIndex]))
