@@ -120,7 +120,7 @@ func (profile *Profile) Init() {
 func SendStepEventProfile(name string) error {
 	profile, found := ProfileMap[name]
 	if found == false {
-		err := fmt.Errorf("unknown profile:%s", profile)
+		err := fmt.Errorf("unknown profile:%v", profile)
 		log.Println(err)
 		return err
 	}
@@ -144,7 +144,7 @@ func SendStepEventProfile(name string) error {
 func SendAddNewCallsEventProfile(name string, number int32) error {
 	profile, found := ProfileMap[name]
 	if found == false {
-		err := fmt.Errorf("unknown profile:%s", profile)
+		err := fmt.Errorf("unknown profile:%v", profile)
 		return err
 	}
 	msg := &common.ProfileMessage{}
