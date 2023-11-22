@@ -140,7 +140,6 @@ func HandleEvents(ue *simuectx.SimUe) {
 			ue.Log.Errorln("Failed to handle event:", event, "Error:", err)
 			msg := &common.UeMessage{}
 			msg.Error = err
-			err = nil
 			msg.Event = common.ERROR_EVENT
 			HandleErrorEvent(ue, msg)
 			return
