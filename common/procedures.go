@@ -9,7 +9,8 @@ import "github.com/omec-project/gnbsim/logger"
 type ProcedureType uint8
 
 const (
-	REGISTRATION_PROCEDURE ProcedureType = 1 + iota
+	UNKNOWN_PROCEDURE ProcedureType = 0 + iota
+	REGISTRATION_PROCEDURE
 	PDU_SESSION_ESTABLISHMENT_PROCEDURE
 	UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE
 	USER_DATA_PKT_GENERATION_PROCEDURE
@@ -19,9 +20,11 @@ const (
 	NW_TRIGGERED_UE_DEREGISTRATION_PROCEDURE
 	AMF_RELEASE_PROCEDURE
 	NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE
+	CUSTOM_PROCEDURE
 )
 
 var procStrMap = map[ProcedureType]string{
+	UNKNOWN_PROCEDURE:                          "UNKNOWN-PROCEDURE",
 	REGISTRATION_PROCEDURE:                     "REGISTRATION-PROCEDURE",
 	PDU_SESSION_ESTABLISHMENT_PROCEDURE:        "PDU-SESSION-ESTABLISHMENT-PROCEDURE",
 	USER_DATA_PKT_GENERATION_PROCEDURE:         "USER-DATA-PACKET-GENERATION-PROCEDURE",
@@ -32,6 +35,7 @@ var procStrMap = map[ProcedureType]string{
 	AMF_RELEASE_PROCEDURE:                      "AMF-RELEASE-PROCEDURE",
 	UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE: "UE-REQUESTED-PDU-SESSION-RELEASE-PROCEDURE",
 	NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE: "NW-REQUESTED-PDU-SESSION-RELEASE-PROCEDURE",
+	CUSTOM_PROCEDURE:                           "CUSTOM-PROCEDURE",
 }
 
 func (id ProcedureType) String() string {
@@ -40,4 +44,14 @@ func (id ProcedureType) String() string {
 		logger.AppLog.Fatalf("Invalid Procedure ID: %#v", id)
 	}
 	return procStr
+}
+
+func GetProcId(name string) ProcedureType {
+	var p ProcedureType = UNKNOWN_PROCEDURE
+	for id, v := range procStrMap {
+		if v == name {
+			return id
+		}
+	}
+	return p
 }

@@ -6,20 +6,29 @@ package simue
 
 import (
 	"fmt"
-
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/gnodeb"
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
+	profctx "github.com/omec-project/gnbsim/profile/context"
+	"github.com/omec-project/gnbsim/profile/util"
 	"github.com/omec-project/gnbsim/realue"
 	simuectx "github.com/omec-project/gnbsim/simue/context"
+	"time"
 )
+
+func InitUE(imsiStr string, gnb *gnbctx.GNodeB, profile *profctx.Profile, result chan *common.ProfileMessage) chan common.InterfaceMessage {
+	simUe := simuectx.NewSimUe(imsiStr, gnb, profile, result)
+	Init(simUe) // Initialize simUE, realUE & wait for events
+	return simUe.ReadChan
+}
 
 func Init(simUe *simuectx.SimUe) {
 
 	err := ConnectToGnb(simUe)
 	if err != nil {
 		err = fmt.Errorf("failed to connect to gnodeb: %v", err)
-		SendToProfile(simUe, common.PROFILE_FAIL_EVENT, err)
-		simUe.Log.Infoln("Sent Profile Fail Event to Profile routine")
+		simUe.Log.Infoln("Sent Profile Fail Event to Profile routine****: ", err)
+		SendToProfile(simUe, common.PROC_FAIL_EVENT, err)
 		return
 	}
 
@@ -29,8 +38,8 @@ func Init(simUe *simuectx.SimUe) {
 		realue.Init(simUe.RealUe)
 	}()
 
-	HandleEvents(simUe)
-	simUe.Log.Infoln("SIM UE go routine complete")
+	go HandleEvents(simUe)
+	simUe.Log.Infoln("SIM UE Init complete")
 }
 
 func ConnectToGnb(simUe *simuectx.SimUe) error {
@@ -43,6 +52,8 @@ func ConnectToGnb(simUe *simuectx.SimUe) error {
 	gNb := simUe.GnB
 	simUe.WriteGnbUeChan, err = gnodeb.RequestConnection(gNb, &uemsg)
 	if err != nil {
+		simUe.Log.Infof("ERROR -- connecting to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
+			gNb.GnbN2Ip, gNb.GnbN2Port)
 		return err
 	}
 
@@ -58,6 +69,8 @@ func HandleEvents(ue *simuectx.SimUe) {
 		ue.Log.Infoln("Handling event:", event)
 
 		switch event {
+		case common.PROC_START_EVENT:
+			err = HandleProcedureEvent(ue, msg)
 		case common.REG_REQUEST_EVENT:
 			err = HandleRegRequestEvent(ue, msg)
 		case common.REG_REJECT_EVENT:
@@ -106,8 +119,6 @@ func HandleEvents(ue *simuectx.SimUe) {
 			err = HandleServiceRequestEvent(ue, msg)
 		case common.SERVICE_ACCEPT_EVENT:
 			err = HandleServiceAcceptEvent(ue, msg)
-		case common.PROFILE_START_EVENT:
-			err = HandleProfileStartEvent(ue, msg)
 		case common.CONNECTION_RELEASE_REQUEST_EVENT:
 			err = HandleConnectionReleaseRequestEvent(ue, msg)
 		case common.DEREG_REQUEST_UE_TERM_EVENT:
@@ -115,6 +126,7 @@ func HandleEvents(ue *simuectx.SimUe) {
 		case common.DEREG_ACCEPT_UE_TERM_EVENT:
 			err = HandleNwDeregAcceptEvent(ue, msg)
 		case common.ERROR_EVENT:
+			ue.Log.Warnln("Event:", event, " received error")
 			HandleErrorEvent(ue, msg)
 			return
 		case common.QUIT_EVENT:
@@ -128,7 +140,6 @@ func HandleEvents(ue *simuectx.SimUe) {
 			ue.Log.Errorln("Failed to handle event:", event, "Error:", err)
 			msg := &common.UeMessage{}
 			msg.Error = err
-			err = nil
 			msg.Event = common.ERROR_EVENT
 			HandleErrorEvent(ue, msg)
 			return
@@ -157,4 +168,67 @@ func SendToProfile(ue *simuectx.SimUe, event common.EventType, errMsg error) {
 	msg.Error = errMsg
 	ue.WriteProfileChan <- msg
 	ue.Log.Traceln("Sent ", event, "to Profile routine")
+}
+
+func RunProcedure(simUe *simuectx.SimUe, procedure common.ProcedureType) {
+	util.SendToSimUe(simUe, common.PROC_START_EVENT, procedure)
+}
+
+func ImsiStateMachine(profile *profctx.Profile, pCtx *profctx.ProfileUeContext, imsiStr string, summaryChan chan common.InterfaceMessage) error {
+	var no_more_proc bool
+	var proc_fail bool
+	var err error
+
+	procedure := profile.GetNextProcedure(pCtx, 0)
+	for {
+		// select procedure to execute for imsi
+		simUe := simuectx.GetSimUe(imsiStr)
+		//if simUe == nil {
+		// pass readChan to simUe
+		//}
+		pCtx.Log.Infoln("Execute procedure ", procedure)
+		// proc result -  success, fail or timeout
+		timeout := time.Duration(profile.PerUserTimeout) * time.Second
+		ticker := time.NewTicker(timeout)
+		//Ask simUe to just run procedure and return result
+		go RunProcedure(simUe, procedure)
+		pCtx.Log.Infoln("Waiting for procedure result from imsiStateMachine")
+		select {
+		case <-ticker.C:
+			err = fmt.Errorf("imsi:%v, profile timeout", imsiStr)
+			pCtx.Log.Infoln("Procedure Result: FAIL,", err)
+			proc_fail = true
+		case msg := <-pCtx.ReadChan:
+			pCtx.Log.Infoln("imsiStateMachine received result ")
+			switch msg.Event {
+			case common.PROC_PASS_EVENT:
+				pCtx.Log.Infoln("Procedure Result: PASS, imsi:", msg.Supi)
+				procedure = profile.GetNextProcedure(pCtx, simUe.Procedure)
+				if procedure == 0 {
+					no_more_proc = true
+				}
+			case common.PROC_FAIL_EVENT:
+				err = fmt.Errorf("imsi:%v, procedure:%v, error:%v", msg.Supi, msg.Proc, msg.Error)
+				pCtx.Log.Infoln("Result: FAIL,", err)
+				proc_fail = true
+			}
+		}
+		ticker.Stop()
+		if no_more_proc == true {
+			pCtx.Log.Infoln("imsiStateMachine no more proc to execute")
+			break
+		} else if proc_fail == true {
+			break
+		}
+		//should we wait for pulse to move to next step?
+		if profile.StepTrigger == true {
+			pCtx.Log.Infoln("imsiStateMachine waiting for user trigger")
+			select {
+			case msg := <-pCtx.TrigEventsChan:
+				pCtx.Log.Infoln("imsiStateMachine received trigger : ", msg)
+			}
+		}
+	}
+	pCtx.Log.Infoln("imsiStateMachine ended")
+	return err
 }

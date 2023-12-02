@@ -18,9 +18,9 @@ import (
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 	"github.com/omec-project/gnbsim/util/test"
 
-	"github.com/free5gc/aper"
-	"github.com/free5gc/ngap/ngapConvert"
-	"github.com/free5gc/ngap/ngapType"
+	"github.com/omec-project/aper"
+	"github.com/omec-project/ngap/ngapConvert"
+	"github.com/omec-project/ngap/ngapType"
 )
 
 type pduSessResourceSetupItem struct {
@@ -135,6 +135,7 @@ func HandleInitialContextSetupRequest(gnbue *gnbctx.GnbCpUe,
 				gnbue.Log.Errorln("AMFUENGAPID is nil")
 				return
 			}
+			gnbue.AmfUeNgapId = amfUeNgapId.Value
 		case ngapType.ProtocolIEIDNASPDU:
 			nasPdu = ie.Value.NASPDU
 			if nasPdu == nil {

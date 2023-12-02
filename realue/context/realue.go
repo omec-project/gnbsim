@@ -14,12 +14,12 @@ import (
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/logger"
 
-	"github.com/free5gc/UeauCommon"
-	"github.com/free5gc/milenage"
-	"github.com/free5gc/openapi/models"
+	"github.com/omec-project/UeauCommon"
+	"github.com/omec-project/milenage"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasType"
 	"github.com/omec-project/nas/security"
+	"github.com/omec-project/openapi/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -28,6 +28,11 @@ type RealUe struct {
 	Supi               string
 	Suci               []uint8
 	Guti               string
+	Key                string
+	Opc                string
+	SeqNum             string
+	Dnn                string
+	SNssai             *models.Snssai
 	ULCount            security.Count
 	DLCount            security.Count
 	CipheringAlg       uint8
@@ -52,12 +57,18 @@ type RealUe struct {
 }
 
 func NewRealUe(supi string, cipheringAlg, integrityAlg uint8,
-	simuechan chan common.InterfaceMessage, plmnid *models.PlmnId) *RealUe {
+	simuechan chan common.InterfaceMessage, plmnid *models.PlmnId,
+	key string, opc string, seqNum string, Dnn string, SNssai *models.Snssai) *RealUe {
 
 	ue := RealUe{}
 	ue.Supi = supi
 	ue.CipheringAlg = cipheringAlg
 	ue.IntegrityAlg = integrityAlg
+	ue.Key = key
+	ue.Opc = opc
+	ue.SeqNum = seqNum
+	ue.Dnn = Dnn
+	ue.SNssai = SNssai
 	ue.Plmn = plmnid
 	ue.WriteSimUeChan = simuechan
 	ue.PduSessions = make(map[int64]*PduSession)

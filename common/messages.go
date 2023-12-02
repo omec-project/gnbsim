@@ -8,8 +8,8 @@ import (
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 	"github.com/omec-project/gnbsim/util/test"
 
-	"github.com/free5gc/ngap/ngapType"
 	"github.com/omec-project/nas"
+	"github.com/omec-project/ngap/ngapType"
 )
 
 type InterfaceMessage interface {
@@ -116,6 +116,9 @@ type UeMessage struct {
 
 	// Number of user data packets to be generated as directed by profile
 	UserDataPktCount int
+
+	// User data packets generating interval as directed by profile
+	UserDataPktInterval int
 
 	// default destination of data pkt
 	DefaultAs string

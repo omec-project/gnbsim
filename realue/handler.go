@@ -15,15 +15,15 @@ import (
 
 	realue_nas "github.com/omec-project/gnbsim/realue/nas"
 
-	"github.com/free5gc/openapi/models"
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasConvert"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasTestpacket"
 	"github.com/omec-project/nas/nasType"
+	"github.com/omec-project/openapi/models"
 )
 
-//TODO Remove the hardcoding
+// TODO Remove the hardcoding
 const (
 	SN_NAME                        string = "5G:mnc093.mcc208.3gppnetwork.org"
 	SWITCH_OFF                     uint8  = 0
@@ -44,8 +44,7 @@ func HandleRegRequestEvent(ue *realuectx.RealUe,
 		Len:    uint16(len(ue.Suci)), // suci
 		Buffer: ue.Suci,
 	}
-
-	ue.Log.Traceln("Generating Registration Request Message")
+	ue.Log.Traceln("Generating SUPI Registration Request Message")
 	nasPdu := nasTestpacket.GetRegistrationRequest(nasMessage.RegistrationType5GSInitialRegistration,
 		mobileId5GS, nil, ueSecurityCapability, nil, nil, nil)
 
@@ -170,12 +169,12 @@ func HandleDeregRequestEvent(ue *realuectx.RealUe,
 func HandlePduSessEstRequestEvent(ue *realuectx.RealUe,
 	msg common.InterfaceMessage) (err error) {
 
-	sNssai := models.Snssai{
-		Sst: 1,
-		Sd:  "010203",
-	}
+	// sNssai := models.Snssai{
+	// 	Sst: 1,
+	// 	Sd:  "010203",
+	// }
 	nasPdu := nasTestpacket.GetUlNasTransport_PduSessionEstablishmentRequest(10,
-		nasMessage.ULNASTransportRequestTypeInitialRequest, "internet", &sNssai)
+		nasMessage.ULNASTransportRequestTypeInitialRequest, ue.Dnn, ue.SNssai)
 
 	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)

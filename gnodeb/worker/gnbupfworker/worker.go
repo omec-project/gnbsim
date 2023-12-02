@@ -12,7 +12,7 @@ import (
 	"github.com/omec-project/gnbsim/logger"
 	"github.com/omec-project/gnbsim/util/test"
 
-	"github.com/free5gc/ngap/ngapType"
+	"github.com/omec-project/ngap/ngapType"
 )
 
 func Init(gnbUpf *gnbctx.GnbUpf) {
