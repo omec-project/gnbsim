@@ -280,8 +280,8 @@ github.com/omec-project/logger_util v1.1.0/go.mod h1:UkD09amIhlh8P0k82A6Uz/atiZG
 github.com/omec-project/milenage v1.1.0 h1:yVBtBB4hd+SQx4gFkE6mZ8mfzO5na/1d2j31G6jYlCA=
 github.com/omec-project/milenage v1.1.0/go.mod h1:Tw5HLvxWEQN0JA+EXEVwZ17TL9adEZk3kWqKGgsNmHc=
 github.com/omec-project/nas v1.1.1/go.mod h1:gXqi/IZwEGXno26X8wg8ITsAUiemRQ7PkIJOWP1NzGA=
-github.com/omec-project/nas v1.1.3 h1:2GuvNz/1tr3M6wpHlcuDCOJaxAa3Fm54xt5Wggklwrg=
-github.com/omec-project/nas v1.1.3/go.mod h1:gXqi/IZwEGXno26X8wg8ITsAUiemRQ7PkIJOWP1NzGA=
+github.com/omec-project/nas v1.1.4 h1:kQvTTkjJ8eSb6/noeU8Bp6AOo4KeSvUII9CneFADnYs=
+github.com/omec-project/nas v1.1.4/go.mod h1:gXqi/IZwEGXno26X8wg8ITsAUiemRQ7PkIJOWP1NzGA=
 github.com/omec-project/ngap v1.1.0 h1:J9bkPEzzyGd1787nGY/aZVp3gckkZBoJB4tkTo59eyw=
 github.com/omec-project/ngap v1.1.0/go.mod h1:A+T3+JKk+6AuhnMr6W319Tc7E176ig6rIRDVSKQ7E5g=
 github.com/omec-project/openapi v1.0.100-dev/go.mod h1:Fv9ajWROYypcNER+ZwWXPhLCdV4pBz75KqFp/R/2gCw=
