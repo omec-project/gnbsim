@@ -19,7 +19,7 @@ require (
 	github.com/omec-project/nas v1.1.4
 	github.com/omec-project/ngap v1.1.0
 	github.com/omec-project/openapi v1.1.0
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli v1.22.14
 	github.com/yerden/go-util v1.1.4
 	golang.org/x/net v0.19.0
