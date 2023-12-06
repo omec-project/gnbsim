@@ -19,11 +19,11 @@ require (
 	github.com/omec-project/nas v1.1.4
 	github.com/omec-project/ngap v1.1.0
 	github.com/omec-project/openapi v1.1.0
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli v1.22.14
 	github.com/yerden/go-util v1.1.4
-	golang.org/x/net v0.16.0
-	golang.org/x/sys v0.13.0
+	golang.org/x/net v0.19.0
+	golang.org/x/sys v0.15.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -68,9 +68,9 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	golang.org/x/arch v0.5.0 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/crypto v0.16.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20210810183815-faf39c7919d5 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/h2non/gock.v1 v1.1.2 // indirect
