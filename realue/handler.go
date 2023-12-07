@@ -23,7 +23,7 @@ import (
 	"github.com/omec-project/openapi/models"
 )
 
-//TODO Remove the hardcoding
+// TODO Remove the hardcoding
 const (
 	SN_NAME                        string = "5G:mnc093.mcc208.3gppnetwork.org"
 	SWITCH_OFF                     uint8  = 0
