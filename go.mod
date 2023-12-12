@@ -19,11 +19,11 @@ require (
 	github.com/omec-project/nas v1.1.4
 	github.com/omec-project/ngap v1.1.0
 	github.com/omec-project/openapi v1.1.0
-	github.com/sirupsen/logrus v1.8.1
-	github.com/urfave/cli v1.22.4
+	github.com/sirupsen/logrus v1.9.3
+	github.com/urfave/cli v1.22.14
 	github.com/yerden/go-util v1.1.4
-	golang.org/x/net v0.16.0
-	golang.org/x/sys v0.13.0
+	golang.org/x/net v0.19.0
+	golang.org/x/sys v0.15.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -34,7 +34,7 @@ require (
 	github.com/bytedance/sonic v1.10.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.0 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -64,14 +64,13 @@ require (
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4 // indirect
 	github.com/prometheus/common v0.4.0 // indirect
 	github.com/prometheus/procfs v0.0.0-20190507164030-5867b95ac084 // indirect
-	github.com/russross/blackfriday/v2 v2.0.1 // indirect
-	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	golang.org/x/arch v0.5.0 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/crypto v0.16.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20210810183815-faf39c7919d5 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/h2non/gock.v1 v1.1.2 // indirect

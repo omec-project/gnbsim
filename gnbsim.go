@@ -113,6 +113,7 @@ func action(c *cli.Context) error {
 		// Keep running gnbsim as long as profiles are not finished
 		for _, profile := range config.Configuration.Profiles {
 			if !profile.Enable {
+				logger.AppLog.Errorln("disabled profileType ", profile.ProfileType)
 				continue
 			}
 			profileWaitGrp.Add(1)
