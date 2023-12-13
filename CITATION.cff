@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2023 Intel Corporation
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "ONF project"
+title: "5G Test tool - gNBSim"
+version: 1.1.0
+date-released: 2022-03-13
+url: "https://github.com/omec-project/gnbsim"

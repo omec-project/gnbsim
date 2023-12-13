@@ -42,18 +42,31 @@ func HandleInitialUEMessage(gnbue *gnbctx.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
 
 	msg := intfcMsg.(*common.UuMessage)
-	sendMsg, err := test.GetInitialUEMessage(gnbue.GnbUeNgapId, msg.NasPdus[0], "")
-	if err != nil {
-		gnbue.Log.Errorln("GetInitialUEMessage failed:", err)
-		return
+	if gnbue.AmfUeNgapId != 0 {
+		sendMsg, err := test.GetUplinkNASTransport(gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, msg.NasPdus[0])
+		if err != nil {
+			gnbue.Log.Errorln("GetUplinkNASMessage failed:", err)
+			return
+		}
+		err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg)
+		if err != nil {
+			gnbue.Log.Errorln("SendToPeer failed:", err)
+			return
+		}
+		gnbue.Log.Traceln("Sent Uplink NAS Message to AMF")
+	} else {
+		sendMsg, err := test.GetInitialUEMessage(gnbue.GnbUeNgapId, msg.NasPdus[0], "")
+		if err != nil {
+			gnbue.Log.Errorln("GetInitialUEMessage failed:", err)
+			return
+		}
+		err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg)
+		if err != nil {
+			gnbue.Log.Errorln("SendToPeer failed:", err)
+			return
+		}
+		gnbue.Log.Traceln("Sent Initial UE Message to AMF")
 	}
-	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg)
-	if err != nil {
-		gnbue.Log.Errorln("SendToPeer failed:", err)
-		return
-	}
-
-	gnbue.Log.Traceln("Sent Initial UE Message to AMF")
 }
 
 func HandleDownlinkNasTransport(gnbue *gnbctx.GnbCpUe,
