@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-FROM golang:1.21.4-bookworm AS gnb
+FROM golang:1.21.5-bookworm AS gnb
 
 LABEL maintainer="ONF <omec-dev@opennetworking.org>"
 
@@ -12,7 +12,7 @@ RUN cd $GOPATH/src && mkdir -p gnbsim
 COPY . $GOPATH/src/gnbsim 
 RUN cd $GOPATH/src/gnbsim && go build -mod=vendor
 
-FROM alpine:3.18 AS gnbsim
+FROM alpine:3.19 AS gnbsim
 RUN apk update && apk add -U gcompat vim strace net-tools curl netcat-openbsd bind-tools bash tcpdump
 
 RUN mkdir -p /gnbsim/bin
