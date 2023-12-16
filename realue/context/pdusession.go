@@ -10,7 +10,7 @@ import (
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/logger"
 
-	"github.com/free5gc/openapi/models"
+	"github.com/omec-project/openapi/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -28,6 +28,7 @@ type PduSession struct {
 	PduAddress       net.IP
 	SeqNum           int
 	ReqDataPktCount  int
+	ReqDataPktInt    int
 	DefaultAs        string
 	TxDataPktCount   int
 	RxDataPktCount   int

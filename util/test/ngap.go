@@ -8,8 +8,8 @@ package test
 import (
 	"github.com/omec-project/gnbsim/logger"
 
-	"github.com/free5gc/aper"
-	"github.com/free5gc/ngap/ngapType"
+	"github.com/omec-project/aper"
+	"github.com/omec-project/ngap/ngapType"
 )
 
 func PrintAndGetCause(cause *ngapType.Cause) (present int, value aper.Enumerated) {
@@ -31,7 +31,7 @@ func PrintAndGetCause(cause *ngapType.Cause) (present int, value aper.Enumerated
 		logger.NgapLog.Infof("Cause Misc[%d]\n", cause.Misc.Value)
 		value = cause.Misc.Value
 	default:
-		logger.NgapLog.Errorln("Invalid Cause group[%d]\n", cause.Present)
+		logger.NgapLog.Errorf("Invalid Cause group[%d]\n", cause.Present)
 	}
 	return
 }

@@ -30,7 +30,7 @@ func GetServiceRequest(ue *realuectx.RealUe) ([]byte, error) {
 	data := new(bytes.Buffer)
 	err := nasMsg.GmmMessageEncode(data)
 	if err != nil {
-		return nil, fmt.Errorf("encode failed:", err)
+		return nil, fmt.Errorf("encode failed:+%v", err)
 	}
 
 	return data.Bytes(), nil

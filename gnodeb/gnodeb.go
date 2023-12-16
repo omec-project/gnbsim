@@ -19,7 +19,7 @@ import (
 	"github.com/omec-project/gnbsim/gnodeb/worker/gnbcpueworker"
 	"github.com/omec-project/gnbsim/logger"
 
-	"github.com/free5gc/idgenerator"
+	"github.com/omec-project/idgenerator"
 )
 
 func InitializeAllGnbs() error {
@@ -74,7 +74,7 @@ func Init(gnb *gnbctx.GNodeB) error {
 
 	go gnb.CpTransport.ReceiveFromPeer(gnb.DefaultAmf)
 
-	gnb.Log.Traceln("GNodeB Initialized")
+	gnb.Log.Tracef("GNodeB Initialized %v ", gnb)
 	return nil
 }
 

@@ -18,9 +18,9 @@ import (
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 	"github.com/omec-project/gnbsim/util/test"
 
-	"github.com/free5gc/aper"
-	"github.com/free5gc/ngap/ngapConvert"
-	"github.com/free5gc/ngap/ngapType"
+	"github.com/omec-project/aper"
+	"github.com/omec-project/ngap/ngapConvert"
+	"github.com/omec-project/ngap/ngapType"
 )
 
 type pduSessResourceSetupItem struct {
@@ -42,18 +42,31 @@ func HandleInitialUEMessage(gnbue *gnbctx.GnbCpUe,
 	intfcMsg common.InterfaceMessage) {
 
 	msg := intfcMsg.(*common.UuMessage)
-	sendMsg, err := test.GetInitialUEMessage(gnbue.GnbUeNgapId, msg.NasPdus[0], "")
-	if err != nil {
-		gnbue.Log.Errorln("GetInitialUEMessage failed:", err)
-		return
+	if gnbue.AmfUeNgapId != 0 {
+		sendMsg, err := test.GetUplinkNASTransport(gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, msg.NasPdus[0])
+		if err != nil {
+			gnbue.Log.Errorln("GetUplinkNASMessage failed:", err)
+			return
+		}
+		err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg)
+		if err != nil {
+			gnbue.Log.Errorln("SendToPeer failed:", err)
+			return
+		}
+		gnbue.Log.Traceln("Sent Uplink NAS Message to AMF")
+	} else {
+		sendMsg, err := test.GetInitialUEMessage(gnbue.GnbUeNgapId, msg.NasPdus[0], "")
+		if err != nil {
+			gnbue.Log.Errorln("GetInitialUEMessage failed:", err)
+			return
+		}
+		err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg)
+		if err != nil {
+			gnbue.Log.Errorln("SendToPeer failed:", err)
+			return
+		}
+		gnbue.Log.Traceln("Sent Initial UE Message to AMF")
 	}
-	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg)
-	if err != nil {
-		gnbue.Log.Errorln("SendToPeer failed:", err)
-		return
-	}
-
-	gnbue.Log.Traceln("Sent Initial UE Message to AMF")
 }
 
 func HandleDownlinkNasTransport(gnbue *gnbctx.GnbCpUe,
@@ -135,6 +148,7 @@ func HandleInitialContextSetupRequest(gnbue *gnbctx.GnbCpUe,
 				gnbue.Log.Errorln("AMFUENGAPID is nil")
 				return
 			}
+			gnbue.AmfUeNgapId = amfUeNgapId.Value
 		case ngapType.ProtocolIEIDNASPDU:
 			nasPdu = ie.Value.NASPDU
 			if nasPdu == nil {

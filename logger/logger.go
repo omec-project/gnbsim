@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2022 Great Software Laboratory Pvt. Ltd
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 // Copyright 2019 free5GC.org
 //
@@ -10,7 +11,7 @@ import (
 	"time"
 
 	formatter "github.com/antonfisher/nested-logrus-formatter"
-	"github.com/free5gc/logger_util"
+	"github.com/omec-project/logger_util"
 	"github.com/sirupsen/logrus"
 )
 
@@ -28,6 +29,9 @@ var (
 	GtpLog        *logrus.Entry
 	NgapLog       *logrus.Entry
 	PsuppLog      *logrus.Entry
+	GinLog        *logrus.Entry
+	HttpLog       *logrus.Entry
+	ProfUeCtxLog  *logrus.Entry
 )
 
 const (
@@ -79,8 +83,11 @@ func init() {
 	AppSummaryLog = summaryLog.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Summary"})
 	RealUeLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "RealUe"})
 	SimUeLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "SimUe"})
+	ProfUeCtxLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "ProfUeCtx"})
 	ProfileLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Profile"})
 	GNodeBLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "GNodeB"})
+	GinLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Gin"})
+	HttpLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "HTTP"})
 	CfgLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "CFG"})
 	UtilLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Util"})
 	GtpLog = UtilLog.WithField("subcategory", "GTP")
