@@ -29,7 +29,7 @@ func HTTPStepProfile(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{})
 		return
 	}
-	err := profCtx.SendStepEventProfile(profName)
+	err := profile.SendStepEventProfile(profName)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{})
 		log.Println(err)
@@ -55,7 +55,7 @@ func HTTPAddNewCallsProfile(c *gin.Context) {
 		number = int32(n)
 	}
 
-	err := profCtx.SendAddNewCallsEventProfile(profName, number)
+	err := profile.SendAddNewCallsEventProfile(profName, number)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{})
 		log.Println(err)

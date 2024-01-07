@@ -7,6 +7,7 @@ package profile
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"sync"
 
@@ -18,24 +19,14 @@ import (
 	"github.com/omec-project/gnbsim/simue"
 )
 
-// profile names
-const (
-	REGISTER                string = "register"
-	PDU_SESS_EST            string = "pdusessest"
-	DEREGISTER              string = "deregister"
-	AN_RELEASE              string = "anrelease"
-	UE_TRIGG_SERVICE_REQ    string = "uetriggservicereq"
-	NW_TRIGG_UE_DEREG       string = "nwtriggeruedereg"
-	UE_REQ_PDU_SESS_RELEASE string = "uereqpdusessrelease"
-	NW_REQ_PDU_SESS_RELEASE string = "nwreqpdusessrelease"
-	CUSTOM_PROCEDURE        string = "custom"
-)
-
-func InitializeAllProfiles() {
+func InitializeAllProfiles() error {
 	for _, profile := range factory.AppConfig.Configuration.Profiles {
-		profile.Init()
+		err := profile.Init()
+		if err != nil {
+			return err
+		}
 	}
-	initProcedureEventMap()
+	return nil
 }
 
 func InitProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMessage) {
@@ -46,13 +37,6 @@ func InitProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMess
 		ErrorList:   make([]error, 0, 10),
 	}
 
-	err := initProcedureList(profile)
-	if err != nil {
-		summary.ErrorList = append(summary.ErrorList, err)
-		summaryChan <- summary
-		return
-	}
-
 	imsi, err := strconv.Atoi(profile.StartImsi)
 	if err != nil {
 		err = fmt.Errorf("invalid imsi value:%v", profile.StartImsi)
@@ -60,15 +44,12 @@ func InitProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMess
 		summaryChan <- summary
 		return
 	}
+
 	startImsi := imsi
 	profile.Imsi = imsi
 
 	profile.Log.Infoln("Init profile:", profile.Name,
 		", profile type:", profile.ProfileType)
-
-	if profile.PerUserTimeout == 0 {
-		profile.PerUserTimeout = profctx.PER_USER_TIMEOUT
-	}
 
 	gnb, err := factory.AppConfig.Configuration.GetGNodeB(profile.GnbName)
 	if err != nil {
@@ -199,147 +180,44 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 	profile.Log.Infoln("ExecuteProfile ended")
 }
 
-// predefined profiles
-func initProcedureEventMap() {
-	proc1 := profctx.ProcedureEventsDetails{}
-
-	//common.REGISTRATION_PROCEDURE:
-	proc1.Events = map[common.EventType]common.EventType{
-		common.REG_REQUEST_EVENT:     common.AUTH_REQUEST_EVENT,
-		common.AUTH_REQUEST_EVENT:    common.AUTH_RESPONSE_EVENT,
-		common.SEC_MOD_COMMAND_EVENT: common.SEC_MOD_COMPLETE_EVENT,
-		common.REG_ACCEPT_EVENT:      common.REG_COMPLETE_EVENT,
-		common.PROFILE_PASS_EVENT:    common.QUIT_EVENT,
+// enable step trigger only if execParallel is enabled in profile
+func SendStepEventProfile(name string) error {
+	profile, found := profctx.ProfileMap[name]
+	if found == false {
+		err := fmt.Errorf("unknown profile:%+v", profile)
+		log.Println(err)
+		return err
 	}
-	profctx.ProceduresMap[common.REGISTRATION_PROCEDURE] = &proc1
-
-	// common.PDU_SESSION_ESTABLISHMENT_PROCEDURE:
-	proc2 := profctx.ProcedureEventsDetails{}
-	proc2.Events = map[common.EventType]common.EventType{
-		common.PDU_SESS_EST_REQUEST_EVENT: common.PDU_SESS_EST_ACCEPT_EVENT,
-		common.PDU_SESS_EST_ACCEPT_EVENT:  common.PDU_SESS_EST_ACCEPT_EVENT,
-		common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
+	if profile.ExecInParallel == false {
+		err := fmt.Errorf("ExecInParallel should be true if step profile needs to be executed")
+		log.Println(err)
+		return err
 	}
-	profctx.ProceduresMap[common.PDU_SESSION_ESTABLISHMENT_PROCEDURE] = &proc2
-
-	//common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE:
-	proc3 := profctx.ProcedureEventsDetails{}
-	proc3.Events = map[common.EventType]common.EventType{
-		common.PDU_SESS_REL_REQUEST_EVENT: common.PDU_SESS_REL_COMMAND_EVENT,
-		common.PDU_SESS_REL_COMMAND_EVENT: common.PDU_SESS_REL_COMPLETE_EVENT,
-		common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
+	msg := &common.ProfileMessage{}
+	// msg.Supi =
+	// msg.ProcedureType =
+	msg.Event = common.PROFILE_STEP_EVENT
+	for _, ctx := range profile.PSimUe {
+		profile.Log.Traceln("profile ", profile, ", writing on trig channel - start")
+		ctx.TrigEventsChan <- msg
+		profile.Log.Traceln("profile ", profile, ", writing on trig channel - end")
 	}
-	profctx.ProceduresMap[common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE] = &proc3
-
-	// common.UE_INITIATED_DEREGISTRATION_PROCEDURE:
-	proc4 := profctx.ProcedureEventsDetails{}
-	proc4.Events = map[common.EventType]common.EventType{
-		common.DEREG_REQUEST_UE_ORIG_EVENT: common.DEREG_ACCEPT_UE_ORIG_EVENT,
-		common.PROFILE_PASS_EVENT:          common.QUIT_EVENT,
-	}
-	profctx.ProceduresMap[common.UE_INITIATED_DEREGISTRATION_PROCEDURE] = &proc4
-
-	// common.AN_RELEASE_PROCEDURE:
-	proc5 := profctx.ProcedureEventsDetails{}
-	proc5.Events = map[common.EventType]common.EventType{
-		common.TRIGGER_AN_RELEASE_EVENT: common.CONNECTION_RELEASE_REQUEST_EVENT,
-		common.PROFILE_PASS_EVENT:       common.QUIT_EVENT,
-	}
-	profctx.ProceduresMap[common.AN_RELEASE_PROCEDURE] = &proc5
-
-	// common.UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE:
-	proc6 := profctx.ProcedureEventsDetails{}
-	proc6.Events = map[common.EventType]common.EventType{
-		common.SERVICE_REQUEST_EVENT: common.SERVICE_ACCEPT_EVENT,
-		common.PROFILE_PASS_EVENT:    common.QUIT_EVENT,
-	}
-	profctx.ProceduresMap[common.UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE] = &proc6
-
-	// common.NW_TRIGGERED_UE_DEREGISTRATION_PROCEDURE:
-	proc7 := profctx.ProcedureEventsDetails{}
-	proc7.Events = map[common.EventType]common.EventType{
-		common.DEREG_REQUEST_UE_TERM_EVENT: common.DEREG_ACCEPT_UE_TERM_EVENT,
-		common.PROFILE_PASS_EVENT:          common.QUIT_EVENT,
-	}
-	profctx.ProceduresMap[common.NW_TRIGGERED_UE_DEREGISTRATION_PROCEDURE] = &proc7
-
-	// common.NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE:
-	proc8 := profctx.ProcedureEventsDetails{}
-	proc8.Events = map[common.EventType]common.EventType{
-		common.PDU_SESS_REL_COMMAND_EVENT: common.PDU_SESS_REL_COMPLETE_EVENT,
-		common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
-	}
-	profctx.ProceduresMap[common.NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE] = &proc8
-
-	// common.USER_DATA_PKT_GENERATION_PROCEDURE:
-	proc9 := profctx.ProcedureEventsDetails{}
-	proc9.Events = map[common.EventType]common.EventType{
-		common.PROFILE_PASS_EVENT: common.QUIT_EVENT,
-	}
-	profctx.ProceduresMap[common.USER_DATA_PKT_GENERATION_PROCEDURE] = &proc9
-
+	return nil
 }
 
-func initProcedureList(profile *profctx.Profile) error {
-	switch profile.ProfileType {
-	case REGISTER:
-		profile.Procedures = []common.ProcedureType{common.REGISTRATION_PROCEDURE}
-	case PDU_SESS_EST:
-		profile.Procedures = []common.ProcedureType{
-			common.REGISTRATION_PROCEDURE,
-			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
-			common.USER_DATA_PKT_GENERATION_PROCEDURE,
-		}
-	case DEREGISTER:
-		profile.Procedures = []common.ProcedureType{
-			common.REGISTRATION_PROCEDURE,
-			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
-			common.USER_DATA_PKT_GENERATION_PROCEDURE,
-			common.UE_INITIATED_DEREGISTRATION_PROCEDURE,
-		}
-	case AN_RELEASE:
-		profile.Procedures = []common.ProcedureType{
-			common.REGISTRATION_PROCEDURE,
-			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
-			common.USER_DATA_PKT_GENERATION_PROCEDURE,
-			common.AN_RELEASE_PROCEDURE,
-		}
-	case UE_TRIGG_SERVICE_REQ:
-		profile.Procedures = []common.ProcedureType{
-			common.REGISTRATION_PROCEDURE,
-			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
-			common.USER_DATA_PKT_GENERATION_PROCEDURE,
-			common.AN_RELEASE_PROCEDURE,
-			common.UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE,
-		}
-	case NW_TRIGG_UE_DEREG:
-		profile.Procedures = []common.ProcedureType{
-			common.REGISTRATION_PROCEDURE,
-			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
-			common.USER_DATA_PKT_GENERATION_PROCEDURE,
-			common.NW_TRIGGERED_UE_DEREGISTRATION_PROCEDURE,
-		}
-	case UE_REQ_PDU_SESS_RELEASE:
-		profile.Procedures = []common.ProcedureType{
-			common.REGISTRATION_PROCEDURE,
-			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
-			common.USER_DATA_PKT_GENERATION_PROCEDURE,
-			common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE,
-		}
-	case NW_REQ_PDU_SESS_RELEASE:
-		profile.Procedures = []common.ProcedureType{
-			common.REGISTRATION_PROCEDURE,
-			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
-			common.USER_DATA_PKT_GENERATION_PROCEDURE,
-			common.NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE,
-		}
-
-	case CUSTOM_PROCEDURE:
-		// Custom Profiles do not have prefdefined procedure list
-		return nil
-
-	default:
-		return fmt.Errorf("profile type not supported: %v", profile.ProfileType)
+func SendAddNewCallsEventProfile(name string, number int32) error {
+	profile, found := profctx.ProfileMap[name]
+	if found == false {
+		err := fmt.Errorf("unknown profile:%+v", profile)
+		return err
+	}
+	msg := &common.ProfileMessage{}
+	msg.Event = common.PROFILE_ADDCALLS_EVENT
+	var i int32
+	for i = 0; i < number; i++ {
+		profile.Log.Traceln("profile ", profile, ", writing on trig channel - start")
+		profile.ReadChan <- msg
+		profile.Log.Traceln("profile ", profile, ", writing on trig channel - end")
 	}
 	return nil
 }

@@ -73,8 +73,13 @@ func action(c *cli.Context) error {
 	logger.AppLog.Infoln("Setting log level to:", lvl)
 	logger.SetLogLevel(lvl)
 
-	prof.InitializeAllProfiles()
-	err := gnodeb.InitializeAllGnbs()
+	err := prof.InitializeAllProfiles()
+	if err != nil {
+		logger.AppLog.Errorln("Failed to initialize Profiles:", err)
+		return err
+	}
+
+	err = gnodeb.InitializeAllGnbs()
 	if err != nil {
 		logger.AppLog.Errorln("Failed to initialize gNodeBs:", err)
 		return err
