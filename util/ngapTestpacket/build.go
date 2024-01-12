@@ -2842,7 +2842,7 @@ func BuildUERadioCapabilityInfoIndication() (pdu ngapType.NGAPPDU) {
 	ie.Value.Present = ngapType.UERadioCapabilityInfoIndicationIEsPresentUERadioCapability
 	ie.Value.UERadioCapability = new(ngapType.UERadioCapability)
 
-	uERadioCapability := ngapType.UERadioCapability{}
+	uERadioCapability := ie.Value.UERadioCapability
 	uERadioCapability.Value = aper.OctetString("\x00\x00\x01")
 
 	uERadioCapabilityInfoIndicationIEs.List = append(uERadioCapabilityInfoIndicationIEs.List, ie)

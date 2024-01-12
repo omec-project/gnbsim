@@ -20,6 +20,11 @@ import (
 // HandleNGSetupResponse processes the NG Setup Response and updates GnbAmf
 // context
 func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
+	if amf == nil {
+		amf = new(gnbctx.GnbAmf)
+		amf.Log.Errorln("ran is nil")
+		return
+	}
 	amf.Log.Traceln("Processing NG Setup Response")
 	var amfName *ngapType.AMFName
 	var servedGUAMIList *ngapType.ServedGUAMIList
@@ -27,10 +32,6 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 	var plmnSupportList *ngapType.PLMNSupportList
 	// TODO Process optional IEs
 
-	if amf == nil {
-		amf.Log.Errorln("ran is nil")
-		return
-	}
 	if pdu == nil {
 		amf.Log.Errorln("NGAP Message is nil")
 		return
@@ -159,13 +160,14 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 }
 
 func HandleNgSetupFailure(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
-	amf.Log.Traceln("Processing NG Setup Failure")
-	var cause *ngapType.Cause
-
 	if amf == nil {
+		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")
 		return
 	}
+	amf.Log.Traceln("Processing NG Setup Failure")
+	var cause *ngapType.Cause
+
 	if pdu == nil {
 		amf.Log.Errorln("NGAP Message is nil")
 		return
@@ -205,13 +207,14 @@ func HandleNgSetupFailure(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 func HandleDownlinkNasTransport(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU) {
 
-	amf.Log.Traceln("Processing Downlink Nas Transport")
-	var gnbUeNgapId *ngapType.RANUENGAPID
-
 	if amf == nil {
+		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")
 		return
 	}
+	amf.Log.Traceln("Processing Downlink Nas Transport")
+	var gnbUeNgapId *ngapType.RANUENGAPID
+
 	if pdu == nil {
 		amf.Log.Errorln("NGAP Message is nil")
 		return
@@ -257,13 +260,14 @@ func HandleDownlinkNasTransport(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 func HandleInitialContextSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU) {
 
-	amf.Log.Traceln("Processing Initial Context Setup Request")
-	var gnbUeNgapId *ngapType.RANUENGAPID
-
 	if amf == nil {
+		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")
 		return
 	}
+	amf.Log.Traceln("Processing Initial Context Setup Request")
+	var gnbUeNgapId *ngapType.RANUENGAPID
+
 	if pdu == nil {
 		amf.Log.Errorln("NGAP Message is nil")
 		return
@@ -308,13 +312,14 @@ func HandleInitialContextSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 // TODO : Much of the code is repeated in each handler
 func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU) {
-	amf.Log.Traceln("Processing Pdu Session Resource Setup Request")
-	var gnbUeNgapId *ngapType.RANUENGAPID
-
 	if amf == nil {
+		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")
 		return
 	}
+	amf.Log.Traceln("Processing Pdu Session Resource Setup Request")
+	var gnbUeNgapId *ngapType.RANUENGAPID
+
 	if pdu == nil {
 		amf.Log.Errorln("NGAP Message is nil")
 		return
@@ -357,13 +362,14 @@ func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 
 func HandlePduSessResourceReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU) {
-	amf.Log.Traceln("Processing Pdu Session Resource Release Command")
-	var gnbUeNgapId *ngapType.RANUENGAPID
-
 	if amf == nil {
+		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")
 		return
 	}
+	amf.Log.Traceln("Processing Pdu Session Resource Release Command")
+	var gnbUeNgapId *ngapType.RANUENGAPID
+
 	if pdu == nil {
 		amf.Log.Errorln("NGAP Message is nil")
 		return
@@ -406,12 +412,14 @@ func HandlePduSessResourceReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 
 func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU) {
-
-	amf.Log.Traceln("Processing Ue Context Release Command")
 	if amf == nil {
+		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")
 		return
 	}
+
+	amf.Log.Traceln("Processing Ue Context Release Command")
+
 	if pdu == nil {
 		amf.Log.Errorln("NGAP Message is nil")
 		return
@@ -450,13 +458,10 @@ func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 
 	if ueNgapIds.Present == ngapType.UENGAPIDsPresentUENGAPIDPair {
 		ranUeNgapId = &ueNgapIds.UENGAPIDPair.RANUENGAPID
-		if ranUeNgapId == nil {
-			amf.Log.Errorln("RANUENGAPID is nil")
-			return
-		}
 	} else {
 		/*TODO: Should add mapping for AMFUENGAPID vs GnbCpUeContext*/
 		amf.Log.Errorln("No RANUENGAPID received")
+		return
 	}
 
 	ngapId := ranUeNgapId.Value
