@@ -27,7 +27,7 @@ func HandleUlMessage(gnbue *gnbctx.GnbUpUe, msg common.InterfaceMessage) (err er
 		gnbue.Log.Errorln("BuildGpduMessage() returned:", err)
 		return fmt.Errorf("failed to encode gpdu")
 	}
-	err = gnbue.Gnb.UpTransport.SendToPeer(gnbue.Upf, encodedMsg)
+	err = gnbue.Gnb.UpTransport.SendToPeer(gnbue.Upf, encodedMsg, 0)
 	if err != nil {
 		gnbue.Log.Errorln("UP Transport SendToPeer() returned:", err)
 		return fmt.Errorf("failed to send gpdu")

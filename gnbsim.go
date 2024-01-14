@@ -23,6 +23,7 @@ import (
 	"github.com/omec-project/gnbsim/logger"
 	prof "github.com/omec-project/gnbsim/profile"
 	profctx "github.com/omec-project/gnbsim/profile/context"
+	"github.com/omec-project/gnbsim/stats"
 
 	"github.com/urfave/cli"
 )
@@ -142,6 +143,9 @@ func action(c *cli.Context) error {
 
 	appWaitGrp.Wait()
 
+	//should be good enough to send pending packets out of socket and process events on channel
+	time.Sleep(time.Second * 5)
+	stats.DumpStats()
 	// TODO: To be removed. Allowing summary logger to dump the logs
 	time.Sleep(time.Second * 5)
 

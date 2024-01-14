@@ -17,7 +17,7 @@ import (
 /* HandleMessage decodes an incoming NGAP message and routes it to the
  * corresponding handlers
  */
-func HandleMessage(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf, pkt []byte) error {
+func HandleMessage(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf, pkt []byte, id uint64) error {
 	// decoding the incoming packet
 	pdu, err := ngap.Decoder(pkt)
 	if err != nil {
@@ -33,15 +33,15 @@ func HandleMessage(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf, pkt []byte) error {
 		}
 		switch initiatingMessage.ProcedureCode.Value {
 		case ngapType.ProcedureCodeDownlinkNASTransport:
-			HandleDownlinkNasTransport(gnb, amf, pdu)
+			HandleDownlinkNasTransport(gnb, amf, pdu, id)
 		case ngapType.ProcedureCodeInitialContextSetup:
-			HandleInitialContextSetupRequest(gnb, amf, pdu)
+			HandleInitialContextSetupRequest(gnb, amf, pdu, id)
 		case ngapType.ProcedureCodePDUSessionResourceSetup:
-			HandlePduSessResourceSetupRequest(gnb, amf, pdu)
+			HandlePduSessResourceSetupRequest(gnb, amf, pdu, id)
 		case ngapType.ProcedureCodePDUSessionResourceRelease:
-			HandlePduSessResourceReleaseCommand(gnb, amf, pdu)
+			HandlePduSessResourceReleaseCommand(gnb, amf, pdu, id)
 		case ngapType.ProcedureCodeUEContextRelease:
-			HandleUeCtxReleaseCommand(gnb, amf, pdu)
+			HandleUeCtxReleaseCommand(gnb, amf, pdu, id)
 		}
 	case ngapType.NGAPPDUPresentSuccessfulOutcome:
 		successfulOutcome := pdu.SuccessfulOutcome
@@ -66,9 +66,10 @@ func HandleMessage(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf, pkt []byte) error {
 	return nil
 }
 
-func SendToGnbUe(gnbue *gnbctx.GnbCpUe, event common.EventType, ngapPdu *ngapType.NGAPPDU) {
+func SendToGnbUe(gnbue *gnbctx.GnbCpUe, event common.EventType, ngapPdu *ngapType.NGAPPDU, id uint64) {
 	amfmsg := common.N2Message{}
 	amfmsg.Event = event
 	amfmsg.NgapPdu = ngapPdu
+	amfmsg.Id = id
 	gnbue.ReadChan <- &amfmsg
 }

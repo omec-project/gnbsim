@@ -36,6 +36,7 @@ func (msg *DefaultMessage) GetErrorMsg() error {
 type N2Message struct {
 	DefaultMessage
 	NgapPdu *ngapType.NGAPPDU
+	Id      uint64
 }
 
 type NasPduList [][]byte
@@ -54,6 +55,8 @@ type UuMessage struct {
 	   triggering procedure.
 	*/
 	TriggeringEvent EventType
+	// Unique Message Id
+	Id uint64
 
 	// channel that a src entity can optionally send to the target entity.
 	// Target entity will use this channel to write to the src entity
@@ -122,6 +125,9 @@ type UeMessage struct {
 
 	// default destination of data pkt
 	DefaultAs string
+
+	// Unique Message Id
+	Id uint64
 
 	CommChan chan InterfaceMessage
 }

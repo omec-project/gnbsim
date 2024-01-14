@@ -15,6 +15,7 @@ import (
 	"github.com/omec-project/gnbsim/gnodeb/ngap"
 	"github.com/omec-project/gnbsim/gnodeb/worker/gnbupfworker"
 	"github.com/omec-project/gnbsim/gnodeb/worker/gnbupueworker"
+	"github.com/omec-project/gnbsim/stats"
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 	"github.com/omec-project/gnbsim/util/test"
 
@@ -48,7 +49,7 @@ func HandleInitialUEMessage(gnbue *gnbctx.GnbCpUe,
 			gnbue.Log.Errorln("GetUplinkNASMessage failed:", err)
 			return
 		}
-		err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg)
+		err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg, msg.Id)
 		if err != nil {
 			gnbue.Log.Errorln("SendToPeer failed:", err)
 			return
@@ -60,7 +61,7 @@ func HandleInitialUEMessage(gnbue *gnbctx.GnbCpUe,
 			gnbue.Log.Errorln("GetInitialUEMessage failed:", err)
 			return
 		}
-		err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg)
+		err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg, msg.Id)
 		if err != nil {
 			gnbue.Log.Errorln("SendToPeer failed:", err)
 			return
@@ -105,7 +106,7 @@ func HandleDownlinkNasTransport(gnbue *gnbctx.GnbCpUe,
 	gnbue.AmfUeNgapId = amfUeNgapId.Value
 	var pdus common.NasPduList
 	pdus = append(pdus, nasPdu.Value)
-	SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, pdus)
+	SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, pdus, msg.Id)
 }
 
 func HandleUlInfoTransfer(gnbue *gnbctx.GnbCpUe,
@@ -118,7 +119,7 @@ func HandleUlInfoTransfer(gnbue *gnbctx.GnbCpUe,
 		gnbue.Log.Errorln("GetUplinkNASTransport failed:", err)
 		return
 	}
-	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg)
+	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg, msg.Id)
 	if err != nil {
 		gnbue.Log.Errorln("SendToPeer failed:", err)
 		return
@@ -167,7 +168,7 @@ func HandleInitialContextSetupRequest(gnbue *gnbctx.GnbCpUe,
 	if nasPdu.Value != nil {
 		var pdus common.NasPduList
 		pdus = append(pdus, nasPdu.Value)
-		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, pdus)
+		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, pdus, msg.Id)
 		gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
 	}
 
@@ -184,11 +185,12 @@ func HandleInitialContextSetupRequest(gnbue *gnbctx.GnbCpUe,
 	}
 
 	if len(list) != 0 {
-		ProcessPduSessResourceSetupList(gnbue, list,
-			common.INITIAL_CTX_SETUP_REQUEST_EVENT)
-
+		ProcessPduSessResourceSetupList(gnbue, list, common.INITIAL_CTX_SETUP_REQUEST_EVENT, msg.Id)
 		return
 	}
+
+	e := &stats.StatisticsEvent{Supi: gnbue.Supi, EType: stats.ICS_REQ_IN, Id: msg.Id}
+	stats.LogStats(e)
 
 	//TODO: Handle other mandatory IEs
 	resp, err := test.GetInitialContextSetupResponse(gnbue.AmfUeNgapId, gnbue.GnbUeNgapId)
@@ -197,7 +199,7 @@ func HandleInitialContextSetupRequest(gnbue *gnbctx.GnbCpUe,
 		return
 	}
 
-	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, resp)
+	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, resp, 0)
 	if err != nil {
 		gnbue.Log.Errorln("SendToPeer failed:", err)
 		return
@@ -244,8 +246,7 @@ func HandlePduSessResourceSetupRequest(gnbue *gnbctx.GnbCpUe,
 		list = append(list, dst)
 	}
 
-	ProcessPduSessResourceSetupList(gnbue, list,
-		common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT)
+	ProcessPduSessResourceSetupList(gnbue, list, common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT, msg.Id)
 }
 
 // TODO: Error handling
@@ -312,7 +313,7 @@ func HandlePduSessResourceReleaseCommand(gnbue *gnbctx.GnbCpUe,
 	if nasPdu.Value != nil {
 		var pdus common.NasPduList
 		pdus = append(pdus, nasPdu.Value)
-		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, pdus)
+		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, pdus, msg.Id)
 		gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
 	}
 
@@ -323,14 +324,14 @@ func HandlePduSessResourceReleaseCommand(gnbue *gnbctx.GnbCpUe,
 		return
 	}
 
-	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, ngapPdu)
+	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, ngapPdu, 0)
 	if err != nil {
 		gnbue.Log.Errorln("SendToPeer failed:", err)
 		return
 	}
 	gnbue.Log.Traceln("Sent PDU Session Resource Setup Response Message to AMF")
 
-	SendToUe(gnbue, common.DATA_BEARER_RELEASE_REQUEST_EVENT, nil)
+	SendToUe(gnbue, common.DATA_BEARER_RELEASE_REQUEST_EVENT, nil, msg.Id)
 }
 
 func HandleDataBearerSetupResponse(gnbue *gnbctx.GnbCpUe,
@@ -380,7 +381,7 @@ func HandleDataBearerSetupResponse(gnbue *gnbctx.GnbCpUe,
 		}
 	}
 
-	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, ngapPdu)
+	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, ngapPdu, msg.Id)
 	if err != nil {
 		gnbue.Log.Errorln("SendToPeer failed:", err)
 		return
@@ -441,7 +442,10 @@ func HandleUeCtxReleaseCommand(gnbue *gnbctx.GnbCpUe,
 		return
 	}
 
-	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, ngapPdu)
+	e := &stats.StatisticsEvent{Supi: gnbue.Supi, EType: stats.UE_CTX_CMD_IN, Id: msg.Id}
+	stats.LogStats(e)
+
+	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, ngapPdu, msg.Id)
 	if err != nil {
 		gnbue.Log.Errorln("SendToPeer failed:", err)
 		return
@@ -477,7 +481,12 @@ func HandleRanConnectionRelease(gnbue *gnbctx.GnbCpUe,
 		gnbue.Log.Errorln("GetUplinkNASTransport failed:", err)
 		return
 	}
-	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg)
+
+	id := stats.GetId()
+	e := &stats.StatisticsEvent{Supi: gnbue.Supi, EType: stats.UE_CTX_REL_OUT, Id: id}
+	stats.LogStats(e)
+
+	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg, id)
 	if err != nil {
 		gnbue.Log.Errorln("SendToPeer failed:", err)
 		return
@@ -487,7 +496,7 @@ func HandleRanConnectionRelease(gnbue *gnbctx.GnbCpUe,
 }
 
 func ProcessPduSessResourceSetupList(gnbue *gnbctx.GnbCpUe,
-	lst []pduSessResourceSetupItem, event common.EventType) {
+	lst []pduSessResourceSetupItem, event common.EventType, id uint64) {
 	//var pduSessions []ngapTestpacket.PduSession
 	var dbParamSet []*common.DataBearerParams
 
@@ -599,7 +608,7 @@ func ProcessPduSessResourceSetupList(gnbue *gnbctx.GnbCpUe,
 	}
 
 	if len(nasPdus) != 0 {
-		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, nasPdus)
+		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, nasPdus, id)
 		gnbue.Log.Traceln("Sent DL Information Transfer Event to UE")
 	}
 

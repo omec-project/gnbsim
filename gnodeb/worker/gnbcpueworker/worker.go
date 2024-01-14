@@ -52,9 +52,10 @@ func HandleEvents(gnbue *gnbctx.GnbCpUe) (err error) {
 	return nil
 }
 
-func SendToUe(gnbue *gnbctx.GnbCpUe, event common.EventType, nasPdus common.NasPduList) {
-	gnbue.Log.Traceln("Sending event", event, "to SimUe")
+func SendToUe(gnbue *gnbctx.GnbCpUe, event common.EventType, nasPdus common.NasPduList, id uint64) {
+	gnbue.Log.Traceln("Sending event", event, "to SimUe. Id:", id)
 	uemsg := common.UuMessage{}
+	uemsg.Id = id
 	uemsg.Event = event
 	uemsg.NasPdus = nasPdus
 	gnbue.WriteUeChan <- &uemsg
