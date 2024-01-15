@@ -430,7 +430,6 @@ func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	}
 
 	var ueNgapIds *ngapType.UENGAPIDs
-	var ranUeNgapId *ngapType.RANUENGAPID
 
 	initiatingMessage := pdu.InitiatingMessage
 	if initiatingMessage == nil {
@@ -457,17 +456,20 @@ func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	}
 
 	if ueNgapIds.Present == ngapType.UENGAPIDsPresentUENGAPIDPair {
-		ranUeNgapId = &ueNgapIds.UENGAPIDPair.RANUENGAPID
+		if ueNgapIds.UENGAPIDPair == nil {
+			amf.Log.Errorln("UENGAPIDPair is nil")
+			return
+		}
 	} else {
 		/*TODO: Should add mapping for AMFUENGAPID vs GnbCpUeContext*/
 		amf.Log.Errorln("No RANUENGAPID received")
 		return
 	}
 
-	ngapId := ranUeNgapId.Value
+	ngapId := ueNgapIds.UENGAPIDPair.RANUENGAPID.Value
 	gnbue := gnb.GnbUes.GetGnbCpUe(ngapId)
 	if gnbue == nil {
-		amf.Log.Errorln("No GnbUe found corresponding to RANUENGAPID:")
+		amf.Log.Errorln("No GnbUe found corresponding to RANUENGAPID:", ngapId)
 		return
 	}
 
