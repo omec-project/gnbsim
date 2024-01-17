@@ -53,7 +53,8 @@ func (cpTprt *GnbCpTransport) ConnectToPeer(peer transportcommon.TransportPeer) 
 		if amf.AmfHostName == "" {
 			return fmt.Errorf("amf ip or host name not configured")
 		}
-		addrs, err := net.LookupHost(amf.AmfHostName)
+		var addrs []string
+		addrs, err = net.LookupHost(amf.AmfHostName)
 		if err != nil {
 			return fmt.Errorf("failed to resolve amf host name: %v, err: %v",
 				amf.AmfHostName, err)

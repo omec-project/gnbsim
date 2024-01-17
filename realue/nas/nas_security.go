@@ -124,7 +124,8 @@ func NASEncode(ue *realuectx.RealUe, msg *nas.Message, securityContextAvailable 
 		// add sequence number
 		payload = append([]byte{ue.ULCount.SQN()}, payload[:]...)
 
-		mac32, err := security.NASMacCalculate(ue.IntegrityAlg, ue.KnasInt, ue.ULCount.Get(),
+		var mac32 []byte
+		mac32, err = security.NASMacCalculate(ue.IntegrityAlg, ue.KnasInt, ue.ULCount.Get(),
 			security.Bearer3GPP, security.DirectionUplink, payload)
 		if err != nil {
 			return nil, fmt.Errorf("nas mac calcuate failed: %+v", err)

@@ -349,7 +349,8 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 			time.Sleep(time.Millisecond * time.Duration(itp.WaitMap[pCtx.CurrentProcIndex]))
 		}
 		nextProcIndex := pCtx.CurrentProcIndex + 1
-		nextProcedure, found := itp.ProcMap[nextProcIndex]
+		var found bool
+		nextProcedure, found = itp.ProcMap[nextProcIndex]
 		if found == true {
 			pCtx.Log.Infof("Next Procedure Index %v and next Procedure = %v ", nextProcIndex, nextProcedure)
 			pCtx.Procedure = nextProcedure
@@ -361,7 +362,7 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 			pCtx.Repeat = pCtx.Repeat - 1
 			pCtx.Log.Infoln("Repeat current iteration : ", itp.Name, ", Repeat Count ", pCtx.Repeat)
 			pCtx.CurrentProcIndex = 1
-			nextProcedure := itp.ProcMap[1]
+			nextProcedure = itp.ProcMap[1]
 			pCtx.Procedure = nextProcedure
 			return nextProcedure
 		}
@@ -373,7 +374,7 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 			pCtx.CurrentItr = nItr.Name
 			pCtx.CurrentProcIndex = 1
 			pCtx.Repeat = nItr.Repeat
-			nextProcedure := nItr.ProcMap[1]
+			nextProcedure = nItr.ProcMap[1]
 			pCtx.Procedure = nextProcedure
 			return nextProcedure
 		}

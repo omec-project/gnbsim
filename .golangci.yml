@@ -169,13 +169,10 @@ linters-settings:
           - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
           - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
           - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
-    # enable or disable analyzers by name
-    enable:
-      - atomicalign
-    enable-all: false
+    # enable all analyzers
+    enable-all: true
     disable:
-      - shadow
-    disable-all: false
+      - fieldalignment
   depguard:
     list-type: blacklist
     include-go-root: false
@@ -219,7 +216,7 @@ linters-settings:
 linters:
   enable:
     - gofmt
-    # - govet
+    - govet
     # - errcheck
     # - staticcheck
     # - unused
