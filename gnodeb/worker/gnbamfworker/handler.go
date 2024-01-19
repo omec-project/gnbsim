@@ -313,9 +313,6 @@ func HandleInitialContextSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU, id uint64) {
 
-	amf.Log.Traceln("Processing Pdu Session Resource Setup Request")
-	var gnbUeNgapId *ngapType.RANUENGAPID
-
   if amf == nil {
 		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")
