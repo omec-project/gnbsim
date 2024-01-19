@@ -313,7 +313,7 @@ func HandleInitialContextSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU, id uint64) {
 
-  if amf == nil {
+	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")
 		return
@@ -363,9 +363,6 @@ func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 
 func HandlePduSessResourceReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU, id uint64) {
-	amf.Log.Traceln("Processing Pdu Session Resource Release Command")
-	var gnbUeNgapId *ngapType.RANUENGAPID
-
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")
