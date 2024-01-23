@@ -7,6 +7,7 @@ package realue
 import (
 	"fmt"
 	"net"
+	"strconv"
 
 	"github.com/omec-project/gnbsim/common"
 	realuectx "github.com/omec-project/gnbsim/realue/context"
@@ -25,9 +26,8 @@ import (
 
 // TODO Remove the hardcoding
 const (
-	SN_NAME                        string = "5G:mnc093.mcc208.3gppnetwork.org"
-	SWITCH_OFF                     uint8  = 0
-	REQUEST_TYPE_EXISTING_PDU_SESS uint8  = 0x02
+	SWITCH_OFF                     uint8 = 0
+	REQUEST_TYPE_EXISTING_PDU_SESS uint8 = 0x02
 )
 
 func HandleRegRequestEvent(ue *realuectx.RealUe,
@@ -64,9 +64,13 @@ func HandleAuthResponseEvent(ue *realuectx.RealUe,
 
 	ue.NgKsi = nasConvert.SpareHalfOctetAndNgksiToModels(authReq.SpareHalfOctetAndNgksi)
 
+	mcc, _ := strconv.Atoi(ue.Plmn.Mcc)
+	mnc, _ := strconv.Atoi(ue.Plmn.Mnc)
+	snName := fmt.Sprintf("5G:mnc%03d.mcc%03d.3gppnetwork.org", mnc, mcc)
+
 	rand := authReq.GetRANDValue()
 	autn := authReq.GetAUTN()
-	resStat := ue.DeriveRESstarAndSetKey(autn[:], rand[:], SN_NAME)
+	resStat := ue.DeriveRESstarAndSetKey(autn[:], rand[:], snName)
 
 	// TODO: Parse Auth Request IEs and update the RealUE Context
 
