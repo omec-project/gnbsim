@@ -12,6 +12,42 @@ on:
       - main
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Build
+        run: go build
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: make docker-build
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3.7.0
+        with:
+          version: latest
+          args: -v --config ./.golangci.yml
+
   license-check:
     runs-on: ubuntu-latest
     steps:
@@ -29,3 +65,15 @@ jobs:
         uses: fossa-contrib/fossa-action@v3
         with:
           fossa-api-key: 9dc8fa92e3dd565687317beb87b56d89
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Unit tests
+        run: go test ./...
