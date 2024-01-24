@@ -60,9 +60,6 @@ func (dao *GnbUeDao) GetGnbUpUe(teid uint32, downlink bool) *GnbUpUe {
 	var ok bool
 	if downlink {
 		val, ok = dao.dlTeidGnbUpUeMap.Load(teid)
-	} else {
-		// TODO
-		//val, ok = dao.ulTeidGnbUpUeMap.Load(teid)
 	}
 
 	if ok {
@@ -78,8 +75,6 @@ func (dao *GnbUeDao) AddGnbUpUe(teid uint32, downlink bool, gnbue *GnbUpUe) {
 	dao.Log.Infoln("Adding new GnbUpUe for TEID:", teid, "Downlink:", downlink)
 	if downlink {
 		dao.dlTeidGnbUpUeMap.Store(teid, gnbue)
-	} else {
-		//  TODO
 	}
 }
 
@@ -88,7 +83,5 @@ func (dao *GnbUeDao) RemoveGnbUpUe(teid uint32, downlink bool) {
 	dao.Log.Infoln("Removing GnbUpUe for TEID:", teid, "Downlink:", downlink)
 	if downlink {
 		dao.dlTeidGnbUpUeMap.Delete(teid)
-	} else {
-		//  TODO
 	}
 }
