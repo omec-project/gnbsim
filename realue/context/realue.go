@@ -155,7 +155,7 @@ func (ue *RealUe) DeriveRESstarAndSetKey(
 
 	rcvSQN := make([]byte, 6)
 
-	// Todo : check what to do with the seperation bit of the AMF field
+	// Todo : check what to do with the separation bit of the AMF field
 	rcvAMF := autn[6:8]
 
 	for i := 0; i < 6; i++ {

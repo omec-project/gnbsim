@@ -19,6 +19,8 @@ import (
 	"github.com/omec-project/gnbsim/simue"
 )
 
+const IMSI_PREFIX = "imsi-"
+
 func InitializeAllProfiles() error {
 	for _, profile := range factory.AppConfig.Configuration.Profiles {
 		err := profile.Init()
@@ -60,7 +62,7 @@ func InitProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMess
 	}
 
 	for count := 1; count <= profile.UeCount; count++ {
-		imsiStr := "imsi-" + strconv.Itoa(startImsi)
+		imsiStr := IMSI_PREFIX + strconv.Itoa(startImsi)
 		initImsi(profile, gnb, imsiStr)
 		startImsi++
 	}
@@ -125,7 +127,7 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 				plock.Lock()
 				profile.UeCount = profile.UeCount + 1
 				imsi := profile.Imsi + profile.UeCount
-				imsiStr := "imsi-" + strconv.Itoa(imsi)
+				imsiStr := IMSI_PREFIX + strconv.Itoa(imsi)
 				initImsi(profile, gnb, imsiStr)
 				pCtx := profile.PSimUe[imsiStr]
 				profile.Log.Infoln("pCtx ", pCtx)
@@ -149,7 +151,7 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 	}()
 	imsi := profile.Imsi
 	for count := 1; count <= profile.UeCount; count++ {
-		imsiStr := "imsi-" + strconv.Itoa(imsi)
+		imsiStr := IMSI_PREFIX + strconv.Itoa(imsi)
 		imsi++
 		wg.Add(1)
 		pCtx := profile.PSimUe[imsiStr]

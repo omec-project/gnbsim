@@ -71,12 +71,12 @@ func HandleAuthResponseEvent(ue *realuectx.RealUe,
 	// TODO: Parse Auth Request IEs and update the RealUE Context
 
 	// Now generate NAS Authentication Response
-	ue.Log.Traceln("Generating Authentication Reponse Message")
+	ue.Log.Traceln("Generating Authentication Response Message")
 	nasPdu := nasTestpacket.GetAuthenticationResponse(resStat, "")
 
 	m := formUuMessage(common.AUTH_RESPONSE_EVENT, nasPdu)
 	SendToSimUe(ue, m)
-	ue.Log.Traceln("Sent Authentication Reponse Message to SimUe")
+	ue.Log.Traceln("Sent Authentication Response Message to SimUe")
 	return nil
 }
 
