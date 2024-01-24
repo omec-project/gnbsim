@@ -451,7 +451,7 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		msg.Event = common.DATA_PKT_GEN_REQUEST_EVENT
 
 		/* TODO: Solve timing issue. Currently UE may start sending user data
-		 * before gnb has successfuly sent PDU Session Resource Setup Response
+		 * before gnb has successfully sent PDU Session Resource Setup Response
 		 * or before 5g core has processed it
 		 */
 		ue.Log.Infoln("Please wait, initiating uplink user data in 3 seconds ...")

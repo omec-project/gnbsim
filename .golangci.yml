@@ -241,7 +241,7 @@ linters:
     - govet
     # - errcheck
     - staticcheck
-    # - unused
+    - unused
     # - gosimple
     - ineffassign
     # - typecheck
@@ -249,13 +249,13 @@ linters:
     # - lll
     - godox
     #- gomnd
-    # - goconst
+    - goconst
     # - gocognit
     # - nestif
     # - gomodguard
     # - nakedret
     # - gci
-    # - misspell
+    - misspell
     # - gofumpt
     # - whitespace
     # - unconvert

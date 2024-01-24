@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//TODO: Need to seperate out the DAOs
+//TODO: Need to separate out the DAOs
 
 // GnbUeDao acts as a Data Access Object that stores and provides access to all
 // the GNodeB instances

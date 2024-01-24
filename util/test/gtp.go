@@ -40,7 +40,7 @@ const (
 )
 
 type GtpHdr struct {
-	Flags uint8 //Version(3-bits), Protocal Type(1-bit), Extension Header flag(1-bit),
+	Flags uint8 //Version(3-bits), Protocol Type(1-bit), Extension Header flag(1-bit),
 	// Sequence Number flag(1-bit), N-PDU number flag(1-bit)
 	MsgType uint8  //Message Type
 	Len     uint16 //Total Length
