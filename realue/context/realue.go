@@ -46,10 +46,10 @@ type RealUe struct {
 	PduSessions        map[int64]*PduSession
 	WaitGrp            sync.WaitGroup
 
-	//RealUe writes messages to SimUE on this channel
+	// RealUe writes messages to SimUE on this channel
 	WriteSimUeChan chan common.InterfaceMessage
 
-	//RealUe reads messages from SimUE on this channel
+	// RealUe reads messages from SimUE on this channel
 	ReadChan chan common.InterfaceMessage
 
 	/* logger */
@@ -58,8 +58,8 @@ type RealUe struct {
 
 func NewRealUe(supi string, cipheringAlg, integrityAlg uint8,
 	simuechan chan common.InterfaceMessage, plmnid *models.PlmnId,
-	key string, opc string, seqNum string, Dnn string, SNssai *models.Snssai) *RealUe {
-
+	key string, opc string, seqNum string, Dnn string, SNssai *models.Snssai,
+) *RealUe {
 	ue := RealUe{}
 	ue.Supi = supi
 	ue.CipheringAlg = cipheringAlg
@@ -111,8 +111,8 @@ func (ue *RealUe) GetUESecurityCapability() (UESecurityCapability *nasType.UESec
 }
 
 func (ue *RealUe) DeriveRESstarAndSetKey(
-	autn, rand []byte, snName string) []byte {
-
+	autn, rand []byte, snName string,
+) []byte {
 	authSubs := ue.AuthenticationSubs
 
 	// Run milenage
@@ -183,14 +183,11 @@ func (ue *RealUe) DeriveRESstarAndSetKey(
 
 	ue.DerivateKamf(key, snName, rcvSQN, ak)
 	ue.DerivateAlgKey()
-	kdfVal_for_resStar :=
-		UeauCommon.GetKDFValue(key, FC, P0, UeauCommon.KDFLen(P0), P1, UeauCommon.KDFLen(P1), P2, UeauCommon.KDFLen(P2))
+	kdfVal_for_resStar := UeauCommon.GetKDFValue(key, FC, P0, UeauCommon.KDFLen(P0), P1, UeauCommon.KDFLen(P1), P2, UeauCommon.KDFLen(P2))
 	return kdfVal_for_resStar[len(kdfVal_for_resStar)/2:]
-
 }
 
 func (ue *RealUe) DerivateKamf(key []byte, snName string, SQN, AK []byte) {
-
 	FC := UeauCommon.FC_FOR_KAUSF_DERIVATION
 	P0 := []byte(snName)
 	SQNxorAK := make([]byte, 6)

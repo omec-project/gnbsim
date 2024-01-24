@@ -31,16 +31,16 @@ type pduSessResourceSetupItem struct {
 }
 
 func HandleConnectRequest(gnbue *gnbctx.GnbCpUe,
-	intfcMsg common.InterfaceMessage) {
-
+	intfcMsg common.InterfaceMessage,
+) {
 	msg := intfcMsg.(*common.UuMessage)
 	gnbue.Supi = msg.Supi
 	gnbue.WriteUeChan = msg.CommChan
 }
 
 func HandleInitialUEMessage(gnbue *gnbctx.GnbCpUe,
-	intfcMsg common.InterfaceMessage) {
-
+	intfcMsg common.InterfaceMessage,
+) {
 	msg := intfcMsg.(*common.UuMessage)
 	if gnbue.AmfUeNgapId != 0 {
 		sendMsg, err := test.GetUplinkNASTransport(gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, msg.NasPdus[0])
@@ -70,8 +70,8 @@ func HandleInitialUEMessage(gnbue *gnbctx.GnbCpUe,
 }
 
 func HandleDownlinkNasTransport(gnbue *gnbctx.GnbCpUe,
-	intfcMsg common.InterfaceMessage) {
-
+	intfcMsg common.InterfaceMessage,
+) {
 	msg := intfcMsg.(*common.N2Message)
 	// Need not perform other checks as they are validated at gnbamfworker level
 	var amfUeNgapId *ngapType.AMFUENGAPID
@@ -101,7 +101,7 @@ func HandleDownlinkNasTransport(gnbue *gnbctx.GnbCpUe,
 		}
 	}
 
-	//TODO: check what needs to be done with AmfUeNgapId on every DownlinkNasTransport message
+	// TODO: check what needs to be done with AmfUeNgapId on every DownlinkNasTransport message
 	gnbue.AmfUeNgapId = amfUeNgapId.Value
 	var pdus common.NasPduList
 	pdus = append(pdus, nasPdu.Value)
@@ -109,8 +109,8 @@ func HandleDownlinkNasTransport(gnbue *gnbctx.GnbCpUe,
 }
 
 func HandleUlInfoTransfer(gnbue *gnbctx.GnbCpUe,
-	intfcMsg common.InterfaceMessage) {
-
+	intfcMsg common.InterfaceMessage,
+) {
 	msg := intfcMsg.(*common.UuMessage)
 	gnbue.Log.Traceln("Creating Uplink NAS Transport Message")
 	sendMsg, err := ngap.GetUplinkNASTransport(gnbue, msg.NasPdus[0])
@@ -128,8 +128,8 @@ func HandleUlInfoTransfer(gnbue *gnbctx.GnbCpUe,
 }
 
 func HandleInitialContextSetupRequest(gnbue *gnbctx.GnbCpUe,
-	intfcMsg common.InterfaceMessage) {
-
+	intfcMsg common.InterfaceMessage,
+) {
 	msg := intfcMsg.(*common.N2Message)
 	var amfUeNgapId *ngapType.AMFUENGAPID
 	var nasPdu *ngapType.NASPDU
@@ -190,7 +190,7 @@ func HandleInitialContextSetupRequest(gnbue *gnbctx.GnbCpUe,
 		return
 	}
 
-	//TODO: Handle other mandatory IEs
+	// TODO: Handle other mandatory IEs
 	resp, err := test.GetInitialContextSetupResponse(gnbue.AmfUeNgapId, gnbue.GnbUeNgapId)
 	if err != nil {
 		gnbue.Log.Errorln("Failed to create Initial Context Setup Response Message ")
@@ -206,8 +206,8 @@ func HandleInitialContextSetupRequest(gnbue *gnbctx.GnbCpUe,
 
 // TODO: Error handling
 func HandlePduSessResourceSetupRequest(gnbue *gnbctx.GnbCpUe,
-	intfcMsg common.InterfaceMessage) {
-
+	intfcMsg common.InterfaceMessage,
+) {
 	msg := intfcMsg.(*common.N2Message)
 	var amfUeNgapId *ngapType.AMFUENGAPID
 	var pduSessResourceSetupReqList *ngapType.PDUSessionResourceSetupListSUReq
@@ -250,8 +250,8 @@ func HandlePduSessResourceSetupRequest(gnbue *gnbctx.GnbCpUe,
 
 // TODO: Error handling
 func HandlePduSessResourceReleaseCommand(gnbue *gnbctx.GnbCpUe,
-	intfcMsg common.InterfaceMessage) {
-
+	intfcMsg common.InterfaceMessage,
+) {
 	msg := intfcMsg.(*common.N2Message)
 	var amfUeNgapId *ngapType.AMFUENGAPID
 	var pduSessResourceToReleaseList *ngapType.PDUSessionResourceToReleaseListRelCmd
@@ -334,8 +334,8 @@ func HandlePduSessResourceReleaseCommand(gnbue *gnbctx.GnbCpUe,
 }
 
 func HandleDataBearerSetupResponse(gnbue *gnbctx.GnbCpUe,
-	intfcMsg common.InterfaceMessage) {
-
+	intfcMsg common.InterfaceMessage,
+) {
 	msg := intfcMsg.(*common.UuMessage)
 	var pduSessions []*ngapTestpacket.PduSession
 	for _, item := range msg.DBParams {
@@ -389,8 +389,8 @@ func HandleDataBearerSetupResponse(gnbue *gnbctx.GnbCpUe,
 }
 
 func HandleUeCtxReleaseCommand(gnbue *gnbctx.GnbCpUe,
-	intfcMsg common.InterfaceMessage) {
-
+	intfcMsg common.InterfaceMessage,
+) {
 	msg := intfcMsg.(*common.N2Message)
 	var ueNgapIds *ngapType.UENGAPIDs
 	var amfUeNgapId ngapType.AMFUENGAPID
@@ -456,8 +456,8 @@ func HandleUeCtxReleaseCommand(gnbue *gnbctx.GnbCpUe,
 }
 
 func HandleRanConnectionRelease(gnbue *gnbctx.GnbCpUe,
-	intfcMsg common.InterfaceMessage) {
-
+	intfcMsg common.InterfaceMessage,
+) {
 	// Todo: The cause for the RAN connection release should be sent by the
 	// Sim-UE, which should receive it through configuration
 	gnbue.Log.Traceln("Handling RAN Connection Release Event")
@@ -479,8 +479,9 @@ func HandleRanConnectionRelease(gnbue *gnbctx.GnbCpUe,
 }
 
 func ProcessPduSessResourceSetupList(gnbue *gnbctx.GnbCpUe,
-	lst []pduSessResourceSetupItem, event common.EventType) {
-	//var pduSessions []ngapTestpacket.PduSession
+	lst []pduSessResourceSetupItem, event common.EventType,
+) {
+	// var pduSessions []ngapTestpacket.PduSession
 	var dbParamSet []*common.DataBearerParams
 
 	var nasPdus common.NasPduList
@@ -583,7 +584,7 @@ func ProcessPduSessResourceSetupList(gnbue *gnbctx.GnbCpUe,
 		gnbupue.Upf = gnbupf
 		gnbue.AddGnbUpUe(gnbupue.PduSessId, gnbupue)
 
-		//pduSessions = append(pduSessions, pduSess)
+		// pduSessions = append(pduSessions, pduSess)
 		dbParam := &common.DataBearerParams{}
 		dbParam.CommChan = gnbupue.ReadUlChan
 		dbParam.PduSess = pduSess

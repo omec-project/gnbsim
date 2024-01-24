@@ -33,8 +33,10 @@ type GnbUpf struct {
 func NewGnbUpf(ip string) *GnbUpf {
 	gnbupf := &GnbUpf{}
 
-	gnbupf.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbUpf",
-		logger.FieldIp: ip})
+	gnbupf.Log = logger.GNodeBLog.WithFields(logrus.Fields{
+		"subcategory":  "GnbUpf",
+		logger.FieldIp: ip,
+	})
 
 	ipPort := net.JoinHostPort(ip, strconv.Itoa(GTP_U_PORT))
 	addr, err := net.ResolveUDPAddr("udp", ipPort)

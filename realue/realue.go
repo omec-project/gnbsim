@@ -11,14 +11,12 @@ import (
 )
 
 func Init(ue *realuectx.RealUe) {
-
 	ue.AuthenticationSubs = test.GetAuthSubscription(ue.Key, ue.Opc, "", ue.SeqNum)
 
 	HandleEvents(ue)
 }
 
 func HandleEvents(ue *realuectx.RealUe) (err error) {
-
 	for msg := range ue.ReadChan {
 		event := msg.GetEventType()
 		ue.Log.Infoln("Handling:", event)
@@ -86,8 +84,8 @@ func formUuMessage(event common.EventType, nasPdu []byte) *common.UuMessage {
 }
 
 func SendToSimUe(ue *realuectx.RealUe,
-	msg common.InterfaceMessage) {
-
+	msg common.InterfaceMessage,
+) {
 	ue.Log.Traceln("Sending", msg.GetEventType(), "to SimUe")
 	ue.WriteSimUeChan <- msg
 }

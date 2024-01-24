@@ -56,8 +56,10 @@ func NewPduSession(realUe *RealUe, pduSessId int64) *PduSession {
 	pduSess.PduSessId = pduSessId
 	pduSess.ReadDlChan = make(chan common.InterfaceMessage, 10)
 	pduSess.ReadCmdChan = make(chan common.InterfaceMessage, 10)
-	pduSess.Log = realUe.Log.WithFields(logrus.Fields{"subcategory": "PduSession",
-		logger.FieldPduSessId: pduSessId})
+	pduSess.Log = realUe.Log.WithFields(logrus.Fields{
+		"subcategory":         "PduSession",
+		logger.FieldPduSessId: pduSessId,
+	})
 	pduSess.Log.Traceln("Pdu Session Created")
 	return &pduSess
 }

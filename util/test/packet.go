@@ -44,15 +44,15 @@ func GetInitialContextSetupResponse(amfUeNgapID int64, ranUeNgapID int64) ([]byt
 
 func GetInitialContextSetupResponseForServiceRequest(
 	pduSessions []*ngapTestpacket.PduSession, amfUeNgapID int64,
-	ranUeNgapID int64, ipv4 string) ([]byte, error) {
-
+	ranUeNgapID int64, ipv4 string,
+) ([]byte, error) {
 	message := ngapTestpacket.BuildInitialContextSetupResponse(pduSessions, amfUeNgapID, ranUeNgapID, ipv4, nil)
 	return ngap.Encoder(message)
 }
 
 func GetPDUSessionResourceSetupResponse(pduSessions []*ngapTestpacket.PduSession,
-	amfUeNgapID int64, ranUeNgapID int64, ipv4 string) ([]byte, error) {
-
+	amfUeNgapID int64, ranUeNgapID int64, ipv4 string,
+) ([]byte, error) {
 	message := ngapTestpacket.BuildPDUSessionResourceSetupResponseForRegistrationTest(pduSessions, amfUeNgapID, ranUeNgapID, ipv4)
 	return ngap.Encoder(message)
 }
@@ -71,15 +71,16 @@ func GetPDUSessionResourceReleaseResponse(amfUeNgapID int64, ranUeNgapID int64) 
 	message := ngapTestpacket.BuildPDUSessionResourceReleaseResponseForReleaseTest(amfUeNgapID, ranUeNgapID)
 	return ngap.Encoder(message)
 }
+
 func GetPathSwitchRequest(amfUeNgapID int64, ranUeNgapID int64) ([]byte, error) {
 	message := ngapTestpacket.BuildPathSwitchRequest(amfUeNgapID, ranUeNgapID)
-	message.InitiatingMessage.Value.PathSwitchRequest.ProtocolIEs.List =
-		message.InitiatingMessage.Value.PathSwitchRequest.ProtocolIEs.List[0:5]
+	message.InitiatingMessage.Value.PathSwitchRequest.ProtocolIEs.List = message.InitiatingMessage.Value.PathSwitchRequest.ProtocolIEs.List[0:5]
 	return ngap.Encoder(message)
 }
 
 func GetHandoverRequired(
-	amfUeNgapID int64, ranUeNgapID int64, targetGNBID []byte, targetCellID []byte) ([]byte, error) {
+	amfUeNgapID int64, ranUeNgapID int64, targetGNBID []byte, targetCellID []byte,
+) ([]byte, error) {
 	message := ngapTestpacket.BuildHandoverRequired(amfUeNgapID, ranUeNgapID, targetGNBID, targetCellID)
 	return ngap.Encoder(message)
 }
@@ -95,8 +96,8 @@ func GetHandoverNotify(amfUeNgapID int64, ranUeNgapID int64) ([]byte, error) {
 }
 
 func GetPDUSessionResourceSetupResponseForPaging(pduSessions []*ngapTestpacket.PduSession,
-	amfUeNgapID int64, ranUeNgapID int64, ipv4 string) ([]byte, error) {
-
+	amfUeNgapID int64, ranUeNgapID int64, ipv4 string,
+) ([]byte, error) {
 	message := ngapTestpacket.BuildPDUSessionResourceSetupResponseForPaging(
 		pduSessions, amfUeNgapID, ranUeNgapID, ipv4)
 	return ngap.Encoder(message)

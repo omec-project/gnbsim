@@ -11,7 +11,6 @@ import (
 )
 
 func BuildServiceRequest(serviceType uint8) *nas.Message {
-
 	m := nas.NewMessage()
 	m.GmmMessage = nas.NewGmmMessage()
 	m.GmmHeader.SetMessageType(nas.MsgTypeServiceRequest)

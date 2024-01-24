@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//TODO: Need to separate out the DAOs
+// TODO: Need to separate out the DAOs
 
 // GnbUeDao acts as a Data Access Object that stores and provides access to all
 // the GNodeB instances
@@ -22,8 +22,8 @@ type GnbUeDao struct {
 
 	/* logger */
 	Log *logrus.Entry
-	//TODO:
-	//ulTeidGnbUpUeMap sync.Map
+	// TODO:
+	// ulTeidGnbUpUeMap sync.Map
 	// This map will be helpful when gNb receives an ErrorIndication Message
 	// which will have an UL TEID. In which case gNb can fetch and delete the
 	// GnbUpUe context corresponding to that UL TEID
