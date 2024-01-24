@@ -451,7 +451,6 @@ func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 				amf.Log.Errorln("UENGAPIDs is nil")
 				return
 			}
-			break
 		}
 	}
 
