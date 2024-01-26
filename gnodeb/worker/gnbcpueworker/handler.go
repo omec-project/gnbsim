@@ -55,7 +55,7 @@ func HandleInitialUEMessage(gnbue *gnbctx.GnbCpUe,
 		}
 		gnbue.Log.Traceln("Sent Uplink NAS Message to AMF")
 	} else {
-		sendMsg, err := test.GetInitialUEMessage(gnbue.GnbUeNgapId, msg.NasPdus[0], "")
+		sendMsg, err := ngap.GetInitialUEMessage(gnbue, msg.NasPdus[0])
 		if err != nil {
 			gnbue.Log.Errorln("GetInitialUEMessage failed:", err)
 			return
@@ -113,7 +113,7 @@ func HandleUlInfoTransfer(gnbue *gnbctx.GnbCpUe,
 
 	msg := intfcMsg.(*common.UuMessage)
 	gnbue.Log.Traceln("Creating Uplink NAS Transport Message")
-	sendMsg, err := test.GetUplinkNASTransport(gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, msg.NasPdus[0])
+	sendMsg, err := ngap.GetUplinkNASTransport(gnbue, msg.NasPdus[0])
 	if err != nil {
 		gnbue.Log.Errorln("GetUplinkNASTransport failed:", err)
 		return
@@ -427,15 +427,7 @@ func HandleUeCtxReleaseCommand(gnbue *gnbctx.GnbCpUe,
 		}
 	}
 
-	var pduSessIds []int64
-	f := func(k interface{}, v interface{}) bool {
-		pduSessIds = append(pduSessIds, k.(int64))
-		return true
-	}
-	gnbue.GnbUpUes.Range(f)
-
-	ngapPdu, err := test.GetUEContextReleaseComplete(gnbue.AmfUeNgapId,
-		gnbue.GnbUeNgapId, pduSessIds)
+	ngapPdu, err := ngap.GetUEContextReleaseComplete(gnbue)
 	if err != nil {
 		fmt.Println("Failed to create UE Context Release Complete message")
 		return
