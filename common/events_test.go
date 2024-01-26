@@ -35,6 +35,6 @@ func TestString_InvalidEventTypeExitsWithLogMsg(t *testing.T) {
 	logger.AppLog.Logger.SetOutput(&logBuf)
 	logger.AppLog.Logger.ExitFunc = patchedExit
 
-	assert.Panics(func() { INVALID_EVENT.String() }) //nolint:govet
+	assert.Panics(func() { _ = INVALID_EVENT.String() })
 	assert.Contains(logBuf.String(), "Invalid Event ID: 0x0")
 }
