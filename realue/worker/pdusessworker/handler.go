@@ -28,7 +28,8 @@ const (
 )
 
 func HandleInitEvent(pduSess *realuectx.PduSession,
-	intfcMsg common.InterfaceMessage) (err error) {
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UeMessage)
 	pduSess.WriteGnbChan = msg.CommChan
 	pduSess.LastDataPktRecvd = false
@@ -36,7 +37,6 @@ func HandleInitEvent(pduSess *realuectx.PduSession,
 }
 
 func SendIcmpEchoRequest(pduSess *realuectx.PduSession) (err error) {
-
 	pduSess.Log.Traceln("Sending UL ICMP ping message")
 
 	icmpPayload, err := hex.DecodeString("8c870d0000000000101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3031323334353637")
@@ -94,7 +94,8 @@ func SendIcmpEchoRequest(pduSess *realuectx.PduSession) (err error) {
 }
 
 func HandleIcmpMessage(pduSess *realuectx.PduSession,
-	icmpPkt []byte) (err error) {
+	icmpPkt []byte,
+) (err error) {
 	icmpMsg, err := icmp.ParseMessage(1, icmpPkt)
 	if err != nil {
 		return fmt.Errorf("failed to parse icmp message:%v", err)
@@ -129,8 +130,8 @@ func HandleIcmpMessage(pduSess *realuectx.PduSession,
 }
 
 func HandleDlMessage(pduSess *realuectx.PduSession,
-	msg common.InterfaceMessage) (err error) {
-
+	msg common.InterfaceMessage,
+) (err error) {
 	pduSess.Log.Traceln("Handling DL user data packet from gNb")
 
 	if msg.GetEventType() == common.LAST_DATA_PKT_EVENT {
@@ -165,7 +166,8 @@ func HandleDlMessage(pduSess *realuectx.PduSession,
 }
 
 func HandleDataPktGenRequestEvent(pduSess *realuectx.PduSession,
-	intfcMsg common.InterfaceMessage) (err error) {
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	cmd := intfcMsg.(*common.UeMessage)
 	pduSess.ReqDataPktCount = cmd.UserDataPktCount
 	pduSess.ReqDataPktInt = cmd.UserDataPktInterval
@@ -195,8 +197,8 @@ func HandleDataPktGenRequestEvent(pduSess *realuectx.PduSession,
 }
 
 func HandleConnectionReleaseRequestEvent(pduSess *realuectx.PduSession,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	userDataMsg := &common.UserDataMessage{}
 	userDataMsg.Event = common.LAST_DATA_PKT_EVENT
 	pduSess.WriteGnbChan <- userDataMsg
@@ -206,8 +208,8 @@ func HandleConnectionReleaseRequestEvent(pduSess *realuectx.PduSession,
 }
 
 func HandleQuitEvent(pduSess *realuectx.PduSession,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	if pduSess.WriteGnbChan != nil {
 		userDataMsg := &common.UserDataMessage{}
 		userDataMsg.Event = common.LAST_DATA_PKT_EVENT

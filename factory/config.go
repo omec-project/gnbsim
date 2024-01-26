@@ -71,7 +71,6 @@ func (c *Config) GetVersion() string {
 }
 
 func (c *Config) Validate() (err error) {
-
 	if c.Info == nil {
 		return fmt.Errorf("Info field missing")
 	}

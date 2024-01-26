@@ -40,17 +40,17 @@ const (
 )
 
 type GtpHdr struct {
-	Flags uint8 //Version(3-bits), Protocol Type(1-bit), Extension Header flag(1-bit),
+	Flags uint8 // Version(3-bits), Protocol Type(1-bit), Extension Header flag(1-bit),
 	// Sequence Number flag(1-bit), N-PDU number flag(1-bit)
-	MsgType uint8  //Message Type
-	Len     uint16 //Total Length
-	Teid    uint32 //Tunnel Endpoint Identifier
+	MsgType uint8  // Message Type
+	Len     uint16 // Total Length
+	Teid    uint32 // Tunnel Endpoint Identifier
 }
 
 type GtpHdrOpt struct {
-	SeqNum      uint16 //Sequence Number
-	NpduNum     uint8  //N-PDU Number
-	NextHdrType uint8  //Next Extenstion Header Type
+	SeqNum      uint16 // Sequence Number
+	NpduNum     uint8  // N-PDU Number
+	NextHdrType uint8  // Next Extenstion Header Type
 }
 
 type GtpPdu struct {
@@ -66,8 +66,8 @@ type PduSessContainerExtHeader struct {
 
 func BuildGTPv1Header(extHdrFlag bool, snFlag bool, nPduFlag bool,
 	nExtHdrType uint8, sn uint16, nPduNum uint8, msgType uint8,
-	payloadLen uint16, teID uint32) ([]byte, error) {
-
+	payloadLen uint16, teID uint32,
+) ([]byte, error) {
 	var optHdrPresent bool
 
 	/* Setting GTP-U header flags */
@@ -187,8 +187,8 @@ func BuildPduSessContainerExtHeader(qfi uint8) []uint8 {
 
 // Currently processing QFI only
 func DecodePduSessContainerExtHeader(pkt []uint8) (payload []uint8,
-	extHdr *PduSessContainerExtHeader, err error) {
-
+	extHdr *PduSessContainerExtHeader, err error,
+) {
 	bufLen := len(pkt)
 	if bufLen == 0 {
 		err = fmt.Errorf("extension header is nil")

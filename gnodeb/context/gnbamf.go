@@ -40,14 +40,18 @@ func NewGnbAmf(ip string, port int) *GnbAmf {
 	gnbAmf := &GnbAmf{}
 	gnbAmf.AmfIp = ip
 	gnbAmf.AmfPort = port
-	gnbAmf.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbAmf",
-		logger.FieldIp: gnbAmf.AmfIp})
+	gnbAmf.Log = logger.GNodeBLog.WithFields(logrus.Fields{
+		"subcategory":  "GnbAmf",
+		logger.FieldIp: gnbAmf.AmfIp,
+	})
 	return gnbAmf
 }
 
 func (amf *GnbAmf) Init() {
-	amf.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbAmf",
-		logger.FieldIp: amf.AmfIp})
+	amf.Log = logger.GNodeBLog.WithFields(logrus.Fields{
+		"subcategory":  "GnbAmf",
+		logger.FieldIp: amf.AmfIp,
+	})
 }
 
 func (amf *GnbAmf) GetIpAddr() string {

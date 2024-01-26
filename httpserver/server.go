@@ -28,7 +28,6 @@ const (
 )
 
 func StartHttpServer() (err error) {
-
 	router := logger_util.NewGinWithLogrus(logger.GinLog)
 	router.Use(cors.New(cors.Config{
 		AllowMethods: []string{"GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"},

@@ -21,7 +21,6 @@ import (
 )
 
 func GetNGSetupRequest(gnb *gnbctx.GNodeB) ([]byte, error) {
-
 	message := ngapTestpacket.BuildNGSetupRequest()
 
 	// GlobalRANNodeID
