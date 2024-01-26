@@ -22,6 +22,8 @@ import (
 
 type RanUeContext struct {
 	Supi               string
+	AuthenticationSubs models.AuthenticationSubscription
+	Kamf               []uint8
 	RanUeNgapId        int64
 	AmfUeNgapId        int64
 	ULCount            security.Count
@@ -30,8 +32,6 @@ type RanUeContext struct {
 	IntegrityAlg       uint8
 	KnasEnc            [16]uint8
 	KnasInt            [16]uint8
-	Kamf               []uint8
-	AuthenticationSubs models.AuthenticationSubscription
 }
 
 func CalculateIpv4HeaderChecksum(hdr *ipv4.Header) uint32 {

@@ -15,16 +15,9 @@ import (
 )
 
 type GnbCpUe struct {
-	Supi        string
-	GnbUeNgapId int64
-	AmfUeNgapId int64
-	Amf         *GnbAmf
-	Gnb         *GNodeB
-
-	// TODO: Sync map is not needed as it is handled single threaded
-	GnbUpUes sync.Map
-
-	WaitGrp sync.WaitGroup
+	Supi string
+	Amf  *GnbAmf
+	Gnb  *GNodeB
 
 	// GnbCpUe writes messages to UE on this channel
 	WriteUeChan chan common.InterfaceMessage
@@ -34,6 +27,14 @@ type GnbCpUe struct {
 
 	// logger
 	Log *logrus.Entry
+
+	// TODO: Sync map is not needed as it is handled single threaded
+	GnbUpUes sync.Map
+
+	WaitGrp sync.WaitGroup
+
+	GnbUeNgapId int64
+	AmfUeNgapId int64
 }
 
 func NewGnbCpUe(ngapId int64, gnb *GNodeB, amf *GnbAmf) *GnbCpUe {

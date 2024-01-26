@@ -14,15 +14,10 @@ import (
 )
 
 type GnbUpUe struct {
-	PduSessId        int64
-	DlTeid           uint32
-	UlTeid           uint32
-	Snssai           models.Snssai
-	Upf              *GnbUpf
-	Gnb              *GNodeB
-	PduSessType      models.PduSessionType
-	QosFlows         map[int64]*ngapType.QosFlowSetupRequestItem
-	LastDataPktRecvd bool
+	Upf         *GnbUpf
+	Gnb         *GNodeB
+	PduSessType models.PduSessionType
+	QosFlows    map[int64]*ngapType.QosFlowSetupRequestItem
 
 	// GnbUpUe writes downlink packets to UE on this channel
 	WriteUeChan chan common.InterfaceMessage
@@ -38,6 +33,12 @@ type GnbUpUe struct {
 
 	/* logger */
 	Log *logrus.Entry
+
+	Snssai           models.Snssai
+	PduSessId        int64
+	DlTeid           uint32
+	UlTeid           uint32
+	LastDataPktRecvd bool
 }
 
 func NewGnbUpUe(dlTeid, ulTeid uint32, gnb *GNodeB) *GnbUpUe {

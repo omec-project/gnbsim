@@ -17,11 +17,12 @@ import (
 // GnbUeDao acts as a Data Access Object that stores and provides access to all
 // the GNodeB instances
 type GnbUeDao struct {
+	/* logger */
+	Log *logrus.Entry
+
 	ngapIdGnbCpUeMap sync.Map
 	dlTeidGnbUpUeMap sync.Map
 
-	/* logger */
-	Log *logrus.Entry
 	//TODO:
 	//ulTeidGnbUpUeMap sync.Map
 	// This map will be helpful when gNb receives an ErrorIndication Message

@@ -15,13 +15,13 @@ import (
 // GnbPeerDao acts as a Data Access Object that stores and provides access to all
 // the GnbUpf and GnbAmf instances
 type GnbPeerDao struct {
+	/* Logger */
+	Log *logrus.Entry
+
 	// Map of UPF IP address vs GnbUpf Context. Not considering Port as they
 	// will be same for all UPFs i.e GTP-U port 2152
 	gnbUpfMap sync.Map
 	lock      sync.Mutex
-
-	/* Logger */
-	Log *logrus.Entry
 
 	// TODO
 	// gnbAmfMap sync.Map

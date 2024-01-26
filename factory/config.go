@@ -41,10 +41,10 @@ type Configuration struct {
 	Gnbs                     map[string]*gnbctx.GNodeB   `yaml:"gnbs"`
 	CustomProfiles           map[string]*profctx.Profile `yaml:"customProfiles"`
 	Profiles                 []*profctx.Profile          `yaml:"profiles"`
-	SingleInterface          bool                        `yaml:"singleInterface"`
-	ExecInParallel           bool                        `yaml:"execInParallel"`
 	Server                   HttpServer                  `yaml:"httpServer"`
 	GoProfile                ProfileServer               `yaml:"goProfile"`
+	SingleInterface          bool                        `yaml:"singleInterface"`
+	ExecInParallel           bool                        `yaml:"execInParallel"`
 	RunConfigProfilesAtStart bool                        `yaml:"runConfigProfilesAtStart"`
 }
 
@@ -54,9 +54,9 @@ type ProfileServer struct {
 }
 
 type HttpServer struct {
-	Enable bool   `yaml:"enable"`
 	IpAddr string `yaml:"ipAddr"`
 	Port   string `yaml:"port"`
+	Enable bool   `yaml:"enable"`
 }
 
 type Logger struct {

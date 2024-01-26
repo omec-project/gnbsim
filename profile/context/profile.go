@@ -61,52 +61,53 @@ type Iterations struct {
 }
 
 type ProfileUeContext struct {
-	TrigEventsChan   chan *common.ProfileMessage  // Receiving Events from the REST interface
-	WriteSimChan     chan common.InterfaceMessage // Sending events to SIMUE -  start proc and proc parameters
-	ReadChan         chan *common.ProfileMessage  // Sending events to profile
-	Repeat           int                          // used only if UE is part of custom profile
-	CurrentItr       string                       // used only if UE is part of custom profile
-	CurrentProcIndex int                          // current procedure index. Used in custom profile
-	Procedure        common.ProcedureType
+	TrigEventsChan chan *common.ProfileMessage  // Receiving Events from the REST interface
+	WriteSimChan   chan common.InterfaceMessage // Sending events to SIMUE -  start proc and proc parameters
+	ReadChan       chan *common.ProfileMessage  // Sending events to profile
 
 	/* logger */
 	Log *logrus.Entry
+
+	CurrentItr       string // used only if UE is part of custom profile
+	Repeat           int    // used only if UE is part of custom profile
+	CurrentProcIndex int    // current procedure index. Used in custom profile
+	Procedure        common.ProcedureType
 }
 
 type Profile struct {
 	ProfileType    string         `yaml:"profileType" json:"profileType"`
 	Name           string         `yaml:"profileName" json:"profileName"`
-	Enable         bool           `yaml:"enable" json:"enable"`
 	GnbName        string         `yaml:"gnbName" json:"gnbName"`
 	StartImsi      string         `yaml:"startImsi" json:"startImsi"`
-	Imsi           int            // StartImsi in int
-	UeCount        int            `yaml:"ueCount" json:"ueCount"`
-	Plmn           *models.PlmnId `yaml:"plmnId" json:"plmnId"`
-	DataPktCount   int            `yaml:"dataPktCount" json:"dataPktCount"`
-	DataPktInt     int            `yaml:"dataPktInterval" json:"dataPktInterval"`
-	PerUserTimeout uint32         `yaml:"perUserTimeout" json:"perUserTimeout"`
 	DefaultAs      string         `yaml:"defaultAs" json:"defaultAs"`
 	Key            string         `yaml:"key" json:"key"`
 	Opc            string         `yaml:"opc" json:"opc"`
 	SeqNum         string         `yaml:"sequenceNumber" json:"sequenceNumber"`
 	Dnn            string         `yaml:"dnn" json:"dnn"`
-	SNssai         *models.Snssai `yaml:"sNssai" json:"sNssai"`
-	ExecInParallel bool           `yaml:"execInParallel" json:"execInParallel"`
-	StepTrigger    bool           `yaml:"stepTrigger" json:"stepTrigger"`
 	StartIteration string         `yaml:"startiteration" json:"startiteration"`
-	Iterations     []*Iterations  `yaml:"iterations"`
-
-	PIterations map[string]*PIterations
-	Procedures  []common.ProcedureType
+	Plmn           *models.PlmnId `yaml:"plmnId" json:"plmnId"`
+	SNssai         *models.Snssai `yaml:"sNssai" json:"sNssai"`
 
 	// Profile routine reads messages from other entities on this channel
 	// Entities can be SimUe, Main routine.
 	ReadChan chan *common.ProfileMessage
 
-	PSimUe map[string]*ProfileUeContext
-
 	/* logger */
 	Log *logrus.Entry
+
+	Iterations  []*Iterations `yaml:"iterations"`
+	PIterations map[string]*PIterations
+	PSimUe      map[string]*ProfileUeContext
+	Procedures  []common.ProcedureType
+
+	Imsi           int    // StartImsi in int
+	UeCount        int    `yaml:"ueCount" json:"ueCount"`
+	DataPktCount   int    `yaml:"dataPktCount" json:"dataPktCount"`
+	DataPktInt     int    `yaml:"dataPktInterval" json:"dataPktInterval"`
+	PerUserTimeout uint32 `yaml:"perUserTimeout" json:"perUserTimeout"`
+	Enable         bool   `yaml:"enable" json:"enable"`
+	ExecInParallel bool   `yaml:"execInParallel" json:"execInParallel"`
+	StepTrigger    bool   `yaml:"stepTrigger" json:"stepTrigger"`
 }
 
 func init() {
