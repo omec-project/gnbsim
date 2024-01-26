@@ -23,8 +23,8 @@ type GnbUeDao struct {
 	ngapIdGnbCpUeMap sync.Map
 	dlTeidGnbUpUeMap sync.Map
 
-	//TODO:
-	//ulTeidGnbUpUeMap sync.Map
+	// TODO:
+	// ulTeidGnbUpUeMap sync.Map
 	// This map will be helpful when gNb receives an ErrorIndication Message
 	// which will have an UL TEID. In which case gNb can fetch and delete the
 	// GnbUpUe context corresponding to that UL TEID
