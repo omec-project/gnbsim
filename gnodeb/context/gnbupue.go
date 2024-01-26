@@ -50,8 +50,10 @@ func NewGnbUpUe(dlTeid, ulTeid uint32, gnb *GNodeB) *GnbUpUe {
 	gnbue.ReadUlChan = make(chan common.InterfaceMessage, 10)
 	gnbue.ReadDlChan = make(chan common.InterfaceMessage, 10)
 	gnbue.ReadCmdChan = make(chan common.InterfaceMessage, 5)
-	gnbue.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbUpUe",
-		logger.FieldDlTeid: dlTeid})
+	gnbue.Log = logger.GNodeBLog.WithFields(logrus.Fields{
+		"subcategory":      "GnbUpUe",
+		logger.FieldDlTeid: dlTeid,
+	})
 	gnbue.Log.Traceln("Context Created")
 	return &gnbue
 }

@@ -9,7 +9,7 @@ package main
 import (
 	"fmt"
 	"net/http"
-	_ "net/http/pprof" //Using package only for invoking initialization.
+	_ "net/http/pprof" // Using package only for invoking initialization.
 	"os"
 	"os/signal"
 	"sync"
@@ -43,7 +43,6 @@ func main() {
 }
 
 func action(c *cli.Context) error {
-
 	cfg := c.String("cfg")
 	if cfg == "" {
 		logger.AppLog.Warnln("No configuration file provided. Using default configuration file:", factory.GNBSIM_DEFAULT_CONFIG_PATH)
@@ -58,7 +57,7 @@ func action(c *cli.Context) error {
 
 	config := factory.AppConfig
 
-	//Initiating a server for profiling
+	// Initiating a server for profiling
 	if config.Configuration.GoProfile.Enable == true {
 		go func() {
 			endpt := fmt.Sprintf(":%v", config.Configuration.GoProfile.Port)
@@ -108,10 +107,10 @@ func action(c *cli.Context) error {
 		}()
 	}
 
-	//This configuration enables running the configured profiles
-	//when gnbsim is started. It is enabled by default. If we want no
-	//profiles to run and gnbsim to wait for a command, then we
-	//should disable this config.
+	// This configuration enables running the configured profiles
+	// when gnbsim is started. It is enabled by default. If we want no
+	// profiles to run and gnbsim to wait for a command, then we
+	// should disable this config.
 	if config.Configuration.RunConfigProfilesAtStart {
 		var profileWaitGrp sync.WaitGroup
 		// start profile and wait for it to finish (success or failure)

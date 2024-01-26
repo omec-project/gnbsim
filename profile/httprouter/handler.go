@@ -65,7 +65,6 @@ func HTTPAddNewCallsProfile(c *gin.Context) {
 }
 
 func HTTPExecuteConfigProfile(c *gin.Context) {
-
 	logger.HttpLog.Infoln("ExecuteConfigProfile API called")
 	c.JSON(http.StatusOK, gin.H{"Status": "Request received. Test run in Progress"})
 
@@ -96,10 +95,9 @@ func HTTPExecuteConfigProfile(c *gin.Context) {
 			profileWaitGrp.Wait()
 		}
 	}()
-
 }
-func HTTPExecuteProfile(c *gin.Context) {
 
+func HTTPExecuteProfile(c *gin.Context) {
 	logger.HttpLog.Infoln("EcecuteProfile API called")
 	var prof profCtx.Profile
 

@@ -29,15 +29,17 @@ const (
 	CUSTOM_PROCEDURE        string = "custom"
 )
 
-const PER_USER_TIMEOUT uint32 = 100 //seconds
+const PER_USER_TIMEOUT uint32 = 100 // seconds
 var SummaryChan = make(chan common.InterfaceMessage)
 
 type ProcedureEventsDetails struct {
 	Events map[common.EventType]common.EventType
 }
 
-var ProceduresMap map[common.ProcedureType]*ProcedureEventsDetails
-var ProfileMap map[string]*Profile
+var (
+	ProceduresMap map[common.ProcedureType]*ProcedureEventsDetails
+	ProfileMap    map[string]*Profile
+)
 
 type PIterations struct {
 	Name    string
@@ -120,7 +122,7 @@ func init() {
 func initProcedureEventMap() {
 	proc1 := ProcedureEventsDetails{}
 
-	//common.REGISTRATION_PROCEDURE:
+	// common.REGISTRATION_PROCEDURE:
 	proc1.Events = map[common.EventType]common.EventType{
 		common.REG_REQUEST_EVENT:     common.AUTH_REQUEST_EVENT,
 		common.AUTH_REQUEST_EVENT:    common.AUTH_RESPONSE_EVENT,
@@ -139,7 +141,7 @@ func initProcedureEventMap() {
 	}
 	ProceduresMap[common.PDU_SESSION_ESTABLISHMENT_PROCEDURE] = &proc2
 
-	//common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE:
+	// common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE:
 	proc3 := ProcedureEventsDetails{}
 	proc3.Events = map[common.EventType]common.EventType{
 		common.PDU_SESS_REL_REQUEST_EVENT: common.PDU_SESS_REL_COMMAND_EVENT,
@@ -194,7 +196,6 @@ func initProcedureEventMap() {
 		common.PROFILE_PASS_EVENT: common.QUIT_EVENT,
 	}
 	ProceduresMap[common.USER_DATA_PKT_GENERATION_PROCEDURE] = &proc9
-
 }
 
 func (profile *Profile) Init() error {

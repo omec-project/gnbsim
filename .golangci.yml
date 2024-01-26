@@ -251,7 +251,7 @@ linters:
     # - nakedret
     # - gci
     - misspell
-    # - gofumpt
+    - gofumpt
     # - whitespace
     # - unconvert
     # - predeclared

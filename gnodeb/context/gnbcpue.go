@@ -43,8 +43,10 @@ func NewGnbCpUe(ngapId int64, gnb *GNodeB, amf *GnbAmf) *GnbCpUe {
 	gnbue.Amf = amf
 	gnbue.Gnb = gnb
 	gnbue.ReadChan = make(chan common.InterfaceMessage, 5)
-	gnbue.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbCpUe",
-		logger.FieldGnbUeNgapId: ngapId})
+	gnbue.Log = logger.GNodeBLog.WithFields(logrus.Fields{
+		"subcategory":           "GnbCpUe",
+		logger.FieldGnbUeNgapId: ngapId,
+	})
 	gnbue.Log.Traceln("Context Created")
 	return &gnbue
 }

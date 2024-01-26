@@ -15,7 +15,7 @@ import (
 // GNodeB holds the context for a gNodeB. It manages the control plane and
 // user plane layer of a gNodeB.
 type GNodeB struct {
-	//TODO IP and port should be the property of transport var
+	// TODO IP and port should be the property of transport var
 	GnbN2Ip              string                 `yaml:"n2IpAddr"`
 	GnbN3Ip              string                 `yaml:"n3IpAddr"`
 	GnbName              string                 `yaml:"name"`

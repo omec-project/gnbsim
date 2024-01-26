@@ -6,6 +6,8 @@ package simue
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/gnodeb"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
@@ -13,7 +15,6 @@ import (
 	"github.com/omec-project/gnbsim/profile/util"
 	"github.com/omec-project/gnbsim/realue"
 	simuectx "github.com/omec-project/gnbsim/simue/context"
-	"time"
 )
 
 func InitUE(imsiStr string, gnb *gnbctx.GNodeB, profile *profctx.Profile, result chan *common.ProfileMessage) chan common.InterfaceMessage {
@@ -23,7 +24,6 @@ func InitUE(imsiStr string, gnb *gnbctx.GNodeB, profile *profctx.Profile, result
 }
 
 func Init(simUe *simuectx.SimUe) {
-
 	err := ConnectToGnb(simUe)
 	if err != nil {
 		err = fmt.Errorf("failed to connect to gnodeb: %v", err)
@@ -190,7 +190,7 @@ func ImsiStateMachine(profile *profctx.Profile, pCtx *profctx.ProfileUeContext, 
 		// proc result -  success, fail or timeout
 		timeout := time.Duration(profile.PerUserTimeout) * time.Second
 		ticker := time.NewTicker(timeout)
-		//Ask simUe to just run procedure and return result
+		// Ask simUe to just run procedure and return result
 		go RunProcedure(simUe, procedure)
 		pCtx.Log.Infoln("Waiting for procedure result from imsiStateMachine")
 		select {
@@ -220,7 +220,7 @@ func ImsiStateMachine(profile *profctx.Profile, pCtx *profctx.ProfileUeContext, 
 		} else if proc_fail == true {
 			break
 		}
-		//should we wait for pulse to move to next step?
+		// should we wait for pulse to move to next step?
 		if profile.StepTrigger == true {
 			pCtx.Log.Infoln("imsiStateMachine waiting for user trigger")
 			select {

@@ -41,6 +41,6 @@ func HandleEvents(gnbue *gnbctx.GnbUpUe) {
 				return
 			}
 		}
-		//TODO: Handle Errors
+		// TODO: Handle Errors
 	}
 }

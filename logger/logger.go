@@ -55,8 +55,10 @@ func init() {
 		TrimMessages:    true,
 		NoFieldsSpace:   true,
 		HideKeys:        true,
-		FieldsOrder: []string{"component", "category", "subcategory",
-			FieldProfile, FieldSupi, FieldGnb, FieldGnbUeNgapId},
+		FieldsOrder: []string{
+			"component", "category", "subcategory",
+			FieldProfile, FieldSupi, FieldGnb, FieldGnbUeNgapId,
+		},
 	}
 
 	summaryLog.Formatter = &formatter.Formatter{
