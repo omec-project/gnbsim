@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/omec-project/gnbsim/common"
@@ -18,6 +19,8 @@ import (
 	profctx "github.com/omec-project/gnbsim/profile/context"
 	"github.com/omec-project/gnbsim/simue"
 )
+
+const IMSI_PREFIX = "imsi-"
 
 func InitializeAllProfiles() error {
 	for _, profile := range factory.AppConfig.Configuration.Profiles {
@@ -30,7 +33,6 @@ func InitializeAllProfiles() error {
 }
 
 func InitProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMessage) {
-
 	summary := &common.SummaryMessage{
 		ProfileType: profile.ProfileType,
 		ProfileName: profile.Name,
@@ -60,10 +62,16 @@ func InitProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMess
 	}
 
 	for count := 1; count <= profile.UeCount; count++ {
-		imsiStr := "imsi-" + strconv.Itoa(startImsi)
+		imsiStr := makeImsiStr(profile, startImsi)
 		initImsi(profile, gnb, imsiStr)
 		startImsi++
 	}
+}
+
+// makeImsiStr constructs IMSI string with specified integer value and proper length.
+func makeImsiStr(profile *profctx.Profile, imsi int) string {
+	s := strconv.Itoa(imsi)
+	return IMSI_PREFIX + strings.Repeat("0", max(0, len(profile.StartImsi)-len(s))) + s
 }
 
 func initImsi(profile *profctx.Profile, gnb *gnbctx.GNodeB, imsiStr string) {
@@ -91,7 +99,6 @@ func initImsi(profile *profctx.Profile, gnb *gnbctx.GNodeB, imsiStr string) {
 //    - We should be able to pass events to profile
 
 func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMessage) {
-
 	profile.Log.Infoln("ExecuteProfile started ")
 	var wg sync.WaitGroup
 	var Mu sync.Mutex
@@ -125,7 +132,7 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 				plock.Lock()
 				profile.UeCount = profile.UeCount + 1
 				imsi := profile.Imsi + profile.UeCount
-				imsiStr := "imsi-" + strconv.Itoa(imsi)
+				imsiStr := makeImsiStr(profile, imsi)
 				initImsi(profile, gnb, imsiStr)
 				pCtx := profile.PSimUe[imsiStr]
 				profile.Log.Infoln("pCtx ", pCtx)
@@ -149,7 +156,7 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 	}()
 	imsi := profile.Imsi
 	for count := 1; count <= profile.UeCount; count++ {
-		imsiStr := "imsi-" + strconv.Itoa(imsi)
+		imsiStr := makeImsiStr(profile, imsi)
 		imsi++
 		wg.Add(1)
 		pCtx := profile.PSimUe[imsiStr]

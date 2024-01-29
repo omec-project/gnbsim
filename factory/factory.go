@@ -11,7 +11,7 @@ package factory
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"gopkg.in/yaml.v2"
 
@@ -22,7 +22,7 @@ var AppConfig *Config
 
 // TODO: Support configuration update from REST api
 func InitConfigFactory(f string) error {
-	content, err := ioutil.ReadFile(f)
+	content, err := os.ReadFile(f)
 	if err != nil {
 		logger.CfgLog.Errorln("Failed to read", f, "file:", err)
 		return err

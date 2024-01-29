@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2023 Open Networking Foundation <info@opennetworking.org>
 #
 # SPDX-License-Identifier: Apache-2.0
-
+#
 
 # This file contains all available configuration options
 # with their default values.
@@ -98,7 +98,7 @@ linters-settings:
     # To check which checks are enabled run `GL_DEBUG=gocritic golangci-lint run`
     # By default list of stable checks is used.
     enabled-checks:
-    #- rangeValCopy
+      #- rangeValCopy
     # Which checks should be disabled; can't be combined with 'enabled-checks'; default is empty
     disabled-checks:
       - regexpMust
@@ -145,19 +145,19 @@ linters-settings:
   gomodguard:
     allowed:
       modules:                                                        # List of allowed modules
-      # - gopkg.in/yaml.v2
+        # - gopkg.in/yaml.v2
       domains:                                                        # List of allowed module domains
-      # - golang.org
+        # - golang.org
     blocked:
       modules:                                                        # List of blocked modules
-      # - github.com/uudashr/go-module:                             # Blocked module
-      #     recommendations:                                        # Recommended modules that should be used instead (Optional)
-      #       - golang.org/x/mod
-      #     reason: "`mod` is the official go.mod parser library."  # Reason why the recommended module should be used (Optional)
+        # - github.com/uudashr/go-module:                             # Blocked module
+        #     recommendations:                                        # Recommended modules that should be used instead (Optional)
+        #       - golang.org/x/mod
+        #     reason: "`mod` is the official go.mod parser library."  # Reason why the recommended module should be used (Optional)
       versions:                                                       # List of blocked module version constraints
-      # - github.com/mitchellh/go-homedir:                          # Blocked module with version constraint
-      #     version: "< 1.1.0"                                      # Version constraint, see https://github.com/Masterminds/semver#basic-comparisons
-      #     reason: "testing if blocked version constraint works."  # Reason why the version constraint exists. (Optional)
+        # - github.com/mitchellh/go-homedir:                          # Blocked module with version constraint
+        #     version: "< 1.1.0"                                      # Version constraint, see https://github.com/Masterminds/semver#basic-comparisons
+        #     reason: "testing if blocked version constraint works."  # Reason why the version constraint exists. (Optional)
   govet:
     # report about shadowed variables
     check-shadowing: true
@@ -213,35 +213,50 @@ linters-settings:
   misspell:
     #locale: US
     ignore-words:
+  wsl:
+    # If true append is only allowed to be cuddled if appending value is
+    # matching variables, fields or types on line above. Default is true.
+    strict-append: true
+    # Allow calls and assignments to be cuddled as long as the lines have any
+    # matching variables, fields or types. Default is true.
+    allow-assign-and-call: true
+    # Allow multiline assignments to be cuddled. Default is true.
+    allow-multiline-assign: true
+    # Allow declarations (var) to be cuddled.
+    allow-cuddle-declarations: false
+    # Allow trailing comments in ending of blocks
+    allow-trailing-comment: true
+    # Force newlines in end of case at this limit (0 = never).
+    force-case-trailing-whitespace: 0
+    # Force cuddling of err checks with err var assignment
+    force-err-cuddling: false
+    # Allow leading comments to be separated with empty liens
+    allow-separated-leading-comment: false
   custom:
-  # Each custom linter should have a unique name.
+    # Each custom linter should have a unique name.
 
 linters:
   enable:
     - gofmt
-    # - govet
+    - govet
     # - errcheck
-    # - staticcheck
-    # - unused
+    - staticcheck
+    - unused
     # - gosimple
-    # - structcheck
-    # - varcheck
     - ineffassign
-    # - deadcode
     # - typecheck
     # Additional
     # - lll
     - godox
-    # - gomnd
-    # - goconst
+    #- gomnd
+    - goconst
     # - gocognit
-    # - maligned
     # - nestif
     # - gomodguard
     # - nakedret
     # - gci
-    # - misspell
-    # - gofumpt
+    - misspell
+    - gofumpt
     # - whitespace
     # - unconvert
     # - predeclared
@@ -250,8 +265,8 @@ linters:
     # - bodyclose
     - asciicheck
       #- stylecheck
-    # - unparam
-    #- wsl
+      # - unparam
+      # - wsl
 
   #disable-all: false
   fast: true
@@ -263,7 +278,7 @@ issues:
   exclude:
   # Excluding configuration per-path, per-linter, per-text and per-source
   exclude-rules:
-  # Exclude some linters from running on tests files.
+    # Exclude some linters from running on tests files.
   # Independently from option `exclude` we use default exclude patterns,
   # it can be disabled by this option. To list all
   # excluded by default patterns execute `golangci-lint run --help`.
@@ -274,7 +289,7 @@ issues:
   exclude-case-sensitive: false
   # The list of ids of default excludes to include or disable. By default it's empty.
   include:
-  #- EXC0002 # disable excluding of issues about comments from golint
+    #- EXC0002 # disable excluding of issues about comments from golint
   # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
   #max-issues-per-linter: 0
   # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
@@ -310,5 +325,5 @@ severity:
   # Only affects out formats that support setting severity information.
   rules:
     - linters:
-        - gomnd
+      - gomnd
       severity: ignore

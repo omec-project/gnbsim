@@ -16,7 +16,6 @@ import (
 )
 
 func GetServiceRequest(ue *realuectx.RealUe) ([]byte, error) {
-
 	nasMsg := nastestpacket.BuildServiceRequest(nasMessage.ServiceTypeData)
 	serviceRequest := nasMsg.GmmMessage.ServiceRequest
 

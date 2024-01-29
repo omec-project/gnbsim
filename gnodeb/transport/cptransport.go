@@ -23,7 +23,7 @@ import (
 // Need to check if NGAP may exceed this limit
 var MAX_SCTP_PKT_LEN int = 2048
 
-//TODO: Should have a context variable which when cancelled will result in
+// TODO: Should have a context variable which when cancelled will result in
 // the termination of the ReceiveFromPeer handler
 
 // GnbCpTransport represents the control plane transport of the GNodeB
@@ -53,7 +53,8 @@ func (cpTprt *GnbCpTransport) ConnectToPeer(peer transportcommon.TransportPeer) 
 		if amf.AmfHostName == "" {
 			return fmt.Errorf("amf ip or host name not configured")
 		}
-		addrs, err := net.LookupHost(amf.AmfHostName)
+		var addrs []string
+		addrs, err = net.LookupHost(amf.AmfHostName)
 		if err != nil {
 			return fmt.Errorf("failed to resolve amf host name: %v, err: %v",
 				amf.AmfHostName, err)
@@ -72,13 +73,13 @@ func (cpTprt *GnbCpTransport) ConnectToPeer(peer transportcommon.TransportPeer) 
 	return
 }
 
-//TODO Should add timeout
+// TODO Should add timeout
 
 // SendToPeer sends an NGAP encoded packet to the specified AMF over the socket
 // connection and waits for the response
 func (cpTprt *GnbCpTransport) SendToPeerBlock(peer transportcommon.TransportPeer,
-	pkt []byte) ([]byte, error) {
-
+	pkt []byte,
+) ([]byte, error) {
 	err := cpTprt.SendToPeer(peer, pkt)
 	if err != nil {
 		cpTprt.Log.Errorln("SendToPeer returned err:", err)
@@ -103,8 +104,8 @@ func (cpTprt *GnbCpTransport) SendToPeerBlock(peer transportcommon.TransportPeer
 // SendToPeer sends an NGAP encoded packet to the specified AMF over the socket
 // connection
 func (cpTprt *GnbCpTransport) SendToPeer(peer transportcommon.TransportPeer,
-	pkt []byte) (err error) {
-
+	pkt []byte,
+) (err error) {
 	err = cpTprt.CheckTransportParam(peer, pkt)
 	if err != nil {
 		return err
@@ -139,13 +140,12 @@ func (cpTprt *GnbCpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 		if err := amf.Conn.Close(); err != nil && err != syscall.EBADF {
 			cpTprt.Log.Errorln("Close returned:", err)
 		}
-
 	}()
 
 	conn := amf.Conn.(*sctp.SCTPConn)
 	for {
 		recvMsg := make([]byte, MAX_SCTP_PKT_LEN)
-		//TODO Handle notification, info
+		// TODO Handle notification, info
 		n, _, _, err := conn.SCTPRead(recvMsg)
 		if err != nil {
 			switch err {
@@ -165,7 +165,7 @@ func (cpTprt *GnbCpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 		}
 
 		cpTprt.Log.Infof("Read %v bytes from %v\n", n, amf.GetIpAddr())
-		//TODO Post to gnbamfworker channel
+		// TODO Post to gnbamfworker channel
 		gnbamfworker.HandleMessage(cpTprt.GnbInstance, amf, recvMsg[:n])
 	}
 }

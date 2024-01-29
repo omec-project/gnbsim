@@ -23,25 +23,12 @@ const (
 var ROUTING_INDICATOR []uint8 = []uint8{0xf0, 0xff}
 
 func SupiToSuci(supi string, plmnid *models.PlmnId) ([]byte, error) {
-	index := strings.Index(supi, "-")
-	if index < 0 {
-		return nil, fmt.Errorf(`invalid supi format, should start with "imsi-"`)
+	supiExpectedPrefix := "imsi-" + plmnid.Mcc + plmnid.Mnc
+	if !strings.HasPrefix(supi, supiExpectedPrefix) {
+		return nil, fmt.Errorf(`invalid supi format, should start with "imsi-" + MCC + MNC`)
 	}
-
-	// extracting imsi part after "imsi-"
-	imsi := supi[(index + 1):]
-
-	if !strings.Contains(imsi, plmnid.Mcc) {
-		return nil, fmt.Errorf("mcc not found in imsi")
-	}
-
-	index = strings.Index(imsi, plmnid.Mnc)
-	if index < 0 {
-		return nil, fmt.Errorf("mnc not found in imsi")
-	}
-	index += len(plmnid.Mnc)
-	// extracting msin from imsi
-	msin := imsi[index:]
+	// extracting msin from supi
+	msin := supi[len(supiExpectedPrefix):]
 
 	suci := make([]uint8, 0, SUCI_LEN)
 	// creating octet 4 of 5GS mobile identity info

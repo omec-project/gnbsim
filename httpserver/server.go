@@ -28,7 +28,6 @@ const (
 )
 
 func StartHttpServer() (err error) {
-
 	router := logger_util.NewGinWithLogrus(logger.GinLog)
 	router.Use(cors.New(cors.Config{
 		AllowMethods: []string{"GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"},
@@ -62,8 +61,6 @@ func StartHttpServer() (err error) {
 	serverScheme := "http"
 	if serverScheme == "http" {
 		err = server.ListenAndServe()
-	} else if serverScheme == "https" {
-		//To Do
 	}
 
 	if err != nil {
