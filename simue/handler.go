@@ -305,7 +305,7 @@ func HandleDataPktGenFailureEvent(ue *simuectx.SimUe,
 
 func retransmitMsg(ue *simuectx.SimUe, intfcMsg common.InterfaceMessage, count int) {
 	// TBD: Profile should give timeout and number of retransmission as input
-	ticker := time.NewTicker(50 * time.Millisecond)
+	ticker := time.NewTicker(5 * time.Second)
 	for {
 		select {
 		case <-ue.MsgRspReceived:
@@ -331,7 +331,9 @@ func HandleServiceRequestEvent(ue *simuectx.SimUe,
 	}
 
 	SendToGnbUe(ue, intfcMsg)
-	go retransmitMsg(ue, intfcMsg, 1)
+	if ue.ProfileCtx.RetransMsg == true {
+		go retransmitMsg(ue, intfcMsg, 2)
+	}
 
 	ue.Log.Traceln("Sent Service Request Event to the network")
 	return nil
@@ -340,7 +342,9 @@ func HandleServiceRequestEvent(ue *simuectx.SimUe,
 func HandleServiceAcceptEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage) (err error) {
 
-	ue.MsgRspReceived <- true // feedback loop
+	if ue.ProfileCtx.RetransMsg == true {
+		ue.MsgRspReceived <- true // feedback loop
+	}
 	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.SERVICE_REQUEST_EVENT,
 		intfcMsg.GetEventType())
 	if err != nil {
