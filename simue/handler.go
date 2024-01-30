@@ -331,7 +331,7 @@ func HandleServiceRequestEvent(ue *simuectx.SimUe,
 	}
 
 	SendToGnbUe(ue, intfcMsg)
-	if ue.ProfileCtx.RetransMsg == true {
+	if ue.ProfileCtx.RetransMsg {
 		go retransmitMsg(ue, intfcMsg, 2)
 	}
 
