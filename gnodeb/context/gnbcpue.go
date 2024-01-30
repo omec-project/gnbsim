@@ -18,15 +18,13 @@ type GnbCpUe struct {
 	Supi string
 	Amf  *GnbAmf
 	Gnb  *GNodeB
+	Log  *logrus.Entry
 
 	// GnbCpUe writes messages to UE on this channel
 	WriteUeChan chan common.InterfaceMessage
 
 	// GnbCpUe reads messages from all other workers and UE on this channel
 	ReadChan chan common.InterfaceMessage
-
-	// logger
-	Log *logrus.Entry
 
 	// TODO: Sync map is not needed as it is handled single threaded
 	GnbUpUes sync.Map

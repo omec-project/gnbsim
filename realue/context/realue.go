@@ -34,15 +34,13 @@ type RealUe struct {
 	SNssai             *models.Snssai
 	AuthenticationSubs *models.AuthenticationSubscription
 	Plmn               *models.PlmnId
+	Log                *logrus.Entry
 
 	// RealUe writes messages to SimUE on this channel
 	WriteSimUeChan chan common.InterfaceMessage
 
 	// RealUe reads messages from SimUE on this channel
 	ReadChan chan common.InterfaceMessage
-
-	/* logger */
-	Log *logrus.Entry
 
 	PduSessions  map[int64]*PduSession
 	Kamf         []uint8

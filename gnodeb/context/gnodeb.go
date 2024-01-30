@@ -24,6 +24,7 @@ type GNodeB struct {
 	GnbPeers             *GnbPeerDao
 	RanUeNGAPIDGenerator *idgenerator.IDGenerator
 	DlTeidGenerator      *idgenerator.IDGenerator
+	Log                  *logrus.Entry
 
 	/*channel to notify all the go routines corresponding to this GNodeB instance to stop*/
 	Quit chan int
@@ -36,9 +37,6 @@ type GNodeB struct {
 
 	/* User Plane transport */
 	UpTransport transport.Transport
-
-	/* logger */
-	Log *logrus.Entry
 
 	SupportedTaList []SupportedTA `yaml:"supportedTaList"`
 	GnbN2Port       int           `yaml:"n2Port"`

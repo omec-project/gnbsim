@@ -67,7 +67,6 @@ type ProfileUeContext struct {
 	WriteSimChan   chan common.InterfaceMessage // Sending events to SIMUE -  start proc and proc parameters
 	ReadChan       chan *common.ProfileMessage  // Sending events to profile
 
-	/* logger */
 	Log *logrus.Entry
 
 	CurrentItr       string // used only if UE is part of custom profile
@@ -89,13 +88,11 @@ type Profile struct {
 	StartIteration string         `yaml:"startiteration" json:"startiteration"`
 	Plmn           *models.PlmnId `yaml:"plmnId" json:"plmnId"`
 	SNssai         *models.Snssai `yaml:"sNssai" json:"sNssai"`
+	Log            *logrus.Entry
 
 	// Profile routine reads messages from other entities on this channel
 	// Entities can be SimUe, Main routine.
 	ReadChan chan *common.ProfileMessage
-
-	/* logger */
-	Log *logrus.Entry
 
 	Iterations  []*Iterations `yaml:"iterations"`
 	PIterations map[string]*PIterations

@@ -31,7 +31,6 @@ type PduSession struct {
 	// commands from RealUE control plane are read on this channel
 	ReadCmdChan chan common.InterfaceMessage
 
-	/* logger */
 	Log *logrus.Entry
 
 	/* Number of UL data packets to be transmitted as requested by Sim UE*/

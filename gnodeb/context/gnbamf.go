@@ -26,7 +26,6 @@ type GnbAmf struct {
 	/*Socket Connection*/
 	Conn net.Conn
 
-	/* logger */
 	Log *logrus.Entry
 
 	ServedGuamiList []models.Guami

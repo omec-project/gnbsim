@@ -29,9 +29,7 @@ var MAX_SCTP_PKT_LEN int = 2048
 // GnbCpTransport represents the control plane transport of the GNodeB
 type GnbCpTransport struct {
 	GnbInstance *gnbctx.GNodeB
-
-	/* logger */
-	Log *logrus.Entry
+	Log         *logrus.Entry
 }
 
 func NewGnbCpTransport(gnb *gnbctx.GNodeB) *GnbCpTransport {

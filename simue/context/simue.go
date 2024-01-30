@@ -27,6 +27,7 @@ type SimUe struct {
 	GnB        *gnbctx.GNodeB
 	RealUe     *realuectx.RealUe
 	ProfileCtx *profctx.Profile
+	Log        *logrus.Entry
 
 	// SimUe writes messages to Profile routine on this channel
 	WriteProfileChan chan *common.ProfileMessage
@@ -40,9 +41,6 @@ type SimUe struct {
 	// SimUe reads messages from other entities on this channel
 	// Entities can be RealUe, GnbUe etc.
 	ReadChan chan common.InterfaceMessage
-
-	/* logger */
-	Log *logrus.Entry
 
 	Supi      string
 	Procedure common.ProcedureType

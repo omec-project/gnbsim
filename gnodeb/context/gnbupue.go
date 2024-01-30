@@ -16,6 +16,7 @@ import (
 type GnbUpUe struct {
 	Upf         *GnbUpf
 	Gnb         *GNodeB
+	Log         *logrus.Entry
 	PduSessType models.PduSessionType
 	QosFlows    map[int64]*ngapType.QosFlowSetupRequestItem
 
@@ -30,9 +31,6 @@ type GnbUpUe struct {
 
 	// GnbUpUe reads commands from GnbCpUe on this channel
 	ReadCmdChan chan common.InterfaceMessage
-
-	/* logger */
-	Log *logrus.Entry
 
 	Snssai           models.Snssai
 	PduSessId        int64
