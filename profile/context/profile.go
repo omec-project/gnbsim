@@ -97,6 +97,7 @@ type Profile struct {
 	StepTrigger    bool           `yaml:"stepTrigger" json:"stepTrigger"`
 	StartIteration string         `yaml:"startiteration" json:"startiteration"`
 	Iterations     []*Iterations  `yaml:"iterations"`
+	RetransMsg     bool           `yaml:"retransMsg" json:"retransMsg"`
 
 	PIterations map[string]*PIterations
 	Procedures  []common.ProcedureType
