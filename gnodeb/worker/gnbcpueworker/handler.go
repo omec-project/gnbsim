@@ -24,10 +24,10 @@ import (
 )
 
 type pduSessResourceSetupItem struct {
-	PDUSessionID                           ngapType.PDUSessionID
 	NASPDU                                 *ngapType.NASPDU
 	SNSSAI                                 ngapType.SNSSAI
 	PDUSessionResourceSetupRequestTransfer aper.OctetString
+	PDUSessionID                           ngapType.PDUSessionID
 }
 
 func HandleConnectRequest(gnbue *gnbctx.GnbCpUe,

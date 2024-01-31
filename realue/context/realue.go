@@ -26,25 +26,15 @@ import (
 // RealUe represents a Real UE
 type RealUe struct {
 	Supi               string
-	Suci               []uint8
 	Guti               string
 	Key                string
 	Opc                string
 	SeqNum             string
 	Dnn                string
 	SNssai             *models.Snssai
-	ULCount            security.Count
-	DLCount            security.Count
-	CipheringAlg       uint8
-	IntegrityAlg       uint8
-	KnasEnc            [16]uint8
-	KnasInt            [16]uint8
-	Kamf               []uint8
-	NgKsi              models.NgKsi
 	AuthenticationSubs *models.AuthenticationSubscription
 	Plmn               *models.PlmnId
-	PduSessions        map[int64]*PduSession
-	WaitGrp            sync.WaitGroup
+	Log                *logrus.Entry
 
 	// RealUe writes messages to SimUE on this channel
 	WriteSimUeChan chan common.InterfaceMessage
@@ -52,8 +42,17 @@ type RealUe struct {
 	// RealUe reads messages from SimUE on this channel
 	ReadChan chan common.InterfaceMessage
 
-	/* logger */
-	Log *logrus.Entry
+	PduSessions  map[int64]*PduSession
+	Kamf         []uint8
+	Suci         []uint8
+	NgKsi        models.NgKsi
+	WaitGrp      sync.WaitGroup
+	ULCount      security.Count
+	DLCount      security.Count
+	CipheringAlg uint8
+	IntegrityAlg uint8
+	KnasEnc      [16]uint8
+	KnasInt      [16]uint8
 }
 
 func NewRealUe(supi string, cipheringAlg, integrityAlg uint8,

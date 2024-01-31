@@ -18,16 +18,14 @@ const GTP_U_PORT int = 2152
 
 // GnbUpf holds the UPF context
 type GnbUpf struct {
-	UpfAddr     *net.UDPAddr
-	UpfIpString string
-
+	UpfAddr  *net.UDPAddr
 	GnbUpUes *GnbUeDao
+	Log      *logrus.Entry
 
 	// GnbUpf Reads messages from transport, GnbUpUe and GNodeB
 	ReadChan chan common.InterfaceMessage
 
-	/* logger */
-	Log *logrus.Entry
+	UpfIpString string
 }
 
 func NewGnbUpf(ip string) *GnbUpf {

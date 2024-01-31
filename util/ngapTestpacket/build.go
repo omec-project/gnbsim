@@ -19,10 +19,10 @@ import (
 var TestPlmn ngapType.PLMNIdentity
 
 type PduSession struct {
-	PduSessId      int64
-	Teid           uint32
 	SuccessQfiList []int64
 	FailedQfiList  []int64
+	PduSessId      int64
+	Teid           uint32
 
 	/* indicates whether  the pdu session was successfully established in Real
 	   UE or not*/

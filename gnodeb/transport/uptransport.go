@@ -30,7 +30,6 @@ type GnbUpTransport struct {
 	/* UDP Connection without any association with peers */
 	Conn *net.UDPConn
 
-	/* logger */
 	Log *logrus.Entry
 }
 
