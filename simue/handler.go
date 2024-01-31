@@ -340,9 +340,9 @@ func HandleServiceRequestEvent(ue *simuectx.SimUe,
 }
 
 func HandleServiceAcceptEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
-	if ue.ProfileCtx.RetransMsg == true {
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	if ue.ProfileCtx.RetransMsg {
 		ue.MsgRspReceived <- true // feedback loop
 	}
 	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.SERVICE_REQUEST_EVENT,
