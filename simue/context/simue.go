@@ -42,7 +42,7 @@ type SimUe struct {
 	// Entities can be RealUe, GnbUe etc.
 	ReadChan chan common.InterfaceMessage
 
-        // Message response received
+	// Message response received
 	MsgRspReceived chan bool
 
 	Supi      string
