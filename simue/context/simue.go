@@ -42,6 +42,9 @@ type SimUe struct {
 	// Entities can be RealUe, GnbUe etc.
 	ReadChan chan common.InterfaceMessage
 
+  // Message response received
+	MsgRspReceived chan bool
+
 	Supi      string
 	Procedure common.ProcedureType
 	WaitGrp   sync.WaitGroup
@@ -65,6 +68,7 @@ func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile, result 
 	simue.Log = logger.SimUeLog.WithField(logger.FieldSupi, supi)
 
 	simue.Log.Traceln("Created new SimUe context")
+	simue.MsgRspReceived = make(chan bool, 5)
 	SimUeTable[supi] = &simue
 	return &simue
 }

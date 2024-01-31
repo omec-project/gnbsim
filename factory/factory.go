@@ -15,7 +15,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/omec-project/amf/logger"
+	"github.com/omec-project/gnbsim/logger"
 )
 
 var AppConfig *Config

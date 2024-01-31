@@ -107,6 +107,7 @@ type Profile struct {
 	Enable         bool   `yaml:"enable" json:"enable"`
 	ExecInParallel bool   `yaml:"execInParallel" json:"execInParallel"`
 	StepTrigger    bool   `yaml:"stepTrigger" json:"stepTrigger"`
+  RetransMsg     bool   `yaml:"retransMsg" json:"retransMsg"`
 }
 
 func init() {
