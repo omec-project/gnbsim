@@ -13,12 +13,12 @@ require (
 	github.com/omec-project/amf v1.1.0
 	github.com/omec-project/aper v1.1.0
 	github.com/omec-project/http2_util v1.1.0
-	github.com/omec-project/idgenerator v1.1.0
 	github.com/omec-project/logger_util v1.1.0
 	github.com/omec-project/milenage v1.1.0
 	github.com/omec-project/nas v1.1.4
 	github.com/omec-project/ngap v1.1.0
 	github.com/omec-project/openapi v1.1.0
+	github.com/omec-project/util v1.0.12
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli v1.22.14
@@ -30,10 +30,10 @@ require (
 
 require (
 	github.com/aead/cmac v0.0.0-20160719120800-7af84192f0b1 // indirect
-	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef // indirect
+	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic v1.10.1 // indirect
-	github.com/cespare/xxhash/v2 v2.1.1 // indirect
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
@@ -45,7 +45,7 @@ require (
 	github.com/go-playground/validator/v10 v10.15.5 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
-	github.com/golang/protobuf v1.5.0 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
@@ -58,6 +58,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/omec-project/fsm v1.1.0 // indirect
+	github.com/omec-project/idgenerator v1.1.0 // indirect
 	github.com/omec-project/logger_conf v1.1.0 // indirect
 	github.com/omec-project/path_util v1.1.0 // indirect
 	github.com/omec-project/util_3gpp v1.1.1 // indirect
