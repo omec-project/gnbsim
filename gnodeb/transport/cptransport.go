@@ -25,15 +25,13 @@ import (
 // Need to check if NGAP may exceed this limit
 var MAX_SCTP_PKT_LEN int = 2048
 
-//TODO: Should have a context variable which when cancelled will result in
+// TODO: Should have a context variable which when cancelled will result in
 // the termination of the ReceiveFromPeer handler
 
 // GnbCpTransport represents the control plane transport of the GNodeB
 type GnbCpTransport struct {
 	GnbInstance *gnbctx.GNodeB
-
-	/* logger */
-	Log *logrus.Entry
+	Log         *logrus.Entry
 }
 
 func NewGnbCpTransport(gnb *gnbctx.GNodeB) *GnbCpTransport {
@@ -75,7 +73,7 @@ func (cpTprt *GnbCpTransport) ConnectToPeer(peer transportcommon.TransportPeer) 
 	return
 }
 
-//TODO Should add timeout
+// TODO Should add timeout
 
 // SendToPeer sends an NGAP encoded packet to the specified AMF over the socket
 // connection and waits for the response
@@ -83,7 +81,8 @@ func (cpTprt *GnbCpTransport) SendToPeerBlock(peer transportcommon.TransportPeer
 	pkt []byte, id uint64) ([]byte, error) {
 
 	err := cpTprt.SendToPeer(peer, pkt, id)
-	if err != nil {
+
+  if err != nil {
 		cpTprt.Log.Errorln("SendToPeer returned err:", err)
 		return nil, fmt.Errorf("failed to send packet")
 	}
@@ -146,13 +145,12 @@ func (cpTprt *GnbCpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 		if err := amf.Conn.Close(); err != nil && err != syscall.EBADF {
 			cpTprt.Log.Errorln("Close returned:", err)
 		}
-
 	}()
 
 	conn := amf.Conn.(*sctp.SCTPConn)
 	for {
 		recvMsg := make([]byte, MAX_SCTP_PKT_LEN)
-		//TODO Handle notification, info
+		// TODO Handle notification, info
 		n, _, _, err := conn.SCTPRead(recvMsg)
 		if err != nil {
 			switch err {
@@ -176,6 +174,7 @@ func (cpTprt *GnbCpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 		stats.RecvdMessage(m)
 
 		cpTprt.Log.Infof("Read %v bytes from %v\n", n, amf.GetIpAddr())
+
 		//TODO Post to gnbamfworker channel
 		gnbamfworker.HandleMessage(cpTprt.GnbInstance, amf, recvMsg[:n], id)
 	}

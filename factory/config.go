@@ -22,8 +22,8 @@ import (
 )
 
 const (
-	GNBSIM_EXPECTED_CONFIG_VERSION string = "1.0.0"
-	GNBSIM_DEFAULT_CONFIG_PATH            = "/gnbsim/config/gnb.conf"
+	GNBSIM_EXPECTED_CONFIG_VERSION = "1.0.0"
+	GNBSIM_DEFAULT_CONFIG_PATH     = "/gnbsim/config/gnb.conf"
 )
 
 type Config struct {
@@ -41,10 +41,10 @@ type Configuration struct {
 	Gnbs                     map[string]*gnbctx.GNodeB   `yaml:"gnbs"`
 	CustomProfiles           map[string]*profctx.Profile `yaml:"customProfiles"`
 	Profiles                 []*profctx.Profile          `yaml:"profiles"`
-	SingleInterface          bool                        `yaml:"singleInterface"`
-	ExecInParallel           bool                        `yaml:"execInParallel"`
 	Server                   HttpServer                  `yaml:"httpServer"`
 	GoProfile                ProfileServer               `yaml:"goProfile"`
+	SingleInterface          bool                        `yaml:"singleInterface"`
+	ExecInParallel           bool                        `yaml:"execInParallel"`
 	RunConfigProfilesAtStart bool                        `yaml:"runConfigProfilesAtStart"`
 }
 
@@ -54,9 +54,9 @@ type ProfileServer struct {
 }
 
 type HttpServer struct {
-	Enable bool   `yaml:"enable"`
 	IpAddr string `yaml:"ipAddr"`
 	Port   string `yaml:"port"`
+	Enable bool   `yaml:"enable"`
 }
 
 type Logger struct {
@@ -71,7 +71,6 @@ func (c *Config) GetVersion() string {
 }
 
 func (c *Config) Validate() (err error) {
-
 	if c.Info == nil {
 		return fmt.Errorf("Info field missing")
 	}

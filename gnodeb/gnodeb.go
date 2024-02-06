@@ -19,7 +19,7 @@ import (
 	"github.com/omec-project/gnbsim/gnodeb/worker/gnbcpueworker"
 	"github.com/omec-project/gnbsim/logger"
 
-	"github.com/omec-project/idgenerator"
+	"github.com/omec-project/util/idgenerator"
 )
 
 func InitializeAllGnbs() error {
@@ -134,8 +134,8 @@ func RequestConnection(gnb *gnbctx.GNodeB, uemsg *common.UuMessage) (chan common
 		defer wg.Done()
 		gnbcpueworker.Init(gnbUe)
 	}()
-	//Channel on which UE can write message to GnbUe and from which GnbUe will
-	//be reading.
+	// Channel on which UE can write message to GnbUe and from which GnbUe will
+	// be reading.
 	ch := gnbUe.ReadChan
 	ch <- uemsg
 	return ch, nil

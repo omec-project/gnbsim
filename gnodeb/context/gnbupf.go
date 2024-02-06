@@ -18,23 +18,23 @@ const GTP_U_PORT int = 2152
 
 // GnbUpf holds the UPF context
 type GnbUpf struct {
-	UpfAddr     *net.UDPAddr
-	UpfIpString string
-
+	UpfAddr  *net.UDPAddr
 	GnbUpUes *GnbUeDao
+	Log      *logrus.Entry
 
 	// GnbUpf Reads messages from transport, GnbUpUe and GNodeB
 	ReadChan chan common.InterfaceMessage
 
-	/* logger */
-	Log *logrus.Entry
+	UpfIpString string
 }
 
 func NewGnbUpf(ip string) *GnbUpf {
 	gnbupf := &GnbUpf{}
 
-	gnbupf.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbUpf",
-		logger.FieldIp: ip})
+	gnbupf.Log = logger.GNodeBLog.WithFields(logrus.Fields{
+		"subcategory":  "GnbUpf",
+		logger.FieldIp: ip,
+	})
 
 	ipPort := net.JoinHostPort(ip, strconv.Itoa(GTP_U_PORT))
 	addr, err := net.ResolveUDPAddr("udp", ipPort)

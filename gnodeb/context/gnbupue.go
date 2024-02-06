@@ -14,15 +14,11 @@ import (
 )
 
 type GnbUpUe struct {
-	PduSessId        int64
-	DlTeid           uint32
-	UlTeid           uint32
-	Snssai           models.Snssai
-	Upf              *GnbUpf
-	Gnb              *GNodeB
-	PduSessType      models.PduSessionType
-	QosFlows         map[int64]*ngapType.QosFlowSetupRequestItem
-	LastDataPktRecvd bool
+	Upf         *GnbUpf
+	Gnb         *GNodeB
+	Log         *logrus.Entry
+	PduSessType models.PduSessionType
+	QosFlows    map[int64]*ngapType.QosFlowSetupRequestItem
 
 	// GnbUpUe writes downlink packets to UE on this channel
 	WriteUeChan chan common.InterfaceMessage
@@ -36,8 +32,11 @@ type GnbUpUe struct {
 	// GnbUpUe reads commands from GnbCpUe on this channel
 	ReadCmdChan chan common.InterfaceMessage
 
-	/* logger */
-	Log *logrus.Entry
+	Snssai           models.Snssai
+	PduSessId        int64
+	DlTeid           uint32
+	UlTeid           uint32
+	LastDataPktRecvd bool
 }
 
 func NewGnbUpUe(dlTeid, ulTeid uint32, gnb *GNodeB) *GnbUpUe {
@@ -49,8 +48,10 @@ func NewGnbUpUe(dlTeid, ulTeid uint32, gnb *GNodeB) *GnbUpUe {
 	gnbue.ReadUlChan = make(chan common.InterfaceMessage, 10)
 	gnbue.ReadDlChan = make(chan common.InterfaceMessage, 10)
 	gnbue.ReadCmdChan = make(chan common.InterfaceMessage, 5)
-	gnbue.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbUpUe",
-		logger.FieldDlTeid: dlTeid})
+	gnbue.Log = logger.GNodeBLog.WithFields(logrus.Fields{
+		"subcategory":      "GnbUpUe",
+		logger.FieldDlTeid: dlTeid,
+	})
 	gnbue.Log.Traceln("Context Created")
 	return &gnbue
 }

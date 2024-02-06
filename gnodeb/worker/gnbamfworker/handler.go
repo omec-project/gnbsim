@@ -313,6 +313,7 @@ func HandleInitialContextSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU, id uint64) {
 
+
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")
@@ -363,6 +364,7 @@ func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 
 func HandlePduSessResourceReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU, id uint64) {
+
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")
@@ -415,6 +417,7 @@ func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU, id uint64) {
 
 	amf.Log.Traceln("Processing Ue Context Release Command")
+
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")
@@ -454,7 +457,6 @@ func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 				amf.Log.Errorln("UENGAPIDs is nil")
 				return
 			}
-			break
 		}
 	}
 

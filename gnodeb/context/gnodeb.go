@@ -7,26 +7,24 @@ package context
 import (
 	transport "github.com/omec-project/gnbsim/transportcommon"
 
-	"github.com/omec-project/idgenerator"
 	"github.com/omec-project/openapi/models"
+	"github.com/omec-project/util/idgenerator"
 	"github.com/sirupsen/logrus"
 )
 
 // GNodeB holds the context for a gNodeB. It manages the control plane and
 // user plane layer of a gNodeB.
 type GNodeB struct {
-	//TODO IP and port should be the property of transport var
+	// TODO IP and port should be the property of transport var
 	GnbN2Ip              string                 `yaml:"n2IpAddr"`
-	GnbN2Port            int                    `yaml:"n2Port"`
 	GnbN3Ip              string                 `yaml:"n3IpAddr"`
-	GnbN3Port            int                    `yaml:"n3Port"`
 	GnbName              string                 `yaml:"name"`
 	RanId                models.GlobalRanNodeId `yaml:"globalRanId"`
-	SupportedTaList      []SupportedTA          `yaml:"supportedTaList"`
 	GnbUes               *GnbUeDao
 	GnbPeers             *GnbPeerDao
 	RanUeNGAPIDGenerator *idgenerator.IDGenerator
 	DlTeidGenerator      *idgenerator.IDGenerator
+	Log                  *logrus.Entry
 
 	/*channel to notify all the go routines corresponding to this GNodeB instance to stop*/
 	Quit chan int
@@ -40,8 +38,9 @@ type GNodeB struct {
 	/* User Plane transport */
 	UpTransport transport.Transport
 
-	/* logger */
-	Log *logrus.Entry
+	SupportedTaList []SupportedTA `yaml:"supportedTaList"`
+	GnbN2Port       int           `yaml:"n2Port"`
+	GnbN3Port       int           `yaml:"n3Port"`
 }
 
 func (gnb *GNodeB) GetDefaultAmf() *GnbAmf {

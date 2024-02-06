@@ -22,6 +22,8 @@ import (
 
 type RanUeContext struct {
 	Supi               string
+	AuthenticationSubs models.AuthenticationSubscription
+	Kamf               []uint8
 	RanUeNgapId        int64
 	AmfUeNgapId        int64
 	ULCount            security.Count
@@ -30,8 +32,6 @@ type RanUeContext struct {
 	IntegrityAlg       uint8
 	KnasEnc            [16]uint8
 	KnasInt            [16]uint8
-	Kamf               []uint8
-	AuthenticationSubs models.AuthenticationSubscription
 }
 
 func CalculateIpv4HeaderChecksum(hdr *ipv4.Header) uint32 {
@@ -101,8 +101,8 @@ func NewRanUeContext(supi string, ranUeNgapId int64, cipheringAlg, integrityAlg 
 }
 
 func (ue *RanUeContext) DeriveRESstarAndSetKey(
-	authSubs models.AuthenticationSubscription, rand []byte, snName string) []byte {
-
+	authSubs models.AuthenticationSubscription, rand []byte, snName string,
+) []byte {
 	sqn, err := hex.DecodeString(authSubs.SequenceNumber)
 	if err != nil {
 		fatal.Fatalf("DecodeString error: %+v", err)
@@ -166,14 +166,11 @@ func (ue *RanUeContext) DeriveRESstarAndSetKey(
 
 	ue.DerivateKamf(key, snName, sqn, ak)
 	ue.DerivateAlgKey()
-	kdfVal_for_resStar :=
-		UeauCommon.GetKDFValue(key, FC, P0, UeauCommon.KDFLen(P0), P1, UeauCommon.KDFLen(P1), P2, UeauCommon.KDFLen(P2))
+	kdfVal_for_resStar := UeauCommon.GetKDFValue(key, FC, P0, UeauCommon.KDFLen(P0), P1, UeauCommon.KDFLen(P1), P2, UeauCommon.KDFLen(P2))
 	return kdfVal_for_resStar[len(kdfVal_for_resStar)/2:]
-
 }
 
 func (ue *RanUeContext) DerivateKamf(key []byte, snName string, SQN, AK []byte) {
-
 	FC := UeauCommon.FC_FOR_KAUSF_DERIVATION
 	P0 := []byte(snName)
 	SQNxorAK := make([]byte, 6)

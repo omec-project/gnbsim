@@ -7,7 +7,6 @@ package httprouter
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -17,14 +16,14 @@ import (
 
 // Route is the information for every URI.
 type Route struct {
+	// HandlerFunc is the handler function of this route.
+	HandlerFunc gin.HandlerFunc
 	// Name is the name of this Route.
 	Name string
 	// Method is the string for the HTTP method. ex) GET, POST etc..
 	Method string
 	// Pattern is the pattern of the URI.
 	Pattern string
-	// HandlerFunc is the handler function of this route.
-	HandlerFunc gin.HandlerFunc
 }
 
 // Routes is the list of the generated Route.
@@ -64,34 +63,24 @@ func Index(c *gin.Context) {
 
 var routes = Routes{
 	{
-		"Index",
-		"GET",
-		"/",
-		Index,
+		Name: "Index", Method: "GET",
+		Pattern: "/", HandlerFunc: Index,
 	},
 
 	{
-		"ExecuteProfile",
-		strings.ToUpper("Post"),
-		"/executeProfile",
-		HTTPExecuteProfile,
+		Name: "ExecuteProfile", Method: "POST",
+		Pattern: "/executeProfile", HandlerFunc: HTTPExecuteProfile,
 	},
 	{
-		"ExecuteConfigProfile",
-		strings.ToUpper("Get"),
-		"/executeConfigProfile",
-		HTTPExecuteConfigProfile,
+		Name: "ExecuteConfigProfile", Method: "POST",
+		Pattern: "/executeConfigProfile", HandlerFunc: HTTPExecuteConfigProfile,
 	},
 	{
-		"StepProfile",
-		strings.ToUpper("Post"),
-		"/:profile-name/stepProfile",
-		HTTPStepProfile,
+		Name: "StepProfile", Method: "POST",
+		Pattern: "/:profile-name/stepProfile", HandlerFunc: HTTPStepProfile,
 	},
 	{
-		"addNewCalls",
-		strings.ToUpper("Post"),
-		"/:profile-name/addNewCalls",
-		HTTPAddNewCallsProfile,
+		Name: "addNewCalls", Method: "POST",
+		Pattern: "/:profile-name/addNewCalls", HandlerFunc: HTTPAddNewCallsProfile,
 	},
 }

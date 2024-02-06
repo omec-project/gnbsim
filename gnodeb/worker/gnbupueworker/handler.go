@@ -54,8 +54,7 @@ func HandleDlMessage(gnbue *gnbctx.GnbUpUe, intfcMsg common.InterfaceMessage) (e
 			// headers and return a map(ext header type - ext headers)
 			// and user data
 			var extHdr *test.PduSessContainerExtHeader
-			ueDataMsg.Payload, extHdr, err =
-				test.DecodePduSessContainerExtHeader(msg.Pdu.Payload)
+			ueDataMsg.Payload, extHdr, err = test.DecodePduSessContainerExtHeader(msg.Pdu.Payload)
 			if err != nil {
 				return fmt.Errorf("failed to decode pdu session container extension header:%v", err)
 			}

@@ -18,10 +18,10 @@ type InterfaceMessage interface {
 }
 
 type DefaultMessage struct {
-	Event EventType
-
 	// Any error associated with this message
 	Error error
+
+	Event EventType
 }
 
 func (msg *DefaultMessage) GetEventType() EventType {
@@ -34,8 +34,8 @@ func (msg *DefaultMessage) GetErrorMsg() error {
 
 // Message received over N2 interface
 type N2Message struct {
-	DefaultMessage
 	NgapPdu *ngapType.NGAPPDU
+	DefaultMessage
 	Id      uint64
 }
 
@@ -46,6 +46,10 @@ type UuMessage struct {
 	DefaultMessage
 	Supi string
 
+	// channel that a src entity can optionally send to the target entity.
+	// Target entity will use this channel to write to the src entity
+	CommChan chan InterfaceMessage
+
 	// Encoded NAS message
 	NasPdus  NasPduList
 	DBParams []*DataBearerParams
@@ -55,12 +59,10 @@ type UuMessage struct {
 	   triggering procedure.
 	*/
 	TriggeringEvent EventType
-	// Unique Message Id
+
+  // Unique Message Id
 	Id uint64
 
-	// channel that a src entity can optionally send to the target entity.
-	// Target entity will use this channel to write to the src entity
-	CommChan chan InterfaceMessage
 }
 
 // ProfileMessage is used to carry information between the Profile and SimUe
@@ -76,9 +78,9 @@ type SummaryMessage struct {
 	DefaultMessage
 	ProfileType   string
 	ProfileName   string
+	ErrorList     []error
 	UePassedCount uint
 	UeFailedCount uint
-	ErrorList     []error
 }
 
 // DataBearerParams hold information require to setup data bearer(path) between
@@ -94,13 +96,13 @@ type DataBearerParams struct {
 // UserDataMessage is used to carry user data between Real UE and gNodeB
 type UserDataMessage struct {
 	DefaultMessage
-	Payload []byte
 	Qfi     *uint8
+	Payload []byte
 }
 
 type N3Message struct {
-	DefaultMessage
 	Pdu *test.GtpPdu
+	DefaultMessage
 }
 
 // TransportMessage is used to carry raw message received over the transport
@@ -117,17 +119,18 @@ type UeMessage struct {
 	// Decoded NAS message
 	NasMsg *nas.Message
 
+	CommChan chan InterfaceMessage
+
+	// default destination of data pkt
+	DefaultAs string
+
 	// Number of user data packets to be generated as directed by profile
 	UserDataPktCount int
 
 	// User data packets generating interval as directed by profile
 	UserDataPktInterval int
 
-	// default destination of data pkt
-	DefaultAs string
-
 	// Unique Message Id
 	Id uint64
 
-	CommChan chan InterfaceMessage
 }

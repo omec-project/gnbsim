@@ -26,40 +26,39 @@ import (
 // RealUe represents a Real UE
 type RealUe struct {
 	Supi               string
-	Suci               []uint8
 	Guti               string
 	Key                string
 	Opc                string
 	SeqNum             string
 	Dnn                string
 	SNssai             *models.Snssai
-	ULCount            security.Count
-	DLCount            security.Count
-	CipheringAlg       uint8
-	IntegrityAlg       uint8
-	KnasEnc            [16]uint8
-	KnasInt            [16]uint8
-	Kamf               []uint8
-	NgKsi              models.NgKsi
 	AuthenticationSubs *models.AuthenticationSubscription
 	Plmn               *models.PlmnId
-	PduSessions        map[int64]*PduSession
-	WaitGrp            sync.WaitGroup
+	Log                *logrus.Entry
 
-	//RealUe writes messages to SimUE on this channel
+	// RealUe writes messages to SimUE on this channel
 	WriteSimUeChan chan common.InterfaceMessage
 
-	//RealUe reads messages from SimUE on this channel
+	// RealUe reads messages from SimUE on this channel
 	ReadChan chan common.InterfaceMessage
 
-	/* logger */
-	Log *logrus.Entry
+	PduSessions  map[int64]*PduSession
+	Kamf         []uint8
+	Suci         []uint8
+	NgKsi        models.NgKsi
+	WaitGrp      sync.WaitGroup
+	ULCount      security.Count
+	DLCount      security.Count
+	CipheringAlg uint8
+	IntegrityAlg uint8
+	KnasEnc      [16]uint8
+	KnasInt      [16]uint8
 }
 
 func NewRealUe(supi string, cipheringAlg, integrityAlg uint8,
 	simuechan chan common.InterfaceMessage, plmnid *models.PlmnId,
-	key string, opc string, seqNum string, Dnn string, SNssai *models.Snssai) *RealUe {
-
+	key string, opc string, seqNum string, Dnn string, SNssai *models.Snssai,
+) *RealUe {
 	ue := RealUe{}
 	ue.Supi = supi
 	ue.CipheringAlg = cipheringAlg
@@ -111,8 +110,8 @@ func (ue *RealUe) GetUESecurityCapability() (UESecurityCapability *nasType.UESec
 }
 
 func (ue *RealUe) DeriveRESstarAndSetKey(
-	autn, rand []byte, snName string) []byte {
-
+	autn, rand []byte, snName string,
+) []byte {
 	authSubs := ue.AuthenticationSubs
 
 	// Run milenage
@@ -155,7 +154,7 @@ func (ue *RealUe) DeriveRESstarAndSetKey(
 
 	rcvSQN := make([]byte, 6)
 
-	// Todo : check what to do with the seperation bit of the AMF field
+	// Todo : check what to do with the separation bit of the AMF field
 	rcvAMF := autn[6:8]
 
 	for i := 0; i < 6; i++ {
@@ -183,14 +182,11 @@ func (ue *RealUe) DeriveRESstarAndSetKey(
 
 	ue.DerivateKamf(key, snName, rcvSQN, ak)
 	ue.DerivateAlgKey()
-	kdfVal_for_resStar :=
-		UeauCommon.GetKDFValue(key, FC, P0, UeauCommon.KDFLen(P0), P1, UeauCommon.KDFLen(P1), P2, UeauCommon.KDFLen(P2))
+	kdfVal_for_resStar := UeauCommon.GetKDFValue(key, FC, P0, UeauCommon.KDFLen(P0), P1, UeauCommon.KDFLen(P1), P2, UeauCommon.KDFLen(P2))
 	return kdfVal_for_resStar[len(kdfVal_for_resStar)/2:]
-
 }
 
 func (ue *RealUe) DerivateKamf(key []byte, snName string, SQN, AK []byte) {
-
 	FC := UeauCommon.FC_FOR_KAUSF_DERIVATION
 	P0 := []byte(snName)
 	SQNxorAK := make([]byte, 6)

@@ -7,6 +7,7 @@ package realue
 import (
 	"fmt"
 	"net"
+	"strconv"
 
 	"github.com/omec-project/gnbsim/common"
 	realuectx "github.com/omec-project/gnbsim/realue/context"
@@ -26,9 +27,8 @@ import (
 
 // TODO Remove the hardcoding
 const (
-	SN_NAME                        string = "5G:mnc093.mcc208.3gppnetwork.org"
-	SWITCH_OFF                     uint8  = 0
-	REQUEST_TYPE_EXISTING_PDU_SESS uint8  = 0x02
+	SWITCH_OFF                     uint8 = 0
+	REQUEST_TYPE_EXISTING_PDU_SESS uint8 = 0x02
 )
 
 func HandleRegRequestEvent(ue *realuectx.RealUe,
@@ -60,8 +60,8 @@ func HandleRegRequestEvent(ue *realuectx.RealUe,
 }
 
 func HandleAuthResponseEvent(ue *realuectx.RealUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UeMessage)
 
 	id := stats.GetId()
@@ -75,26 +75,30 @@ func HandleAuthResponseEvent(ue *realuectx.RealUe,
 
 	ue.NgKsi = nasConvert.SpareHalfOctetAndNgksiToModels(authReq.SpareHalfOctetAndNgksi)
 
+	mcc, _ := strconv.Atoi(ue.Plmn.Mcc)
+	mnc, _ := strconv.Atoi(ue.Plmn.Mnc)
+	snName := fmt.Sprintf("5G:mnc%03d.mcc%03d.3gppnetwork.org", mnc, mcc)
+
 	rand := authReq.GetRANDValue()
 	autn := authReq.GetAUTN()
-	resStat := ue.DeriveRESstarAndSetKey(autn[:], rand[:], SN_NAME)
+	resStat := ue.DeriveRESstarAndSetKey(autn[:], rand[:], snName)
 
 	// TODO: Parse Auth Request IEs and update the RealUE Context
 
 	// Now generate NAS Authentication Response
-	ue.Log.Traceln("Generating Authentication Reponse Message")
+	ue.Log.Traceln("Generating Authentication Response Message")
 	nasPdu := nasTestpacket.GetAuthenticationResponse(resStat, "")
 
 	m := formUuMessage(common.AUTH_RESPONSE_EVENT, nasPdu, id)
 	SendToSimUe(ue, m)
-	ue.Log.Traceln("Sent Authentication Reponse Message to SimUe")
+	ue.Log.Traceln("Sent Authentication Response Message to SimUe")
 	return nil
 }
 
 func HandleSecModCompleteEvent(ue *realuectx.RealUe,
-	msg common.InterfaceMessage) (err error) {
-
-	//TODO: Process corresponding Security Mode Command first
+	msg common.InterfaceMessage,
+) (err error) {
+	// TODO: Process corresponding Security Mode Command first
 
 	mobileId5GS := nasType.MobileIdentity5GS{
 		Len:    uint16(len(ue.Suci)), // suci
@@ -126,9 +130,9 @@ func HandleSecModCompleteEvent(ue *realuectx.RealUe,
 }
 
 func HandleRegCompleteEvent(ue *realuectx.RealUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
-	//TODO: Process corresponding Registration Accept first
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	// TODO: Process corresponding Registration Accept first
 	msg := intfcMsg.(*common.UeMessage).NasMsg.RegistrationAccept
 
 	var guti []uint8
@@ -158,8 +162,8 @@ func HandleRegCompleteEvent(ue *realuectx.RealUe,
 }
 
 func HandleDeregRequestEvent(ue *realuectx.RealUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	if ue.Guti == "" {
 		ue.Log.Errorln("guti not allocated")
 		return fmt.Errorf("failed to create deregistration request: guti not unallocated")
@@ -216,8 +220,8 @@ func HandlePduSessEstRequestEvent(ue *realuectx.RealUe,
 }
 
 func HandlePduSessEstAcceptEvent(ue *realuectx.RealUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UeMessage)
 	nasMsg := msg.NasMsg.PDUSessionEstablishmentAccept
 	if nasMsg == nil {
@@ -250,8 +254,8 @@ func HandlePduSessEstAcceptEvent(ue *realuectx.RealUe,
 }
 
 func HandlePduSessReleaseRequestEvent(ue *realuectx.RealUe,
-	msg common.InterfaceMessage) (err error) {
-
+	msg common.InterfaceMessage,
+) (err error) {
 	nasPdu := nasTestpacket.GetUlNasTransport_PduSessionReleaseRequest(10)
 
 	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
@@ -267,8 +271,8 @@ func HandlePduSessReleaseRequestEvent(ue *realuectx.RealUe,
 }
 
 func HandlePduSessReleaseCompleteEvent(ue *realuectx.RealUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UeMessage)
 	nasMsg := msg.NasMsg.PDUSessionReleaseCommand
 	if nasMsg == nil {
@@ -304,8 +308,8 @@ func HandlePduSessReleaseCompleteEvent(ue *realuectx.RealUe,
 }
 
 func HandleDataBearerSetupRequestEvent(ue *realuectx.RealUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UuMessage)
 	for _, item := range msg.DBParams {
 		/* Currently gNB also adds failed pdu session ids in the list.
@@ -350,8 +354,8 @@ func HandleDataBearerSetupRequestEvent(ue *realuectx.RealUe,
 }
 
 func HandleDataPktGenRequestEvent(ue *realuectx.RealUe,
-	msg common.InterfaceMessage) (err error) {
-
+	msg common.InterfaceMessage,
+) (err error) {
 	for _, v := range ue.PduSessions {
 		v.ReadCmdChan <- msg
 	}
@@ -360,13 +364,15 @@ func HandleDataPktGenRequestEvent(ue *realuectx.RealUe,
 }
 
 func HandleDataPktGenSuccessEvent(ue *realuectx.RealUe,
-	msg common.InterfaceMessage) (err error) {
+	msg common.InterfaceMessage,
+) (err error) {
 	ue.WriteSimUeChan <- msg
 	return nil
 }
 
 func HandleConnectionReleaseRequestEvent(ue *realuectx.RealUe,
-	intfcMsg common.InterfaceMessage) (err error) {
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UuMessage)
 
 	for _, pdusess := range ue.PduSessions {
@@ -377,8 +383,8 @@ func HandleConnectionReleaseRequestEvent(ue *realuectx.RealUe,
 }
 
 func HandleErrorEvent(ue *realuectx.RealUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	SendToSimUe(ue, intfcMsg)
 	return nil
 }
@@ -395,8 +401,8 @@ func HandleQuitEvent(ue *realuectx.RealUe, intfcMsg common.InterfaceMessage) (er
 }
 
 func HandleDlInfoTransferEvent(ue *realuectx.RealUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UuMessage)
 	for _, pdu := range msg.NasPdus {
 		nasMsg, err := realue_nas.NASDecode(ue, nas.GetSecurityHeaderType(pdu), pdu)
@@ -443,8 +449,8 @@ func HandleDlInfoTransferEvent(ue *realuectx.RealUe,
 }
 
 func HandleServiceRequestEvent(ue *realuectx.RealUe,
-	msg common.InterfaceMessage) (err error) {
-
+	msg common.InterfaceMessage,
+) (err error) {
 	nasPdu, err := realue_nas.GetServiceRequest(ue)
 	if err != nil {
 		return fmt.Errorf("failed to handle service request event: %v", err)

@@ -14,7 +14,8 @@ import (
 )
 
 func HandleProcedureEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.ProfileMessage)
 	ue.Procedure = msg.Proc
 	ue.Log.Infoln("Start new procedure ", ue.Procedure)
@@ -23,15 +24,15 @@ func HandleProcedureEvent(ue *simuectx.SimUe,
 }
 
 func HandleRegRequestEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	SendToGnbUe(ue, intfcMsg)
 	return nil
 }
 
 func HandleRegRejectEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.REG_REQUEST_EVENT,
 		intfcMsg.GetEventType())
 	if err != nil {
@@ -43,8 +44,8 @@ func HandleRegRejectEvent(ue *simuectx.SimUe,
 }
 
 func HandleAuthRequestEvent(ue *simuectx.SimUe,
-	intfMsg common.InterfaceMessage) (err error) {
-
+	intfMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfMsg.(*common.UeMessage)
 	// checking as per profile if Authentication Request Message is expected
 	// from 5G Core against Registration Request message sent by RealUE
@@ -69,8 +70,8 @@ func HandleAuthRequestEvent(ue *simuectx.SimUe,
 }
 
 func HandleAuthResponseEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UuMessage)
 	// Checking if RealUe has sent expected message as per profile against
 	// Authentication Request message recevied from 5G Core
@@ -87,8 +88,8 @@ func HandleAuthResponseEvent(ue *simuectx.SimUe,
 }
 
 func HandleSecModCommandEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	// TODO: Should check if SecModCommandEvent event is expected
 
 	msg := intfcMsg.(*common.UeMessage)
@@ -107,8 +108,8 @@ func HandleSecModCommandEvent(ue *simuectx.SimUe,
 }
 
 func HandleSecModCompleteEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	ue.Log.Traceln("Handling Security Mode Complete Event")
 
 	msg := intfcMsg.(*common.UuMessage)
@@ -126,8 +127,8 @@ func HandleSecModCompleteEvent(ue *simuectx.SimUe,
 }
 
 func HandleRegAcceptEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UeMessage)
 	// TODO: Should check if Registration Accept event is expected
 	nextEvent, err := ue.ProfileCtx.GetNextEvent(ue.Procedure, msg.Event)
@@ -141,8 +142,8 @@ func HandleRegAcceptEvent(ue *simuectx.SimUe,
 }
 
 func HandleRegCompleteEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UuMessage)
 	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.REG_ACCEPT_EVENT, msg.Event)
 	if err != nil {
@@ -154,14 +155,14 @@ func HandleRegCompleteEvent(ue *simuectx.SimUe,
 	SendToGnbUe(ue, msg)
 	ue.Log.Traceln("Sent Registration Complete to the network")
 
-	//Current Procedure is complete. Move to next one
+	// Current Procedure is complete. Move to next one
 	SendProcedureResult(ue)
 	return nil
 }
 
 func HandleDeregRequestEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UuMessage)
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
@@ -176,12 +177,13 @@ func HandleDeregAcceptEvent(ue *simuectx.SimUe,
 	msg := intfcMsg.(*common.UeMessage)
 	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.DEREG_ACC_IN, Id: msg.Id}
 	stats.LogStats(e)
+
 	return nil
 }
 
 func HandlePduSessEstRequestEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UuMessage)
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
@@ -189,8 +191,8 @@ func HandlePduSessEstRequestEvent(ue *simuectx.SimUe,
 }
 
 func HandlePduSessEstAcceptEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UeMessage)
 	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.PDU_SESS_EST_REQUEST_EVENT, msg.Event)
 	if err != nil {
@@ -209,8 +211,8 @@ func HandlePduSessEstAcceptEvent(ue *simuectx.SimUe,
 }
 
 func HandlePduSessEstRejectEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.PDU_SESS_EST_REQUEST_EVENT,
 		intfcMsg.GetEventType())
 	if err != nil {
@@ -222,8 +224,8 @@ func HandlePduSessEstRejectEvent(ue *simuectx.SimUe,
 }
 
 func HandlePduSessReleaseRequestEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UuMessage)
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
@@ -231,8 +233,8 @@ func HandlePduSessReleaseRequestEvent(ue *simuectx.SimUe,
 }
 
 func HandlePduSessReleaseCommandEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UeMessage)
 	if ue.Procedure == common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE {
 		err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.PDU_SESS_REL_REQUEST_EVENT, msg.Event)
@@ -253,8 +255,8 @@ func HandlePduSessReleaseCommandEvent(ue *simuectx.SimUe,
 }
 
 func HandlePduSessReleaseCompleteEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UuMessage)
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
@@ -262,74 +264,100 @@ func HandlePduSessReleaseCompleteEvent(ue *simuectx.SimUe,
 }
 
 func HandleDlInfoTransferEvent(ue *simuectx.SimUe,
-	msg common.InterfaceMessage) (err error) {
-
+	msg common.InterfaceMessage,
+) (err error) {
 	SendToRealUe(ue, msg)
 	return nil
 }
 
 func HandleDataBearerSetupRequestEvent(ue *simuectx.SimUe,
-	msg common.InterfaceMessage) (err error) {
-
+	msg common.InterfaceMessage,
+) (err error) {
 	SendToRealUe(ue, msg)
 	return nil
 }
 
 func HandleDataBearerSetupResponseEvent(ue *simuectx.SimUe,
-	msg common.InterfaceMessage) (err error) {
-
+	msg common.InterfaceMessage,
+) (err error) {
 	SendToGnbUe(ue, msg)
 
-	//Current Procedure is complete. Move to next one
+	// Current Procedure is complete. Move to next one
 	SendProcedureResult(ue)
 	return nil
 }
 
 func HandleDataBearerReleaseRequestEvent(ue *simuectx.SimUe,
-	msg common.InterfaceMessage) (err error) {
+	msg common.InterfaceMessage,
+) (err error) {
 	// This event is sent by gNB component after it has sent
 	// PDU Session Resource Release Complete over N2, However the PDU Sesson
 	// routines in the RealUE will be terminated while processing PDU Session
 	// Release Complete which will also release the communication links
 	// (go channels) with the gNB
-	//Current Procedure is complete. Move to next one
+	// Current Procedure is complete. Move to next one
 	SendProcedureResult(ue)
 	return nil
 }
 
 func HandleDataPktGenSuccessEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
-	//Current Procedure is complete. Move to next one
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	// Current Procedure is complete. Move to next one
 	SendProcedureResult(ue)
 	return nil
 }
 
 func HandleDataPktGenFailureEvent(ue *simuectx.SimUe,
-	msg common.InterfaceMessage) (err error) {
-
+	msg common.InterfaceMessage,
+) (err error) {
 	ue.Log.Traceln("HandleDataPktGenFailureEvent")
 	SendToProfile(ue, common.PROC_FAIL_EVENT, msg.GetErrorMsg())
 	return nil
 }
 
-func HandleServiceRequestEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
+func retransmitMsg(ue *simuectx.SimUe, intfcMsg common.InterfaceMessage, count int) {
+	// TBD: Profile should give timeout and number of retransmission as input
+	ticker := time.NewTicker(5 * time.Second)
+	for {
+		select {
+		case <-ue.MsgRspReceived:
+			ue.Log.Traceln("Received Service Accept Message ")
+			ticker.Stop()
+			return
+		case <-ticker.C:
+			if count > 0 {
+				ue.Log.Traceln("Resend Service Request count ", count)
+				SendToGnbUe(ue, intfcMsg)
+				count = count - 1
+			}
+		}
+	}
+}
 
+func HandleServiceRequestEvent(ue *simuectx.SimUe,
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	err = ConnectToGnb(ue)
 	if err != nil {
 		return fmt.Errorf("failed to connect gnb %v:", err)
 	}
 
 	SendToGnbUe(ue, intfcMsg)
+	if ue.ProfileCtx.RetransMsg {
+		go retransmitMsg(ue, intfcMsg, 2)
+	}
 
 	ue.Log.Traceln("Sent Service Request Event to the network")
 	return nil
 }
 
 func HandleServiceAcceptEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	if ue.ProfileCtx.RetransMsg {
+		ue.MsgRspReceived <- true // feedback loop
+	}
 	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.SERVICE_REQUEST_EVENT,
 		intfcMsg.GetEventType())
 	if err != nil {
@@ -345,7 +373,8 @@ func HandleServiceAcceptEvent(ue *simuectx.SimUe,
 }
 
 func HandleConnectionReleaseRequestEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UuMessage)
 
 	if ue.Procedure == common.AN_RELEASE_PROCEDURE {
@@ -370,14 +399,13 @@ func HandleConnectionReleaseRequestEvent(ue *simuectx.SimUe,
 		return nil
 	}
 	SendToRealUe(ue, msg)
-	//Current Procedure is complete. Move to next one
+	// Current Procedure is complete. Move to next one
 	SendProcedureResult(ue)
 
 	return nil
 }
 
 func HandleNwDeregRequestEvent(ue *simuectx.SimUe, intfcMsg common.InterfaceMessage) (err error) {
-
 	msg := intfcMsg.(*common.UeMessage)
 
 	nextEvent, err := ue.ProfileCtx.GetNextEvent(ue.Procedure, msg.Event)
@@ -393,7 +421,6 @@ func HandleNwDeregRequestEvent(ue *simuectx.SimUe, intfcMsg common.InterfaceMess
 }
 
 func HandleNwDeregAcceptEvent(ue *simuectx.SimUe, intfcMsg common.InterfaceMessage) (err error) {
-
 	ue.Log.Traceln("Handling Dereg Accept Event")
 
 	msg := intfcMsg.(*common.UuMessage)
@@ -411,8 +438,8 @@ func HandleNwDeregAcceptEvent(ue *simuectx.SimUe, intfcMsg common.InterfaceMessa
 }
 
 func HandleErrorEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	ue.Log.Traceln("debug3")
 	SendToProfile(ue, common.PROC_FAIL_EVENT, intfcMsg.GetErrorMsg())
 
@@ -423,7 +450,8 @@ func HandleErrorEvent(ue *simuectx.SimUe,
 }
 
 func HandleQuitEvent(ue *simuectx.SimUe,
-	msg common.InterfaceMessage) (err error) {
+	msg common.InterfaceMessage,
+) (err error) {
 	if ue.WriteGnbUeChan != nil {
 		SendToGnbUe(ue, msg)
 	}
@@ -475,7 +503,7 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		msg.Event = common.DATA_PKT_GEN_REQUEST_EVENT
 
 		/* TODO: Solve timing issue. Currently UE may start sending user data
-		 * before gnb has successfuly sent PDU Session Resource Setup Response
+		 * before gnb has successfully sent PDU Session Resource Setup Response
 		 * or before 5g core has processed it
 		 */
 		ue.Log.Infoln("Please wait, initiating uplink user data in 3 seconds ...")

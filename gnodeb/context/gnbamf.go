@@ -19,35 +19,41 @@ const NGAP_SCTP_PORT int = 38412
 
 // GnbAmf holds the AMF context
 type GnbAmf struct {
-	/* Indicates wether NGSetup was successful or not*/
-	NgSetupStatus bool
-	AmfHostName   string `yaml:"hostName"`
-	AmfIp         string `yaml:"ipAddr"`
-	AmfName       string
-	AmfPort       int `yaml:"port"`
-	/* Relative AMF Capacity */
-	RelCap          int64
-	ServedGuamiList []models.Guami
-	PlmnSupportList []factory.PlmnSupportItem
+	AmfHostName string `yaml:"hostName"`
+	AmfIp       string `yaml:"ipAddr"`
+	AmfName     string
+
 	/*Socket Connection*/
 	Conn net.Conn
 
-	/* logger */
 	Log *logrus.Entry
+
+	ServedGuamiList []models.Guami
+	PlmnSupportList []factory.PlmnSupportItem
+	AmfPort         int `yaml:"port"`
+
+	/* Relative AMF Capacity */
+	RelCap int64
+	/* Indicates wether NGSetup was successful or not*/
+	NgSetupStatus bool
 }
 
 func NewGnbAmf(ip string, port int) *GnbAmf {
 	gnbAmf := &GnbAmf{}
 	gnbAmf.AmfIp = ip
 	gnbAmf.AmfPort = port
-	gnbAmf.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbAmf",
-		logger.FieldIp: gnbAmf.AmfIp})
+	gnbAmf.Log = logger.GNodeBLog.WithFields(logrus.Fields{
+		"subcategory":  "GnbAmf",
+		logger.FieldIp: gnbAmf.AmfIp,
+	})
 	return gnbAmf
 }
 
 func (amf *GnbAmf) Init() {
-	amf.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbAmf",
-		logger.FieldIp: amf.AmfIp})
+	amf.Log = logger.GNodeBLog.WithFields(logrus.Fields{
+		"subcategory":  "GnbAmf",
+		logger.FieldIp: amf.AmfIp,
+	})
 }
 
 func (amf *GnbAmf) GetIpAddr() string {

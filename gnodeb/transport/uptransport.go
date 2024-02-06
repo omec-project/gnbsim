@@ -20,7 +20,7 @@ import (
 // Need to check if NGAP may exceed this limit
 var MAX_UDP_PKT_LEN int = 65507
 
-//TODO: Should have a context variable which when cancelled will result in
+// TODO: Should have a context variable which when cancelled will result in
 // the termination of the ReceiveFromPeer handler
 
 // GnbUpTransport represents the User Plane transport of the GNodeB
@@ -30,7 +30,6 @@ type GnbUpTransport struct {
 	/* UDP Connection without any association with peers */
 	Conn *net.UDPConn
 
-	/* logger */
 	Log *logrus.Entry
 }
 
@@ -66,7 +65,6 @@ func (upTprt *GnbUpTransport) Init() error {
 // SendToPeer sends a GTP-U encoded packet to the specified UPF over the socket
 func (upTprt *GnbUpTransport) SendToPeer(peer transportcommon.TransportPeer,
 	pkt []byte, id uint64) (err error) {
-
 	err = upTprt.CheckTransportParam(peer, pkt)
 	if err != nil {
 		return err
@@ -93,7 +91,7 @@ func (upTprt *GnbUpTransport) SendToPeer(peer transportcommon.TransportPeer,
 func (upTprt *GnbUpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer) {
 	for {
 		recvMsg := make([]byte, MAX_UDP_PKT_LEN)
-		//TODO Handle notification, info
+		// TODO Handle notification, info
 		n, srcAddr, err := upTprt.Conn.ReadFromUDP(recvMsg)
 		if err != nil {
 			upTprt.Log.Errorln("ReadFromUDP returned:", err)
@@ -114,8 +112,8 @@ func (upTprt *GnbUpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 }
 
 func (upTprt *GnbUpTransport) CheckTransportParam(peer transportcommon.TransportPeer,
-	pkt []byte) error {
-
+	pkt []byte,
+) error {
 	upf := peer.(*gnbctx.GnbUpf)
 
 	if upf == nil {

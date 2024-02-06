@@ -29,15 +29,17 @@ const (
 	CUSTOM_PROCEDURE        string = "custom"
 )
 
-const PER_USER_TIMEOUT uint32 = 100 //seconds
+const PER_USER_TIMEOUT uint32 = 100 // seconds
 var SummaryChan = make(chan common.InterfaceMessage)
 
 type ProcedureEventsDetails struct {
 	Events map[common.EventType]common.EventType
 }
 
-var ProceduresMap map[common.ProcedureType]*ProcedureEventsDetails
-var ProfileMap map[string]*Profile
+var (
+	ProceduresMap map[common.ProcedureType]*ProcedureEventsDetails
+	ProfileMap    map[string]*Profile
+)
 
 type PIterations struct {
 	Name    string
@@ -61,52 +63,51 @@ type Iterations struct {
 }
 
 type ProfileUeContext struct {
-	TrigEventsChan   chan *common.ProfileMessage  // Receiving Events from the REST interface
-	WriteSimChan     chan common.InterfaceMessage // Sending events to SIMUE -  start proc and proc parameters
-	ReadChan         chan *common.ProfileMessage  // Sending events to profile
-	Repeat           int                          // used only if UE is part of custom profile
-	CurrentItr       string                       // used only if UE is part of custom profile
-	CurrentProcIndex int                          // current procedure index. Used in custom profile
-	Procedure        common.ProcedureType
+	TrigEventsChan chan *common.ProfileMessage  // Receiving Events from the REST interface
+	WriteSimChan   chan common.InterfaceMessage // Sending events to SIMUE -  start proc and proc parameters
+	ReadChan       chan *common.ProfileMessage  // Sending events to profile
 
-	/* logger */
 	Log *logrus.Entry
+
+	CurrentItr       string // used only if UE is part of custom profile
+	Repeat           int    // used only if UE is part of custom profile
+	CurrentProcIndex int    // current procedure index. Used in custom profile
+	Procedure        common.ProcedureType
 }
 
 type Profile struct {
 	ProfileType    string         `yaml:"profileType" json:"profileType"`
 	Name           string         `yaml:"profileName" json:"profileName"`
-	Enable         bool           `yaml:"enable" json:"enable"`
 	GnbName        string         `yaml:"gnbName" json:"gnbName"`
 	StartImsi      string         `yaml:"startImsi" json:"startImsi"`
-	Imsi           int            // StartImsi in int
-	UeCount        int            `yaml:"ueCount" json:"ueCount"`
-	Plmn           *models.PlmnId `yaml:"plmnId" json:"plmnId"`
-	DataPktCount   int            `yaml:"dataPktCount" json:"dataPktCount"`
-	DataPktInt     int            `yaml:"dataPktInterval" json:"dataPktInterval"`
-	PerUserTimeout uint32         `yaml:"perUserTimeout" json:"perUserTimeout"`
 	DefaultAs      string         `yaml:"defaultAs" json:"defaultAs"`
 	Key            string         `yaml:"key" json:"key"`
 	Opc            string         `yaml:"opc" json:"opc"`
 	SeqNum         string         `yaml:"sequenceNumber" json:"sequenceNumber"`
 	Dnn            string         `yaml:"dnn" json:"dnn"`
-	SNssai         *models.Snssai `yaml:"sNssai" json:"sNssai"`
-	ExecInParallel bool           `yaml:"execInParallel" json:"execInParallel"`
-	StepTrigger    bool           `yaml:"stepTrigger" json:"stepTrigger"`
 	StartIteration string         `yaml:"startiteration" json:"startiteration"`
-	Iterations     []*Iterations  `yaml:"iterations"`
-
-	PIterations map[string]*PIterations
-	Procedures  []common.ProcedureType
+	Plmn           *models.PlmnId `yaml:"plmnId" json:"plmnId"`
+	SNssai         *models.Snssai `yaml:"sNssai" json:"sNssai"`
+	Log            *logrus.Entry
 
 	// Profile routine reads messages from other entities on this channel
 	// Entities can be SimUe, Main routine.
 	ReadChan chan *common.ProfileMessage
 
-	PSimUe map[string]*ProfileUeContext
+	Iterations  []*Iterations `yaml:"iterations"`
+	PIterations map[string]*PIterations
+	PSimUe      map[string]*ProfileUeContext
+	Procedures  []common.ProcedureType
 
-	/* logger */
-	Log *logrus.Entry
+	Imsi           int    // StartImsi in int
+	UeCount        int    `yaml:"ueCount" json:"ueCount"`
+	DataPktCount   int    `yaml:"dataPktCount" json:"dataPktCount"`
+	DataPktInt     int    `yaml:"dataPktInterval" json:"dataPktInterval"`
+	PerUserTimeout uint32 `yaml:"perUserTimeout" json:"perUserTimeout"`
+	Enable         bool   `yaml:"enable" json:"enable"`
+	ExecInParallel bool   `yaml:"execInParallel" json:"execInParallel"`
+	StepTrigger    bool   `yaml:"stepTrigger" json:"stepTrigger"`
+	RetransMsg     bool   `yaml:"retransMsg" json:"retransMsg"`
 }
 
 func init() {
@@ -119,7 +120,7 @@ func init() {
 func initProcedureEventMap() {
 	proc1 := ProcedureEventsDetails{}
 
-	//common.REGISTRATION_PROCEDURE:
+	// common.REGISTRATION_PROCEDURE:
 	proc1.Events = map[common.EventType]common.EventType{
 		common.REG_REQUEST_EVENT:     common.AUTH_REQUEST_EVENT,
 		common.AUTH_REQUEST_EVENT:    common.AUTH_RESPONSE_EVENT,
@@ -138,7 +139,7 @@ func initProcedureEventMap() {
 	}
 	ProceduresMap[common.PDU_SESSION_ESTABLISHMENT_PROCEDURE] = &proc2
 
-	//common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE:
+	// common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE:
 	proc3 := ProcedureEventsDetails{}
 	proc3.Events = map[common.EventType]common.EventType{
 		common.PDU_SESS_REL_REQUEST_EVENT: common.PDU_SESS_REL_COMMAND_EVENT,
@@ -193,7 +194,6 @@ func initProcedureEventMap() {
 		common.PROFILE_PASS_EVENT: common.QUIT_EVENT,
 	}
 	ProceduresMap[common.USER_DATA_PKT_GENERATION_PROCEDURE] = &proc9
-
 }
 
 func (profile *Profile) Init() error {
