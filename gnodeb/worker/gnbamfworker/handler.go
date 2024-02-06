@@ -205,8 +205,8 @@ func HandleNgSetupFailure(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 }
 
 func HandleDownlinkNasTransport(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
-	pdu *ngapType.NGAPPDU, id uint64) {
-
+	pdu *ngapType.NGAPPDU, id uint64,
+) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")
@@ -258,8 +258,8 @@ func HandleDownlinkNasTransport(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 }
 
 func HandleInitialContextSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
-	pdu *ngapType.NGAPPDU, id uint64) {
-
+	pdu *ngapType.NGAPPDU, id uint64,
+) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")
@@ -311,9 +311,8 @@ func HandleInitialContextSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 
 // TODO : Much of the code is repeated in each handler
 func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
-	pdu *ngapType.NGAPPDU, id uint64) {
-
-
+	pdu *ngapType.NGAPPDU, id uint64,
+) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")
@@ -363,8 +362,8 @@ func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 }
 
 func HandlePduSessResourceReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
-	pdu *ngapType.NGAPPDU, id uint64) {
-
+	pdu *ngapType.NGAPPDU, id uint64,
+) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")
@@ -414,10 +413,8 @@ func HandlePduSessResourceReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 }
 
 func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
-	pdu *ngapType.NGAPPDU, id uint64) {
-
-	amf.Log.Traceln("Processing Ue Context Release Command")
-
+	pdu *ngapType.NGAPPDU, id uint64,
+) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
 		amf.Log.Errorln("ran is nil")

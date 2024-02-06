@@ -36,7 +36,7 @@ func (msg *DefaultMessage) GetErrorMsg() error {
 type N2Message struct {
 	NgapPdu *ngapType.NGAPPDU
 	DefaultMessage
-	Id      uint64
+	Id uint64
 }
 
 type NasPduList [][]byte
@@ -60,9 +60,8 @@ type UuMessage struct {
 	*/
 	TriggeringEvent EventType
 
-  // Unique Message Id
+	// Unique Message Id
 	Id uint64
-
 }
 
 // ProfileMessage is used to carry information between the Profile and SimUe
@@ -132,5 +131,4 @@ type UeMessage struct {
 
 	// Unique Message Id
 	Id uint64
-
 }

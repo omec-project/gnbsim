@@ -189,11 +189,10 @@ func HandleInitialContextSetupRequest(gnbue *gnbctx.GnbCpUe,
 		return
 	}
 
-
 	e := &stats.StatisticsEvent{Supi: gnbue.Supi, EType: stats.ICS_REQ_IN, Id: msg.Id}
 	stats.LogStats(e)
 
-	//TODO: Handle other mandatory IEs
+	// TODO: Handle other mandatory IEs
 
 	resp, err := test.GetInitialContextSetupResponse(gnbue.AmfUeNgapId, gnbue.GnbUeNgapId)
 	if err != nil {
@@ -490,8 +489,9 @@ func HandleRanConnectionRelease(gnbue *gnbctx.GnbCpUe,
 }
 
 func ProcessPduSessResourceSetupList(gnbue *gnbctx.GnbCpUe,
-	lst []pduSessResourceSetupItem, event common.EventType, id uint64) {
-	//var pduSessions []ngapTestpacket.PduSession
+	lst []pduSessResourceSetupItem, event common.EventType, id uint64,
+) {
+	// var pduSessions []ngapTestpacket.PduSession
 
 	var dbParamSet []*common.DataBearerParams
 

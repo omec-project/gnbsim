@@ -43,72 +43,65 @@ const (
 )
 
 type Registration struct {
-	RegProcTime   int64
-	RegReqOutTime time.Time
-	AuthReqInTime time.Time
-	RegReqAuthReq int64
-
-	AuthRspOutTime time.Time
-	SecMCmdInTime  time.Time
-	AuthRspSecMReq int64
-
+	RegReqOutTime    time.Time
+	AuthReqInTime    time.Time
+	AuthRspOutTime   time.Time
+	SecMCmdInTime    time.Time
 	SecCmdCmpOutTime time.Time
 	ICSReqInTime     time.Time
+	RegProcTime      int64
+	RegReqAuthReq    int64
+	AuthRspSecMReq   int64
 	SecModeRspICReq  int64
 }
 
 type PduSessEst struct {
-	PduSessProcTime   int64
 	PduSessReqOutTime time.Time
 	PduSessAcceptIn   time.Time
+	PduSessProcTime   int64
 	PduSessReqAccept  int64
 }
 
 type Deregistration struct {
-	DeregistrationProcTime int64
 	DeregReqOutTime        time.Time
 	DeregAccInTime         time.Time
+	DeregistrationProcTime int64
 	DregReqAccTime         int64
 }
 
 type ServiceReq struct {
-	ServiceReqProcTime int64
 	ServiceReqOutTime  time.Time
 	ServiceAccInTime   time.Time
+	ServiceReqProcTime int64
 	ServReqAccTime     int64
 }
 
 type CtxRelease struct {
-	CtxReleaseProcTime int64
 	CtxRelReqOutTime   time.Time
 	CtxRelCmdInTime    time.Time
+	CtxReleaseProcTime int64
 	CtxRelReqCmdTime   int64
 }
 
 type UeStats struct {
-	Supi string
-
-	CReg Registration   // Current
-	Reg  []Registration // Historical. After completion move CReg here
-
-	CPdu PduSessEst
-	Pdu  []PduSessEst
-
+	Supi    string
+	CReg    Registration // Current
+	CSvc    ServiceReq
+	CPdu    PduSessEst
 	CCtxrel CtxRelease
+	CDreg   Deregistration
+	Reg     []Registration // Historical. After completion move CReg here
+	Pdu     []PduSessEst
+	Svc     []ServiceReq
 	Ctxrel  []CtxRelease
-
-	CDreg Deregistration
-	Dreg  []Deregistration
-
-	CSvc ServiceReq
-	Svc  []ServiceReq
+	Dreg    []Deregistration
 }
 
 type StatisticsEvent struct {
+	T     time.Time
 	Supi  string
 	EType int64
 	Id    uint64
-	T     time.Time
 }
 
 var (

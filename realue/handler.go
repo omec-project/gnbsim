@@ -32,8 +32,8 @@ const (
 )
 
 func HandleRegRequestEvent(ue *realuectx.RealUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	id := stats.GetId()
 	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.REG_REQ_OUT, Id: id}
 	stats.LogStats(e)
@@ -194,8 +194,8 @@ func HandleDeregRequestEvent(ue *realuectx.RealUe,
 }
 
 func HandlePduSessEstRequestEvent(ue *realuectx.RealUe,
-	msg common.InterfaceMessage) (err error) {
-
+	msg common.InterfaceMessage,
+) (err error) {
 	id := stats.GetId()
 	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.PDU_SESS_REQ_OUT, Id: id}
 	stats.LogStats(e)

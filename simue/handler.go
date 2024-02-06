@@ -172,8 +172,8 @@ func HandleDeregRequestEvent(ue *simuectx.SimUe,
 }
 
 func HandleDeregAcceptEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage) (err error) {
-
+	intfcMsg common.InterfaceMessage,
+) (err error) {
 	msg := intfcMsg.(*common.UeMessage)
 	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.DEREG_ACC_IN, Id: msg.Id}
 	stats.LogStats(e)
@@ -466,8 +466,8 @@ func HandleQuitEvent(ue *simuectx.SimUe,
 func SendProcedureResult(ue *simuectx.SimUe) {
 	ue.Log.Traceln("Sending Procedure Result to Profile : PASS")
 	SendToProfile(ue, common.PROC_PASS_EVENT, nil)
-	//e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.REG_PROC_END, Id: 0}
-	//stats.LogStats(e)
+	// e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.REG_PROC_END, Id: 0}
+	// stats.LogStats(e)
 
 	return
 }
