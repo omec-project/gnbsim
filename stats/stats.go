@@ -84,17 +84,17 @@ type CtxRelease struct {
 }
 
 type UeStats struct {
-	Supi    string
-	CReg    Registration // Current
-	CSvc    ServiceReq
-	CPdu    PduSessEst
-	CCtxrel CtxRelease
-	CDreg   Deregistration
 	Reg     []Registration // Historical. After completion move CReg here
 	Pdu     []PduSessEst
 	Svc     []ServiceReq
 	Ctxrel  []CtxRelease
 	Dreg    []Deregistration
+	CSvc    ServiceReq
+	CPdu    PduSessEst
+	CCtxrel CtxRelease
+	CDreg   Deregistration
+	Supi    string
+	CReg    Registration // Current
 }
 
 type StatisticsEvent struct {
