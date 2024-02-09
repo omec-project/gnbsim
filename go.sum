@@ -325,8 +325,6 @@ github.com/omec-project/logger_conf v1.1.0/go.mod h1:2+SOX9OFbPZ+UNv8k+tvPnaWHo4
 github.com/omec-project/logger_util v1.0.100-dev/go.mod h1:UkD09amIhlh8P0k82A6Uz/atiZGeFS3C2wd334CKpuY=
 github.com/omec-project/logger_util v1.1.0 h1:R7tT80+ML1HlK4OoTrNv/UK+2H/u2GdIFNBx41g630Q=
 github.com/omec-project/logger_util v1.1.0/go.mod h1:UkD09amIhlh8P0k82A6Uz/atiZGeFS3C2wd334CKpuY=
-github.com/omec-project/milenage v1.1.0 h1:yVBtBB4hd+SQx4gFkE6mZ8mfzO5na/1d2j31G6jYlCA=
-github.com/omec-project/milenage v1.1.0/go.mod h1:Tw5HLvxWEQN0JA+EXEVwZ17TL9adEZk3kWqKGgsNmHc=
 github.com/omec-project/nas v1.1.1/go.mod h1:gXqi/IZwEGXno26X8wg8ITsAUiemRQ7PkIJOWP1NzGA=
 github.com/omec-project/nas v1.1.4 h1:kQvTTkjJ8eSb6/noeU8Bp6AOo4KeSvUII9CneFADnYs=
 github.com/omec-project/nas v1.1.4/go.mod h1:gXqi/IZwEGXno26X8wg8ITsAUiemRQ7PkIJOWP1NzGA=

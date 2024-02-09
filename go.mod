@@ -14,7 +14,6 @@ require (
 	github.com/omec-project/aper v1.1.0
 	github.com/omec-project/http2_util v1.1.0
 	github.com/omec-project/logger_util v1.1.0
-	github.com/omec-project/milenage v1.1.0
 	github.com/omec-project/nas v1.1.4
 	github.com/omec-project/ngap v1.1.0
 	github.com/omec-project/openapi v1.1.0
