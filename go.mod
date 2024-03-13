@@ -9,7 +9,6 @@ require (
 	github.com/gin-contrib/cors v1.7.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/omec-project/CommonConsumerTestData v1.1.1
-	github.com/omec-project/UeauCommon v1.1.0
 	github.com/omec-project/amf v1.1.2-0.20240312010902-73424b00e9e9
 	github.com/omec-project/aper v1.1.0
 	github.com/omec-project/http2_util v1.1.0
