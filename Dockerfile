@@ -8,6 +8,7 @@ FROM golang:1.22.1-bookworm AS builder
 
 LABEL maintainer="Aether SD-Core <dev@aetherproject.org>"
 
+RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list
 RUN apt-get update && \
     apt-get -y install --no-install-recommends \
     vim \
