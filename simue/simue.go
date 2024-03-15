@@ -190,8 +190,8 @@ func ImsiStateMachine(profile *profctx.Profile, pCtx *profctx.ProfileUeContext, 
 		// proc result -  success, fail or timeout
 		timeout := time.Duration(profile.PerUserTimeout) * time.Second
 		ticker := time.NewTicker(timeout)
-		// Ask simUe to just run procedure and return result
 		start_ts := time.Now()
+		// Ask simUe to just run procedure and return result
 		go RunProcedure(simUe, procedure)
 		pCtx.Log.Infoln("Waiting for procedure result from imsiStateMachine")
 		select {
@@ -203,7 +203,7 @@ func ImsiStateMachine(profile *profctx.Profile, pCtx *profctx.ProfileUeContext, 
 			pCtx.Log.Infoln("imsiStateMachine received result ")
 			end_ts := time.Now()
 			diff := end_ts.Sub(start_ts)
-			pCtx.Log.Infof("[LOG][E2E], %v, %v, %v\n", msg.Supi, diff.Milliseconds(), msg.GetEventType().String())
+			pCtx.Log.Infof("procedure: %v, status: %v, E2E latency [ms]: %v", procedure.String(), msg.GetEventType().String(), diff.Milliseconds())
 
 			switch msg.Event {
 			case common.PROC_PASS_EVENT:
