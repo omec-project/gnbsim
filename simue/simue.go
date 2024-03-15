@@ -201,24 +201,18 @@ func ImsiStateMachine(profile *profctx.Profile, pCtx *profctx.ProfileUeContext, 
 			proc_fail = true
 		case msg := <-pCtx.ReadChan:
 			pCtx.Log.Infoln("imsiStateMachine received result ")
+			end_ts := time.Now()
+			diff := end_ts.Sub(start_ts)
+			pCtx.Log.Infof("[LOG][E2E], %v, %v, %v\n", msg.Supi, diff.Milliseconds(), msg.GetEventType().String())
+
 			switch msg.Event {
 			case common.PROC_PASS_EVENT:
-				end_ts := time.Now()
-				diff := end_ts.Sub(start_ts)
-				fmt.Printf("[LOG][E2E],%v,%v,%v,%v,%v,%v,%v,%v,pass\n", msg.Supi, start_ts.Unix(), end_ts.Unix(), start_ts.UnixNano(), end_ts.UnixNano(), diff.Milliseconds(), end_ts.Format("15:04:05"), procedure)
-				time.Sleep(1 * time.Millisecond)
-
 				pCtx.Log.Infoln("Procedure Result: PASS, imsi:", msg.Supi)
 				procedure = profile.GetNextProcedure(pCtx, simUe.Procedure)
 				if procedure == 0 {
 					no_more_proc = true
 				}
 			case common.PROC_FAIL_EVENT:
-				end_ts := time.Now()
-				diff := end_ts.Sub(start_ts)
-				fmt.Printf("[LOG][E2E],%v,%v,%v,%v,%v,%v,%v,%v,fail\n", msg.Supi, start_ts.Unix(), end_ts.Unix(), start_ts.UnixNano(), end_ts.UnixNano(), diff.Milliseconds(), end_ts.Format("15:04:05"), procedure)
-				time.Sleep(1 * time.Millisecond)
-
 				err = fmt.Errorf("imsi:%v, procedure:%v, error:%v", msg.Supi, msg.Proc, msg.Error)
 				pCtx.Log.Infoln("Result: FAIL,", err)
 				proc_fail = true
