@@ -129,7 +129,6 @@ func (cpTprt *GnbCpTransport) SendToPeer(peer transportcommon.TransportPeer,
 		return fmt.Errorf("failed to write on socket")
 	} else {
 		cpTprt.Log.Infof("Wrote %v bytes\n", n)
-		cpTprt.Log.Infoln("Message Id **************** ", id)
 	}
 
 	return
