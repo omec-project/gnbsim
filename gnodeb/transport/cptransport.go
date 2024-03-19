@@ -9,10 +9,12 @@ import (
 	"io"
 	"net"
 	"syscall"
+	"time"
 
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/gnodeb/worker/gnbamfworker"
 	"github.com/omec-project/gnbsim/logger"
+	"github.com/omec-project/gnbsim/stats"
 	"github.com/omec-project/gnbsim/transportcommon"
 	"github.com/omec-project/gnbsim/util/test"
 
@@ -76,9 +78,9 @@ func (cpTprt *GnbCpTransport) ConnectToPeer(peer transportcommon.TransportPeer) 
 // SendToPeer sends an NGAP encoded packet to the specified AMF over the socket
 // connection and waits for the response
 func (cpTprt *GnbCpTransport) SendToPeerBlock(peer transportcommon.TransportPeer,
-	pkt []byte,
+	pkt []byte, id uint64,
 ) ([]byte, error) {
-	err := cpTprt.SendToPeer(peer, pkt)
+	err := cpTprt.SendToPeer(peer, pkt, id)
 	if err != nil {
 		cpTprt.Log.Errorln("SendToPeer returned err:", err)
 		return nil, fmt.Errorf("failed to send packet")
@@ -102,7 +104,7 @@ func (cpTprt *GnbCpTransport) SendToPeerBlock(peer transportcommon.TransportPeer
 // SendToPeer sends an NGAP encoded packet to the specified AMF over the socket
 // connection
 func (cpTprt *GnbCpTransport) SendToPeer(peer transportcommon.TransportPeer,
-	pkt []byte,
+	pkt []byte, id uint64,
 ) (err error) {
 	err = cpTprt.CheckTransportParam(peer, pkt)
 	if err != nil {
@@ -119,6 +121,9 @@ func (cpTprt *GnbCpTransport) SendToPeer(peer transportcommon.TransportPeer,
 		}
 	}()
 
+	t := time.Now()
+	m := &stats.StatisticsEvent{EType: stats.MSG_OUT, Id: id, T: t}
+	stats.SentMessage(m)
 	if n, err := amf.Conn.Write(pkt); err != nil || n != len(pkt) {
 		cpTprt.Log.Errorln("Write returned:", err)
 		return fmt.Errorf("failed to write on socket")
@@ -161,10 +166,15 @@ func (cpTprt *GnbCpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 				return
 			}
 		}
+		t := time.Now()
+		id := stats.GetId()
+		m := &stats.StatisticsEvent{EType: stats.MSG_IN, Id: id, T: t}
+		stats.RecvdMessage(m)
 
 		cpTprt.Log.Infof("Read %v bytes from %v\n", n, amf.GetIpAddr())
+
 		// TODO Post to gnbamfworker channel
-		gnbamfworker.HandleMessage(cpTprt.GnbInstance, amf, recvMsg[:n])
+		gnbamfworker.HandleMessage(cpTprt.GnbInstance, amf, recvMsg[:n], id)
 	}
 }
 

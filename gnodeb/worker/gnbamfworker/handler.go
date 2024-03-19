@@ -205,7 +205,7 @@ func HandleNgSetupFailure(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 }
 
 func HandleDownlinkNasTransport(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
-	pdu *ngapType.NGAPPDU,
+	pdu *ngapType.NGAPPDU, id uint64,
 ) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
@@ -254,11 +254,11 @@ func HandleDownlinkNasTransport(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 		return
 	}
 
-	SendToGnbUe(gnbue, common.DOWNLINK_NAS_TRANSPORT_EVENT, pdu)
+	SendToGnbUe(gnbue, common.DOWNLINK_NAS_TRANSPORT_EVENT, pdu, id)
 }
 
 func HandleInitialContextSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
-	pdu *ngapType.NGAPPDU,
+	pdu *ngapType.NGAPPDU, id uint64,
 ) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
@@ -306,12 +306,12 @@ func HandleInitialContextSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 		return
 	}
 
-	SendToGnbUe(gnbue, common.INITIAL_CTX_SETUP_REQUEST_EVENT, pdu)
+	SendToGnbUe(gnbue, common.INITIAL_CTX_SETUP_REQUEST_EVENT, pdu, id)
 }
 
 // TODO : Much of the code is repeated in each handler
 func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
-	pdu *ngapType.NGAPPDU,
+	pdu *ngapType.NGAPPDU, id uint64,
 ) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
@@ -358,11 +358,11 @@ func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 		return
 	}
 
-	SendToGnbUe(gnbue, common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT, pdu)
+	SendToGnbUe(gnbue, common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT, pdu, id)
 }
 
 func HandlePduSessResourceReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
-	pdu *ngapType.NGAPPDU,
+	pdu *ngapType.NGAPPDU, id uint64,
 ) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
@@ -409,11 +409,11 @@ func HandlePduSessResourceReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 		return
 	}
 
-	SendToGnbUe(gnbue, common.PDU_SESS_RESOURCE_RELEASE_COMMAND_EVENT, pdu)
+	SendToGnbUe(gnbue, common.PDU_SESS_RESOURCE_RELEASE_COMMAND_EVENT, pdu, id)
 }
 
 func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
-	pdu *ngapType.NGAPPDU,
+	pdu *ngapType.NGAPPDU, id uint64,
 ) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
@@ -475,5 +475,5 @@ func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 		return
 	}
 
-	SendToGnbUe(gnbue, common.UE_CTX_RELEASE_COMMAND_EVENT, pdu)
+	SendToGnbUe(gnbue, common.UE_CTX_RELEASE_COMMAND_EVENT, pdu, id)
 }

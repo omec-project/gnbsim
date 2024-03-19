@@ -76,10 +76,11 @@ func HandleEvents(ue *realuectx.RealUe) (err error) {
 	return nil
 }
 
-func formUuMessage(event common.EventType, nasPdu []byte) *common.UuMessage {
+func formUuMessage(event common.EventType, nasPdu []byte, id uint64) *common.UuMessage {
 	msg := &common.UuMessage{}
 	msg.Event = event
 	msg.NasPdus = append(msg.NasPdus, nasPdu)
+	msg.Id = id
 	return msg
 }
 

@@ -13,6 +13,7 @@ import (
 	realuectx "github.com/omec-project/gnbsim/realue/context"
 	"github.com/omec-project/gnbsim/realue/util"
 	"github.com/omec-project/gnbsim/realue/worker/pdusessworker"
+	"github.com/omec-project/gnbsim/stats"
 
 	realue_nas "github.com/omec-project/gnbsim/realue/nas"
 
@@ -31,8 +32,12 @@ const (
 )
 
 func HandleRegRequestEvent(ue *realuectx.RealUe,
-	msg common.InterfaceMessage,
+	intfcMsg common.InterfaceMessage,
 ) (err error) {
+	id := stats.GetId()
+	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.REG_REQ_OUT, Id: id}
+	stats.LogStats(e)
+
 	ueSecurityCapability := ue.GetUESecurityCapability()
 
 	ue.Suci, err = util.SupiToSuci(ue.Supi, ue.Plmn)
@@ -48,7 +53,7 @@ func HandleRegRequestEvent(ue *realuectx.RealUe,
 	nasPdu := nasTestpacket.GetRegistrationRequest(nasMessage.RegistrationType5GSInitialRegistration,
 		mobileId5GS, nil, ueSecurityCapability, nil, nil, nil)
 
-	m := formUuMessage(common.REG_REQUEST_EVENT, nasPdu)
+	m := formUuMessage(common.REG_REQUEST_EVENT, nasPdu, id)
 	SendToSimUe(ue, m)
 	ue.Log.Traceln("Sent Registration Request Message to SimUe")
 	return nil
@@ -58,6 +63,12 @@ func HandleAuthResponseEvent(ue *realuectx.RealUe,
 	intfcMsg common.InterfaceMessage,
 ) (err error) {
 	msg := intfcMsg.(*common.UeMessage)
+
+	id := stats.GetId()
+	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.AUTH_RSP_OUT, Id: id}
+	stats.LogStats(e)
+	msg.Id = id
+
 	// First process the corresponding Auth Request
 	ue.Log.Traceln("Processing corresponding Authentication Request Message")
 	authReq := msg.NasMsg.AuthenticationRequest
@@ -78,7 +89,7 @@ func HandleAuthResponseEvent(ue *realuectx.RealUe,
 	ue.Log.Traceln("Generating Authentication Response Message")
 	nasPdu := nasTestpacket.GetAuthenticationResponse(resStat, "")
 
-	m := formUuMessage(common.AUTH_RESPONSE_EVENT, nasPdu)
+	m := formUuMessage(common.AUTH_RESPONSE_EVENT, nasPdu, id)
 	SendToSimUe(ue, m)
 	ue.Log.Traceln("Sent Authentication Response Message to SimUe")
 	return nil
@@ -108,7 +119,11 @@ func HandleSecModCompleteEvent(ue *realuectx.RealUe,
 		return fmt.Errorf("failed to encrypt security mode complete message")
 	}
 
-	m := formUuMessage(common.SEC_MOD_COMPLETE_EVENT, nasPdu)
+	id := stats.GetId()
+	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.SECM_CMP_OUT, Id: id}
+	stats.LogStats(e)
+
+	m := formUuMessage(common.SEC_MOD_COMPLETE_EVENT, nasPdu, id)
 	SendToSimUe(ue, m)
 	ue.Log.Traceln("Sent Security Mode Complete Message to SimUe")
 	return nil
@@ -136,7 +151,11 @@ func HandleRegCompleteEvent(ue *realuectx.RealUe,
 		return fmt.Errorf("failed to encrypt registration complete message")
 	}
 
-	m := formUuMessage(common.REG_COMPLETE_EVENT, nasPdu)
+	id := stats.GetId()
+	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.REG_COMP_OUT, Id: id}
+	stats.LogStats(e)
+
+	m := formUuMessage(common.REG_COMPLETE_EVENT, nasPdu, id)
 	SendToSimUe(ue, m)
 	ue.Log.Traceln("Sent Registration Complete Message to SimUe")
 	return nil
@@ -149,6 +168,10 @@ func HandleDeregRequestEvent(ue *realuectx.RealUe,
 		ue.Log.Errorln("guti not allocated")
 		return fmt.Errorf("failed to create deregistration request: guti not unallocated")
 	}
+	id := stats.GetId()
+	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.DEREG_REQ_OUT, Id: id}
+	stats.LogStats(e)
+
 	gutiNas := nasConvert.GutiToNas(ue.Guti)
 	mobileIdentity5GS := nasType.MobileIdentity5GS{
 		Len:    11, // 5g-guti
@@ -164,7 +187,7 @@ func HandleDeregRequestEvent(ue *realuectx.RealUe,
 		return fmt.Errorf("failed to encrypt deregistration request message")
 	}
 
-	m := formUuMessage(common.DEREG_REQUEST_UE_ORIG_EVENT, nasPdu)
+	m := formUuMessage(common.DEREG_REQUEST_UE_ORIG_EVENT, nasPdu, id)
 	SendToSimUe(ue, m)
 	ue.Log.Traceln("Sent UE Initiated Deregistration Request message to SimUe")
 	return nil
@@ -173,6 +196,10 @@ func HandleDeregRequestEvent(ue *realuectx.RealUe,
 func HandlePduSessEstRequestEvent(ue *realuectx.RealUe,
 	msg common.InterfaceMessage,
 ) (err error) {
+	id := stats.GetId()
+	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.PDU_SESS_REQ_OUT, Id: id}
+	stats.LogStats(e)
+
 	// sNssai := models.Snssai{
 	// 	Sst: 1,
 	// 	Sd:  "010203",
@@ -187,7 +214,7 @@ func HandlePduSessEstRequestEvent(ue *realuectx.RealUe,
 		return
 	}
 
-	m := formUuMessage(common.PDU_SESS_EST_REQUEST_EVENT, nasPdu)
+	m := formUuMessage(common.PDU_SESS_EST_REQUEST_EVENT, nasPdu, id)
 	SendToSimUe(ue, m)
 	return nil
 }
@@ -220,6 +247,9 @@ func HandlePduSessEstAcceptEvent(ue *realuectx.RealUe,
 	ue.Log.Infoln("SSC Mode:", pduSess.SscMode)
 	ue.Log.Infoln("PDU Address:", pduAddr.String())
 
+	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.PDU_SESS_ACC_IN, Id: msg.Id}
+	stats.LogStats(e)
+
 	return nil
 }
 
@@ -235,7 +265,7 @@ func HandlePduSessReleaseRequestEvent(ue *realuectx.RealUe,
 		return
 	}
 
-	m := formUuMessage(common.PDU_SESS_REL_REQUEST_EVENT, nasPdu)
+	m := formUuMessage(common.PDU_SESS_REL_REQUEST_EVENT, nasPdu, 0)
 	SendToSimUe(ue, m)
 	return nil
 }
@@ -272,7 +302,7 @@ func HandlePduSessReleaseCompleteEvent(ue *realuectx.RealUe,
 		return
 	}
 
-	m := formUuMessage(common.PDU_SESS_REL_COMPLETE_EVENT, nasPdu)
+	m := formUuMessage(common.PDU_SESS_REL_COMPLETE_EVENT, nasPdu, 0)
 	SendToSimUe(ue, m)
 	return nil
 }
@@ -316,6 +346,9 @@ func HandleDataBearerSetupRequestEvent(ue *realuectx.RealUe,
 	rsp.Event = common.DATA_BEARER_SETUP_RESPONSE_EVENT
 	rsp.DBParams = msg.DBParams
 	rsp.TriggeringEvent = msg.TriggeringEvent
+	rsp.Id = stats.GetId()
+	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.PDU_SESS_RES_SETUP, Id: rsp.Id}
+	stats.LogStats(e)
 	ue.WriteSimUeChan <- rsp
 	return nil
 }
@@ -405,6 +438,7 @@ func HandleDlInfoTransferEvent(ue *realuectx.RealUe,
 		// is N1_EVENT
 		m.Event = common.EventType(msgType) | common.N1_EVENT
 		m.NasMsg = nasMsg
+		m.Id = msg.Id
 
 		// Simply notify SimUe about the received nas message. Later SimUe will
 		// asynchrously send next event to RealUE informing about what to do with
@@ -422,6 +456,10 @@ func HandleServiceRequestEvent(ue *realuectx.RealUe,
 		return fmt.Errorf("failed to handle service request event: %v", err)
 	}
 
+	id := stats.GetId()
+	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.SVC_REQ_OUT, Id: id}
+	stats.LogStats(e)
+
 	// TS 24.501 Section 4.4.6 - Protection of Initial NAS signalling messages
 	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtected, true)
@@ -429,7 +467,7 @@ func HandleServiceRequestEvent(ue *realuectx.RealUe,
 		return fmt.Errorf("failed to encode with security: %v", err)
 	}
 
-	m := formUuMessage(common.SERVICE_REQUEST_EVENT, nasPdu)
+	m := formUuMessage(common.SERVICE_REQUEST_EVENT, nasPdu, id)
 	SendToSimUe(ue, m)
 	return nil
 }
@@ -446,7 +484,7 @@ func HandleNwDeregAcceptEvent(ue *realuectx.RealUe, msg common.InterfaceMessage)
 		return fmt.Errorf("failed to encrypt security mode complete message")
 	}
 
-	m := formUuMessage(common.DEREG_ACCEPT_UE_TERM_EVENT, nasPdu)
+	m := formUuMessage(common.DEREG_ACCEPT_UE_TERM_EVENT, nasPdu, 0)
 	SendToSimUe(ue, m)
 	ue.Log.Traceln("Sent Dereg Accept UE Terminated Message to SimUe")
 	return nil

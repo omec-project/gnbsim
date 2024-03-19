@@ -10,6 +10,7 @@ import (
 
 	"github.com/omec-project/gnbsim/common"
 	simuectx "github.com/omec-project/gnbsim/simue/context"
+	"github.com/omec-project/gnbsim/stats"
 )
 
 func HandleProcedureEvent(ue *simuectx.SimUe,
@@ -53,6 +54,10 @@ func HandleAuthRequestEvent(ue *simuectx.SimUe,
 		ue.Log.Errorln("CheckCurrentEvent returned:", err)
 		return err
 	}
+
+	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.AUTH_REQ_IN, Id: msg.Id}
+	stats.LogStats(e)
+
 	nextEvent, err := ue.ProfileCtx.GetNextEvent(ue.Procedure, msg.Event)
 	if err != nil {
 		ue.Log.Errorln("GetNextEvent returned:", err)
@@ -93,6 +98,10 @@ func HandleSecModCommandEvent(ue *simuectx.SimUe,
 		ue.Log.Errorln("GetNextEvent returned:", err)
 		return err
 	}
+
+	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.SECM_CMD_IN, Id: msg.Id}
+	stats.LogStats(e)
+
 	msg.Event = nextEvent
 	SendToRealUe(ue, msg)
 	return nil
@@ -165,6 +174,10 @@ func HandleDeregRequestEvent(ue *simuectx.SimUe,
 func HandleDeregAcceptEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage,
 ) (err error) {
+	msg := intfcMsg.(*common.UeMessage)
+	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.DEREG_ACC_IN, Id: msg.Id}
+	stats.LogStats(e)
+
 	return nil
 }
 
@@ -352,6 +365,10 @@ func HandleServiceAcceptEvent(ue *simuectx.SimUe,
 		return err
 	}
 
+	msg := intfcMsg.(*common.UeMessage)
+	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.SVC_ACCEPT_IN, Id: msg.Id}
+	stats.LogStats(e)
+
 	return nil
 }
 
@@ -449,6 +466,9 @@ func HandleQuitEvent(ue *simuectx.SimUe,
 func SendProcedureResult(ue *simuectx.SimUe) {
 	ue.Log.Traceln("Sending Procedure Result to Profile : PASS")
 	SendToProfile(ue, common.PROC_PASS_EVENT, nil)
+	// e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.REG_PROC_END, Id: 0}
+	// stats.LogStats(e)
+
 	return
 }
 
@@ -456,11 +476,16 @@ func HandleProcedure(ue *simuectx.SimUe) {
 	switch ue.Procedure {
 	case common.REGISTRATION_PROCEDURE:
 		ue.Log.Infoln("Initiating Registration Procedure")
+		e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.REG_PROC_START, Id: 0}
+		stats.LogStats(e)
 		msg := &common.UeMessage{}
 		msg.Event = common.REG_REQUEST_EVENT
+		msg.Id = 0
 		SendToRealUe(ue, msg)
 	case common.PDU_SESSION_ESTABLISHMENT_PROCEDURE:
 		ue.Log.Infoln("Initiating UE Requested PDU Session Establishment Procedure")
+		e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.REG_PROC_START, Id: 0}
+		stats.LogStats(e)
 		msg := &common.UeMessage{}
 		msg.Event = common.PDU_SESS_EST_REQUEST_EVENT
 		SendToRealUe(ue, msg)

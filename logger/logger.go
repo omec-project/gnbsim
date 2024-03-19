@@ -32,6 +32,7 @@ var (
 	GinLog        *logrus.Entry
 	HttpLog       *logrus.Entry
 	ProfUeCtxLog  *logrus.Entry
+	StatsLog      *logrus.Entry
 )
 
 const (
@@ -91,6 +92,7 @@ func init() {
 	GinLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Gin"})
 	HttpLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "HTTP"})
 	CfgLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "CFG"})
+	StatsLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Stats"})
 	UtilLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Util"})
 	GtpLog = UtilLog.WithField("subcategory", "GTP")
 	NgapLog = UtilLog.WithField("subcategory", "NGAP")

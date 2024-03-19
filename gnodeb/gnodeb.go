@@ -99,13 +99,13 @@ func PerformNgSetup(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf) (bool, error) {
 	}
 
 	gnb.Log.Traceln("Sending NG Setup Request")
-	ngSetupResp, err := gnb.CpTransport.SendToPeerBlock(amf, ngSetupReq)
+	ngSetupResp, err := gnb.CpTransport.SendToPeerBlock(amf, ngSetupReq, 0)
 	if err != nil {
 		gnb.Log.Errorln("SendToPeerBlock returned:", err)
 		return status, fmt.Errorf("failed to send ng setup request")
 	}
 	gnb.Log.Traceln("Received NG Setup Response")
-	err = gnbamfworker.HandleMessage(gnb, amf, ngSetupResp)
+	err = gnbamfworker.HandleMessage(gnb, amf, ngSetupResp, 0)
 	if err != nil {
 		gnb.Log.Errorln("HandleMessage returned:", err)
 		return status, fmt.Errorf("failed to handle ng setup response")
