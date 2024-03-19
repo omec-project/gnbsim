@@ -131,7 +131,7 @@ func LogStats(m *StatisticsEvent) {
 	ReadChan <- m
 }
 
-// when Request or response is received on socket
+// when Request or Response is received on socket
 func RecvdMessage(m *StatisticsEvent) {
 	ReadChan <- m
 }
