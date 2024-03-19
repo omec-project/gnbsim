@@ -349,7 +349,7 @@ func DumpStats() {
 			logger.StatsLog.Infof("UE: %s, TotalDeregistrationTime[us]: %d, DregReqAccTime[us]: %d", UeStatsTable[ue].Supi, s.DeregistrationProcTime, s.DregReqAccTime)
 		}
 	}
-	for k1, v1 := range StatsTransTable {
-		logger.StatsLog.Infoln("k1 ", k1, " v1: ", v1)
-	}
+	// for k1, v1 := range StatsTransTable {
+	// 	logger.StatsLog.Infoln("k1 ", k1, " v1: ", v1)
+	// }
 }
