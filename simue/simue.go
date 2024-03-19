@@ -145,8 +145,6 @@ func HandleEvents(ue *simuectx.SimUe) {
 			return
 		}
 	}
-
-	return
 }
 
 func SendToRealUe(ue *simuectx.SimUe, msg common.InterfaceMessage) {
@@ -219,18 +217,18 @@ func ImsiStateMachine(profile *profctx.Profile, pCtx *profctx.ProfileUeContext, 
 			}
 		}
 		ticker.Stop()
-		if no_more_proc == true {
+		if no_more_proc {
 			pCtx.Log.Infoln("imsiStateMachine no more proc to execute")
 			break
-		} else if proc_fail == true {
+		} else if proc_fail {
 			break
 		}
 		// should we wait for pulse to move to next step?
-		if profile.StepTrigger == true {
+		if profile.StepTrigger {
 			pCtx.Log.Infoln("imsiStateMachine waiting for user trigger")
-			select {
-			case msg := <-pCtx.TrigEventsChan:
-				pCtx.Log.Infoln("imsiStateMachine received trigger : ", msg)
+			msg, ok := <-pCtx.TrigEventsChan
+			if ok {
+				pCtx.Log.Infoln("imsiStateMachine received trigger:", msg)
 			}
 		}
 	}

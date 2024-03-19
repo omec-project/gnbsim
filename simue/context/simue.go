@@ -75,7 +75,7 @@ func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile, result 
 
 func GetSimUe(supi string) *SimUe {
 	simue, found := SimUeTable[supi]
-	if found == false {
+	if !found {
 		return nil
 	}
 	return simue

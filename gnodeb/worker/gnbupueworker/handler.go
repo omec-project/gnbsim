@@ -80,7 +80,7 @@ func HandleQuitEvent(gnbue *gnbctx.GnbUpUe, intfcMsg common.InterfaceMessage) (e
 	// Drain all the messages until END MARKER is received.
 	// This ensures that the transmitting go routine is not blocked while
 	// sending data on this channel
-	if gnbue.LastDataPktRecvd != true {
+	if !gnbue.LastDataPktRecvd {
 		for pkt := range gnbue.ReadUlChan {
 			if pkt.GetEventType() == common.LAST_DATA_PKT_EVENT {
 				gnbue.Log.Debugln("Received last uplink data packet")

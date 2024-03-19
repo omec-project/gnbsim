@@ -82,7 +82,7 @@ func (c *Config) Validate() (err error) {
 	if len(c.Configuration.Gnbs) == 0 {
 		return fmt.Errorf("no gnbs configured")
 	}
-	if c.Configuration.GoProfile.Enable == true {
+	if c.Configuration.GoProfile.Enable {
 		if c.Configuration.GoProfile.Port == 0 {
 			c.Configuration.GoProfile.Port = 5000
 		}
@@ -92,7 +92,7 @@ func (c *Config) Validate() (err error) {
 		c.Configuration.Server.IpAddr = os.Getenv("POD_IP")
 	}
 
-	if c.Configuration.SingleInterface == true {
+	if c.Configuration.SingleInterface {
 		for _, gnb := range c.Configuration.Gnbs {
 			if gnb.GnbN3Ip == "POD_IP" {
 				gnb.GnbN3Ip = os.Getenv("POD_IP")

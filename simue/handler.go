@@ -468,8 +468,6 @@ func SendProcedureResult(ue *simuectx.SimUe) {
 	SendToProfile(ue, common.PROC_PASS_EVENT, nil)
 	// e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.REG_PROC_END, Id: 0}
 	// stats.LogStats(e)
-
-	return
 }
 
 func HandleProcedure(ue *simuectx.SimUe) {
