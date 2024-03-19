@@ -5,6 +5,7 @@
 package stats
 
 import (
+	"sort"
 	"sync/atomic"
 	"time"
 
@@ -183,8 +184,8 @@ func readStats() {
 				ue := getUe(m.Supi)
 				ue.CReg.AuthReqInTime = m.T
 				x := m.T.Sub(ue.CReg.RegReqOutTime)
-				ue.CReg.RegReqAuthReq = x.Nanoseconds()
-				logger.StatsLog.Infoln("Time between Reg Req & Auth Req ", ue.CReg.RegReqAuthReq)
+				ue.CReg.RegReqAuthReq = x.Microseconds()
+				logger.StatsLog.Infoln("Time[us] between Reg Req & Auth Req ", ue.CReg.RegReqAuthReq)
 			case AUTH_RSP_OUT:
 				logger.StatsLog.Infoln("Received Event: AUTH_RSP_OUT: ", m)
 				addTrans(m)
@@ -195,8 +196,8 @@ func readStats() {
 				ue := getUe(m.Supi)
 				ue.CReg.SecMCmdInTime = m.T
 				x := m.T.Sub(ue.CReg.AuthRspOutTime)
-				ue.CReg.AuthRspSecMReq = x.Nanoseconds()
-				logger.StatsLog.Infoln("Rime between Auth Rsp and Sec M Req ", ue.CReg.AuthRspSecMReq)
+				ue.CReg.AuthRspSecMReq = x.Microseconds()
+				logger.StatsLog.Infoln("Time[us] between Auth Rsp and Sec M Req ", ue.CReg.AuthRspSecMReq)
 			case SECM_CMP_OUT:
 				logger.StatsLog.Infoln("Received Event: SECM_CMP_OUT: ", m)
 				addTrans(m)
@@ -207,13 +208,13 @@ func readStats() {
 				ue := getUe(m.Supi)
 				ue.CReg.ICSReqInTime = m.T
 				x := m.T.Sub(ue.CReg.SecCmdCmpOutTime)
-				ue.CReg.SecModeRspICReq = x.Nanoseconds()
-				logger.StatsLog.Infoln("Time between Sec Mod Cmd & ICSReq ", ue.CReg.SecModeRspICReq)
+				ue.CReg.SecModeRspICReq = x.Microseconds()
+				logger.StatsLog.Infoln("Time[us] between Sec Mod Cmd & ICSReq ", ue.CReg.SecModeRspICReq)
 			case REG_COMP_OUT:
 				logger.StatsLog.Infoln("Received Event: REG_COMP_OUT: ", m)
 				addTrans(m)
 			case PDU_SESS_REQ_OUT:
-				logger.StatsLog.Infoln("Received Event PDU_SESS_REQ_OUT: ", m)
+				logger.StatsLog.Infoln("Received Event: PDU_SESS_REQ_OUT: ", m)
 				addTrans(m)
 			case PDU_SESS_ACC_IN:
 				logger.StatsLog.Infoln("Received Event: PDU_SESS_ACC_IN: ", m)
@@ -222,8 +223,8 @@ func readStats() {
 				ue := getUe(m.Supi)
 				ue.CPdu.PduSessAcceptIn = m.T
 				x := m.T.Sub(ue.CPdu.PduSessReqOutTime)
-				ue.CPdu.PduSessReqAccept = x.Nanoseconds()
-				logger.StatsLog.Infoln("Time between PDU Sess Req & Accept ", ue.CPdu.PduSessReqAccept)
+				ue.CPdu.PduSessReqAccept = x.Microseconds()
+				logger.StatsLog.Infoln("Time[us] between PDU Sess Req & Accept ", ue.CPdu.PduSessReqAccept)
 				ue.CPdu.PduSessProcTime = ue.CPdu.PduSessReqAccept
 				ue.Pdu = append(ue.Pdu, ue.CPdu)
 				ue.CPdu = PduSessEst{}
@@ -241,10 +242,10 @@ func readStats() {
 				ue.CCtxrel.CtxRelCmdInTime = m.T
 				if !ue.CCtxrel.CtxRelReqOutTime.IsZero() {
 					x := m.T.Sub(ue.CCtxrel.CtxRelReqOutTime)
-					ue.CCtxrel.CtxRelReqCmdTime = x.Nanoseconds()
+					ue.CCtxrel.CtxRelReqCmdTime = x.Microseconds()
 					ue.CCtxrel.CtxReleaseProcTime = ue.CCtxrel.CtxRelReqCmdTime
 					ue.Ctxrel = append(ue.Ctxrel, ue.CCtxrel)
-					logger.StatsLog.Infoln("Time between Ctx Rel Req & Cmd ", ue.CCtxrel.CtxRelReqCmdTime)
+					logger.StatsLog.Infoln("Time[us] between Ctx Rel Req & Cmd ", ue.CCtxrel.CtxRelReqCmdTime)
 					ue.CCtxrel = CtxRelease{}
 				}
 			case DEREG_REQ_OUT:
@@ -257,10 +258,10 @@ func readStats() {
 				ue := getUe(m.Supi)
 				ue.CDreg.DeregAccInTime = m.T
 				x := m.T.Sub(ue.CDreg.DeregReqOutTime)
-				ue.CDreg.DregReqAccTime = x.Nanoseconds()
+				ue.CDreg.DregReqAccTime = x.Microseconds()
 				ue.CDreg.DeregistrationProcTime = ue.CDreg.DregReqAccTime
 				ue.Dreg = append(ue.Dreg, ue.CDreg)
-				logger.StatsLog.Infoln("Time between Dereg Req & Accept ", ue.CDreg.DregReqAccTime)
+				logger.StatsLog.Infoln("Time[us] between Dereg Req & Accept ", ue.CDreg.DregReqAccTime)
 				ue.CDreg = Deregistration{}
 			case SVC_REQ_OUT:
 				logger.StatsLog.Infoln("Received SVC_REQ_OUT", m)
@@ -272,10 +273,10 @@ func readStats() {
 				ue := getUe(m.Supi)
 				ue.CSvc.ServiceAccInTime = m.T
 				x := m.T.Sub(ue.CSvc.ServiceReqOutTime)
-				ue.CSvc.ServReqAccTime = x.Nanoseconds()
+				ue.CSvc.ServReqAccTime = x.Microseconds()
 				ue.CSvc.ServiceReqProcTime = ue.CSvc.ServReqAccTime
 				ue.Svc = append(ue.Svc, ue.CSvc)
-				logger.StatsLog.Infoln("Time between Service Req & Accept ", ue.CSvc.ServReqAccTime)
+				logger.StatsLog.Infoln("Time[us] between Service Req & Accept ", ue.CSvc.ServReqAccTime)
 				ue.CSvc = ServiceReq{}
 			case MSG_OUT:
 				logger.StatsLog.Infoln("Received Event: MSG_OUT: ", m)
@@ -325,21 +326,27 @@ func readStats() {
 
 func DumpStats() {
 	logger.StatsLog.Infoln("Dump all metrics")
-	for _, ue := range UeStatsTable {
-		for _, s := range ue.Reg {
-			logger.StatsLog.Infof("UE: %s Total Reg Time = %d RegReqAuthReq: %d  AuthRspSecMReq: %d SecModeRspICReq: %d ", ue.Supi, s.RegProcTime, s.RegReqAuthReq, s.AuthRspSecMReq, s.SecModeRspICReq)
+	ues := make([]string, 0, len(UeStatsTable))
+	for ue := range UeStatsTable {
+		ues = append(ues, ue)
+	}
+	sort.Strings(ues)
+
+	for _, ue := range ues {
+		for _, s := range UeStatsTable[ue].Reg {
+			logger.StatsLog.Infof("UE: %s, TotalRegTime[us]: %d, RegReqAuthReq[us]: %d,  AuthRspSecMReq[us]: %d, SecModeRspICReq[us]: %d", UeStatsTable[ue].Supi, s.RegProcTime, s.RegReqAuthReq, s.AuthRspSecMReq, s.SecModeRspICReq)
 		}
-		for _, s := range ue.Pdu {
-			logger.StatsLog.Infof("UE: %s Total Pdu Est Time = %d PduSessReqAccept: %d  ", ue.Supi, s.PduSessProcTime, s.PduSessReqAccept)
+		for _, s := range UeStatsTable[ue].Pdu {
+			logger.StatsLog.Infof("UE: %s, TotalPduEstTime[us]: %d, PduSessReqAccept[us]: %d", UeStatsTable[ue].Supi, s.PduSessProcTime, s.PduSessReqAccept)
 		}
-		for _, s := range ue.Ctxrel {
-			logger.StatsLog.Infof("UE: %s Total Ctx Release Time = %d CtxRelReqCmdTime: %d  ", ue.Supi, s.CtxReleaseProcTime, s.CtxRelReqCmdTime)
+		for _, s := range UeStatsTable[ue].Ctxrel {
+			logger.StatsLog.Infof("UE: %s, TotalCtxReleaseTime[us]: %d, CtxRelReqCmdTime[us]: %d", UeStatsTable[ue].Supi, s.CtxReleaseProcTime, s.CtxRelReqCmdTime)
 		}
-		for _, s := range ue.Svc {
-			logger.StatsLog.Infof("UE: %s Total Service Req Time = %d ServReqAccTime: %d  ", ue.Supi, s.ServiceReqProcTime, s.ServReqAccTime)
+		for _, s := range UeStatsTable[ue].Svc {
+			logger.StatsLog.Infof("UE: %s, TotalServiceReqTime[us]: %d, ServReqAccTime[us]: %d", UeStatsTable[ue].Supi, s.ServiceReqProcTime, s.ServReqAccTime)
 		}
-		for _, s := range ue.Dreg {
-			logger.StatsLog.Infof("UE: %s Total Deregistration Time = %d DregReqAccTime: %d  ", ue.Supi, s.DeregistrationProcTime, s.DregReqAccTime)
+		for _, s := range UeStatsTable[ue].Dreg {
+			logger.StatsLog.Infof("UE: %s, TotalDeregistrationTime[us]: %d, DregReqAccTime[us]: %d", UeStatsTable[ue].Supi, s.DeregistrationProcTime, s.DregReqAccTime)
 		}
 	}
 	for k1, v1 := range StatsTransTable {
