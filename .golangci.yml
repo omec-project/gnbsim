@@ -244,14 +244,14 @@ linters:
     # - gocognit
     # - nestif
     # - gomodguard
-    # - nakedret
+    - nakedret
     - gci
     - misspell
     - gofumpt
     - whitespace
-    # - unconvert
-    # - predeclared
-    # - noctx
+    - unconvert
+    - predeclared
+    - noctx
     - dogsled
     # - bodyclose
     - asciicheck

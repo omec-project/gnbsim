@@ -79,12 +79,10 @@ func NASEncode(ue *realuectx.RealUe, msg *nas.Message, securityContextAvailable 
 	defer encodeMutex.Unlock()
 
 	if ue == nil {
-		err = fmt.Errorf("amfUe is nil")
-		return
+		return nil, fmt.Errorf("amfUe is nil")
 	}
 	if msg == nil {
-		err = fmt.Errorf("nas message is empty")
-		return
+		return nil, fmt.Errorf("nas message is empty")
 	}
 
 	if !securityContextAvailable {
@@ -107,7 +105,7 @@ func NASEncode(ue *realuectx.RealUe, msg *nas.Message, securityContextAvailable 
 			ue.DLCount.Set(0, 0)
 			needCiphering = true
 		default:
-			return nil, fmt.Errorf("Wrong security header type: 0x%0x", msg.SecurityHeader.SecurityHeaderType)
+			return nil, fmt.Errorf("wrong security header type: 0x%0x", msg.SecurityHeader.SecurityHeaderType)
 		}
 
 		payload, err = msg.PlainNasEncode()
@@ -121,7 +119,7 @@ func NASEncode(ue *realuectx.RealUe, msg *nas.Message, securityContextAvailable 
 			// TODO: Support for ue has nas connection in both accessType
 			if err = security.NASEncrypt(ue.CipheringAlg, ue.KnasEnc, ue.ULCount.Get(), security.Bearer3GPP,
 				security.DirectionUplink, payload); err != nil {
-				return nil, fmt.Errorf("Encrypt error: %+v", err)
+				return nil, fmt.Errorf("encrypt error: %+v", err)
 			}
 		}
 		// add sequence number
@@ -151,19 +149,17 @@ func NASDecode(ue *realuectx.RealUe, securityHeaderType uint8, payload []byte) (
 	defer decodeMutex.Unlock()
 
 	if ue == nil {
-		err = fmt.Errorf("amfUe is nil")
-		return
+		return nil, fmt.Errorf("amfUe is nil")
 	}
 	if payload == nil {
-		err = fmt.Errorf("Nas payload is empty")
-		return
+		return nil, fmt.Errorf("nas payload is empty")
 	}
 
 	msg = new(nas.Message)
-	msg.SecurityHeaderType = uint8(nas.GetSecurityHeaderType(payload) & 0x0f)
+	msg.SecurityHeaderType = nas.GetSecurityHeaderType(payload)
 	if securityHeaderType == nas.SecurityHeaderTypePlainNas {
 		err = msg.PlainNasDecode(&payload)
-		return
+		return msg, err
 	} else if ue.IntegrityAlg == security.AlgIntegrity128NIA0 {
 		ue.Log.Debugln("decode payload is ", payload)
 		// remove header
@@ -175,7 +171,7 @@ func NASDecode(ue *realuectx.RealUe, securityHeaderType uint8, payload []byte) (
 		}
 
 		err = msg.PlainNasDecode(&payload)
-		return
+		return msg, err
 	} else { // Security protected NAS message
 		securityHeader := payload[0:6]
 		sequenceNumber := payload[6]
@@ -199,7 +195,7 @@ func NASDecode(ue *realuectx.RealUe, securityHeaderType uint8, payload []byte) (
 			ciphered = true
 			ue.DLCount.Set(0, 0)
 		default:
-			return nil, fmt.Errorf("Wrong security header type: 0x%0x", msg.SecurityHeader.SecurityHeaderType)
+			return nil, fmt.Errorf("wrong security header type: 0x%0x", msg.SecurityHeader.SecurityHeaderType)
 		}
 		// Caculate ul count
 		if ue.DLCount.SQN() > sequenceNumber {

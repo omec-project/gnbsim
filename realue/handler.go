@@ -245,7 +245,7 @@ func HandlePduSessEstAcceptEvent(ue *realuectx.RealUe,
 	pduSess.SscMode = nasMsg.GetSSCMode()
 	pduSess.PduAddress = pduAddr
 	pduSess.WriteUeChan = ue.ReadChan
-	ue.AddPduSession(int64(pduSess.PduSessId), pduSess)
+	ue.AddPduSession(pduSess.PduSessId, pduSess)
 	ue.Log.Infoln("PDU Session ID:", pduSess.PduSessId)
 	ue.Log.Infoln("PDU Session Type:", pduSess.PduSessType)
 	ue.Log.Infoln("SSC Mode:", pduSess.SscMode)
@@ -302,8 +302,7 @@ func HandlePduSessReleaseCompleteEvent(ue *realuectx.RealUe,
 	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
 	if err != nil {
-		fmt.Println("Failed to encrypt PDU Session Release Request Message", err)
-		return
+		return fmt.Errorf("failed to encrypt PDU Session Release Request Message: %v", err)
 	}
 
 	m := formUuMessage(common.PDU_SESS_REL_COMPLETE_EVENT, nasPdu, 0)

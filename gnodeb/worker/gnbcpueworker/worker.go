@@ -44,7 +44,6 @@ func HandleEvents(gnbue *gnbctx.GnbCpUe) (err error) {
 			HandleRanConnectionRelease(gnbue, msg)
 		case common.QUIT_EVENT:
 			HandleQuitEvent(gnbue, msg)
-			return
 		default:
 			gnbue.Log.Infoln("Event", evt, "is not supported")
 		}

@@ -41,7 +41,7 @@ func SendIcmpEchoRequest(pduSess *realuectx.PduSession) (err error) {
 	icmpPayload, err := hex.DecodeString("8c870d0000000000101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3031323334353637")
 	if err != nil {
 		pduSess.Log.Errorln("Failed to decode icmp hexString ")
-		return
+		return err
 	}
 	icmpPayloadLen := len(icmpPayload)
 	pduSess.Log.Traceln("ICMP payload size:", icmpPayloadLen)
@@ -63,7 +63,7 @@ func SendIcmpEchoRequest(pduSess *realuectx.PduSession) (err error) {
 	v4HdrBuf, err := ipv4hdr.Marshal()
 	if err != nil {
 		pduSess.Log.Errorln("ipv4hdr header marshal failed")
-		return
+		return err
 	}
 
 	icmpMsg := icmp.Message{
@@ -76,7 +76,7 @@ func SendIcmpEchoRequest(pduSess *realuectx.PduSession) (err error) {
 	b, err := icmpMsg.Marshal(nil)
 	if err != nil {
 		pduSess.Log.Errorln("Failed to marshal icmp message")
-		return
+		return err
 	}
 
 	payload := append(v4HdrBuf, b...)
