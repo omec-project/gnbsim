@@ -11,7 +11,6 @@ import (
 	"sync"
 
 	realuectx "github.com/omec-project/gnbsim/realue/context"
-
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/security"

@@ -10,7 +10,6 @@ import (
 
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/logger"
-
 	"github.com/sirupsen/logrus"
 )
 

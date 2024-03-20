@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"github.com/omec-project/gnbsim/logger"
-
 	"github.com/sirupsen/logrus"
 )
 

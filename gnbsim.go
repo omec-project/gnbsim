@@ -24,7 +24,6 @@ import (
 	prof "github.com/omec-project/gnbsim/profile"
 	profctx "github.com/omec-project/gnbsim/profile/context"
 	"github.com/omec-project/gnbsim/stats"
-
 	"github.com/urfave/cli"
 )
 

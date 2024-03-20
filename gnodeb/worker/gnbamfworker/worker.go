@@ -9,7 +9,6 @@ import (
 
 	"github.com/omec-project/gnbsim/common"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
-
 	"github.com/omec-project/ngap"
 	"github.com/omec-project/ngap/ngapType"
 )

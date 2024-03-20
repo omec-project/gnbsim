@@ -12,7 +12,6 @@ import (
 	"github.com/omec-project/gnbsim/logger"
 	profctx "github.com/omec-project/gnbsim/profile/context"
 	realuectx "github.com/omec-project/gnbsim/realue/context"
-
 	"github.com/omec-project/nas/security"
 	"github.com/sirupsen/logrus"
 )

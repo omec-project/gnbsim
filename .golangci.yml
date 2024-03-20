@@ -235,7 +235,7 @@ linters:
     - unused
     - gosimple
     - ineffassign
-    # - typecheck
+    - typecheck
     # Additional
     # - lll
     - godox
@@ -245,10 +245,10 @@ linters:
     # - nestif
     # - gomodguard
     # - nakedret
-    # - gci
+    - gci
     - misspell
     - gofumpt
-    # - whitespace
+    - whitespace
     # - unconvert
     # - predeclared
     # - noctx

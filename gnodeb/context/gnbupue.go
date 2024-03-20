@@ -7,7 +7,6 @@ package context
 import (
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/logger"
-
 	"github.com/omec-project/ngap/ngapType"
 	"github.com/omec-project/openapi/models"
 	"github.com/sirupsen/logrus"
