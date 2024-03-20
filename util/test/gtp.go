@@ -86,7 +86,7 @@ func BuildGTPv1Header(extHdrFlag bool, snFlag bool, nPduFlag bool,
 	}
 
 	if optHdrPresent {
-		payloadLen += uint16(OPT_GTPU_HEADER_LENGTH)
+		payloadLen += OPT_GTPU_HEADER_LENGTH
 	}
 
 	/* Populating GTP-U header */
@@ -126,12 +126,12 @@ func DecodeGTPv1Header(pkt []byte) (gtpPdu *GtpPdu, err error) {
 	buf := bytes.NewReader(pkt)
 	err = binary.Read(buf, binary.BigEndian, gtpPdu.Hdr)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	if (gtpPdu.Hdr.Flags & FLAG_REQUIRED) != FLAG_REQUIRED {
 		err = fmt.Errorf("invalid gtp version or protocol type")
-		return
+		return nil, err
 	}
 
 	logger.GtpLog.Traceln("Header field - Length:", gtpPdu.Hdr.Len)
@@ -145,18 +145,18 @@ func DecodeGTPv1Header(pkt []byte) (gtpPdu *GtpPdu, err error) {
 		gtpPdu.OptHdr = &GtpHdrOpt{}
 		err = binary.Read(buf, binary.BigEndian, gtpPdu.OptHdr)
 		if err != nil {
-			return
+			return nil, err
 		}
 		payloadStart += OPT_GTPU_HEADER_LENGTH
 	}
 
 	if len(pkt) != int(payloadEnd) {
 		err = fmt.Errorf("invalid payload length")
-		return
+		return nil, err
 	}
 
 	gtpPdu.Payload = pkt[payloadStart:payloadEnd]
-	return
+	return gtpPdu, nil
 }
 
 func BuildPduSessContainerExtHeader(qfi uint8) []uint8 {
@@ -192,7 +192,7 @@ func DecodePduSessContainerExtHeader(pkt []uint8) (payload []uint8,
 	bufLen := len(pkt)
 	if bufLen == 0 {
 		err = fmt.Errorf("extension header is nil")
-		return
+		return nil, nil, err
 	}
 
 	logger.GtpLog.Info("PDU Session Container Extension header length:", pkt[0])
@@ -201,7 +201,7 @@ func DecodePduSessContainerExtHeader(pkt []uint8) (payload []uint8,
 	octetCount := pkt[0] * 4
 	if octetCount == 0 || bufLen < int(octetCount) {
 		err = fmt.Errorf("incomplete extension header - buffer length: %v, extension header length value: %v", bufLen, pkt[0])
-		return
+		return nil, nil, err
 	}
 
 	extHdr = &PduSessContainerExtHeader{}
@@ -209,7 +209,7 @@ func DecodePduSessContainerExtHeader(pkt []uint8) (payload []uint8,
 	extHdr.Qfi, err = DecodeDlPduSessInformation(pkt[1:(octetCount - 1)])
 	if err != nil {
 		err = fmt.Errorf("failed to decode downlink pdu sessioon information:%v", err)
-		return
+		return nil, nil, err
 	}
 
 	extHdr.NextExtHeaderType = pkt[octetCount-1]
@@ -218,7 +218,7 @@ func DecodePduSessContainerExtHeader(pkt []uint8) (payload []uint8,
 		payload = pkt[octetCount:]
 	}
 
-	return
+	return payload, extHdr, nil
 }
 
 func BuildGpduMessage(payload []byte, teID uint32) ([]byte, error) {

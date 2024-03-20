@@ -61,8 +61,7 @@ func (cpTprt *GnbCpTransport) ConnectToPeer(peer transportcommon.TransportPeer) 
 		amf.AmfIp = addrs[0]
 	}
 
-	amf.Conn, err = test.ConnectToAmf(amf.AmfIp, gnb.GnbN2Ip, int(amf.AmfPort),
-		int(gnb.GnbN2Port))
+	amf.Conn, err = test.ConnectToAmf(amf.AmfIp, gnb.GnbN2Ip, amf.AmfPort, gnb.GnbN2Port)
 	if err != nil {
 		return fmt.Errorf("failed to connect amf, ip: %v, port: %v, err: %v",
 			amf.AmfIp, amf.AmfPort, err)
