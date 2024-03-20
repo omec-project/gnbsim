@@ -55,7 +55,7 @@ func HandleInitialUEMessage(gnbue *gnbctx.GnbCpUe,
 		}
 		gnbue.Log.Traceln("Sent Uplink NAS Message to AMF")
 	} else {
-		sendMsg, err := ngap.GetInitialUEMessage(gnbue, msg.NasPdus[0])
+		sendMsg, err := ngap.GetInitialUEMessage(gnbue, msg.NasPdus[0], msg.Tmsi)
 		if err != nil {
 			gnbue.Log.Errorln("GetInitialUEMessage failed:", err)
 			return

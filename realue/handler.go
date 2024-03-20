@@ -160,6 +160,14 @@ func HandleRegCompleteEvent(ue *realuectx.RealUe,
 	stats.LogStats(e)
 
 	m := formUuMessage(common.REG_COMPLETE_EVENT, nasPdu, id)
+	var tmsi string
+	if len(ue.Guti) == 19 {
+		tmsi = ue.Guti[5:]
+	} else {
+		tmsi = ue.Guti[6:]
+	}
+
+	m.Tmsi = tmsi
 	SendToSimUe(ue, m)
 	ue.Log.Traceln("Sent Registration Complete Message to SimUe")
 	return nil
