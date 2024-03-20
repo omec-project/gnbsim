@@ -75,8 +75,14 @@ func HandleAuthResponseEvent(ue *realuectx.RealUe,
 
 	ue.NgKsi = nasConvert.SpareHalfOctetAndNgksiToModels(authReq.SpareHalfOctetAndNgksi)
 
-	mcc, _ := strconv.Atoi(ue.Plmn.Mcc)
-	mnc, _ := strconv.Atoi(ue.Plmn.Mnc)
+	mcc, err := strconv.Atoi(ue.Plmn.Mcc)
+	if err != nil {
+		ue.Log.Infoln("failed to convert mcc to int", err)
+	}
+	mnc, err := strconv.Atoi(ue.Plmn.Mnc)
+	if err != nil {
+		ue.Log.Infoln("failed to convert mnc to int", err)
+	}
 	snName := fmt.Sprintf("5G:mnc%03d.mcc%03d.3gppnetwork.org", mnc, mcc)
 
 	rand := authReq.GetRANDValue()

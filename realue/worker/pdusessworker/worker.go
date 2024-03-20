@@ -31,13 +31,16 @@ func HandleEvents(pduSess *realuectx.PduSession) {
 
 			switch event {
 			case common.INIT_EVENT:
-				HandleInitEvent(pduSess, msg)
+				err = HandleInitEvent(pduSess, msg)
 			case common.DATA_PKT_GEN_REQUEST_EVENT:
 				err = HandleDataPktGenRequestEvent(pduSess, msg)
 			case common.CONNECTION_RELEASE_REQUEST_EVENT:
 				err = HandleConnectionReleaseRequestEvent(pduSess, msg)
 			case common.QUIT_EVENT:
-				HandleQuitEvent(pduSess, msg)
+				err = HandleQuitEvent(pduSess, msg)
+				if err != nil {
+					pduSess.Log.Infoln("failed to handle quiet evet:", err)
+				}
 				return
 			}
 		}
