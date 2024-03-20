@@ -11,12 +11,10 @@ import (
 
 	"github.com/omec-project/gnbsim/common"
 	realuectx "github.com/omec-project/gnbsim/realue/context"
+	realue_nas "github.com/omec-project/gnbsim/realue/nas"
 	"github.com/omec-project/gnbsim/realue/util"
 	"github.com/omec-project/gnbsim/realue/worker/pdusessworker"
 	"github.com/omec-project/gnbsim/stats"
-
-	realue_nas "github.com/omec-project/gnbsim/realue/nas"
-
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasConvert"
 	"github.com/omec-project/nas/nasMessage"
@@ -435,7 +433,6 @@ func HandleDlInfoTransferEvent(ue *realuectx.RealUe,
 			}
 			nasMsg = m
 			msgType = nasMsg.GsmHeader.GetMessageType()
-
 		}
 
 		m := &common.UeMessage{}

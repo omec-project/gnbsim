@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/omec-project/aper"
 	"github.com/omec-project/gnbsim/common"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/gnodeb/ngap"
@@ -18,8 +19,6 @@ import (
 	"github.com/omec-project/gnbsim/stats"
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 	"github.com/omec-project/gnbsim/util/test"
-
-	"github.com/omec-project/aper"
 	"github.com/omec-project/ngap/ngapConvert"
 	"github.com/omec-project/ngap/ngapType"
 )
@@ -498,7 +497,6 @@ func ProcessPduSessResourceSetupList(gnbue *gnbctx.GnbCpUe,
 	var nasPdus common.NasPduList
 
 	for _, item := range lst {
-
 		resourceSetupRequestTransfer := ngapType.PDUSessionResourceSetupRequestTransfer{}
 		err := aper.UnmarshalWithParams(item.PDUSessionResourceSetupRequestTransfer,
 			&resourceSetupRequestTransfer, "valueExt")

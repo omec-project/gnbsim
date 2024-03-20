@@ -13,7 +13,6 @@ import (
 
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/logger"
-
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasType"
 	"github.com/omec-project/nas/security"

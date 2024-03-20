@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-
 	"github.com/omec-project/gnbsim/logger"
 	"github.com/omec-project/logger_util"
 )

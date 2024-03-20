@@ -9,8 +9,6 @@ import (
 	"regexp"
 
 	"github.com/calee0219/fatal"
-	"golang.org/x/net/ipv4"
-
 	"github.com/omec-project/CommonConsumerTestData/UDR/TestRegistrationProcedure"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasType"
@@ -18,6 +16,7 @@ import (
 	"github.com/omec-project/openapi/models"
 	"github.com/omec-project/util/milenage"
 	"github.com/omec-project/util/ueauth"
+	"golang.org/x/net/ipv4"
 )
 
 type RanUeContext struct {

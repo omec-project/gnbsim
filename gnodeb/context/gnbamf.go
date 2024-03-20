@@ -7,10 +7,9 @@ package context
 import (
 	"net"
 
-	"github.com/omec-project/gnbsim/logger"
-
 	amfctx "github.com/omec-project/amf/context"
 	"github.com/omec-project/amf/factory"
+	"github.com/omec-project/gnbsim/logger"
 	"github.com/omec-project/openapi/models"
 	"github.com/sirupsen/logrus"
 )

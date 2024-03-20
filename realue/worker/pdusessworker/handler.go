@@ -13,7 +13,6 @@ import (
 	"github.com/omec-project/gnbsim/common"
 	realuectx "github.com/omec-project/gnbsim/realue/context"
 	"github.com/omec-project/gnbsim/util/test"
-
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
 )
