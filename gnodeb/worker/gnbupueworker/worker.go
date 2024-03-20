@@ -37,7 +37,10 @@ func HandleEvents(gnbue *gnbctx.GnbUpUe) {
 			gnbue.Log.Infoln("Handling:", evt)
 			switch evt {
 			case common.QUIT_EVENT:
-				HandleQuitEvent(gnbue, msg)
+				err := HandleQuitEvent(gnbue, msg)
+				if err != nil {
+					gnbue.Log.Errorln("failed to handle quiet event:", err)
+				}
 				return
 			}
 		}

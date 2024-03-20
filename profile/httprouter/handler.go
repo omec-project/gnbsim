@@ -51,7 +51,10 @@ func HTTPAddNewCallsProfile(c *gin.Context) {
 	if !ok {
 		number = 1
 	} else {
-		n, _ := strconv.Atoi(n)
+		n, err := strconv.Atoi(n)
+		if err != nil {
+			log.Println(err)
+		}
 		number = int32(n)
 	}
 
@@ -128,7 +131,10 @@ func HTTPExecuteProfile(c *gin.Context) {
 	}
 	logger.HttpLog.Debugf("%#v", prof)
 
-	prof.Init()
+	err = prof.Init()
+	if err != nil {
+		logger.HttpLog.Infoln("failed to initiale profile", err)
+	}
 	go profile.ExecuteProfile(&prof, profCtx.SummaryChan)
 	c.JSON(http.StatusOK, gin.H{})
 }

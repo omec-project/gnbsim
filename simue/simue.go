@@ -127,10 +127,16 @@ func HandleEvents(ue *simuectx.SimUe) {
 			err = HandleNwDeregAcceptEvent(ue, msg)
 		case common.ERROR_EVENT:
 			ue.Log.Warnln("Event:", event, " received error")
-			HandleErrorEvent(ue, msg)
+			err = HandleErrorEvent(ue, msg)
+			if err != nil {
+				ue.Log.Warnln("failed to handle error event:", err)
+			}
 			return
 		case common.QUIT_EVENT:
-			HandleQuitEvent(ue, msg)
+			err = HandleQuitEvent(ue, msg)
+			if err != nil {
+				ue.Log.Warnln("failed to handle quiet event:", err)
+			}
 			return
 		default:
 			ue.Log.Warnln("Event:", event, "is not supported")
@@ -141,7 +147,10 @@ func HandleEvents(ue *simuectx.SimUe) {
 			msg := &common.UeMessage{}
 			msg.Error = err
 			msg.Event = common.ERROR_EVENT
-			HandleErrorEvent(ue, msg)
+			err = HandleErrorEvent(ue, msg)
+			if err != nil {
+				ue.Log.Errorln("failed to handle error event:", err)
+			}
 			return
 		}
 	}

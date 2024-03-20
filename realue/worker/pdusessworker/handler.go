@@ -114,7 +114,10 @@ func HandleIcmpMessage(pduSess *realuectx.PduSession,
 		pduSess.RxDataPktCount++
 		if pduSess.ReqDataPktInt == 0 {
 			if pduSess.TxDataPktCount < pduSess.ReqDataPktCount {
-				SendIcmpEchoRequest(pduSess)
+				err := SendIcmpEchoRequest(pduSess)
+				if err != nil {
+					return fmt.Errorf("failed to send icmp message:%v", err)
+				}
 			} else {
 				msg := &common.UuMessage{}
 				msg.Event = common.DATA_PKT_GEN_SUCCESS_EVENT
@@ -178,11 +181,12 @@ func HandleDataPktGenRequestEvent(pduSess *realuectx.PduSession,
 			return fmt.Errorf("failed to send icmp echo req:%v", err)
 		}
 	} else {
-		go func(pduSess *realuectx.PduSession) error {
+		go func(pduSess *realuectx.PduSession) {
 			for pduSess.TxDataPktCount < pduSess.ReqDataPktCount {
-				err = SendIcmpEchoRequest(pduSess)
+				err := SendIcmpEchoRequest(pduSess)
 				if err != nil {
-					return fmt.Errorf("failed to send icmp echo req:%v", err)
+					pduSess.Log.Errorf("failed to send icmp echo req: %v", err)
+					return // Exit the goroutine on error
 				}
 				time.Sleep(time.Duration(pduSess.ReqDataPktInt) * time.Second)
 			}
@@ -190,7 +194,6 @@ func HandleDataPktGenRequestEvent(pduSess *realuectx.PduSession,
 			msg.Event = common.DATA_PKT_GEN_SUCCESS_EVENT
 			pduSess.WriteUeChan <- msg
 			pduSess.Log.Traceln("Sent Data Packet Generation Success Event")
-			return nil
 		}(pduSess)
 	}
 	return nil

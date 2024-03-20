@@ -340,7 +340,7 @@ func HandleServiceRequestEvent(ue *simuectx.SimUe,
 ) (err error) {
 	err = ConnectToGnb(ue)
 	if err != nil {
-		return fmt.Errorf("failed to connect gnb %v:", err)
+		return fmt.Errorf("failed to connect gnb %v", err)
 	}
 
 	SendToGnbUe(ue, intfcMsg)
@@ -445,7 +445,10 @@ func HandleErrorEvent(ue *simuectx.SimUe,
 
 	msg := &common.UuMessage{}
 	msg.Event = common.QUIT_EVENT
-	HandleQuitEvent(ue, msg)
+	err = HandleQuitEvent(ue, msg)
+	if err != nil {
+		ue.Log.Warnln("failed to handle quiet event", err)
+	}
 	return nil
 }
 

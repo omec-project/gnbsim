@@ -13,7 +13,10 @@ import (
 func Init(ue *realuectx.RealUe) {
 	ue.AuthenticationSubs = test.GetAuthSubscription(ue.Key, ue.Opc, "", ue.SeqNum)
 
-	HandleEvents(ue)
+	err := HandleEvents(ue)
+	if err != nil {
+		ue.Log.Infoln("failed to handle events:", err)
+	}
 }
 
 func HandleEvents(ue *realuectx.RealUe) (err error) {
@@ -55,9 +58,12 @@ func HandleEvents(ue *realuectx.RealUe) (err error) {
 		case common.DEREG_ACCEPT_UE_TERM_EVENT:
 			err = HandleNwDeregAcceptEvent(ue, msg)
 		case common.ERROR_EVENT:
-			HandleErrorEvent(ue, msg)
+			err = HandleErrorEvent(ue, msg)
 		case common.QUIT_EVENT:
-			HandleQuitEvent(ue, msg)
+			err = HandleQuitEvent(ue, msg)
+			if err != nil {
+				ue.Log.Warnln("failed to handle quiet event", err)
+			}
 			return nil
 		default:
 			ue.Log.Warnln("Event", event, "is not supported")
@@ -68,8 +74,7 @@ func HandleEvents(ue *realuectx.RealUe) (err error) {
 			msg := &common.UeMessage{}
 			msg.Error = err
 			msg.Event = common.ERROR_EVENT
-			err = nil
-			HandleErrorEvent(ue, msg)
+			err = HandleErrorEvent(ue, msg)
 		}
 	}
 

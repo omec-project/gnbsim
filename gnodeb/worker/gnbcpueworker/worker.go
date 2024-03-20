@@ -10,7 +10,10 @@ import (
 )
 
 func Init(gnbue *gnbctx.GnbCpUe) {
-	HandleEvents(gnbue)
+	err := HandleEvents(gnbue)
+	if err != nil {
+		gnbue.Log.Infoln("failed to handle event", err)
+	}
 }
 
 func HandleEvents(gnbue *gnbctx.GnbCpUe) (err error) {
