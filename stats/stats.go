@@ -166,160 +166,157 @@ func getUe(supi string) *UeStats {
 }
 
 func readStats() {
-	for {
-		select {
-		case m := <-ReadChan:
-			switch m.EType {
-			case REG_PROC_START:
-				logger.StatsLog.Infoln("Received Event: REG_PROC_START: ", m)
-			case REG_PROC_END:
-				logger.StatsLog.Infoln("Received Event: REG_PROC_END: ", m)
-			case REG_REQ_OUT:
-				logger.StatsLog.Infoln("Received Event: REG_REQ_OUT: ", m)
-				addTrans(m)
-			case AUTH_REQ_IN:
-				logger.StatsLog.Infoln("Received Event: AUTH_REQ_IN: ", m)
-				t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
-				m.T = t.T
-				ue := getUe(m.Supi)
-				ue.CReg.AuthReqInTime = m.T
-				x := m.T.Sub(ue.CReg.RegReqOutTime)
-				ue.CReg.RegReqAuthReq = x.Microseconds()
-				logger.StatsLog.Infoln("Time[us] between Reg Req & Auth Req ", ue.CReg.RegReqAuthReq)
-			case AUTH_RSP_OUT:
-				logger.StatsLog.Infoln("Received Event: AUTH_RSP_OUT: ", m)
-				addTrans(m)
-			case SECM_CMD_IN:
-				logger.StatsLog.Infoln("Received Event: SECM_CMD_IN: ", m)
-				t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
-				m.T = t.T
-				ue := getUe(m.Supi)
-				ue.CReg.SecMCmdInTime = m.T
-				x := m.T.Sub(ue.CReg.AuthRspOutTime)
-				ue.CReg.AuthRspSecMReq = x.Microseconds()
-				logger.StatsLog.Infoln("Time[us] between Auth Rsp and Sec M Req ", ue.CReg.AuthRspSecMReq)
-			case SECM_CMP_OUT:
-				logger.StatsLog.Infoln("Received Event: SECM_CMP_OUT: ", m)
-				addTrans(m)
-			case ICS_REQ_IN:
-				logger.StatsLog.Infoln("Received Event: ICS_REQ_IN: ", m)
-				t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
-				m.T = t.T
-				ue := getUe(m.Supi)
-				ue.CReg.ICSReqInTime = m.T
-				x := m.T.Sub(ue.CReg.SecCmdCmpOutTime)
-				ue.CReg.SecModeRspICReq = x.Microseconds()
-				logger.StatsLog.Infoln("Time[us] between Sec Mod Cmd & ICSReq ", ue.CReg.SecModeRspICReq)
-			case REG_COMP_OUT:
-				logger.StatsLog.Infoln("Received Event: REG_COMP_OUT: ", m)
-				addTrans(m)
-			case PDU_SESS_REQ_OUT:
-				logger.StatsLog.Infoln("Received Event: PDU_SESS_REQ_OUT: ", m)
-				addTrans(m)
-			case PDU_SESS_ACC_IN:
-				logger.StatsLog.Infoln("Received Event: PDU_SESS_ACC_IN: ", m)
-				t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
-				m.T = t.T
-				ue := getUe(m.Supi)
-				ue.CPdu.PduSessAcceptIn = m.T
-				x := m.T.Sub(ue.CPdu.PduSessReqOutTime)
-				ue.CPdu.PduSessReqAccept = x.Microseconds()
-				logger.StatsLog.Infoln("Time[us] between PDU Sess Req & Accept ", ue.CPdu.PduSessReqAccept)
-				ue.CPdu.PduSessProcTime = ue.CPdu.PduSessReqAccept
-				ue.Pdu = append(ue.Pdu, ue.CPdu)
-				ue.CPdu = PduSessEst{}
-			// case PDU_SESS_RES_SETUP:
-			// 	logger.StatsLog.Infoln("Received Event PDU_SESS_RES_SETUP: ", m)
-			// 	addTrans(m)
-			case UE_CTX_REL_OUT:
-				logger.StatsLog.Infoln("Received UE_CTX_REL_OUT ", m)
-				addTrans(m)
-			case UE_CTX_CMD_IN:
-				logger.StatsLog.Infoln("Received Event: UE_CTX_CMD_IN: ", m)
-				t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
-				m.T = t.T
-				ue := getUe(m.Supi)
-				ue.CCtxrel.CtxRelCmdInTime = m.T
-				if !ue.CCtxrel.CtxRelReqOutTime.IsZero() {
-					x := m.T.Sub(ue.CCtxrel.CtxRelReqOutTime)
-					ue.CCtxrel.CtxRelReqCmdTime = x.Microseconds()
-					ue.CCtxrel.CtxReleaseProcTime = ue.CCtxrel.CtxRelReqCmdTime
-					ue.Ctxrel = append(ue.Ctxrel, ue.CCtxrel)
-					logger.StatsLog.Infoln("Time[us] between Ctx Rel Req & Cmd ", ue.CCtxrel.CtxRelReqCmdTime)
-					ue.CCtxrel = CtxRelease{}
-				}
-			case DEREG_REQ_OUT:
-				logger.StatsLog.Infoln("Received DEREG_REQ_OUT ", m)
-				addTrans(m)
-			case DEREG_ACC_IN:
-				logger.StatsLog.Infoln("Received Event: DEREG_ACC_IN: ", m)
-				t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
-				m.T = t.T
-				ue := getUe(m.Supi)
-				ue.CDreg.DeregAccInTime = m.T
-				x := m.T.Sub(ue.CDreg.DeregReqOutTime)
-				ue.CDreg.DregReqAccTime = x.Microseconds()
-				ue.CDreg.DeregistrationProcTime = ue.CDreg.DregReqAccTime
-				ue.Dreg = append(ue.Dreg, ue.CDreg)
-				logger.StatsLog.Infoln("Time[us] between Dereg Req & Accept ", ue.CDreg.DregReqAccTime)
-				ue.CDreg = Deregistration{}
-			case SVC_REQ_OUT:
-				logger.StatsLog.Infoln("Received SVC_REQ_OUT", m)
-				addTrans(m)
-			case SVC_ACCEPT_IN:
-				logger.StatsLog.Infoln("Received Event: SVC_ACCEPT_IN: ", m)
-				t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
-				m.T = t.T
-				ue := getUe(m.Supi)
-				ue.CSvc.ServiceAccInTime = m.T
-				x := m.T.Sub(ue.CSvc.ServiceReqOutTime)
-				ue.CSvc.ServReqAccTime = x.Microseconds()
-				ue.CSvc.ServiceReqProcTime = ue.CSvc.ServReqAccTime
-				ue.Svc = append(ue.Svc, ue.CSvc)
-				logger.StatsLog.Infoln("Time[us] between Service Req & Accept ", ue.CSvc.ServReqAccTime)
-				ue.CSvc = ServiceReq{}
-			case MSG_OUT:
-				logger.StatsLog.Infoln("Received Event: MSG_OUT: ", m)
-				if m.Id != 0 {
-					t := popTrans(m.Id) // Don't add new Event event in table
-					if t != nil {
-						t.T = m.T
-						ue := getUe(t.Supi)
-						switch t.EType {
-						case REG_REQ_OUT:
-							ue.CReg.RegReqOutTime = t.T
-						case AUTH_RSP_OUT:
-							ue.CReg.AuthRspOutTime = t.T
-						case SECM_CMP_OUT:
-							ue.CReg.SecCmdCmpOutTime = t.T
-						case REG_COMP_OUT:
-							ue.CReg.RegProcTime = ue.CReg.RegReqAuthReq + ue.CReg.AuthRspSecMReq + ue.CReg.SecModeRspICReq
-							ue.Reg = append(ue.Reg, ue.CReg) // push the history
-							ue.CReg = Registration{}
-						case PDU_SESS_REQ_OUT:
-							ue.CPdu.PduSessReqOutTime = t.T
-						// case PDU_SESS_RES_SETUP:
-						// 	ue.CPdu.PduSessProcTime = ue.CPdu.PduSessReqAccept
-						// 	ue.Pdu = append(ue.Pdu, ue.CPdu)
-						case UE_CTX_REL_OUT:
-							ue.CCtxrel.CtxRelReqOutTime = t.T
-						case UE_CTX_REL_CMP_OUT:
-							if ue.CCtxrel.CtxRelReqCmdTime != 0 {
-								ue.CCtxrel.CtxReleaseProcTime = ue.CCtxrel.CtxRelReqCmdTime
-								ue.Ctxrel = append(ue.Ctxrel, ue.CCtxrel)
-								ue.CCtxrel = CtxRelease{}
-							}
-						case SVC_REQ_OUT:
-							ue.CSvc.ServiceReqOutTime = t.T
-						case DEREG_REQ_OUT:
-							ue.CDreg.DeregReqOutTime = t.T
+	for m := range ReadChan {
+		switch m.EType {
+		case REG_PROC_START:
+			logger.StatsLog.Infoln("Received Event: REG_PROC_START: ", m)
+		case REG_PROC_END:
+			logger.StatsLog.Infoln("Received Event: REG_PROC_END: ", m)
+		case REG_REQ_OUT:
+			logger.StatsLog.Infoln("Received Event: REG_REQ_OUT: ", m)
+			addTrans(m)
+		case AUTH_REQ_IN:
+			logger.StatsLog.Infoln("Received Event: AUTH_REQ_IN: ", m)
+			t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
+			m.T = t.T
+			ue := getUe(m.Supi)
+			ue.CReg.AuthReqInTime = m.T
+			x := m.T.Sub(ue.CReg.RegReqOutTime)
+			ue.CReg.RegReqAuthReq = x.Microseconds()
+			logger.StatsLog.Infoln("Time[us] between Reg Req & Auth Req ", ue.CReg.RegReqAuthReq)
+		case AUTH_RSP_OUT:
+			logger.StatsLog.Infoln("Received Event: AUTH_RSP_OUT: ", m)
+			addTrans(m)
+		case SECM_CMD_IN:
+			logger.StatsLog.Infoln("Received Event: SECM_CMD_IN: ", m)
+			t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
+			m.T = t.T
+			ue := getUe(m.Supi)
+			ue.CReg.SecMCmdInTime = m.T
+			x := m.T.Sub(ue.CReg.AuthRspOutTime)
+			ue.CReg.AuthRspSecMReq = x.Microseconds()
+			logger.StatsLog.Infoln("Time[us] between Auth Rsp and Sec M Req ", ue.CReg.AuthRspSecMReq)
+		case SECM_CMP_OUT:
+			logger.StatsLog.Infoln("Received Event: SECM_CMP_OUT: ", m)
+			addTrans(m)
+		case ICS_REQ_IN:
+			logger.StatsLog.Infoln("Received Event: ICS_REQ_IN: ", m)
+			t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
+			m.T = t.T
+			ue := getUe(m.Supi)
+			ue.CReg.ICSReqInTime = m.T
+			x := m.T.Sub(ue.CReg.SecCmdCmpOutTime)
+			ue.CReg.SecModeRspICReq = x.Microseconds()
+			logger.StatsLog.Infoln("Time[us] between Sec Mod Cmd & ICSReq ", ue.CReg.SecModeRspICReq)
+		case REG_COMP_OUT:
+			logger.StatsLog.Infoln("Received Event: REG_COMP_OUT: ", m)
+			addTrans(m)
+		case PDU_SESS_REQ_OUT:
+			logger.StatsLog.Infoln("Received Event: PDU_SESS_REQ_OUT: ", m)
+			addTrans(m)
+		case PDU_SESS_ACC_IN:
+			logger.StatsLog.Infoln("Received Event: PDU_SESS_ACC_IN: ", m)
+			t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
+			m.T = t.T
+			ue := getUe(m.Supi)
+			ue.CPdu.PduSessAcceptIn = m.T
+			x := m.T.Sub(ue.CPdu.PduSessReqOutTime)
+			ue.CPdu.PduSessReqAccept = x.Microseconds()
+			logger.StatsLog.Infoln("Time[us] between PDU Sess Req & Accept ", ue.CPdu.PduSessReqAccept)
+			ue.CPdu.PduSessProcTime = ue.CPdu.PduSessReqAccept
+			ue.Pdu = append(ue.Pdu, ue.CPdu)
+			ue.CPdu = PduSessEst{}
+		// case PDU_SESS_RES_SETUP:
+		// 	logger.StatsLog.Infoln("Received Event PDU_SESS_RES_SETUP: ", m)
+		// 	addTrans(m)
+		case UE_CTX_REL_OUT:
+			logger.StatsLog.Infoln("Received UE_CTX_REL_OUT ", m)
+			addTrans(m)
+		case UE_CTX_CMD_IN:
+			logger.StatsLog.Infoln("Received Event: UE_CTX_CMD_IN: ", m)
+			t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
+			m.T = t.T
+			ue := getUe(m.Supi)
+			ue.CCtxrel.CtxRelCmdInTime = m.T
+			if !ue.CCtxrel.CtxRelReqOutTime.IsZero() {
+				x := m.T.Sub(ue.CCtxrel.CtxRelReqOutTime)
+				ue.CCtxrel.CtxRelReqCmdTime = x.Microseconds()
+				ue.CCtxrel.CtxReleaseProcTime = ue.CCtxrel.CtxRelReqCmdTime
+				ue.Ctxrel = append(ue.Ctxrel, ue.CCtxrel)
+				logger.StatsLog.Infoln("Time[us] between Ctx Rel Req & Cmd ", ue.CCtxrel.CtxRelReqCmdTime)
+				ue.CCtxrel = CtxRelease{}
+			}
+		case DEREG_REQ_OUT:
+			logger.StatsLog.Infoln("Received DEREG_REQ_OUT ", m)
+			addTrans(m)
+		case DEREG_ACC_IN:
+			logger.StatsLog.Infoln("Received Event: DEREG_ACC_IN: ", m)
+			t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
+			m.T = t.T
+			ue := getUe(m.Supi)
+			ue.CDreg.DeregAccInTime = m.T
+			x := m.T.Sub(ue.CDreg.DeregReqOutTime)
+			ue.CDreg.DregReqAccTime = x.Microseconds()
+			ue.CDreg.DeregistrationProcTime = ue.CDreg.DregReqAccTime
+			ue.Dreg = append(ue.Dreg, ue.CDreg)
+			logger.StatsLog.Infoln("Time[us] between Dereg Req & Accept ", ue.CDreg.DregReqAccTime)
+			ue.CDreg = Deregistration{}
+		case SVC_REQ_OUT:
+			logger.StatsLog.Infoln("Received SVC_REQ_OUT", m)
+			addTrans(m)
+		case SVC_ACCEPT_IN:
+			logger.StatsLog.Infoln("Received Event: SVC_ACCEPT_IN: ", m)
+			t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
+			m.T = t.T
+			ue := getUe(m.Supi)
+			ue.CSvc.ServiceAccInTime = m.T
+			x := m.T.Sub(ue.CSvc.ServiceReqOutTime)
+			ue.CSvc.ServReqAccTime = x.Microseconds()
+			ue.CSvc.ServiceReqProcTime = ue.CSvc.ServReqAccTime
+			ue.Svc = append(ue.Svc, ue.CSvc)
+			logger.StatsLog.Infoln("Time[us] between Service Req & Accept ", ue.CSvc.ServReqAccTime)
+			ue.CSvc = ServiceReq{}
+		case MSG_OUT:
+			logger.StatsLog.Infoln("Received Event: MSG_OUT: ", m)
+			if m.Id != 0 {
+				t := popTrans(m.Id) // Don't add new Event event in table
+				if t != nil {
+					t.T = m.T
+					ue := getUe(t.Supi)
+					switch t.EType {
+					case REG_REQ_OUT:
+						ue.CReg.RegReqOutTime = t.T
+					case AUTH_RSP_OUT:
+						ue.CReg.AuthRspOutTime = t.T
+					case SECM_CMP_OUT:
+						ue.CReg.SecCmdCmpOutTime = t.T
+					case REG_COMP_OUT:
+						ue.CReg.RegProcTime = ue.CReg.RegReqAuthReq + ue.CReg.AuthRspSecMReq + ue.CReg.SecModeRspICReq
+						ue.Reg = append(ue.Reg, ue.CReg) // push the history
+						ue.CReg = Registration{}
+					case PDU_SESS_REQ_OUT:
+						ue.CPdu.PduSessReqOutTime = t.T
+					// case PDU_SESS_RES_SETUP:
+					// 	ue.CPdu.PduSessProcTime = ue.CPdu.PduSessReqAccept
+					// 	ue.Pdu = append(ue.Pdu, ue.CPdu)
+					case UE_CTX_REL_OUT:
+						ue.CCtxrel.CtxRelReqOutTime = t.T
+					case UE_CTX_REL_CMP_OUT:
+						if ue.CCtxrel.CtxRelReqCmdTime != 0 {
+							ue.CCtxrel.CtxReleaseProcTime = ue.CCtxrel.CtxRelReqCmdTime
+							ue.Ctxrel = append(ue.Ctxrel, ue.CCtxrel)
+							ue.CCtxrel = CtxRelease{}
 						}
+					case SVC_REQ_OUT:
+						ue.CSvc.ServiceReqOutTime = t.T
+					case DEREG_REQ_OUT:
+						ue.CDreg.DeregReqOutTime = t.T
 					}
 				}
-			case MSG_IN:
-				logger.StatsLog.Infoln("Received Event: MSG_IN: ", m)
-				addTrans(m)
 			}
+		case MSG_IN:
+			logger.StatsLog.Infoln("Received Event: MSG_IN: ", m)
+			addTrans(m)
 		}
 	}
 }

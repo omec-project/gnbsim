@@ -36,10 +36,6 @@ run:
   skip-files:
     - "api_.*\\.go$"
     - "model_.*\\.go$"
-    - "routers.go"
-    - "client.go"
-    - "configuration.go"
-    - "nas.go"
   # by default isn't set. If set we pass it to "go list -mod={option}". From "go help modules":
   # If invoked with -mod=readonly, the go command is disallowed from the implicit
   # automatic updating of go.mod described above. Instead, it fails when any changes
@@ -237,7 +233,7 @@ linters:
     # - errcheck
     - staticcheck
     - unused
-    # - gosimple
+    - gosimple
     - ineffassign
     # - typecheck
     # Additional

@@ -343,7 +343,7 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 	if len(p.Iterations) > 0 {
 		pCtx.Log.Infoln("Current UE iteration ", pCtx.CurrentItr)
 		pCtx.Log.Infoln("Current UE procedure index  ", pCtx.CurrentProcIndex)
-		itp, _ := p.PIterations[pCtx.CurrentItr]
+		itp := p.PIterations[pCtx.CurrentItr]
 		pCtx.Log.Infoln("Current Iteration map - ", itp)
 		if itp.WaitMap[pCtx.CurrentProcIndex] != 0 {
 			time.Sleep(time.Millisecond * time.Duration(itp.WaitMap[pCtx.CurrentProcIndex]))
@@ -351,7 +351,7 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 		nextProcIndex := pCtx.CurrentProcIndex + 1
 		var found bool
 		nextProcedure, found = itp.ProcMap[nextProcIndex]
-		if found == true {
+		if found {
 			pCtx.Log.Infof("Next Procedure Index %v and next Procedure = %v ", nextProcIndex, nextProcedure)
 			pCtx.Procedure = nextProcedure
 			pCtx.CurrentProcIndex = nextProcIndex

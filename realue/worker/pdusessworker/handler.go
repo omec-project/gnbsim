@@ -220,7 +220,7 @@ func HandleQuitEvent(pduSess *realuectx.PduSession,
 	// Drain all the messages until END MARKER is received.
 	// This ensures that the transmitting go routine is not blocked while
 	// sending data on this channel
-	if pduSess.LastDataPktRecvd != true {
+	if !pduSess.LastDataPktRecvd {
 		for pkt := range pduSess.ReadDlChan {
 			if pkt.GetEventType() == common.LAST_DATA_PKT_EVENT {
 				pduSess.Log.Debugln("Received last downlink data packet")

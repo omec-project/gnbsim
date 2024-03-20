@@ -115,43 +115,40 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 
 	go func() {
 		var plock sync.Mutex
-		for {
-			select {
-			case msg := <-profile.ReadChan:
-				profile.Log.Infoln("Received trigger for profile ", msg)
-				// works only if profile is still running.
-				// Typically if execInParallel set true in profile
-				gnb, err := factory.AppConfig.Configuration.GetGNodeB(profile.GnbName)
-				if err != nil {
-					err = fmt.Errorf("Failed to fetch gNB context: %v", err)
-					summary.ErrorList = append(summary.ErrorList, err)
-					summaryChan <- summary
-					return
-				}
-
-				plock.Lock()
-				profile.UeCount = profile.UeCount + 1
-				imsi := profile.Imsi + profile.UeCount
-				imsiStr := makeImsiStr(profile, imsi)
-				initImsi(profile, gnb, imsiStr)
-				pCtx := profile.PSimUe[imsiStr]
-				profile.Log.Infoln("pCtx ", pCtx)
-				wg.Add(1)
-				go func(pCtx *profctx.ProfileUeContext) {
-					defer wg.Done()
-					err := simue.ImsiStateMachine(profile, pCtx, imsiStr, summaryChan)
-					// Execution for the UE is complete. Count UE result as success or failure
-					Mu.Lock()
-					if err != nil {
-						summary.UeFailedCount++
-						summary.ErrorList = append(summary.ErrorList, err)
-					} else {
-						summary.UePassedCount++
-					}
-					Mu.Unlock()
-				}(pCtx)
-				plock.Unlock()
+		for msg := range profile.ReadChan {
+			profile.Log.Infoln("Received trigger for profile ", msg)
+			// works only if profile is still running.
+			// Typically if execInParallel set true in profile
+			gnb, err := factory.AppConfig.Configuration.GetGNodeB(profile.GnbName)
+			if err != nil {
+				err = fmt.Errorf("failed to fetch gNB context: %v", err)
+				summary.ErrorList = append(summary.ErrorList, err)
+				summaryChan <- summary
+				return
 			}
+
+			plock.Lock()
+			profile.UeCount = profile.UeCount + 1
+			imsi := profile.Imsi + profile.UeCount
+			imsiStr := makeImsiStr(profile, imsi)
+			initImsi(profile, gnb, imsiStr)
+			pCtx := profile.PSimUe[imsiStr]
+			profile.Log.Infoln("pCtx ", pCtx)
+			wg.Add(1)
+			go func(pCtx *profctx.ProfileUeContext) {
+				defer wg.Done()
+				err := simue.ImsiStateMachine(profile, pCtx, imsiStr, summaryChan)
+				// Execution for the UE is complete. Count UE result as success or failure
+				Mu.Lock()
+				if err != nil {
+					summary.UeFailedCount++
+					summary.ErrorList = append(summary.ErrorList, err)
+				} else {
+					summary.UePassedCount++
+				}
+				Mu.Unlock()
+			}(pCtx)
+			plock.Unlock()
 		}
 	}()
 	imsi := profile.Imsi
@@ -175,12 +172,12 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 			Mu.Unlock()
 		}(pCtx)
 
-		if profile.ExecInParallel == false {
+		if !profile.ExecInParallel {
 			profile.Log.Infoln("ExecuteProfile ExecInParallel false. Waiting for UEs to finish procesessing")
 			wg.Wait()
 		}
 	}
-	if profile.ExecInParallel == true {
+	if profile.ExecInParallel {
 		profile.Log.Infoln("ExecuteProfile ExecInParallel true. Waiting for for all UEs to finish processing")
 		wg.Wait()
 	}
@@ -190,12 +187,12 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 // enable step trigger only if execParallel is enabled in profile
 func SendStepEventProfile(name string) error {
 	profile, found := profctx.ProfileMap[name]
-	if found == false {
+	if !found {
 		err := fmt.Errorf("unknown profile:%+v", profile)
 		log.Println(err)
 		return err
 	}
-	if profile.ExecInParallel == false {
+	if !profile.ExecInParallel {
 		err := fmt.Errorf("ExecInParallel should be true if step profile needs to be executed")
 		log.Println(err)
 		return err
@@ -214,7 +211,7 @@ func SendStepEventProfile(name string) error {
 
 func SendAddNewCallsEventProfile(name string, number int32) error {
 	profile, found := profctx.ProfileMap[name]
-	if found == false {
+	if !found {
 		err := fmt.Errorf("unknown profile:%+v", profile)
 		return err
 	}
