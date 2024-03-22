@@ -45,6 +45,9 @@ type UuMessage struct {
 	DefaultMessage
 	Supi string
 
+	// meta data
+	Tmsi string
+
 	// channel that a src entity can optionally send to the target entity.
 	// Target entity will use this channel to write to the src entity
 	CommChan chan InterfaceMessage

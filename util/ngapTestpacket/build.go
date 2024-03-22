@@ -319,7 +319,7 @@ func BuildInitialUEMessage(ranUeNgapID int64, nasPdu []byte, fiveGSTmsi string) 
 			Bytes:     amfPointer,
 			BitLength: 6,
 		}
-		tmsi, err := hex.DecodeString(fiveGSTmsi[4:])
+		tmsi, err := hex.DecodeString(fiveGSTmsi[6:])
 		if err != nil {
 			fatal.Fatalf("DecodeString error in BuildInitialUEMessage: %+v", err)
 		}

@@ -71,8 +71,8 @@ func GetNGSetupRequest(gnb *gnbctx.GNodeB) ([]byte, error) {
 //
 //	gnbue: gNB-UE context.
 //	nasPdu: value of id-NAS-PDU from the UE.
-func GetInitialUEMessage(gnbue *gnbctx.GnbCpUe, nasPdu []byte) ([]byte, error) {
-	message := ngapTestpacket.BuildInitialUEMessage(gnbue.GnbUeNgapId, nasPdu, "")
+func GetInitialUEMessage(gnbue *gnbctx.GnbCpUe, nasPdu []byte, tmsi string) ([]byte, error) {
+	message := ngapTestpacket.BuildInitialUEMessage(gnbue.GnbUeNgapId, nasPdu, tmsi)
 	ies := message.InitiatingMessage.Value.InitialUEMessage.ProtocolIEs.List
 
 	if e := updateUserLocationInformation(gnbue.Gnb, ies[2].Value.UserLocationInformation); e != nil {
