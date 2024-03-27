@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/stale@v9
       with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        repo-token: ${{ secrets.GH_OMEC_PAT }}
         stale-issue-message: 'This issue has been stale for 30 days and will be closed in 5 days. Comment to keep it open.'
         stale-pr-message: 'This pull request has been stale for 30 days and will be closed in 5 days. Comment to keep it open.'
         stale-issue-label: 'stale/issue'
