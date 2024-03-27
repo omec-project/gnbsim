@@ -108,7 +108,7 @@ jobs:
             https://api.github.com/repos/${{ github.repository }}/releases \
             -d '{
               "tag_name": "v${{ steps.version-change.outputs.version }}",
-              "target_commitish": "master",
+              "target_commitish": "main",
               "name": "v${{ steps.version-change.outputs.version }}",
               "draft": false,
               "prerelease": false,
