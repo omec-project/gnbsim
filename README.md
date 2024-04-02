@@ -102,7 +102,7 @@ call flows.
     If you want to run gNBSim as a standalone tool then deploy gNBSim using helm charts. If you want to run gNBSim along with 
     other SD-Core Network Functions then use AIAB to deploy all network functions including gNBSim. 
     
-    $ git clone "https://gerrit.opencord.org/aether-in-a-box"  # clobe AIAB
+    $ git clone "https://gerrit.opencord.org/aether-in-a-box"  # clone AIAB
     $ cd aether-in-a-box 
     $ make 5g-core 
     $ kubectl exec -it gnbsim-0 -n omec # Enter gnbsim pod using kubectl exec command
