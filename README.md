@@ -102,14 +102,11 @@ call flows.
     If you want to run gNBSim as a standalone tool then deploy gNBSim using helm charts. If you want to run gNBSim along with 
     other SD-Core Network Functions then use AIAB to deploy all network functions including gNBSim. 
     
-    1. Clone AIAB
-    2. Run "make 5g-core"
-    3. Trigger call flow testing using following commands
-    
-    
-    Enter gnbsim pod using kubectl exec command and run following commands, 
-    
-    $ ./gnbsim
+    $ git clone "https://gerrit.opencord.org/aether-in-a-box"  # clobe AIAB
+    $ cd aether-in-a-box 
+    $ make 5g-core 
+    $ kubectl exec -it gnbsim-0 -n omec # Enter gnbsim pod using kubectl exec command
+    $./gnbsim         # this is within gnbsim container and it triggers call flow testing 
     
     Note: By default, the gNB Sim reads the configuration from 
     /gnbsim/config/gnb.conf file. To provide a different configuration file,
