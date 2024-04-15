@@ -10,6 +10,6 @@ gNodeB and UE by generating NAS and NGAP messages for the configured UEs and
 call flows.
 
 # Table Of Contents
-  * [Configuration](./gnbsim_config.md)
+  * [Configuration](./config.md)
 
 

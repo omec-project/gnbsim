@@ -40,7 +40,7 @@ call flows.
         $ ./gnbsim
 
 Note: By default, the gNB Sim reads the configuration from /gnbsim/config/gnb.conf file. 
-Please refer to the gNBSim configuration [guide](./docs/gnbsim_config.md). To provide a different 
+Please refer to the gNBSim configuration [guide](./docs/config.md). To provide a different 
 configuration file, use the below command
 
          $ ./gnbsim --cfg config/gnbsim.yaml
@@ -137,7 +137,7 @@ Enter gnbsim pod using kubectl exec command and run following commands,
 
 # Support and Contributions
 
-The gnbsimF project welcomes new contributors. Feel free to propose a new feature or fix bugs!
+The gnbsim project welcomes new contributors. Feel free to propose a new feature or fix bugs!
 Before contributing, please follow these guidelines:
 
 1. gNBSim documentation details [here](./docs/README.md)
