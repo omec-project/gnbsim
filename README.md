@@ -55,9 +55,9 @@ section2 This repository is part of the SD-Core project. It provides a tool to s
      $ cd gnbsim
      $ make docker-build #this will create docker image
 
-    If you want to run gNBSim along with other SD-Core Network Functions then use aether onRamp to deploy all network functions.
-    If you want to run gNBSim as a standalone tool then deploy gNBSim using onRamp. 
-    Enter gnbsim pod using kubectl exec command and run following commands, 
+If you want to run gNBSim along with other SD-Core Network Functions then use aether onRamp to deploy all network functions.
+If you want to run gNBSim as a standalone tool then deploy gNBSim using onRamp. 
+Enter gnbsim pod using kubectl exec command and run following commands, 
 
     All these steps are explained in detail on [AIAB documentation](https://docs.sd-core.opennetworking.org/master/developer/aiab.html)
 
