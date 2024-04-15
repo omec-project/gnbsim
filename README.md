@@ -100,7 +100,7 @@ Enter gnbsim pod using kubectl exec command and run following commands,
     - Provision data interface to gNBSim Container/POD/executable for data traffic testing
     - Triggering downlink data from gNB Sim (CI/CD feature as well)
 
-    3gpp features for gNodeB Simulator
+   3gpp features for gNodeB Simulator
  
     - GUTI based registration
     - Adding support for Resynchronization Profile
