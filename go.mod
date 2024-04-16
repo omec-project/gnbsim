@@ -10,10 +10,10 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/omec-project/CommonConsumerTestData v1.2.0
 	github.com/omec-project/amf v1.4.0
-	github.com/omec-project/aper v1.1.1
+	github.com/omec-project/aper v1.1.2
 	github.com/omec-project/http2_util v1.2.0
 	github.com/omec-project/logger_util v1.2.0
-	github.com/omec-project/nas v1.2.0
+	github.com/omec-project/nas v1.2.2
 	github.com/omec-project/ngap v1.2.0
 	github.com/omec-project/openapi v1.2.0
 	github.com/omec-project/util v1.0.13
@@ -67,7 +67,7 @@ require (
 	github.com/montanaflynn/stats v0.6.6 // indirect
 	github.com/omec-project/logger_conf v1.1.1 // indirect
 	github.com/omec-project/metricfunc v1.4.0 // indirect
-	github.com/omec-project/util_3gpp v1.2.0 // indirect
+	github.com/omec-project/util_3gpp v1.2.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
