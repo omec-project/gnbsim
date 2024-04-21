@@ -18,6 +18,9 @@ SPDX-License-Identifier: Apache-2.0
 	List of test/simulation profiles. Each item in the list holds configuration specific to a profile.
 	Each profile executes required set of systems procedures for the configured set of IMSI's.
 	Each profile has enable field and if set to true then that profile is executed.
+- **customProfiles**:
+    List of custom profiles. Each item in the list holds configuration specific to a customProfile.
+    Each custom profile has enable field and if set to true then that custom profile is executed.
         
 ## Description of Each Profile
         
