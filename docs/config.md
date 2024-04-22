@@ -18,8 +18,8 @@ SPDX-License-Identifier: Apache-2.0
 
         gnb:
           ips:
-          - '"192.168.251.5/24"' #gnb1 IP
-          - '"192.168.251.6/32"' #gnb2 IP
+          - '"192.168.251.5/24"' # gnb1 IP
+          - '"192.168.251.6/32"' # gnb2 IP
         configuration:
           runConfigProfilesAtStart: true
           singleInterface: #this will be added through configmap script
