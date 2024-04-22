@@ -7,59 +7,31 @@ SPDX-License-Identifier: Apache-2.0
 # Table Of Contents
   * [Introduction](#Introduction)
   * [gNBSim Block Diagram](#gnbsim-simulator-block-diagram)
-  * [Using gNBSim](#using-gnbsim)
-    * [Locally Built gNBSim](#Locally-built-gnbsim)
-    * [gNBSim as docker container](#gNBSim-as-container)
   * [Supported Features](#supported-features)
   * [Pending Features](#pending-features)
   * [Support & Contributions](#Support-and-contributions)
   * [License](#license)
+  * [Deployment model](/docs/deployment.md)
+  * [Configuration](/docs/config.md)
+  * Advanced Configuration/Features
+    * [API Based Configuration](/docs/apis.md)
+    * [Data Support](/docs/data.md)
+    * [Message Flow](/docs/gnbsim_flow.md)
+    * [Profile Details](/docs/profile_manager_design.md)
+    * [UE Originated Message Flow](/docs/ue_originated_flow.md)
+    * [UE Terminated Message Flow](/docs/ue_terminated_flow.md)
 
 
 # Introduction
 
-This repository is part of the SD-Core project. It provides a tool to simulate
-gNodeB and UE by generating NAS and NGAP messages for the configured UEs and 
-call flows.
+This repository is part of the SD-Core project. SD-Core is open source 5G implementation of 5G Core Network. 
+SD-Core provides a tool to simulate gNodeB and UE by generating NAS and NGAP messages for the configured UEs
+and call flows.
 
 # gNBSim Simulator Block Diagram
 
 ![gNBSim](/docs/images/gnbsim_flow_diagram.png)
 
-
-# Using gNBSim 
-
-## Locally Built gNBSim
-
-        $ git clone git@github.com:omec-project/gnbsim.git
-        $ cd gnbsim
-        $ go build
-
-        Trigger call flow testing using following commands
-
-        $ ./gnbsim
-
-Note: By default, the gNB Sim reads the configuration from /gnbsim/config/gnb.conf file. 
-Please refer to the gNBSim configuration [guide](./docs/config.md). To provide a different 
-configuration file, use the below command
-
-         $ ./gnbsim --cfg config/gnbsim.yaml
-
-
-
-
-## gNBSim as Docker Container
-section2 This repository is part of the SD-Core project. It provides a tool to simulate
-
-     $ git clone git@github.com:omec-project/gnbsim.git
-     $ cd gnbsim
-     $ make docker-build #this will create docker image
-
-If you want to run gNBSim along with other SD-Core Network Functions then use aether onRamp to deploy all network functions.
-If you want to run gNBSim as a standalone tool then deploy gNBSim using onRamp. 
-Enter gnbsim pod using kubectl exec command and run following commands, 
-
-    All these steps are explained in detail on [AIAB documentation](https://docs.sd-core.opennetworking.org/master/developer/aiab.html)
 
 # Supported features
 
@@ -92,6 +64,8 @@ Enter gnbsim pod using kubectl exec command and run following commands,
     - Timeout for every profile
     - Logic to calculate latency per transaction/ operation
     - Support retransmission of Service Request Message
+    - Support deployment of gNBSim as standalone container
+    - Reporting profile errors from all levels
 
 # Pending Features
 
@@ -120,8 +94,6 @@ Enter gnbsim pod using kubectl exec command and run following commands,
     
    CI/CD features
  
-    - Advanced logging
-    - Reporting profile errors from all levels
     - HTTP APIs to fetch subscriber/profile status from gNBSim
 
    Negative Testing features
@@ -130,10 +102,6 @@ Enter gnbsim pod using kubectl exec command and run following commands,
     - Sending negative responses to request/command type messages based on configuration
     - Handling security mode failure message
     
-
-   gNBSim Deployment Features
-
-    - Support deployment of gNBSim as standalone container
 
 # Support and Contributions
 
