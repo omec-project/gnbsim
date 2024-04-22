@@ -20,5 +20,5 @@ AS (Application Server) address. This is used to send data packets.
         gnbName: gnb1 # gNB to be used for this profile
         startImsi: 208930100007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
         ueCount: 1 # Number of UEs for for which the profile will be executed
-        defaultAs: "192.168.250.1" #default icmp pkt destination
-        perUserTimeout: 10 #if no expected event received in this time then treat it as failure
+        defaultAs: "192.168.250.1" # default icmp pkt destination
+        perUserTimeout: 10 # if no expected event received in this time then treat it as failure
