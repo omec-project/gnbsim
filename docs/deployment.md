@@ -56,7 +56,7 @@ Update defaultAs value to correct IP address. This address is used to send some 
 - `make 5gc` will by default deploy gNB Simulator in this mode
 - One interface is used for user plane traffic towards UPF
 - Second interface is used to send traffic towards control plane (i.e. AMF).
-- UPF network & default gateway is provided in the override values.
+- UPF network and default gateway is provided in the override values.
 - Route to UPF network is added when POD comes up
 - defaultAs is configured per profile. This address is used to send data traffic during test
 
