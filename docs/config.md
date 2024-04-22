@@ -30,7 +30,7 @@ SPDX-License-Identifier: Apache-2.0
               n2Port: 9487 # gNB N2 Port used to connect to AMF
               n3IpAddr: 192.168.251.5 # gNB N3 interface IP address used to connect to UPF
               n3Port: 2152 # gNB N3 Port used to connect to UPF
-              name: gnb1 # gNB name that uniquely identify a gNB within application
+              name: gnb1 # gNB name that uniquely identifies a gNB within application
               globalRanId:
                 plmnId:
                   mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
