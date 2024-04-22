@@ -118,7 +118,7 @@ SPDX-License-Identifier: Apache-2.0
            gnbName: gnb1 # gNB to be used for this profile
            startImsi: 208930100007487
            ueCount: 5
-           defaultAs: "192.168.250.1" #default icmp pkt destination
+           defaultAs: "192.168.250.1" # default icmp pkt destination
            opc: "981d464c7c52eb6e5036234984ad0bcf"
            key: "5122250214c33e723a5dd523fc145fc0"
            sequenceNumber: "16f3b3f70fc2"
