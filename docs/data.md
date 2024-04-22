@@ -15,7 +15,7 @@ AS (Application Server) address. This is used to send data packets.
 
 
       - profileType: nwtriggeruedereg # profile type
-        profileName: profile6 # uniqely identifies a profile within application
+        profileName: profile6 # uniquely identifies a profile within application
         enable: false # Set true to execute the profile, false otherwise.
         gnbName: gnb1 # gNB to be used for this profile
         startImsi: 208930100007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
