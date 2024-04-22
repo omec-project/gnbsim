@@ -162,4 +162,3 @@ Currently following profiles are supported :
 ### **uetriggservicereq:**
 - Registration + UE initiated PDU Session Establishment + User Data packets + AN Release + UE Initiated Service Request
 
-
