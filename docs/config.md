@@ -13,7 +13,7 @@ SPDX-License-Identifier: Apache-2.0
             
 - **gnbs:** 
     List of gNB's to be simulated. Each item in the list holds configuration specific to a gNB.
-    Support of Multiple gNBs: Two gnbs are configured by default. So User can create profiles by using these gnbs.
+    Support of multiple gNBs: Two gNBs are configured by default. So, User can create profiles by using these gNBs.
     Configuration of two gNBs can be found here
 
         gnb:
