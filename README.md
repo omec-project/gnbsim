@@ -13,7 +13,7 @@ SPDX-License-Identifier: Apache-2.0
   * [License](#license)
   * [Deployment model](/docs/deployment.md)
   * [Configuration](/docs/config.md)
-  * Advanced Configuation/Featuures
+  * Advanced Configuration/Features
     * [API Based Configuration](/docs/apis.md)
     * [Data Support](/docs/data.md)
     * [Message Flow](/docs/gnbsim_flow.md)
