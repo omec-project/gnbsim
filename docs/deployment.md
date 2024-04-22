@@ -17,7 +17,7 @@ Aether onRamp makefile files are readable and user can achieve the required goal
 
 If you want to run gNBSim as a standalone executable tool, then follow below steps.
 
-        $ git clone git@github.com:omec-project/gnbsim.git
+        $ git clone https://github.com/omec-project/gnbsim.git
         $ cd gnbsim
         $ go build
 
