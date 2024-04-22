@@ -113,8 +113,8 @@ SPDX-License-Identifier: Apache-2.0
            profileType: custom # profile type
            profileName: custom1 # uniqely identifies a profile within application
            enable: false # Set true to execute the profile, false otherwise.
-           execInParallel: false #run all subscribers in parallel
-           stepTrigger: true #wait for trigger to move to next step
+           execInParallel: false # run all subscribers in parallel
+           stepTrigger: true # wait for trigger to move to next step
            gnbName: gnb1 # gNB to be used for this profile
            startImsi: 208930100007487
            ueCount: 5
