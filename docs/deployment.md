@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0
 [Aether onRamp](https://docs.aetherproject.org/master/onramp/gnbsim.html) installs gNBSim as docker container 
 next to SD-Core (5G Core) or can be deployed in a separate host.
 If user wish to use just gNBSim and test it with some other 5G Core then Aether onRamp allows just installation of gNBSim. 
-Aether onRamp makefiles are readable and  user can achieve the required goal.
+Aether onRamp makefile files are readable and user can achieve the required goal.
 
 ## Option2: As standalone executable
 
