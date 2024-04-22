@@ -32,7 +32,7 @@ To provide a different configuration file, use the below command
 > Please refer to the gNBSim configuration [guide](./docs/config.md). Please make sure following
 > configuration fields are updated to correct values.
 
-For each gNB in the config file change below values,
+For each gNB in the config file change below values
 
       n2IpAddr: # gNB N2 interface IP address used to connect to AMF
       n3IpAddr: 192.168.251.5 # gNB N3 interface IP address used to connect to UPF. when singleInterface mode is false
