@@ -105,7 +105,7 @@ SPDX-License-Identifier: Apache-2.0
     Each custom profile has enable field and if set to true then that custom profile is executed.
     Support of Custom Profiles: User can now define your own profile. New profile can be
     created by using existing baseline procedure. Example of custom profile can be found here.
-    Check customProfiles in `gNBSim config <https://github.com/omec-project/gnbsim/blob/main/config/gnbsim.yaml>_`
+    Check customProfiles in [gNBSim config](../config/gnbsim.yaml)
     Delay between Procedures can be added using customProfiles
 
        customProfiles:
