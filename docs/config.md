@@ -140,8 +140,8 @@ SPDX-License-Identifier: Apache-2.0
                "next":  "iteration3"
              - "name": "iteration3"
                "1": "UE-INITIATED-DEREGISTRATION-PROCEDURE 10"
-               #"repeat": 0 #default value 0 . i.e execute once
-               #"next":  "quit" #default value quit. i.e. no further iteration to run
+               #"repeat": 0 # default value 0. i.e., execute once
+               #"next":  "quit" # default value quit. i.e., no further iteration to run
 
 ## Description of Each Profile
         
