@@ -22,8 +22,8 @@ SPDX-License-Identifier: Apache-2.0
           - '"192.168.251.6/32"' # gnb2 IP
         configuration:
           runConfigProfilesAtStart: true
-          singleInterface: #this will be added through configmap script
-          execInParallel: false #run all profiles in parallel
+          singleInterface: # this will be added through configmap script
+          execInParallel: false # run all profiles in parallel
           gnbs: # pool of gNodeBs
             gnb1:
               n2IpAddr: # gNB N2 interface IP address used to connect to AMF
