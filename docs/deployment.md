@@ -52,7 +52,7 @@ Update defaultAs value to correct IP address. This address is used to send some 
 ## Option3: As a part of Aether In a Box
 
 - This is default mode of deployment for gNBSim
-- Multus cni needs to be enabled on cluster. Required for bess-upf & gNBSim
+- Multus cni needs to be enabled on cluster. Required for bess-upf and gNBSim
 - `make 5gc` will by default deploy gNB Simulator in this mode
 - One interface is used for user plane traffic towards UPF
 - Second interface is used to send traffic towards control plane (i.e. AMF).
