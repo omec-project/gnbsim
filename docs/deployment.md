@@ -28,7 +28,7 @@ To provide a different configuration file, use the below command
 
          $ ./gnbsim --cfg config/gnbsim.yaml
 
-> [!Note] By default, the gNB Sim reads the configuration from ./config/gnbsim.yaml file.
+> [!Note] By default, the gNBSim reads the configuration from ./config/gnbsim.yaml file.
 > Please refer to the gNBSim configuration [guide](./docs/config.md). Please make sure following
 > configuration fields are updated to correct values.
 
