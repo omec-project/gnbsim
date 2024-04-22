@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 # gNBsim data support 
 
 
-Gnbsim can generate and send user data packets (ICMP echo request)
+gNBSim can generate and send user data packets (ICMP echo request)
 and process downlink user data (ICMP echo response) over the established user
 plane path (GTP Tunnel). Configure number of data packets to be sent. Configure
 AS (Application Server) address. This is used to send data packets.
