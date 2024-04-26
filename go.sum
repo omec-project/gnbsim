@@ -215,8 +215,8 @@ github.com/omec-project/metricfunc v1.4.0 h1:gOc8K6BIFw/NYBKeagb3MucNSDDqTgEt2mr
 github.com/omec-project/metricfunc v1.4.0/go.mod h1:S7+R12DJtKD8s4iTEjgJUb3jXlUklFj+9t8wTIeNx4A=
 github.com/omec-project/nas v1.2.2 h1:5qvKH6Eew0IwivRMC6eWueRPgXwYSLfRUPcH5sbsv44=
 github.com/omec-project/nas v1.2.2/go.mod h1:QdRwa7KjgzWpuDnIdezNZgtCwhHH7RcFDdQTSCB5afM=
-github.com/omec-project/ngap v1.2.0 h1:BeH8xiQQUnBog0eQiipjgcV7Ua02MEnpS4O5hwVMpDo=
-github.com/omec-project/ngap v1.2.0/go.mod h1:fbX1GqunoSS2B7GDTEccIutmgNdUIxSy5BKVnvX7SM0=
+github.com/omec-project/ngap v1.2.1 h1:YLgkfMYWetvIszqoMr7I5ZPJXxTiK23KLcjiYDawisc=
+github.com/omec-project/ngap v1.2.1/go.mod h1:sPvpU/ahwqoTvFi5IfnzHmJvIxQPnsVCmq7iU/L1lEo=
 github.com/omec-project/openapi v1.2.0 h1:7Wvi0HLvhvxMyQtqGcqtMCPC/0QCGAFP5htrXCfWxRc=
 github.com/omec-project/openapi v1.2.0/go.mod h1:hjU13MB1m9MHTko87JfsUNCdeD6/m6VkNZDD8Vq5U9M=
 github.com/omec-project/util v1.0.13 h1:50ghFbWo7aqhqIknC6KDPWmkht0tP1v2wjpIdcWVXKg=
