@@ -18,7 +18,7 @@ WORKDIR $GOPATH/src/gnbsim
 COPY . .
 RUN make all
 
-FROM alpine:3.19 AS gnbsim
+FROM alpine:3.20 AS gnbsim
 
 LABEL description="Aether open source 5G Core Network" \
     version="Stage 3"
