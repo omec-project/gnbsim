@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/omec-project/gnbsim/logger"
-	"github.com/omec-project/logger_util"
+	logger_util "github.com/omec-project/util/logger"
 )
 
 // Route is the information for every URI.

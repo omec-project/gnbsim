@@ -15,8 +15,8 @@ import (
 	"github.com/omec-project/gnbsim/factory"
 	"github.com/omec-project/gnbsim/logger"
 	profilerouter "github.com/omec-project/gnbsim/profile/httprouter"
-	"github.com/omec-project/http2_util"
-	"github.com/omec-project/logger_util"
+	"github.com/omec-project/util/http2_util"
+	logger_util "github.com/omec-project/util/logger"
 	"golang.org/x/net/context"
 )
 
