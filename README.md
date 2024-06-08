@@ -70,44 +70,31 @@ downlink user data (ICMP echo response) over the established data plane path
 
 # Pending Features
 
-Data Testing Features
-
 - Provision data interface to gNBSim Container/POD/executable for data traffic testing
-- Triggering downlink data from gNB Sim (CI/CD feature as well)
-
-3gpp features for gNodeB Simulator
-
-- GUTI based registration
-- Adding support for Resynchronization Profile
-- Adding Support for N2 handover profile
-- Adding Support for Xn Handover profile
-- Adding support for handling end marker packet
-- Generating GTPU echo request and handling incoming GTPU Request
-- Support to send Error indication Message
+- [3gpp] Generating GTPU echo request & handle incoming GTPU response
+- [3gpp] Handle incoming GTPu echo request & generate GTPu echo response
+- [3gpp] Support to send Error indication Message
+- [3gpp] Adding support for handling End Marker packet
+- [3gpp] GUTI based registration
+- [3gpp] Adding support for Resynchronization Profile
+- [3gpp] Adding Support for N2 handover profile
 - Support to handle Paging Request
-
-Common features for gNodeB Simulator
-
 - Controlling Profiles - Adding support for aborting profile
-- Controlling Profiles - Suspend/Pause profiles
-- Controlling Profiles - Resume Profile
+- Controlling Profiles - Suspend & resume  profiles
 - Adding support for configurable rate of events
-
-CI/CD features
-
 - HTTP APIs to fetch subscriber/profile status from gNBSim
-
-Negative Testing features
-
+- Adding Support for Xn Handover profile
 - Dropping incoming messages based on configuration
 - Sending negative responses to request/command type messages based on configuration
 - Handling security mode failure message
-
+- Triggering downlink data from gNB Sim (CI/CD feature as well)
+- UI Support
+- 3gpp Release Upgrade
+- Extensive gnbsim documentation
 
 # Support and Contributions
 
-The gnbsim project welcomes new contributors. Feel free to propose a new feature
-or fix bugs!
+The gnbsim project welcomes new contributors. Feel free to propose a new feature or fix bugs!
 
 Before contributing, please follow these guidelines:
 
