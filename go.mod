@@ -20,7 +20,7 @@ require (
 	github.com/urfave/cli v1.22.15
 	github.com/yerden/go-util v1.1.4
 	golang.org/x/net v0.25.0
-	golang.org/x/sys v0.20.0
+	golang.org/x/sys v0.21.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
