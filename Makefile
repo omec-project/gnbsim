@@ -3,6 +3,7 @@
 # Copyright 2022-present Intel Corporation
 #
 
+
 PROJECT_NAME             := gnbSim
 DOCKER_VERSION           ?= $(shell cat ./VERSION)
 
