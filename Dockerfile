@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-FROM golang:1.22.2-bookworm AS builder
+FROM golang:1.22.4-bookworm AS builder
 
 LABEL maintainer="Aether SD-Core <dev@aetherproject.org>"
 
@@ -18,7 +18,7 @@ WORKDIR $GOPATH/src/gnbsim
 COPY . .
 RUN make all
 
-FROM alpine:3.19 AS gnbsim
+FROM alpine:3.20 AS gnbsim
 
 LABEL description="Aether open source 5G Core Network" \
     version="Stage 3"
