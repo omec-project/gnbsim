@@ -91,7 +91,7 @@ downlink user data (ICMP echo response) over the established data plane path
 - UI Support
 - 3gpp Release Upgrade
 - Extensive gnbsim documentation
-- Command line options to send logs or events to file in specific format for post processing.
+- Command line options to send logs and/or events to file in specific format for post processing.
 
 # Support and Contributions
 
