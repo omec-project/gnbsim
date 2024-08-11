@@ -221,8 +221,8 @@ func DecodePduSessContainerExtHeader(pkt []uint8) (payload []uint8,
 	return payload, extHdr, nil
 }
 
-func BuildGpduMessage(payload []byte, teID uint32) ([]byte, error) {
-	pduSessContainer := BuildPduSessContainerExtHeader(9)
+func BuildGpduMessage(payload []byte, teID uint32, qfi uint8) ([]byte, error) {
+	pduSessContainer := BuildPduSessContainerExtHeader(qfi)
 
 	/* UE needs to ensure its payload length value should not exceed 2 bytes */
 	payloadLen := uint16(len(payload) + len(pduSessContainer))
