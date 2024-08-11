@@ -9,7 +9,6 @@ import (
 	"regexp"
 
 	"github.com/calee0219/fatal"
-	"github.com/omec-project/CommonConsumerTestData/UDR/TestRegistrationProcedure"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasType"
 	"github.com/omec-project/nas/security"
@@ -68,26 +67,6 @@ func GetAuthSubscription(k, opc, op, seqNum string) *models.AuthenticationSubscr
 	authSubs.SequenceNumber = seqNum
 	authSubs.AuthenticationMethod = models.AuthMethod__5_G_AKA
 	return &authSubs
-}
-
-func GetAccessAndMobilitySubscriptionData() (amData models.AccessAndMobilitySubscriptionData) {
-	return TestRegistrationProcedure.TestAmDataTable[TestRegistrationProcedure.FREE5GC_CASE]
-}
-
-func GetSmfSelectionSubscriptionData() (smfSelData models.SmfSelectionSubscriptionData) {
-	return TestRegistrationProcedure.TestSmfSelDataTable[TestRegistrationProcedure.FREE5GC_CASE]
-}
-
-func GetSessionManagementSubscriptionData() (smfSelData []models.SessionManagementSubscriptionData) {
-	return TestRegistrationProcedure.TestSmSelDataTable[TestRegistrationProcedure.FREE5GC_CASE]
-}
-
-func GetAmPolicyData() (amPolicyData models.AmPolicyData) {
-	return TestRegistrationProcedure.TestAmPolicyDataTable[TestRegistrationProcedure.FREE5GC_CASE]
-}
-
-func GetSmPolicyData() (smPolicyData models.SmPolicyData) {
-	return TestRegistrationProcedure.TestSmPolicyDataTable[TestRegistrationProcedure.FREE5GC_CASE]
 }
 
 func NewRanUeContext(supi string, ranUeNgapId int64, cipheringAlg, integrityAlg uint8) *RanUeContext {

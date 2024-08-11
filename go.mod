@@ -8,7 +8,6 @@ require (
 	github.com/calee0219/fatal v0.0.1
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
-	github.com/omec-project/CommonConsumerTestData v1.2.1
 	github.com/omec-project/amf v1.4.3
 	github.com/omec-project/aper v1.1.2
 	github.com/omec-project/nas v1.3.0

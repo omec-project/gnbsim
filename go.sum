@@ -196,8 +196,6 @@ github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32 h1:W6apQkHrMkS0Muv8G/TipAy
 github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32/go.mod h1:9wM+0iRr9ahx58uYLpLIr5fm8diHn0JbqRycJi6w0Ms=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
 github.com/nxadm/tail v1.4.8/go.mod h1:+ncqLTQzXmGhMZNUePPaPqPvBxHAIsmXswZKocGu+AU=
-github.com/omec-project/CommonConsumerTestData v1.2.1 h1:tzWeeDYj5YBObTL9+FtPzc4dU9HK3+kVYsnGLO0QSxU=
-github.com/omec-project/CommonConsumerTestData v1.2.1/go.mod h1:0BuDdpkhxmXe+ms32pi2PI0V0ubuh8ZOgJoLGpSeLcs=
 github.com/omec-project/amf v1.4.3 h1:Kw04IZIf8ycR5yef+7I2G2VUghuVsmUfS5Hs5P4Nnis=
 github.com/omec-project/amf v1.4.3/go.mod h1:imQhFjdqGM3FaL38H+aXs1JJF/5EH4orBbBxDiPF5Xw=
 github.com/omec-project/aper v1.1.2 h1:oRtfloQJQV5HXhOkPpOXbRW9Ay8TAe5kTcbMMkInmOQ=
