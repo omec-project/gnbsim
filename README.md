@@ -5,6 +5,7 @@ SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org
 SPDX-License-Identifier: Apache-2.0
 -->
 [![Go Report Card](https://goreportcard.com/badge/github.com/omec-project/gnbsim)](https://goreportcard.com/report/github.com/omec-project/gnbsim)
+![GitHub latest release (SemVer)](https://img.shields.io/github/v/release/omec-project/gnbsim?sort=semver)
 
 # Table Of Contents
 * [Introduction](#Introduction)
