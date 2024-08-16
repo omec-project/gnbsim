@@ -55,7 +55,7 @@ func InitProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMess
 
 	gnb, err := factory.AppConfig.Configuration.GetGNodeB(profile.GnbName)
 	if err != nil {
-		err = fmt.Errorf("Failed to fetch gNB context: %v", err)
+		err = fmt.Errorf("failed to fetch gNB context: %v", err)
 		summary.ErrorList = append(summary.ErrorList, err)
 		summaryChan <- summary
 		return

@@ -121,7 +121,7 @@ func (c *Config) Validate() (err error) {
 					PIter.ProcMap[1] = common.GetProcId(x[0])
 					PIter.WaitMap[1], err = strconv.Atoi(x[1])
 					if err != nil {
-						return fmt.Errorf("Value is not converted to integer: %v\n", err)
+						return fmt.Errorf("value is not converted to integer: %v", err)
 					}
 				}
 				if len(v1.Second) > 0 {
@@ -129,7 +129,7 @@ func (c *Config) Validate() (err error) {
 					PIter.ProcMap[2] = common.GetProcId(x[0])
 					PIter.WaitMap[2], err = strconv.Atoi(x[1])
 					if err != nil {
-						return fmt.Errorf("Value is not converted to integer: %v\n", err)
+						return fmt.Errorf("value is not converted to integer: %v", err)
 					}
 				}
 				if len(v1.Third) > 0 {
@@ -137,7 +137,7 @@ func (c *Config) Validate() (err error) {
 					PIter.ProcMap[3] = common.GetProcId(x[0])
 					PIter.WaitMap[3], err = strconv.Atoi(x[1])
 					if err != nil {
-						return fmt.Errorf("Value is not converted to integer: %v\n", err)
+						return fmt.Errorf("value is not converted to integer: %v", err)
 					}
 				}
 				if len(v1.Fourth) > 0 {
@@ -145,7 +145,7 @@ func (c *Config) Validate() (err error) {
 					PIter.ProcMap[4] = common.GetProcId(x[0])
 					PIter.WaitMap[4], err = strconv.Atoi(x[1])
 					if err != nil {
-						return fmt.Errorf("Value is not converted to integer: %v\n", err)
+						return fmt.Errorf("value is not converted to integer: %v", err)
 					}
 				}
 				if len(v1.Fifth) > 0 {
@@ -153,7 +153,7 @@ func (c *Config) Validate() (err error) {
 					PIter.ProcMap[5] = common.GetProcId(x[0])
 					PIter.WaitMap[5], err = strconv.Atoi(x[1])
 					if err != nil {
-						return fmt.Errorf("Value is not converted to integer: %v\n", err)
+						return fmt.Errorf("value is not converted to integer: %v", err)
 					}
 				}
 				if len(v1.Sixth) > 0 {
@@ -161,7 +161,7 @@ func (c *Config) Validate() (err error) {
 					PIter.ProcMap[6] = common.GetProcId(x[0])
 					PIter.WaitMap[6], err = strconv.Atoi(x[1])
 					if err != nil {
-						return fmt.Errorf("Value is not converted to integer: %v\n", err)
+						return fmt.Errorf("value is not converted to integer: %v", err)
 					}
 				}
 				if len(v1.Seventh) > 0 {
@@ -169,7 +169,7 @@ func (c *Config) Validate() (err error) {
 					PIter.ProcMap[7] = common.GetProcId(x[0])
 					PIter.WaitMap[7], err = strconv.Atoi(x[1])
 					if err != nil {
-						return fmt.Errorf("Value is not converted to integer: %v\n", err)
+						return fmt.Errorf("value is not converted to integer: %v", err)
 					}
 				}
 				v.PIterations[v1.Name] = PIter // add iterations in the custom profile
