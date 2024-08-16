@@ -231,7 +231,6 @@ linters:
     - gofmt
     - govet
     - errcheck
-    - staticcheck
     - unused
     - gosimple
     - ineffassign

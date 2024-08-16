@@ -17,7 +17,7 @@ const NgapPPID uint32 = 0x3c000000
 func getNgapIp(amfIP, ranIP string, amfPort, ranPort int) (amfAddr, ranAddr *sctp.SCTPAddr, err error) {
 	ips := []net.IPAddr{}
 	if ip, err1 := net.ResolveIPAddr("ip", amfIP); err1 != nil {
-		err = fmt.Errorf("Error resolving address '%s': %v", amfIP, err1)
+		err = fmt.Errorf("error resolving address '%s': %v", amfIP, err1)
 		return nil, nil, err
 	} else {
 		ips = append(ips, *ip)
@@ -28,7 +28,7 @@ func getNgapIp(amfIP, ranIP string, amfPort, ranPort int) (amfAddr, ranAddr *sct
 	}
 	ips = []net.IPAddr{}
 	if ip, err1 := net.ResolveIPAddr("ip", ranIP); err1 != nil {
-		err = fmt.Errorf("Error resolving address '%s': %v", ranIP, err1)
+		err = fmt.Errorf("error resolving address '%s': %v", ranIP, err1)
 		return nil, nil, err
 	} else {
 		ips = append(ips, *ip)

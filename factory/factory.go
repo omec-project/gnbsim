@@ -47,7 +47,7 @@ func CheckConfigVersion() error {
 	currentVersion := AppConfig.GetVersion()
 
 	if currentVersion != GNBSIM_EXPECTED_CONFIG_VERSION {
-		return fmt.Errorf("config version is [%s], but expected is [%s].",
+		return fmt.Errorf("config version is [%s], but expected is [%s]",
 			currentVersion, GNBSIM_EXPECTED_CONFIG_VERSION)
 	}
 
