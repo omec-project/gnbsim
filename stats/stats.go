@@ -178,6 +178,9 @@ func readStats() {
 		case AUTH_REQ_IN:
 			logger.StatsLog.Infoln("Received Event: AUTH_REQ_IN: ", m)
 			t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
+			if t == nil {
+				continue
+			}
 			m.T = t.T
 			ue := getUe(m.Supi)
 			ue.CReg.AuthReqInTime = m.T
@@ -190,6 +193,9 @@ func readStats() {
 		case SECM_CMD_IN:
 			logger.StatsLog.Infoln("Received Event: SECM_CMD_IN: ", m)
 			t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
+			if t == nil {
+				continue
+			}
 			m.T = t.T
 			ue := getUe(m.Supi)
 			ue.CReg.SecMCmdInTime = m.T
@@ -202,6 +208,9 @@ func readStats() {
 		case ICS_REQ_IN:
 			logger.StatsLog.Infoln("Received Event: ICS_REQ_IN: ", m)
 			t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
+			if t == nil {
+				continue
+			}
 			m.T = t.T
 			ue := getUe(m.Supi)
 			ue.CReg.ICSReqInTime = m.T
@@ -217,6 +226,9 @@ func readStats() {
 		case PDU_SESS_ACC_IN:
 			logger.StatsLog.Infoln("Received Event: PDU_SESS_ACC_IN: ", m)
 			t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
+			if t == nil {
+				continue
+			}
 			m.T = t.T
 			ue := getUe(m.Supi)
 			ue.CPdu.PduSessAcceptIn = m.T
@@ -235,6 +247,8 @@ func readStats() {
 		case UE_CTX_CMD_IN:
 			logger.StatsLog.Infoln("Received Event: UE_CTX_CMD_IN: ", m)
 			t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
+			if t == nil {
+			}
 			m.T = t.T
 			ue := getUe(m.Supi)
 			ue.CCtxrel.CtxRelCmdInTime = m.T
@@ -252,6 +266,9 @@ func readStats() {
 		case DEREG_ACC_IN:
 			logger.StatsLog.Infoln("Received Event: DEREG_ACC_IN: ", m)
 			t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
+			if t == nil {
+				continue
+			}
 			m.T = t.T
 			ue := getUe(m.Supi)
 			ue.CDreg.DeregAccInTime = m.T
@@ -267,6 +284,9 @@ func readStats() {
 		case SVC_ACCEPT_IN:
 			logger.StatsLog.Infoln("Received Event: SVC_ACCEPT_IN: ", m)
 			t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
+			if t == nil {
+				continue
+			}
 			m.T = t.T
 			ue := getUe(m.Supi)
 			ue.CSvc.ServiceAccInTime = m.T
