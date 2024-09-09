@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-FROM golang:1.23.0-bookworm AS builder
+FROM golang:1.23.1-bookworm AS builder
 
 LABEL maintainer="Aether SD-Core <dev@aetherproject.org>"
 
