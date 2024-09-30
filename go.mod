@@ -11,8 +11,8 @@ require (
 	github.com/omec-project/amf v1.4.5
 	github.com/omec-project/aper v1.2.1
 	github.com/omec-project/nas v1.3.0
-	github.com/omec-project/ngap v1.2.3
-	github.com/omec-project/openapi v1.2.1
+	github.com/omec-project/ngap v1.3.0
+	github.com/omec-project/openapi v1.3.1
 	github.com/omec-project/util v1.1.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
@@ -93,7 +93,7 @@ require (
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230525183740-e7c30c78aeb2 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/crypto v0.27.0 // indirect
-	golang.org/x/oauth2 v0.21.0 // indirect
+	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/text v0.18.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240604185151-ef581f913117 // indirect
