@@ -92,6 +92,6 @@ func formUuMessage(event common.EventType, nasPdu []byte, id uint64) *common.UuM
 func SendToSimUe(ue *realuectx.RealUe,
 	msg common.InterfaceMessage,
 ) {
-	ue.Log.Traceln("Sending", msg.GetEventType(), "to SimUe")
+	ue.Log.Debugln("sending", msg.GetEventType(), "to SimUe")
 	ue.WriteSimUeChan <- msg
 }

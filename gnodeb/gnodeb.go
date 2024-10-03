@@ -35,8 +35,8 @@ func InitializeAllGnbs() error {
 
 // Init initializes the GNodeB struct var and connects to the default AMF
 func Init(gnb *gnbctx.GNodeB) error {
-	gnb.Log = logger.GNodeBLog.WithField(logger.FieldGnb, gnb.GnbName)
-	gnb.Log.Traceln("Inititializing GNodeB")
+	gnb.Log = logger.GNodeBLog.With(logger.FieldGnb, gnb.GnbName)
+	gnb.Log.Debugln("inititializing GNodeB")
 	gnb.Log.Infoln("GNodeB IP:", gnb.GnbN2Ip, "GNodeB Port:", gnb.GnbN2Port)
 
 	gnb.CpTransport = transport.NewGnbCpTransport(gnb)
@@ -53,7 +53,7 @@ func Init(gnb *gnbctx.GNodeB) error {
 	gnb.DlTeidGenerator = idgenerator.NewGenerator(int64(start), int64(end))
 
 	if gnb.DefaultAmf == nil {
-		gnb.Log.Infoln("Default AMF not configured, continuing ...")
+		gnb.Log.Infoln("default AMF not configured, continuing ...")
 		return nil
 	}
 
@@ -73,12 +73,12 @@ func Init(gnb *gnbctx.GNodeB) error {
 
 	go gnb.CpTransport.ReceiveFromPeer(gnb.DefaultAmf)
 
-	gnb.Log.Tracef("GNodeB Initialized %v ", gnb)
+	gnb.Log.Debugf("GNodeB initialized %v", gnb)
 	return nil
 }
 
 func QuitGnb(gnb *gnbctx.GNodeB) {
-	log.Println("Shutting Down GNodeB:", gnb.GnbName)
+	log.Println("shutting down GNodeB:", gnb.GnbName)
 	close(gnb.Quit)
 }
 
@@ -86,7 +86,7 @@ func QuitGnb(gnb *gnbctx.GNodeB) {
 // It waits for the response, process the response and informs whether it was
 // SuccessfulOutcome or UnsuccessfulOutcome
 func PerformNgSetup(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf) (bool, error) {
-	gnb.Log.Traceln("Performing NG Setup Procedure")
+	gnb.Log.Debugln("performing NG Setup Procedure")
 
 	var status bool
 
@@ -97,13 +97,13 @@ func PerformNgSetup(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf) (bool, error) {
 		return status, fmt.Errorf("failed to create ng setup request")
 	}
 
-	gnb.Log.Traceln("Sending NG Setup Request")
+	gnb.Log.Debugln("sending NG Setup Request")
 	ngSetupResp, err := gnb.CpTransport.SendToPeerBlock(amf, ngSetupReq, 0)
 	if err != nil {
 		gnb.Log.Errorln("SendToPeerBlock returned:", err)
 		return status, fmt.Errorf("failed to send ng setup request")
 	}
-	gnb.Log.Traceln("Received NG Setup Response")
+	gnb.Log.Debugln("received NG Setup Response")
 	err = gnbamfworker.HandleMessage(gnb, amf, ngSetupResp, 0)
 	if err != nil {
 		gnb.Log.Errorln("HandleMessage returned:", err)

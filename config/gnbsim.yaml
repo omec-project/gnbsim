@@ -29,7 +29,7 @@ configuration:
         plmnId:
           mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
           mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
-        gNbId: 
+        gNbId:
           bitLength: 24
           gNBValue: 000102 # gNB identifier (3 bytes hex string, range: 000000~FFFFFF)
       supportedTaList:
@@ -54,7 +54,7 @@ configuration:
       profileType: custom # profile type
       profileName: custom1 # uniqely identifies a profile within application
       enable: false # Set true to execute the profile, false otherwise.
-      execInParallel: false #run all subscribers in parallel 
+      execInParallel: false #run all subscribers in parallel
       stepTrigger: true #wait for trigger to move to next step
       gnbName: gnb1 # gNB to be used for this profile
       startImsi: 208930100007487
@@ -159,7 +159,7 @@ configuration:
       execInParallel: false #run all subscribers within profile in parallel
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
-        mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)  
+        mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
     - profileType: deregister # profile type
       profileName: profile5 # uniqely identifies a profile within application
       enable: false # Set true to execute the profile, false otherwise.
@@ -235,4 +235,4 @@ configuration:
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
 
 logger:
-  logLevel: info # how detailed the log will be, values: trace, debug, info, warn, error, fatal, panic
+  logLevel: info # how detailed the log will be, values: debug, info, warn, error, fatal, panic

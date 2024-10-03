@@ -45,7 +45,7 @@ func HandleEvents(gnbue *gnbctx.GnbCpUe) (err error) {
 		case common.QUIT_EVENT:
 			HandleQuitEvent(gnbue, msg)
 		default:
-			gnbue.Log.Infoln("Event", evt, "is not supported")
+			gnbue.Log.Infoln("event", evt, "is not supported")
 		}
 
 		// TODO: Need to return and handle errors from handlers
@@ -54,7 +54,7 @@ func HandleEvents(gnbue *gnbctx.GnbCpUe) (err error) {
 }
 
 func SendToUe(gnbue *gnbctx.GnbCpUe, event common.EventType, nasPdus common.NasPduList, id uint64) {
-	gnbue.Log.Traceln("Sending event", event, "to SimUe. Id:", id)
+	gnbue.Log.Debugln("sending event", event, "to SimUe. Id:", id)
 	uemsg := common.UuMessage{}
 	uemsg.Id = id
 	uemsg.Event = event

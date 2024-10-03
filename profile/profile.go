@@ -82,7 +82,7 @@ func initImsi(profile *profctx.Profile, gnb *gnbctx.GNodeB, imsiStr string) {
 	p.ReadChan = readChan
 	trigChan := make(chan *common.ProfileMessage)
 	p.TrigEventsChan = trigChan
-	p.Log = logger.ProfUeCtxLog.WithField(logger.FieldSupi, imsiStr)
+	p.Log = logger.ProfUeCtxLog.With(logger.FieldSupi, imsiStr)
 	profile.PSimUe[imsiStr] = &p
 }
 
@@ -116,7 +116,7 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 	go func() {
 		var plock sync.Mutex
 		for msg := range profile.ReadChan {
-			profile.Log.Infoln("Received trigger for profile ", msg)
+			profile.Log.Infoln("received trigger for profile", msg)
 			// works only if profile is still running.
 			// Typically if execInParallel set true in profile
 			gnb, err := factory.AppConfig.Configuration.GetGNodeB(profile.GnbName)
@@ -133,7 +133,7 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 			imsiStr := makeImsiStr(profile, imsi)
 			initImsi(profile, gnb, imsiStr)
 			pCtx := profile.PSimUe[imsiStr]
-			profile.Log.Infoln("pCtx ", pCtx)
+			profile.Log.Infoln("pCtx", pCtx)
 			wg.Add(1)
 			go func(pCtx *profctx.ProfileUeContext) {
 				defer wg.Done()
@@ -202,9 +202,9 @@ func SendStepEventProfile(name string) error {
 	// msg.ProcedureType =
 	msg.Event = common.PROFILE_STEP_EVENT
 	for _, ctx := range profile.PSimUe {
-		profile.Log.Traceln("profile ", profile, ", writing on trig channel - start")
+		profile.Log.Debugln("profile", profile, ", writing on trig channel - start")
 		ctx.TrigEventsChan <- msg
-		profile.Log.Traceln("profile ", profile, ", writing on trig channel - end")
+		profile.Log.Debugln("profile", profile, ", writing on trig channel - end")
 	}
 	return nil
 }
@@ -219,9 +219,9 @@ func SendAddNewCallsEventProfile(name string, number int32) error {
 	msg.Event = common.PROFILE_ADDCALLS_EVENT
 	var i int32
 	for i = 0; i < number; i++ {
-		profile.Log.Traceln("profile ", profile, ", writing on trig channel - start")
+		profile.Log.Debugln("profile", profile, ", writing on trig channel - start")
 		profile.ReadChan <- msg
-		profile.Log.Traceln("profile ", profile, ", writing on trig channel - end")
+		profile.Log.Debugln("profile", profile, ", writing on trig channel - end")
 	}
 	return nil
 }

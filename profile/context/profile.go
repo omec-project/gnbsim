@@ -12,7 +12,7 @@ import (
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/logger"
 	"github.com/omec-project/openapi/models"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 // profile names
@@ -66,7 +66,7 @@ type ProfileUeContext struct {
 	WriteSimChan   chan common.InterfaceMessage // Sending events to SIMUE -  start proc and proc parameters
 	ReadChan       chan *common.ProfileMessage  // Sending events to profile
 
-	Log *logrus.Entry
+	Log *zap.SugaredLogger
 
 	CurrentItr       string // used only if UE is part of custom profile
 	Repeat           int    // used only if UE is part of custom profile
@@ -87,7 +87,7 @@ type Profile struct {
 	StartIteration string         `yaml:"startiteration" json:"startiteration"`
 	Plmn           *models.PlmnId `yaml:"plmnId" json:"plmnId"`
 	SNssai         *models.Snssai `yaml:"sNssai" json:"sNssai"`
-	Log            *logrus.Entry
+	Log            *zap.SugaredLogger
 
 	// Profile routine reads messages from other entities on this channel
 	// Entities can be SimUe, Main routine.
@@ -198,7 +198,7 @@ func initProcedureEventMap() {
 func (profile *Profile) Init() error {
 	profile.ReadChan = make(chan *common.ProfileMessage)
 	profile.PSimUe = make(map[string]*ProfileUeContext)
-	profile.Log = logger.ProfileLog.WithField(logger.FieldProfile, profile.Name)
+	profile.Log = logger.ProfileLog.With(logger.FieldProfile, profile.Name)
 	if profile.DataPktCount == 0 {
 		profile.DataPktCount = 5 // default
 	}
@@ -216,7 +216,7 @@ func (profile *Profile) Init() error {
 	}
 
 	ProfileMap[profile.Name] = profile
-	profile.Log.Traceln("profile initialized ", profile.Name, ", Enable ", profile.Enable)
+	profile.Log.Debugln("profile initialized", profile.Name, ", Enable", profile.Enable)
 	return nil
 }
 
@@ -332,7 +332,7 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 					nextProcedure = p.Procedures[i+1]
 					break
 				}
-				p.Log.Infoln("No more procedures left")
+				p.Log.Infoln("no more procedures left")
 			}
 		}
 		return nextProcedure
@@ -340,8 +340,8 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 
 	// check if custom Profile
 	if len(p.Iterations) > 0 {
-		pCtx.Log.Infoln("Current UE iteration ", pCtx.CurrentItr)
-		pCtx.Log.Infoln("Current UE procedure index  ", pCtx.CurrentProcIndex)
+		pCtx.Log.Infoln("Current UE iteration", pCtx.CurrentItr)
+		pCtx.Log.Infoln("Current UE procedure index", pCtx.CurrentProcIndex)
 		itp := p.PIterations[pCtx.CurrentItr]
 		pCtx.Log.Infoln("Current Iteration map - ", itp)
 		if itp.WaitMap[pCtx.CurrentProcIndex] != 0 {
@@ -359,17 +359,17 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 		}
 		if pCtx.Repeat > 0 {
 			pCtx.Repeat = pCtx.Repeat - 1
-			pCtx.Log.Infoln("Repeat current iteration : ", itp.Name, ", Repeat Count ", pCtx.Repeat)
+			pCtx.Log.Infoln("Repeat current iteration:", itp.Name, ", Repeat Count", pCtx.Repeat)
 			pCtx.CurrentProcIndex = 1
 			nextProcedure = itp.ProcMap[1]
 			pCtx.Procedure = nextProcedure
 			return nextProcedure
 		}
-		pCtx.Log.Infoln("Iteration Complete ", pCtx.CurrentItr)
+		pCtx.Log.Infoln("Iteration Complete", pCtx.CurrentItr)
 		nextItr := itp.NextItr
 		if nextItr != "quit" {
 			nItr := p.PIterations[nextItr]
-			pCtx.Log.Infoln("Going to next iteration ", nItr.Name)
+			pCtx.Log.Infoln("Going to next iteration", nItr.Name)
 			pCtx.CurrentItr = nItr.Name
 			pCtx.CurrentProcIndex = 1
 			pCtx.Repeat = nItr.Repeat
@@ -378,6 +378,6 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 			return nextProcedure
 		}
 	}
-	pCtx.Log.Infoln("Nothing more to execute for UE")
+	pCtx.Log.Infoln("nothing more to execute for UE")
 	return nextProcedure
 }

@@ -5,7 +5,6 @@
 package ngsetup
 
 import (
-	"fmt"
 	"net"
 
 	"github.com/omec-project/gnbsim/factory"
@@ -24,7 +23,7 @@ func NgSetup_test(profile *profctx.Profile) {
 
 	addrs, err := net.LookupHost("amf")
 	if err != nil {
-		fmt.Println("Failed to resolve amf")
+		profile.Log.Errorln("failed to resolve amf")
 		return
 	}
 

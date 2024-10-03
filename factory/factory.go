@@ -23,7 +23,7 @@ var AppConfig *Config
 func InitConfigFactory(f string) error {
 	content, err := os.ReadFile(f)
 	if err != nil {
-		logger.CfgLog.Errorln("Failed to read", f, "file:", err)
+		logger.CfgLog.Errorln("failed to read", f, "file:", err)
 		return err
 	}
 
@@ -31,13 +31,13 @@ func InitConfigFactory(f string) error {
 
 	err = yaml.Unmarshal(content, AppConfig)
 	if err != nil {
-		logger.CfgLog.Errorln("Failed to unmarshal:", err)
+		logger.CfgLog.Errorln("failed to unmarshal:", err)
 		return err
 	}
 
 	err = AppConfig.Validate()
 	if err != nil {
-		logger.CfgLog.Errorln("Invalid Configuration:", err)
+		logger.CfgLog.Errorln("invalid Configuration:", err)
 	}
 
 	return err

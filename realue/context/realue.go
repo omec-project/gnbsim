@@ -19,7 +19,7 @@ import (
 	"github.com/omec-project/openapi/models"
 	"github.com/omec-project/util/milenage"
 	"github.com/omec-project/util/ueauth"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 // RealUe represents a Real UE
@@ -33,7 +33,7 @@ type RealUe struct {
 	SNssai             *models.Snssai
 	AuthenticationSubs *models.AuthenticationSubscription
 	Plmn               *models.PlmnId
-	Log                *logrus.Entry
+	Log                *zap.SugaredLogger
 
 	// RealUe writes messages to SimUE on this channel
 	WriteSimUeChan chan common.InterfaceMessage
@@ -71,9 +71,9 @@ func NewRealUe(supi string, cipheringAlg, integrityAlg uint8,
 	ue.WriteSimUeChan = simuechan
 	ue.PduSessions = make(map[int64]*PduSession)
 	ue.ReadChan = make(chan common.InterfaceMessage, 5)
-	ue.Log = logger.RealUeLog.WithField(logger.FieldSupi, supi)
+	ue.Log = logger.RealUeLog.With(logger.FieldSupi, supi)
 
-	ue.Log.Traceln("Created new context")
+	ue.Log.Debugln("created new context")
 	return &ue
 }
 
@@ -183,7 +183,7 @@ func (ue *RealUe) DeriveRESstarAndSetKey(
 	ue.DerivateAlgKey()
 	kdfVal_for_resStar, err := ueauth.GetKDFValue(key, FC, P0, ueauth.KDFLen(P0), P1, ueauth.KDFLen(P1), P2, ueauth.KDFLen(P2))
 	if err != nil {
-		ue.Log.Fatalf("Error getting KDF value: %+v", err)
+		ue.Log.Fatalf("error getting KDF value: %+v", err)
 	}
 	return kdfVal_for_resStar[len(kdfVal_for_resStar)/2:]
 }
@@ -198,12 +198,12 @@ func (ue *RealUe) DerivateKamf(key []byte, snName string, SQN, AK []byte) {
 	P1 := SQNxorAK
 	Kausf, err := ueauth.GetKDFValue(key, FC, P0, ueauth.KDFLen(P0), P1, ueauth.KDFLen(P1))
 	if err != nil {
-		ue.Log.Fatalf("Error getting KDF value: %+v", err)
+		ue.Log.Fatalf("error getting KDF value: %+v", err)
 	}
 	P0 = []byte(snName)
 	Kseaf, err := ueauth.GetKDFValue(Kausf, ueauth.FC_FOR_KSEAF_DERIVATION, P0, ueauth.KDFLen(P0))
 	if err != nil {
-		ue.Log.Fatalf("Error getting KDF value: %+v", err)
+		ue.Log.Fatalf("error getting KDF value: %+v", err)
 	}
 
 	supiRegexp, err := regexp.Compile("(?:imsi|supi)-([0-9]{5,15})")
@@ -219,7 +219,7 @@ func (ue *RealUe) DerivateKamf(key []byte, snName string, SQN, AK []byte) {
 
 	ue.Kamf, err = ueauth.GetKDFValue(Kseaf, ueauth.FC_FOR_KAMF_DERIVATION, P0, L0, P1, L1)
 	if err != nil {
-		ue.Log.Fatalf("Error getting KDF value: %+v", err)
+		ue.Log.Fatalf("error getting KDF value: %+v", err)
 	}
 }
 
@@ -233,7 +233,7 @@ func (ue *RealUe) DerivateAlgKey() {
 
 	kenc, err := ueauth.GetKDFValue(ue.Kamf, ueauth.FC_FOR_ALGORITHM_KEY_DERIVATION, P0, L0, P1, L1)
 	if err != nil {
-		ue.Log.Fatalf("Error getting KDF value: %+v", err)
+		ue.Log.Fatalf("error getting KDF value: %+v", err)
 	}
 	copy(ue.KnasEnc[:], kenc[16:32])
 
@@ -245,7 +245,7 @@ func (ue *RealUe) DerivateAlgKey() {
 
 	kint, err := ueauth.GetKDFValue(ue.Kamf, ueauth.FC_FOR_ALGORITHM_KEY_DERIVATION, P0, L0, P1, L1)
 	if err != nil {
-		ue.Log.Fatalf("Error getting KDF value: %+v", err)
+		ue.Log.Fatalf("error getting KDF value: %+v", err)
 	}
 	copy(ue.KnasInt[:], kint[16:32])
 }
@@ -260,7 +260,7 @@ func (ue *RealUe) Get5GMMCapability() (capability5GMM *nasType.Capability5GMM) {
 
 // GetPduSession returns the PduSession instance corresponding to provided PDU Sess ID
 func (ctx *RealUe) GetPduSession(pduSessId int64) (*PduSession, error) {
-	ctx.Log.Infoln("Fetching PDU Session for pduSessId:", pduSessId)
+	ctx.Log.Infoln("fetching PDU Session for pduSessId:", pduSessId)
 	val, ok := ctx.PduSessions[pduSessId]
 	if ok {
 		return val, nil
@@ -271,6 +271,6 @@ func (ctx *RealUe) GetPduSession(pduSessId int64) (*PduSession, error) {
 
 // AddPduSession adds the PduSession instance corresponding to provided PDU Sess ID
 func (ctx *RealUe) AddPduSession(pduSessId int64, pduSess *PduSession) {
-	ctx.Log.Infoln("Adding new PDU Session for PDU Sess ID:", pduSessId)
+	ctx.Log.Infoln("adding new PDU Session for PDU Sess ID:", pduSessId)
 	ctx.PduSessions[pduSessId] = pduSess
 }

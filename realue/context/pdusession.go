@@ -10,7 +10,7 @@ import (
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/logger"
 	"github.com/omec-project/openapi/models"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 /* PduSession represents a PDU Session in Real UE. It listens for DL user data
@@ -30,7 +30,7 @@ type PduSession struct {
 	// commands from RealUE control plane are read on this channel
 	ReadCmdChan chan common.InterfaceMessage
 
-	Log *logrus.Entry
+	Log *zap.SugaredLogger
 
 	/* Number of UL data packets to be transmitted as requested by Sim UE*/
 	Snssai           models.Snssai
@@ -56,11 +56,8 @@ func NewPduSession(realUe *RealUe, pduSessId int64) *PduSession {
 	pduSess.PduSessId = pduSessId
 	pduSess.ReadDlChan = make(chan common.InterfaceMessage, 10)
 	pduSess.ReadCmdChan = make(chan common.InterfaceMessage, 10)
-	pduSess.Log = realUe.Log.WithFields(logrus.Fields{
-		"subcategory":         "PduSession",
-		logger.FieldPduSessId: pduSessId,
-	})
-	pduSess.Log.Traceln("Pdu Session Created")
+	pduSess.Log = realUe.Log.With("subcategory", "PduSession", logger.FieldPduSessId, pduSessId)
+	pduSess.Log.Debugln("pdu session created")
 	return &pduSess
 }
 

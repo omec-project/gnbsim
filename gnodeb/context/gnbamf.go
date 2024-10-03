@@ -11,7 +11,7 @@ import (
 	"github.com/omec-project/amf/factory"
 	"github.com/omec-project/gnbsim/logger"
 	"github.com/omec-project/openapi/models"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 const NGAP_SCTP_PORT int = 38412
@@ -25,7 +25,7 @@ type GnbAmf struct {
 	/*Socket Connection*/
 	Conn net.Conn
 
-	Log *logrus.Entry
+	Log *zap.SugaredLogger
 
 	ServedGuamiList []models.Guami
 	PlmnSupportList []factory.PlmnSupportItem
@@ -41,18 +41,12 @@ func NewGnbAmf(ip string, port int) *GnbAmf {
 	gnbAmf := &GnbAmf{}
 	gnbAmf.AmfIp = ip
 	gnbAmf.AmfPort = port
-	gnbAmf.Log = logger.GNodeBLog.WithFields(logrus.Fields{
-		"subcategory":  "GnbAmf",
-		logger.FieldIp: gnbAmf.AmfIp,
-	})
+	gnbAmf.Log = logger.GNodeBLog.With("subcategory", "GnbAmf", logger.FieldIp, gnbAmf.AmfIp)
 	return gnbAmf
 }
 
 func (amf *GnbAmf) Init() {
-	amf.Log = logger.GNodeBLog.WithFields(logrus.Fields{
-		"subcategory":  "GnbAmf",
-		logger.FieldIp: amf.AmfIp,
-	})
+	amf.Log = logger.GNodeBLog.With("subcategory", "GnbAmf", logger.FieldIp, amf.AmfIp)
 }
 
 func (amf *GnbAmf) GetIpAddr() string {

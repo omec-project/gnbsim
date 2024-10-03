@@ -10,7 +10,7 @@ import (
 
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/logger"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 const GTP_U_PORT int = 2152
@@ -19,7 +19,7 @@ const GTP_U_PORT int = 2152
 type GnbUpf struct {
 	UpfAddr  *net.UDPAddr
 	GnbUpUes *GnbUeDao
-	Log      *logrus.Entry
+	Log      *zap.SugaredLogger
 
 	// GnbUpf Reads messages from transport, GnbUpUe and GNodeB
 	ReadChan chan common.InterfaceMessage
@@ -30,10 +30,7 @@ type GnbUpf struct {
 func NewGnbUpf(ip string) *GnbUpf {
 	gnbupf := &GnbUpf{}
 
-	gnbupf.Log = logger.GNodeBLog.WithFields(logrus.Fields{
-		"subcategory":  "GnbUpf",
-		logger.FieldIp: ip,
-	})
+	gnbupf.Log = logger.GNodeBLog.With("subcategory", "GnbUpf", logger.FieldIp, ip)
 
 	ipPort := net.JoinHostPort(ip, strconv.Itoa(GTP_U_PORT))
 	addr, err := net.ResolveUDPAddr("udp", ipPort)

@@ -47,13 +47,13 @@ func HandleRegRequestEvent(ue *realuectx.RealUe,
 		Len:    uint16(len(ue.Suci)), // suci
 		Buffer: ue.Suci,
 	}
-	ue.Log.Traceln("Generating SUPI Registration Request Message")
+	ue.Log.Debugln("generating SUPI Registration Request Message")
 	nasPdu := nasTestpacket.GetRegistrationRequest(nasMessage.RegistrationType5GSInitialRegistration,
 		mobileId5GS, nil, ueSecurityCapability, nil, nil, nil)
 
 	m := formUuMessage(common.REG_REQUEST_EVENT, nasPdu, id)
 	SendToSimUe(ue, m)
-	ue.Log.Traceln("Sent Registration Request Message to SimUe")
+	ue.Log.Debugln("sent Registration Request Message to SimUe")
 	return nil
 }
 
@@ -68,7 +68,7 @@ func HandleAuthResponseEvent(ue *realuectx.RealUe,
 	msg.Id = id
 
 	// First process the corresponding Auth Request
-	ue.Log.Traceln("Processing corresponding Authentication Request Message")
+	ue.Log.Debugln("processing corresponding Authentication Request Message")
 	authReq := msg.NasMsg.AuthenticationRequest
 
 	ue.NgKsi = nasConvert.SpareHalfOctetAndNgksiToModels(authReq.SpareHalfOctetAndNgksi)
@@ -90,12 +90,12 @@ func HandleAuthResponseEvent(ue *realuectx.RealUe,
 	// TODO: Parse Auth Request IEs and update the RealUE Context
 
 	// Now generate NAS Authentication Response
-	ue.Log.Traceln("Generating Authentication Response Message")
+	ue.Log.Debugln("generating Authentication Response Message")
 	nasPdu := nasTestpacket.GetAuthenticationResponse(resStat, "")
 
 	m := formUuMessage(common.AUTH_RESPONSE_EVENT, nasPdu, id)
 	SendToSimUe(ue, m)
-	ue.Log.Traceln("Sent Authentication Response Message to SimUe")
+	ue.Log.Debugln("sent Authentication Response Message to SimUe")
 	return nil
 }
 
@@ -112,7 +112,7 @@ func HandleSecModCompleteEvent(ue *realuectx.RealUe,
 		nasMessage.RegistrationType5GSInitialRegistration, mobileId5GS, nil,
 		ue.GetUESecurityCapability(), ue.Get5GMMCapability(), nil, nil)
 
-	ue.Log.Traceln("Generating Security Mode Complete Message")
+	ue.Log.Debugln("generating Security Mode Complete Message")
 	nasPdu := nasTestpacket.GetSecurityModeComplete(registrationRequestWith5GMM)
 
 	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
@@ -129,7 +129,7 @@ func HandleSecModCompleteEvent(ue *realuectx.RealUe,
 
 	m := formUuMessage(common.SEC_MOD_COMPLETE_EVENT, nasPdu, id)
 	SendToSimUe(ue, m)
-	ue.Log.Traceln("Sent Security Mode Complete Message to SimUe")
+	ue.Log.Debugln("sent Security Mode Complete Message to SimUe")
 	return nil
 }
 
@@ -146,7 +146,7 @@ func HandleRegCompleteEvent(ue *realuectx.RealUe,
 
 	_, ue.Guti = nasConvert.GutiToString(guti)
 
-	ue.Log.Traceln("Generating Registration Complete Message")
+	ue.Log.Debugln("generating Registration Complete Message")
 	nasPdu := nasTestpacket.GetRegistrationComplete(nil)
 	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
@@ -161,7 +161,7 @@ func HandleRegCompleteEvent(ue *realuectx.RealUe,
 
 	m := formUuMessage(common.REG_COMPLETE_EVENT, nasPdu, id)
 	SendToSimUe(ue, m)
-	ue.Log.Traceln("Sent Registration Complete Message to SimUe")
+	ue.Log.Debugln("sent Registration Complete Message to SimUe")
 	return nil
 }
 
@@ -193,7 +193,7 @@ func HandleDeregRequestEvent(ue *realuectx.RealUe,
 
 	m := formUuMessage(common.DEREG_REQUEST_UE_ORIG_EVENT, nasPdu, id)
 	SendToSimUe(ue, m)
-	ue.Log.Traceln("Sent UE Initiated Deregistration Request message to SimUe")
+	ue.Log.Debugln("sent UE Initiated Deregistration Request message to SimUe")
 	return nil
 }
 
@@ -214,7 +214,7 @@ func HandlePduSessEstRequestEvent(ue *realuectx.RealUe,
 	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
 	if err != nil {
-		fmt.Println("Failed to encrypt PDU Session Establishment Request Message", err)
+		ue.Log.Errorln("failed to encrypt PDU Session Establishment Request Message", err)
 		return
 	}
 
@@ -265,7 +265,7 @@ func HandlePduSessReleaseRequestEvent(ue *realuectx.RealUe,
 	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
 		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
 	if err != nil {
-		fmt.Println("Failed to encrypt PDU Session Release Request Message", err)
+		ue.Log.Errorln("failed to encrypt PDU Session Release Request Message", err)
 		return
 	}
 
@@ -319,12 +319,12 @@ func HandleDataBearerSetupRequestEvent(ue *realuectx.RealUe,
 		   pdu sessions are marked failed during decoding. real ue simply
 		   returns the same list back by marking any failed pdu sessions on
 		   its side. This consolidated list can be used by gnb to form
-		   PDUSession Resource Setup/Failed To Setup Response list
+		   PDUSession Resource Setup/failed To Setup Response list
 		*/
 		if item.PduSess.Success {
 			pduSess, err := ue.GetPduSession(item.PduSess.PduSessId)
 			if err != nil {
-				ue.Log.Warnln("Failed to fetch PDU Session:", err)
+				ue.Log.Warnln("failed to fetch PDU Session:", err)
 				item.PduSess.Success = false
 				continue
 			}
@@ -410,7 +410,7 @@ func HandleDlInfoTransferEvent(ue *realuectx.RealUe,
 	for _, pdu := range msg.NasPdus {
 		nasMsg, err := realue_nas.NASDecode(ue, nas.GetSecurityHeaderType(pdu), pdu)
 		if err != nil {
-			ue.Log.Errorln("Failed to decode dowlink NAS Message due to", err)
+			ue.Log.Errorln("failed to decode dowlink NAS Message due to", err)
 			return err
 		}
 		msgType := nasMsg.GmmHeader.GetMessageType()
@@ -483,7 +483,7 @@ func HandleServiceRequestEvent(ue *realuectx.RealUe,
 }
 
 func HandleNwDeregAcceptEvent(ue *realuectx.RealUe, msg common.InterfaceMessage) (err error) {
-	ue.Log.Traceln("Generating Dereg Accept Message")
+	ue.Log.Debugln("generating Dereg Accept Message")
 	nasPdu := nasTestpacket.GetDeregistrationAccept()
 
 	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
@@ -496,6 +496,6 @@ func HandleNwDeregAcceptEvent(ue *realuectx.RealUe, msg common.InterfaceMessage)
 
 	m := formUuMessage(common.DEREG_ACCEPT_UE_TERM_EVENT, nasPdu, 0)
 	SendToSimUe(ue, m)
-	ue.Log.Traceln("Sent Dereg Accept UE Terminated Message to SimUe")
+	ue.Log.Debugln("sent Dereg Accept UE Terminated Message to SimUe")
 	return nil
 }

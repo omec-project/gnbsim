@@ -7,7 +7,6 @@ package httpserver
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -16,7 +15,7 @@ import (
 	"github.com/omec-project/gnbsim/logger"
 	profilerouter "github.com/omec-project/gnbsim/profile/httprouter"
 	"github.com/omec-project/util/http2_util"
-	logger_util "github.com/omec-project/util/logger"
+	utilLogger "github.com/omec-project/util/logger"
 	"golang.org/x/net/context"
 )
 
@@ -28,7 +27,7 @@ const (
 )
 
 func StartHttpServer() (err error) {
-	router := logger_util.NewGinWithLogrus(logger.GinLog)
+	router := utilLogger.NewGinWithZap(logger.GinLog)
 	router.Use(cors.New(cors.Config{
 		AllowMethods: []string{"GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"},
 		AllowHeaders: []string{
@@ -49,12 +48,12 @@ func StartHttpServer() (err error) {
 	server, err = http2_util.NewServer(serverAddr, logFile, router)
 
 	if server == nil {
-		logger.AppLog.Errorf("Initialize HTTP server failed: %+v", err)
+		logger.AppLog.Errorf("initialize HTTP server failed: %+v", err)
 		return fmt.Errorf("failed to initialize http server, err: %v", err)
 	}
 
 	if err != nil {
-		logger.AppLog.Warnf("Initialize HTTP server: %+v", err)
+		logger.AppLog.Warnf("initialize HTTP server: %+v", err)
 		return fmt.Errorf("failed to initialize http server, err: %v", err)
 	}
 
@@ -79,6 +78,6 @@ func StopHttpServer() {
 	}()
 
 	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("Server shutdown Failed:%+v", err)
+		logger.HttpLog.Fatalf("server shutdown failed:%+v", err)
 	}
 }

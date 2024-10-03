@@ -18,7 +18,7 @@ import (
 	"github.com/omec-project/gnbsim/stats"
 	"github.com/omec-project/gnbsim/transportcommon"
 	"github.com/omec-project/gnbsim/util/test"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 // Need to check if NGAP may exceed this limit
@@ -30,20 +30,20 @@ var MAX_SCTP_PKT_LEN int = 2048
 // GnbCpTransport represents the control plane transport of the GNodeB
 type GnbCpTransport struct {
 	GnbInstance *gnbctx.GNodeB
-	Log         *logrus.Entry
+	Log         *zap.SugaredLogger
 }
 
 func NewGnbCpTransport(gnb *gnbctx.GNodeB) *GnbCpTransport {
 	transport := &GnbCpTransport{}
 	transport.GnbInstance = gnb
-	transport.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "ControlPlaneTransport"})
+	transport.Log = logger.GNodeBLog.With("subcategory", "ControlPlaneTransport")
 
 	return transport
 }
 
 // ConnectToPeer establishes SCTP connection with the AMF
 func (cpTprt *GnbCpTransport) ConnectToPeer(peer transportcommon.TransportPeer) (err error) {
-	cpTprt.Log.Traceln("Connecting to AMF")
+	cpTprt.Log.Debugln("connecting to AMF")
 
 	amf := peer.(*gnbctx.GnbAmf)
 	gnb := cpTprt.GnbInstance
@@ -67,7 +67,7 @@ func (cpTprt *GnbCpTransport) ConnectToPeer(peer transportcommon.TransportPeer) 
 			amf.AmfIp, amf.AmfPort, err)
 	}
 
-	cpTprt.Log.Infoln("Connected to AMF, AMF IP:", amf.AmfIp, "AMF Port:", amf.AmfPort)
+	cpTprt.Log.Infoln("connected to AMF, AMF IP:", amf.AmfIp, "AMF Port:", amf.AmfPort)
 	return
 }
 
@@ -95,7 +95,7 @@ func (cpTprt *GnbCpTransport) SendToPeerBlock(peer transportcommon.TransportPeer
 		return nil, fmt.Errorf("failed to read from socket")
 	}
 
-	cpTprt.Log.Infof("Read %v bytes from %v\n", n, conn.RemoteAddr())
+	cpTprt.Log.Infof("read %v bytes from %v", n, conn.RemoteAddr())
 	return recvMsg[:n], nil
 }
 
@@ -114,7 +114,7 @@ func (cpTprt *GnbCpTransport) SendToPeer(peer transportcommon.TransportPeer,
 	defer func() {
 		recerr := recover()
 		if recerr != nil {
-			cpTprt.Log.Errorln("Recovered panic in SendToPeer, error:", recerr)
+			cpTprt.Log.Errorln("recovered panic in SendToPeer, error:", recerr)
 			err = fmt.Errorf("recovered panic")
 		}
 	}()
@@ -123,10 +123,10 @@ func (cpTprt *GnbCpTransport) SendToPeer(peer transportcommon.TransportPeer,
 	m := &stats.StatisticsEvent{EType: stats.MSG_OUT, Id: id, T: t}
 	stats.SentMessage(m)
 	if n, err := amf.Conn.Write(pkt); err != nil || n != len(pkt) {
-		cpTprt.Log.Errorln("Write returned:", err)
+		cpTprt.Log.Errorln("write returned:", err)
 		return fmt.Errorf("failed to write on socket")
 	} else {
-		cpTprt.Log.Infof("Wrote %v bytes\n", n)
+		cpTprt.Log.Infof("wrote %v bytes", n)
 	}
 
 	return
@@ -139,7 +139,7 @@ func (cpTprt *GnbCpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 
 	defer func() {
 		if err := amf.Conn.Close(); err != nil && err != syscall.EBADF {
-			cpTprt.Log.Errorln("Close returned:", err)
+			cpTprt.Log.Errorln("close returned:", err)
 		}
 	}()
 
@@ -151,16 +151,16 @@ func (cpTprt *GnbCpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 		if err != nil {
 			switch err {
 			case io.EOF, io.ErrUnexpectedEOF:
-				cpTprt.Log.Errorln("Read EOF from client")
+				cpTprt.Log.Errorln("read EOF from client")
 				return
 			case syscall.EAGAIN:
 				cpTprt.Log.Warnln("SCTP read timeout")
 				continue
 			case syscall.EINTR:
-				cpTprt.Log.Warnf("SCTPRead: %+v\n", err)
+				cpTprt.Log.Warnf("SCTPRead: %+v", err)
 				continue
 			default:
-				cpTprt.Log.Errorf("Handle connection[addr: %+v] error: %+v\n", amf.Conn.RemoteAddr(), err)
+				cpTprt.Log.Errorf("handle connection[addr: %+v] error: %+v", amf.Conn.RemoteAddr(), err)
 				return
 			}
 		}
@@ -169,7 +169,7 @@ func (cpTprt *GnbCpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 		m := &stats.StatisticsEvent{EType: stats.MSG_IN, Id: id, T: t}
 		stats.RecvdMessage(m)
 
-		cpTprt.Log.Infof("Read %v bytes from %v\n", n, amf.GetIpAddr())
+		cpTprt.Log.Infof("read %v bytes from %v", n, amf.GetIpAddr())
 
 		// TODO Post to gnbamfworker channel
 		err = gnbamfworker.HandleMessage(cpTprt.GnbInstance, amf, recvMsg[:n], id)

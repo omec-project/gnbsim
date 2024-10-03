@@ -13,7 +13,7 @@ import (
 	profctx "github.com/omec-project/gnbsim/profile/context"
 	realuectx "github.com/omec-project/gnbsim/realue/context"
 	"github.com/omec-project/nas/security"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 func init() {
@@ -26,7 +26,7 @@ type SimUe struct {
 	GnB        *gnbctx.GNodeB
 	RealUe     *realuectx.RealUe
 	ProfileCtx *profctx.Profile
-	Log        *logrus.Entry
+	Log        *zap.SugaredLogger
 
 	// SimUe writes messages to Profile routine on this channel
 	WriteProfileChan chan *common.ProfileMessage
@@ -64,9 +64,9 @@ func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile, result 
 	simue.WriteRealUeChan = simue.RealUe.ReadChan
 	simue.WriteProfileChan = result
 
-	simue.Log = logger.SimUeLog.WithField(logger.FieldSupi, supi)
+	simue.Log = logger.SimUeLog.With(logger.FieldSupi, supi)
 
-	simue.Log.Traceln("Created new SimUe context")
+	simue.Log.Debugln("created new SimUe context")
 	simue.MsgRspReceived = make(chan bool, 5)
 	SimUeTable[supi] = &simue
 	return &simue

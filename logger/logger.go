@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2024 Intel Corporation
 // SPDX-FileCopyrightText: 2022 Great Software Laboratory Pvt. Ltd
 // SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 // Copyright 2019 free5GC.org
@@ -7,32 +8,29 @@
 package logger
 
 import (
-	"os"
-	"time"
-
-	formatter "github.com/antonfisher/nested-logrus-formatter"
-	logger_util "github.com/omec-project/util/logger"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 var (
-	log           *logrus.Logger
-	summaryLog    *logrus.Logger
-	AppLog        *logrus.Entry
-	AppSummaryLog *logrus.Entry
-	RealUeLog     *logrus.Entry
-	SimUeLog      *logrus.Entry
-	ProfileLog    *logrus.Entry
-	GNodeBLog     *logrus.Entry
-	CfgLog        *logrus.Entry
-	UtilLog       *logrus.Entry
-	GtpLog        *logrus.Entry
-	NgapLog       *logrus.Entry
-	PsuppLog      *logrus.Entry
-	GinLog        *logrus.Entry
-	HttpLog       *logrus.Entry
-	ProfUeCtxLog  *logrus.Entry
-	StatsLog      *logrus.Entry
+	log           *zap.Logger
+	summaryLog    *zap.Logger
+	AppLog        *zap.SugaredLogger
+	AppSummaryLog *zap.SugaredLogger
+	RealUeLog     *zap.SugaredLogger
+	SimUeLog      *zap.SugaredLogger
+	ProfileLog    *zap.SugaredLogger
+	GNodeBLog     *zap.SugaredLogger
+	CfgLog        *zap.SugaredLogger
+	UtilLog       *zap.SugaredLogger
+	GtpLog        *zap.SugaredLogger
+	NgapLog       *zap.SugaredLogger
+	PsuppLog      *zap.SugaredLogger
+	GinLog        *zap.SugaredLogger
+	HttpLog       *zap.SugaredLogger
+	ProfUeCtxLog  *zap.SugaredLogger
+	StatsLog      *zap.SugaredLogger
+	atomicLevel   zap.AtomicLevel
 )
 
 const (
@@ -46,67 +44,77 @@ const (
 )
 
 func init() {
-	log = logrus.New()
-	summaryLog = logrus.New()
-	log.SetReportCaller(false)
-	summaryLog.SetReportCaller(false)
-
-	log.Formatter = &formatter.Formatter{
-		TimestampFormat: time.RFC3339,
-		TrimMessages:    true,
-		NoFieldsSpace:   true,
-		HideKeys:        true,
-		FieldsOrder: []string{
-			"component", "category", "subcategory",
-			FieldProfile, FieldSupi, FieldGnb, FieldGnbUeNgapId,
-		},
+	atomicLevel = zap.NewAtomicLevelAt(zap.InfoLevel)
+	config := zap.Config{
+		Level:            atomicLevel,
+		Development:      false,
+		Encoding:         "console",
+		EncoderConfig:    zap.NewProductionEncoderConfig(),
+		OutputPaths:      []string{"stdout", "gnbsim.log"},
+		ErrorOutputPaths: []string{"stderr"},
 	}
 
-	summaryLog.Formatter = &formatter.Formatter{
-		TimestampFormat: time.RFC3339,
-		TrimMessages:    true,
-		NoFieldsSpace:   true,
-		HideKeys:        true,
-		FieldsOrder:     []string{"component", "category"},
-	}
+	config.EncoderConfig.TimeKey = "timestamp"
+	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	config.EncoderConfig.LevelKey = "level"
+	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	config.EncoderConfig.CallerKey = "caller"
+	config.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+	config.EncoderConfig.MessageKey = "message"
+	config.EncoderConfig.StacktraceKey = ""
 
-	selfLogHook, err := logger_util.NewFileHook("gnbsim.log",
-		os.O_CREATE|os.O_APPEND|os.O_RDWR, 0o666)
-	if err == nil {
-		log.Hooks.Add(selfLogHook)
-	}
-
-	summaryLogHook, err := logger_util.NewFileHook("summary.log",
-		os.O_CREATE|os.O_APPEND|os.O_RDWR, 0o666)
-	if err == nil {
-		summaryLog.Hooks.Add(summaryLogHook)
-	}
-
-	AppLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "App"})
-	AppSummaryLog = summaryLog.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Summary"})
-	RealUeLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "RealUe"})
-	SimUeLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "SimUe"})
-	ProfUeCtxLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "ProfUeCtx"})
-	ProfileLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Profile"})
-	GNodeBLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "GNodeB"})
-	GinLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Gin"})
-	HttpLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "HTTP"})
-	CfgLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "CFG"})
-	StatsLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Stats"})
-	UtilLog = log.WithFields(logrus.Fields{"component": "GNBSIM", "category": "Util"})
-	GtpLog = UtilLog.WithField("subcategory", "GTP")
-	NgapLog = UtilLog.WithField("subcategory", "NGAP")
-	PsuppLog = UtilLog.WithField("subcategory", "PSUPP")
-}
-
-func SetLogLevel(level string) {
-	lvl, err := logrus.ParseLevel(level)
+	var err error
+	log, err = config.Build()
 	if err != nil {
-		AppLog.Fatalln("Failed to parse log level:", err)
+		panic(err)
 	}
-	log.SetLevel(lvl)
+
+	configSummary := zap.Config{
+		Level:            atomicLevel,
+		Development:      false,
+		Encoding:         "console",
+		EncoderConfig:    zap.NewProductionEncoderConfig(),
+		OutputPaths:      []string{"stdout", "summary.log"},
+		ErrorOutputPaths: []string{"stderr"},
+	}
+
+	configSummary.EncoderConfig.TimeKey = "timestamp"
+	configSummary.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	configSummary.EncoderConfig.LevelKey = "level"
+	configSummary.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	configSummary.EncoderConfig.CallerKey = "caller"
+	configSummary.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+	configSummary.EncoderConfig.MessageKey = "message"
+	configSummary.EncoderConfig.StacktraceKey = ""
+
+	summaryLog, err = configSummary.Build()
+	if err != nil {
+		panic(err)
+	}
+
+	AppLog = log.Sugar().With("component", "GNBSIM", "category", "App")
+	AppSummaryLog = summaryLog.Sugar().With("component", "GNBSIM", "category", "Summary")
+	RealUeLog = log.Sugar().With("component", "GNBSIM", "category", "RealUe")
+	SimUeLog = log.Sugar().With("component", "GNBSIM", "category", "SimUe")
+	ProfUeCtxLog = log.Sugar().With("component", "GNBSIM", "category", "ProfUeCtx")
+	ProfileLog = log.Sugar().With("component", "GNBSIM", "category", "Profile")
+	GNodeBLog = log.Sugar().With("component", "GNBSIM", "category", "GNodeB")
+	GinLog = log.Sugar().With("component", "GNBSIM", "category", "Gin")
+	HttpLog = log.Sugar().With("component", "GNBSIM", "category", "HTTP")
+	CfgLog = log.Sugar().With("component", "GNBSIM", "category", "CFG")
+	StatsLog = log.Sugar().With("component", "GNBSIM", "category", "Stats")
+	UtilLog = log.Sugar().With("component", "GNBSIM", "category", "Util")
+	GtpLog = UtilLog.With("subcategory", "GTP")
+	NgapLog = UtilLog.With("subcategory", "NGAP")
+	PsuppLog = UtilLog.With("subcategory", "PSUPP")
 }
 
-func SetReportCaller(set bool) {
-	log.SetReportCaller(set)
+func GetLogger() *zap.Logger {
+	return log
+}
+
+// SetLogLevel: set the log level (panic|fatal|error|warn|info|debug)
+func SetLogLevel(level zapcore.Level) {
+	AppLog.Infoln("set log level:", level)
+	atomicLevel.SetLevel(level)
 }

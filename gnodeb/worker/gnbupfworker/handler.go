@@ -14,7 +14,7 @@ import (
  * context
  */
 func HandleDlGpduMessage(gnbUpf *gnbctx.GnbUpf, gtpPdu *test.GtpPdu) error {
-	gnbUpf.Log.Traceln("Processing downlink G-PDU packet")
+	gnbUpf.Log.Debugln("processing downlink G-PDU packet")
 	gnbUpUe := gnbUpf.GnbUpUes.GetGnbUpUe(gtpPdu.Hdr.Teid, true)
 	if gnbUpUe == nil {
 		return nil

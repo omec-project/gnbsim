@@ -8,7 +8,7 @@ import (
 	transport "github.com/omec-project/gnbsim/transportcommon"
 	"github.com/omec-project/openapi/models"
 	"github.com/omec-project/util/idgenerator"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 // GNodeB holds the context for a gNodeB. It manages the control plane and
@@ -23,7 +23,7 @@ type GNodeB struct {
 	GnbPeers             *GnbPeerDao
 	RanUeNGAPIDGenerator *idgenerator.IDGenerator
 	DlTeidGenerator      *idgenerator.IDGenerator
-	Log                  *logrus.Entry
+	Log                  *zap.SugaredLogger
 
 	/*channel to notify all the go routines corresponding to this GNodeB instance to stop*/
 	Quit chan int

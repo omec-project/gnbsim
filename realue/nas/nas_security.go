@@ -57,10 +57,10 @@ func GetNasPduSetupRequest(ue *realuectx.RealUe, msg *ngapType.PDUSessionResourc
 			x := ie.Value.PDUSessionResourceSetupListSUReq
 			for _, ie1 := range x.List {
 				if ie1.PDUSessionNASPDU != nil {
-					fmt.Println("Found NAS PDU inside ResourceSEtupList")
+					ue.Log.Infoln("Found NAS PDU inside ResourceSEtupList")
 					pkg := []byte(ie1.PDUSessionNASPDU.Value)
 					m, err := NASDecode(ue, nas.GetSecurityHeaderType(pkg), pkg)
-					fmt.Println("UE address - ", m.GmmMessage.DLNASTransport.Ipaddr)
+					ue.Log.Infoln("UE address:", m.GmmMessage.DLNASTransport.Ipaddr)
 					if err != nil {
 						return nil
 					}
@@ -91,16 +91,16 @@ func NASEncode(ue *realuectx.RealUe, msg *nas.Message, securityContextAvailable 
 		needCiphering := false
 		switch msg.SecurityHeader.SecurityHeaderType {
 		case nas.SecurityHeaderTypeIntegrityProtected:
-			ue.Log.Debugln("Security header type: Integrity Protected")
+			ue.Log.Debugln("security header type: Integrity Protected")
 		case nas.SecurityHeaderTypeIntegrityProtectedAndCiphered:
-			ue.Log.Debugln("Security header type: Integrity Protected And Ciphered")
+			ue.Log.Debugln("security header type: Integrity Protected And Ciphered")
 			needCiphering = true
 		case nas.SecurityHeaderTypeIntegrityProtectedWithNew5gNasSecurityContext:
-			ue.Log.Debugln("Security header type: Integrity Protected With New 5G Security Context")
+			ue.Log.Debugln("security header type: Integrity Protected With New 5G Security Context")
 			ue.ULCount.Set(0, 0)
 			ue.DLCount.Set(0, 0)
 		case nas.SecurityHeaderTypeIntegrityProtectedAndCipheredWithNew5gNasSecurityContext:
-			ue.Log.Debugln("Security header type: Integrity Protected With New 5G Security Context")
+			ue.Log.Debugln("security header type: Integrity Protected With New 5G Security Context")
 			ue.ULCount.Set(0, 0)
 			ue.DLCount.Set(0, 0)
 			needCiphering = true
@@ -115,7 +115,7 @@ func NASEncode(ue *realuectx.RealUe, msg *nas.Message, securityContextAvailable 
 
 		if needCiphering {
 			ue.Log.Debugf("Encrypt NAS message (algorithm: %+v, DLCount: 0x%0x)", ue.CipheringAlg, ue.DLCount.Get())
-			ue.Log.Tracef("NAS ciphering key: %0x", ue.KnasEnc)
+			ue.Log.Debugf("NAS ciphering key: %0x", ue.KnasEnc)
 			// TODO: Support for ue has nas connection in both accessType
 			if err = security.NASEncrypt(ue.CipheringAlg, ue.KnasEnc, ue.ULCount.Get(), security.Bearer3GPP,
 				security.DirectionUplink, payload); err != nil {
@@ -183,15 +183,15 @@ func NASDecode(ue *realuectx.RealUe, securityHeaderType uint8, payload []byte) (
 		ciphered := false
 		switch msg.SecurityHeaderType {
 		case nas.SecurityHeaderTypeIntegrityProtected:
-			ue.Log.Debugln("Security header type: Integrity Protected")
+			ue.Log.Debugln("security header type: Integrity Protected")
 		case nas.SecurityHeaderTypeIntegrityProtectedAndCiphered:
-			ue.Log.Debugln("Security header type: Integrity Protected And Ciphered")
+			ue.Log.Debugln("security header type: Integrity Protected And Ciphered")
 			ciphered = true
 		case nas.SecurityHeaderTypeIntegrityProtectedWithNew5gNasSecurityContext:
-			ue.Log.Debugln("Security Header Type Integrity Protected With New 5g Nas Security Context")
+			ue.Log.Debugln("security Header Type Integrity Protected With New 5g Nas Security Context")
 			ue.DLCount.Set(0, 0)
 		case nas.SecurityHeaderTypeIntegrityProtectedAndCipheredWithNew5gNasSecurityContext:
-			ue.Log.Debugln("Security header type: Integrity Protected And Ciphered With New 5G Security Context")
+			ue.Log.Debugln("security header type: Integrity Protected And Ciphered With New 5G Security Context")
 			ciphered = true
 			ue.DLCount.Set(0, 0)
 		default:
@@ -203,7 +203,7 @@ func NASDecode(ue *realuectx.RealUe, securityHeaderType uint8, payload []byte) (
 		}
 		ue.DLCount.SetSQN(sequenceNumber)
 
-		ue.Log.Infof("Calculate NAS MAC (algorithm: %+v, DLCount: 0x%0x)", ue.IntegrityAlg, ue.DLCount.Get())
+		ue.Log.Infof("calculate NAS MAC (algorithm: %+v, DLCount: 0x%0x)", ue.IntegrityAlg, ue.DLCount.Get())
 		ue.Log.Infof("NAS integrity key: %0x", ue.KnasInt)
 
 		mac32, errNas := security.NASMacCalculate(ue.IntegrityAlg, ue.KnasInt, ue.DLCount.Get(), security.Bearer3GPP,

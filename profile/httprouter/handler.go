@@ -22,10 +22,10 @@ import (
 )
 
 func HTTPStepProfile(c *gin.Context) {
-	logger.HttpLog.Infoln("HTTPStepProfile!")
+	logger.HttpLog.Infoln("HTTPStepProfile")
 	profName, exists := c.Params.Get("profile-name")
 	if !exists {
-		logger.HttpLog.Printf("Received HTTPStepProfile, but profile-name not found ")
+		logger.HttpLog.Warnln("received HTTPStepProfile but profile-name not found")
 		c.JSON(http.StatusBadRequest, gin.H{})
 		return
 	}
@@ -42,7 +42,7 @@ func HTTPAddNewCallsProfile(c *gin.Context) {
 	logger.HttpLog.Infoln("HTTPAddNewCallsProfile!")
 	profName, exists := c.Params.Get("profile-name")
 	if !exists {
-		logger.HttpLog.Printf("Received HTTPAddNewCallsProfile, but profile-name not found ")
+		logger.HttpLog.Warnln("received HTTPAddNewCallsProfile, but profile-name not found")
 		c.JSON(http.StatusBadRequest, gin.H{})
 		return
 	}
@@ -101,12 +101,12 @@ func HTTPExecuteConfigProfile(c *gin.Context) {
 }
 
 func HTTPExecuteProfile(c *gin.Context) {
-	logger.HttpLog.Infoln("EcecuteProfile API called")
+	logger.HttpLog.Infoln("ExecuteProfile API called")
 	var prof profCtx.Profile
 
 	requestBody, err := c.GetRawData()
 	if err != nil {
-		logger.HttpLog.Errorf("Get Request Body error: %+v", err)
+		logger.HttpLog.Errorf("get Request Body error: %+v", err)
 		problemDetail := models.ProblemDetails{
 			Title:  "System failure",
 			Status: http.StatusInternalServerError,
