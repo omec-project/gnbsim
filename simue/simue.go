@@ -27,7 +27,7 @@ func Init(simUe *simuectx.SimUe) {
 	err := ConnectToGnb(simUe)
 	if err != nil {
 		err = fmt.Errorf("failed to connect to gnodeb: %v", err)
-		simUe.Log.Infoln("Sent Profile Fail Event to Profile routine****: ", err)
+		simUe.Log.Infoln("sent Profile Fail Event to Profile routine****:", err)
 		SendToProfile(simUe, common.PROC_FAIL_EVENT, err)
 		return
 	}
@@ -52,12 +52,12 @@ func ConnectToGnb(simUe *simuectx.SimUe) error {
 	gNb := simUe.GnB
 	simUe.WriteGnbUeChan, err = gnodeb.RequestConnection(gNb, &uemsg)
 	if err != nil {
-		simUe.Log.Infof("ERROR -- connecting to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
+		simUe.Log.Errorf("connecting to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
 			gNb.GnbN2Ip, gNb.GnbN2Port)
 		return err
 	}
 
-	simUe.Log.Infof("Connected to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
+	simUe.Log.Infof("connected to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
 		gNb.GnbN2Ip, gNb.GnbN2Port)
 	return nil
 }
@@ -66,7 +66,7 @@ func HandleEvents(ue *simuectx.SimUe) {
 	var err error
 	for msg := range ue.ReadChan {
 		event := msg.GetEventType()
-		ue.Log.Infoln("Handling event:", event)
+		ue.Log.Infoln("handling event:", event)
 
 		switch event {
 		case common.PROC_START_EVENT:
@@ -126,7 +126,7 @@ func HandleEvents(ue *simuectx.SimUe) {
 		case common.DEREG_ACCEPT_UE_TERM_EVENT:
 			err = HandleNwDeregAcceptEvent(ue, msg)
 		case common.ERROR_EVENT:
-			ue.Log.Warnln("Event:", event, " received error")
+			ue.Log.Warnln("event:", event, " received error")
 			err = HandleErrorEvent(ue, msg)
 			if err != nil {
 				ue.Log.Warnln("failed to handle error event:", err)
@@ -139,11 +139,11 @@ func HandleEvents(ue *simuectx.SimUe) {
 			}
 			return
 		default:
-			ue.Log.Warnln("Event:", event, "is not supported")
+			ue.Log.Warnln("event:", event, "is not supported")
 		}
 
 		if err != nil {
-			ue.Log.Errorln("Failed to handle event:", event, "Error:", err)
+			ue.Log.Errorln("failed to handle event:", event, "Error:", err)
 			msg := &common.UeMessage{}
 			msg.Error = err
 			msg.Event = common.ERROR_EVENT
@@ -157,24 +157,24 @@ func HandleEvents(ue *simuectx.SimUe) {
 }
 
 func SendToRealUe(ue *simuectx.SimUe, msg common.InterfaceMessage) {
-	ue.Log.Traceln("Sending", msg.GetEventType(), "to RealUe")
+	ue.Log.Debugln("sending", msg.GetEventType(), "to RealUe")
 	ue.WriteRealUeChan <- msg
 }
 
 func SendToGnbUe(ue *simuectx.SimUe, msg common.InterfaceMessage) {
-	ue.Log.Traceln("Sending", msg.GetEventType(), "to GnbUe")
+	ue.Log.Debugln("sending", msg.GetEventType(), "to GnbUe")
 	ue.WriteGnbUeChan <- msg
 }
 
 func SendToProfile(ue *simuectx.SimUe, event common.EventType, errMsg error) {
-	ue.Log.Traceln("Sending", event, "to Profile routine")
+	ue.Log.Debugln("sending", event, "to Profile routine")
 	msg := &common.ProfileMessage{}
 	msg.Event = event
 	msg.Supi = ue.Supi
 	msg.Proc = ue.Procedure
 	msg.Error = errMsg
 	ue.WriteProfileChan <- msg
-	ue.Log.Traceln("Sent ", event, "to Profile routine")
+	ue.Log.Debugln("sent ", event, "to Profile routine")
 }
 
 func RunProcedure(simUe *simuectx.SimUe, procedure common.ProcedureType) {
@@ -193,7 +193,7 @@ func ImsiStateMachine(profile *profctx.Profile, pCtx *profctx.ProfileUeContext, 
 		//if simUe == nil {
 		// pass readChan to simUe
 		//}
-		pCtx.Log.Infoln("Execute procedure ", procedure)
+		pCtx.Log.Infoln("execute procedure ", procedure)
 		// proc result -  success, fail or timeout
 		timeout := time.Duration(profile.PerUserTimeout) * time.Second
 		ticker := time.NewTicker(timeout)

@@ -25,6 +25,7 @@ import (
 	profctx "github.com/omec-project/gnbsim/profile/context"
 	"github.com/omec-project/gnbsim/stats"
 	"github.com/urfave/cli"
+	"go.uber.org/zap/zapcore"
 )
 
 func main() {
@@ -37,7 +38,7 @@ func main() {
 	logger.AppLog.Infoln("App Name:", app.Name)
 
 	if err := app.Run(os.Args); err != nil {
-		logger.AppLog.Errorln("Failed to run GNBSIM:", err)
+		logger.AppLog.Errorln("failed to run GNBSIM:", err)
 		return
 	}
 }
@@ -45,13 +46,13 @@ func main() {
 func action(c *cli.Context) error {
 	cfg := c.String("cfg")
 	if cfg == "" {
-		logger.AppLog.Warnln("No configuration file provided. Using default configuration file:", factory.GNBSIM_DEFAULT_CONFIG_PATH)
-		logger.AppLog.Infoln("Application Usage:", c.App.Usage)
+		logger.AppLog.Warnln("no configuration file provided. Using default configuration file:", factory.GNBSIM_DEFAULT_CONFIG_PATH)
+		logger.AppLog.Infoln("application usage:", c.App.Usage)
 		cfg = factory.GNBSIM_DEFAULT_CONFIG_PATH
 	}
 
 	if err := factory.InitConfigFactory(cfg); err != nil {
-		logger.AppLog.Errorln("Failed to initialize config factory:", err)
+		logger.AppLog.Errorln("failed to initialize config factory:", err)
 		return err
 	}
 
@@ -61,26 +62,29 @@ func action(c *cli.Context) error {
 	if config.Configuration.GoProfile.Enable {
 		go func() {
 			endpt := fmt.Sprintf(":%v", config.Configuration.GoProfile.Port)
-			fmt.Println("endpoint for profile server ", endpt)
+			logger.AppLog.Infoln("endpoint for profile server", endpt)
 			err := http.ListenAndServe(endpt, nil)
 			if err != nil {
-				logger.AppLog.Errorln("Failed to start profiling server")
+				logger.AppLog.Errorln("failed to start profiling server")
 			}
 		}()
 	}
-	lvl := config.Logger.LogLevel
-	logger.AppLog.Infoln("Setting log level to:", lvl)
+	lvl, errLevel := zapcore.ParseLevel(config.Logger.LogLevel)
+	if errLevel != nil {
+		logger.AppLog.Errorln("can not parse input level")
+	}
+	logger.AppLog.Infoln("setting log level to:", lvl)
 	logger.SetLogLevel(lvl)
 
 	err := prof.InitializeAllProfiles()
 	if err != nil {
-		logger.AppLog.Errorln("Failed to initialize Profiles:", err)
+		logger.AppLog.Errorln("failed to initialize Profiles:", err)
 		return err
 	}
 
 	err = gnodeb.InitializeAllGnbs()
 	if err != nil {
-		logger.AppLog.Errorln("Failed to initialize gNodeBs:", err)
+		logger.AppLog.Errorln("failed to initialize gNodeBs:", err)
 		return err
 	}
 
@@ -159,7 +163,7 @@ func getCliFlags() []cli.Flag {
 	}
 }
 
-// TODO : we don't keep track of how many profiles are started...
+// TODO: we don't keep track of how many profiles are started...
 func ListenAndLogSummary() {
 	for intfcMsg := range profctx.SummaryChan {
 		// TODO: do we need this event ?
@@ -171,7 +175,7 @@ func ListenAndLogSummary() {
 		// Waiting for execution summary from profile routine
 		msg, ok := intfcMsg.(*common.SummaryMessage)
 		if !ok {
-			logger.AppLog.Fatalln("Invalid Message Type")
+			logger.AppLog.Fatalln("invalid Message Type")
 		}
 
 		logger.AppSummaryLog.Infoln("Profile Name:", msg.ProfileName, ", Profile Type:", msg.ProfileType)

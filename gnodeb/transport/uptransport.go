@@ -13,7 +13,7 @@ import (
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/logger"
 	"github.com/omec-project/gnbsim/transportcommon"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 // Need to check if NGAP may exceed this limit
@@ -29,13 +29,13 @@ type GnbUpTransport struct {
 	/* UDP Connection without any association with peers */
 	Conn *net.UDPConn
 
-	Log *logrus.Entry
+	Log *zap.SugaredLogger
 }
 
 func NewGnbUpTransport(gnb *gnbctx.GNodeB) *GnbUpTransport {
 	transport := &GnbUpTransport{}
 	transport.GnbInstance = gnb
-	transport.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "UserPlaneTransport"})
+	transport.Log = logger.GNodeBLog.With("subcategory", "UserPlaneTransport")
 
 	return transport
 }
@@ -80,7 +80,7 @@ func (upTprt *GnbUpTransport) SendToPeer(peer transportcommon.TransportPeer,
 	} else if n != pktLen {
 		return fmt.Errorf("total bytes:%v, written bytes:%v", pktLen, n)
 	} else {
-		upTprt.Log.Infof("Sent UDP Packet, length: %v bytes\n", n)
+		upTprt.Log.Infof("sent UDP Packet, length: %v bytes", n)
 	}
 
 	return
@@ -97,17 +97,17 @@ func (upTprt *GnbUpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 			upTprt.Log.Errorln("ReadFromUDP returned:", err)
 		}
 		srcIp := srcAddr.IP.String()
-		upTprt.Log.Infof("Read %v bytes from %v:%v\n", n, srcIp, srcAddr.Port)
+		upTprt.Log.Infof("read %v bytes from %v:%v", n, srcIp, srcAddr.Port)
 
 		gnbupf := upTprt.GnbInstance.GnbPeers.GetGnbUpf(srcIp)
 		if gnbupf == nil {
-			upTprt.Log.Errorln("No UPF Context found corresponding to IP:", srcIp)
+			upTprt.Log.Errorln("no UPF Context found corresponding to IP:", srcIp)
 			continue
 		}
 		tMsg := &common.TransportMessage{}
 		tMsg.RawPkt = recvMsg[:n]
 		gnbupf.ReadChan <- tMsg
-		upTprt.Log.Traceln("Forwarded UDP packet to UPF Worker")
+		upTprt.Log.Debugln("forwarded UDP packet to UPF Worker")
 	}
 }
 

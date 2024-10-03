@@ -4,12 +4,8 @@
 package common
 
 import (
-	"bytes"
 	"fmt"
 	"testing"
-
-	"github.com/omec-project/gnbsim/logger"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestString_ValidEventTypeReturnsEventTypeString(t *testing.T) {
@@ -24,17 +20,4 @@ func TestString_ValidEventTypeReturnsEventTypeString(t *testing.T) {
 			},
 		)
 	}
-}
-
-func TestString_InvalidEventTypeExitsWithLogMsg(t *testing.T) {
-	var INVALID_EVENT EventType = 0x0
-	var logBuf bytes.Buffer
-	assert := assert.New(t)
-	patchedExit := func(int) { panic("Dummy exit function") }
-
-	logger.AppLog.Logger.SetOutput(&logBuf)
-	logger.AppLog.Logger.ExitFunc = patchedExit
-
-	assert.Panics(func() { _ = INVALID_EVENT.String() })
-	assert.Contains(logBuf.String(), "Invalid Event ID: 0x0")
 }

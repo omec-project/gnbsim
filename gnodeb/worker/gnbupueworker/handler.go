@@ -13,7 +13,7 @@ import (
 )
 
 func HandleUlMessage(gnbue *gnbctx.GnbUpUe, msg common.InterfaceMessage) (err error) {
-	gnbue.Log.Traceln("Handling UL Packet from UE")
+	gnbue.Log.Debugln("handling UL Packet from UE")
 
 	if msg.GetEventType() == common.LAST_DATA_PKT_EVENT {
 		gnbue.Log.Debugln("Received last uplink data packet")
@@ -37,12 +37,12 @@ func HandleUlMessage(gnbue *gnbctx.GnbUpUe, msg common.InterfaceMessage) (err er
 		gnbue.Log.Errorln("UP Transport SendToPeer() returned:", err)
 		return fmt.Errorf("failed to send gpdu")
 	}
-	gnbue.Log.Traceln("Sent UL Packet from UE to UPF")
+	gnbue.Log.Debugln("sent UL Packet from UE to UPF")
 	return nil
 }
 
 func HandleDlMessage(gnbue *gnbctx.GnbUpUe, intfcMsg common.InterfaceMessage) (err error) {
-	gnbue.Log.Traceln("Handling DL Packet from UPF Worker")
+	gnbue.Log.Debugln("handling DL Packet from UPF Worker")
 
 	msg := intfcMsg.(*common.N3Message)
 	if len(msg.Pdu.Payload) == 0 {
@@ -65,13 +65,13 @@ func HandleDlMessage(gnbue *gnbctx.GnbUpUe, intfcMsg common.InterfaceMessage) (e
 			}
 			ueDataMsg.Qfi = new(uint8)
 			*ueDataMsg.Qfi = extHdr.Qfi
-			gnbue.Log.Infoln("Received QFI value in downlink G-PDU:", extHdr.Qfi)
+			gnbue.Log.Infoln("received QFI value in downlink G-PDU:", extHdr.Qfi)
 		}
 	}
 
 	ueDataMsg.Event = common.DL_UE_DATA_TRANSFER_EVENT
 	gnbue.WriteUeChan <- ueDataMsg
-	gnbue.Log.Infoln("Sent DL user data packet to UE")
+	gnbue.Log.Infoln("sent DL user data packet to UE")
 
 	return nil
 }
@@ -88,7 +88,7 @@ func HandleQuitEvent(gnbue *gnbctx.GnbUpUe, intfcMsg common.InterfaceMessage) (e
 	if !gnbue.LastDataPktRecvd {
 		for pkt := range gnbue.ReadUlChan {
 			if pkt.GetEventType() == common.LAST_DATA_PKT_EVENT {
-				gnbue.Log.Debugln("Received last uplink data packet")
+				gnbue.Log.Debugln("received last uplink data packet")
 				break
 			}
 		}

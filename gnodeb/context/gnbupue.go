@@ -9,13 +9,13 @@ import (
 	"github.com/omec-project/gnbsim/logger"
 	"github.com/omec-project/ngap/ngapType"
 	"github.com/omec-project/openapi/models"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 type GnbUpUe struct {
 	Upf         *GnbUpf
 	Gnb         *GNodeB
-	Log         *logrus.Entry
+	Log         *zap.SugaredLogger
 	PduSessType models.PduSessionType
 	QosFlows    map[int64]*ngapType.QosFlowSetupRequestItem
 
@@ -47,26 +47,23 @@ func NewGnbUpUe(dlTeid, ulTeid uint32, gnb *GNodeB) *GnbUpUe {
 	gnbue.ReadUlChan = make(chan common.InterfaceMessage, 10)
 	gnbue.ReadDlChan = make(chan common.InterfaceMessage, 10)
 	gnbue.ReadCmdChan = make(chan common.InterfaceMessage, 5)
-	gnbue.Log = logger.GNodeBLog.WithFields(logrus.Fields{
-		"subcategory":      "GnbUpUe",
-		logger.FieldDlTeid: dlTeid,
-	})
-	gnbue.Log.Traceln("Context Created")
+	gnbue.Log = logger.GNodeBLog.With("subcategory", "GnbUpUe", logger.FieldDlTeid, dlTeid)
+	gnbue.Log.Debugln("context created")
 	return &gnbue
 }
 
 func (ue *GnbUpUe) GetQosFlow(qfi int64) *ngapType.QosFlowSetupRequestItem {
-	ue.Log.Infoln("Fetching QosFlowItem corresponding to QFI:", qfi)
+	ue.Log.Infoln("fetching QosFlowItem corresponding to QFI:", qfi)
 	val, ok := ue.QosFlows[qfi]
 	if ok {
 		return val
 	} else {
-		ue.Log.Errorln("No QOS Flow found corresponding to QFI:", qfi)
+		ue.Log.Errorln("no QOS Flow found corresponding to QFI:", qfi)
 		return nil
 	}
 }
 
 func (ue *GnbUpUe) AddQosFlow(qfi int64, qosFlow *ngapType.QosFlowSetupRequestItem) {
-	ue.Log.Infoln("Adding new QosFlowItem corresponding to QFI:", qfi)
+	ue.Log.Infoln("adding new QosFlowItem corresponding to QFI:", qfi)
 	ue.QosFlows[qfi] = qosFlow
 }

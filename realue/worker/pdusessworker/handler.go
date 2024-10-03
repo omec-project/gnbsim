@@ -36,15 +36,15 @@ func HandleInitEvent(pduSess *realuectx.PduSession,
 }
 
 func SendIcmpEchoRequest(pduSess *realuectx.PduSession) (err error) {
-	pduSess.Log.Traceln("Sending UL ICMP ping message")
+	pduSess.Log.Debugln("sending UL ICMP ping message")
 
 	icmpPayload, err := hex.DecodeString("8c870d0000000000101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3031323334353637")
 	if err != nil {
-		pduSess.Log.Errorln("Failed to decode icmp hexString ")
+		pduSess.Log.Errorln("failed to decode icmp hexString ")
 		return err
 	}
 	icmpPayloadLen := len(icmpPayload)
-	pduSess.Log.Traceln("ICMP payload size:", icmpPayloadLen)
+	pduSess.Log.Debugln("ICMP payload size:", icmpPayloadLen)
 
 	ipv4hdr := ipv4.Header{
 		Version:  4,
@@ -75,7 +75,7 @@ func SendIcmpEchoRequest(pduSess *realuectx.PduSession) (err error) {
 	}
 	b, err := icmpMsg.Marshal(nil)
 	if err != nil {
-		pduSess.Log.Errorln("Failed to marshal icmp message")
+		pduSess.Log.Errorln("failed to marshal icmp message")
 		return err
 	}
 
@@ -87,7 +87,7 @@ func SendIcmpEchoRequest(pduSess *realuectx.PduSession) (err error) {
 	pduSess.WriteGnbChan <- userDataMsg
 	pduSess.TxDataPktCount++
 
-	pduSess.Log.Traceln("Sent UL ICMP ping message")
+	pduSess.Log.Debugln("sent UL ICMP ping message")
 
 	return nil
 }
@@ -107,7 +107,7 @@ func HandleIcmpMessage(pduSess *realuectx.PduSession,
 			return fmt.Errorf("icmp echo reply is nil")
 		}
 
-		pduSess.Log.Infof("Received ICMP Echo Reply, ID:%v, Seq:%v",
+		pduSess.Log.Infof("received ICMP Echo Reply, ID:%v, Seq:%v",
 			echpReply.ID, echpReply.Seq)
 
 		pduSess.RxDataPktCount++
@@ -121,7 +121,7 @@ func HandleIcmpMessage(pduSess *realuectx.PduSession,
 				msg := &common.UuMessage{}
 				msg.Event = common.DATA_PKT_GEN_SUCCESS_EVENT
 				pduSess.WriteUeChan <- msg
-				pduSess.Log.Traceln("Sent Data Packet Generation Success Event")
+				pduSess.Log.Debugln("sent Data Packet Generation Success Event")
 			}
 		}
 	default:
@@ -134,10 +134,10 @@ func HandleIcmpMessage(pduSess *realuectx.PduSession,
 func HandleDlMessage(pduSess *realuectx.PduSession,
 	msg common.InterfaceMessage,
 ) (err error) {
-	pduSess.Log.Traceln("Handling DL user data packet from gNb")
+	pduSess.Log.Debugln("handling DL user data packet from gNb")
 
 	if msg.GetEventType() == common.LAST_DATA_PKT_EVENT {
-		pduSess.Log.Debugln("Received last downlink data packet")
+		pduSess.Log.Debugln("received last downlink data packet")
 		pduSess.LastDataPktRecvd = true
 		return nil
 	}
@@ -145,7 +145,7 @@ func HandleDlMessage(pduSess *realuectx.PduSession,
 	dataMsg := msg.(*common.UserDataMessage)
 
 	if dataMsg.Qfi != nil {
-		pduSess.Log.Infoln("Received QFI value in downlink user data packet:", *dataMsg.Qfi)
+		pduSess.Log.Infoln("received QFI value in downlink user data packet:", *dataMsg.Qfi)
 	}
 
 	ipv4Hdr, err := ipv4.ParseHeader(dataMsg.Payload)
@@ -192,7 +192,7 @@ func HandleDataPktGenRequestEvent(pduSess *realuectx.PduSession,
 			msg := &common.UuMessage{}
 			msg.Event = common.DATA_PKT_GEN_SUCCESS_EVENT
 			pduSess.WriteUeChan <- msg
-			pduSess.Log.Traceln("Sent Data Packet Generation Success Event")
+			pduSess.Log.Debugln("sent Data Packet Generation Success Event")
 		}(pduSess)
 	}
 	return nil
@@ -225,7 +225,7 @@ func HandleQuitEvent(pduSess *realuectx.PduSession,
 	if !pduSess.LastDataPktRecvd {
 		for pkt := range pduSess.ReadDlChan {
 			if pkt.GetEventType() == common.LAST_DATA_PKT_EVENT {
-				pduSess.Log.Debugln("Received last downlink data packet")
+				pduSess.Log.Debugln("received last downlink data packet")
 				break
 			}
 		}

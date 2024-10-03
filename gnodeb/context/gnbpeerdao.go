@@ -8,13 +8,13 @@ import (
 	"sync"
 
 	"github.com/omec-project/gnbsim/logger"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 // GnbPeerDao acts as a Data Access Object that stores and provides access to all
 // the GnbUpf and GnbAmf instances
 type GnbPeerDao struct {
-	Log *logrus.Entry
+	Log *zap.SugaredLogger
 
 	// Map of UPF IP address vs GnbUpf Context. Not considering Port as they
 	// will be same for all UPFs i.e GTP-U port 2152
@@ -27,13 +27,13 @@ type GnbPeerDao struct {
 
 func NewGnbPeerDao() *GnbPeerDao {
 	dao := &GnbPeerDao{}
-	dao.Log = logger.GNodeBLog.WithFields(logrus.Fields{"subcategory": "GnbPeerDao"})
+	dao.Log = logger.GNodeBLog.With("subcategory", "GnbPeerDao")
 	return dao
 }
 
 // GetGnbUpf returns the GnbUpf instance corresponding to provided IP
 func (dao *GnbPeerDao) GetGnbUpf(ip string) *GnbUpf {
-	dao.Log.Infoln("Fetching GnbUpf corresponding to IP:", ip)
+	dao.Log.Infoln("fetching GnbUpf corresponding to IP:", ip)
 	val, ok := dao.gnbUpfMap.Load(ip)
 	if ok {
 		return val.(*GnbUpf)
@@ -62,6 +62,6 @@ func (dao *GnbPeerDao) GetOrAddGnbUpf(ip string) (*GnbUpf, bool) {
 
 // AddGnbUpf adds a GnbUpf instance corresponding to the IP into the map
 func (dao *GnbPeerDao) AddGnbUpf(ip string, gnbupf *GnbUpf) {
-	dao.Log.Infoln("Adding new GnbUpf corresponding to IP:", ip)
+	dao.Log.Infoln("adding new GnbUpf corresponding to IP:", ip)
 	dao.gnbUpfMap.Store(ip, gnbupf)
 }

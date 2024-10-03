@@ -63,7 +63,7 @@ func HandleAuthRequestEvent(ue *simuectx.SimUe,
 		ue.Log.Errorln("GetNextEvent returned:", err)
 		return err
 	}
-	ue.Log.Infoln("Next Event:", nextEvent)
+	ue.Log.Infoln("next event:", nextEvent)
 	msg.Event = nextEvent
 	SendToRealUe(ue, msg)
 	return nil
@@ -83,7 +83,7 @@ func HandleAuthResponseEvent(ue *simuectx.SimUe,
 
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
-	ue.Log.Traceln("Sending Authentication Response to the network")
+	ue.Log.Debugln("sending Authentication Response to the network")
 	return nil
 }
 
@@ -110,7 +110,7 @@ func HandleSecModCommandEvent(ue *simuectx.SimUe,
 func HandleSecModCompleteEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage,
 ) (err error) {
-	ue.Log.Traceln("Handling Security Mode Complete Event")
+	ue.Log.Debugln("handling Security Mode Complete Event")
 
 	msg := intfcMsg.(*common.UuMessage)
 	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.SEC_MOD_COMMAND_EVENT,
@@ -122,7 +122,7 @@ func HandleSecModCompleteEvent(ue *simuectx.SimUe,
 
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
-	ue.Log.Traceln("Sent Security Mode Complete to the network")
+	ue.Log.Debugln("sent Security Mode Complete to the network")
 	return nil
 }
 
@@ -153,7 +153,7 @@ func HandleRegCompleteEvent(ue *simuectx.SimUe,
 
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
-	ue.Log.Traceln("Sent Registration Complete to the network")
+	ue.Log.Debugln("sent Registration Complete to the network")
 
 	// Current Procedure is complete. Move to next one
 	SendProcedureResult(ue)
@@ -166,7 +166,7 @@ func HandleDeregRequestEvent(ue *simuectx.SimUe,
 	msg := intfcMsg.(*common.UuMessage)
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
-	ue.Log.Traceln("Sent Deregistration Request to the network")
+	ue.Log.Debugln("sent Deregistration Request to the network")
 
 	return nil
 }
@@ -204,7 +204,7 @@ func HandlePduSessEstAcceptEvent(ue *simuectx.SimUe,
 		ue.Log.Errorln("GetNextEvent returned:", err)
 		return err
 	}
-	ue.Log.Infoln("Next Event:", nextEvent)
+	ue.Log.Infoln("next event:", nextEvent)
 	msg.Event = nextEvent
 	SendToRealUe(ue, msg)
 	return nil
@@ -248,7 +248,7 @@ func HandlePduSessReleaseCommandEvent(ue *simuectx.SimUe,
 		ue.Log.Errorln("GetNextEvent returned:", err)
 		return err
 	}
-	ue.Log.Infoln("Next Event:", nextEvent)
+	ue.Log.Infoln("next event:", nextEvent)
 	msg.Event = nextEvent
 	SendToRealUe(ue, msg)
 	return nil
@@ -311,7 +311,7 @@ func HandleDataPktGenSuccessEvent(ue *simuectx.SimUe,
 func HandleDataPktGenFailureEvent(ue *simuectx.SimUe,
 	msg common.InterfaceMessage,
 ) (err error) {
-	ue.Log.Traceln("HandleDataPktGenFailureEvent")
+	ue.Log.Debugln("handleDataPktGenFailureEvent")
 	SendToProfile(ue, common.PROC_FAIL_EVENT, msg.GetErrorMsg())
 	return nil
 }
@@ -322,12 +322,12 @@ func retransmitMsg(ue *simuectx.SimUe, intfcMsg common.InterfaceMessage, count i
 	for {
 		select {
 		case <-ue.MsgRspReceived:
-			ue.Log.Traceln("Received Service Accept Message ")
+			ue.Log.Debugln("received Service Accept Message")
 			ticker.Stop()
 			return
 		case <-ticker.C:
 			if count > 0 {
-				ue.Log.Traceln("Resend Service Request count ", count)
+				ue.Log.Debugln("resend Service Request count", count)
 				SendToGnbUe(ue, intfcMsg)
 				count = count - 1
 			}
@@ -348,7 +348,7 @@ func HandleServiceRequestEvent(ue *simuectx.SimUe,
 		go retransmitMsg(ue, intfcMsg, 2)
 	}
 
-	ue.Log.Traceln("Sent Service Request Event to the network")
+	ue.Log.Debugln("sent Service Request Event to the network")
 	return nil
 }
 
@@ -394,7 +394,7 @@ func HandleConnectionReleaseRequestEvent(ue *simuectx.SimUe,
 			ue.ReadChan <- msg
 		*/
 		// Nothing else to execute. Tell profile we are done.
-		ue.Log.Traceln("debug2")
+		ue.Log.Debugln("debug2")
 		SendToProfile(ue, common.PROC_PASS_EVENT, nil)
 		return nil
 	}
@@ -413,7 +413,7 @@ func HandleNwDeregRequestEvent(ue *simuectx.SimUe, intfcMsg common.InterfaceMess
 		ue.Log.Errorln("GetNextEvent returned:", err)
 		return err
 	}
-	ue.Log.Infoln("Next Event:", nextEvent)
+	ue.Log.Infoln("next event:", nextEvent)
 	msg.Event = nextEvent
 	SendToRealUe(ue, msg)
 
@@ -421,7 +421,7 @@ func HandleNwDeregRequestEvent(ue *simuectx.SimUe, intfcMsg common.InterfaceMess
 }
 
 func HandleNwDeregAcceptEvent(ue *simuectx.SimUe, intfcMsg common.InterfaceMessage) (err error) {
-	ue.Log.Traceln("Handling Dereg Accept Event")
+	ue.Log.Debugln("handling Dereg Accept Event")
 
 	msg := intfcMsg.(*common.UuMessage)
 	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.DEREG_REQUEST_UE_TERM_EVENT,
@@ -433,14 +433,14 @@ func HandleNwDeregAcceptEvent(ue *simuectx.SimUe, intfcMsg common.InterfaceMessa
 
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
-	ue.Log.Traceln("Sent Dereg Accept to the network")
+	ue.Log.Debugln("sent Dereg Accept to the network")
 	return nil
 }
 
 func HandleErrorEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage,
 ) (err error) {
-	ue.Log.Traceln("debug3")
+	ue.Log.Debugln("debug3")
 	SendToProfile(ue, common.PROC_FAIL_EVENT, intfcMsg.GetErrorMsg())
 
 	msg := &common.UuMessage{}
@@ -467,7 +467,7 @@ func HandleQuitEvent(ue *simuectx.SimUe,
 
 // TODO : accept result, 1. pass or 2. Fail (with error)
 func SendProcedureResult(ue *simuectx.SimUe) {
-	ue.Log.Traceln("Sending Procedure Result to Profile : PASS")
+	ue.Log.Debugln("sending Procedure Result to Profile : PASS")
 	SendToProfile(ue, common.PROC_PASS_EVENT, nil)
 	// e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.REG_PROC_END, Id: 0}
 	// stats.LogStats(e)
@@ -476,7 +476,7 @@ func SendProcedureResult(ue *simuectx.SimUe) {
 func HandleProcedure(ue *simuectx.SimUe) {
 	switch ue.Procedure {
 	case common.REGISTRATION_PROCEDURE:
-		ue.Log.Infoln("Initiating Registration Procedure")
+		ue.Log.Infoln("initiating Registration Procedure")
 		e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.REG_PROC_START, Id: 0}
 		stats.LogStats(e)
 		msg := &common.UeMessage{}
@@ -484,19 +484,19 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		msg.Id = 0
 		SendToRealUe(ue, msg)
 	case common.PDU_SESSION_ESTABLISHMENT_PROCEDURE:
-		ue.Log.Infoln("Initiating UE Requested PDU Session Establishment Procedure")
+		ue.Log.Infoln("initiating UE Requested PDU Session Establishment Procedure")
 		e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.REG_PROC_START, Id: 0}
 		stats.LogStats(e)
 		msg := &common.UeMessage{}
 		msg.Event = common.PDU_SESS_EST_REQUEST_EVENT
 		SendToRealUe(ue, msg)
 	case common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE:
-		ue.Log.Infoln("Initiating UE Requested PDU Session Release Procedure")
+		ue.Log.Infoln("initiating UE Requested PDU Session Release Procedure")
 		msg := &common.UeMessage{}
 		msg.Event = common.PDU_SESS_REL_REQUEST_EVENT
 		SendToRealUe(ue, msg)
 	case common.USER_DATA_PKT_GENERATION_PROCEDURE:
-		ue.Log.Infoln("Initiating User Data Packet Generation Procedure")
+		ue.Log.Infoln("initiating User Data Packet Generation Procedure")
 		msg := &common.UeMessage{}
 		msg.UserDataPktCount = ue.ProfileCtx.DataPktCount
 		msg.UserDataPktInterval = ue.ProfileCtx.DataPktInt
@@ -512,17 +512,17 @@ func HandleProcedure(ue *simuectx.SimUe) {
 
 		SendToRealUe(ue, msg)
 	case common.UE_INITIATED_DEREGISTRATION_PROCEDURE:
-		ue.Log.Infoln("Initiating UE Initiated Deregistration Procedure")
+		ue.Log.Infoln("initiating UE Initiated Deregistration Procedure")
 		msg := &common.UeMessage{}
 		msg.Event = common.DEREG_REQUEST_UE_ORIG_EVENT
 		SendToRealUe(ue, msg)
 	case common.AN_RELEASE_PROCEDURE:
-		ue.Log.Infoln("Initiating AN Release Procedure")
+		ue.Log.Infoln("initiating AN Release Procedure")
 		msg := &common.UeMessage{}
 		msg.Event = common.TRIGGER_AN_RELEASE_EVENT
 		SendToGnbUe(ue, msg)
 	case common.UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE:
-		ue.Log.Infoln("Initiating UE Triggered Service Request Procedure")
+		ue.Log.Infoln("initiating UE Triggered Service Request Procedure")
 		msg := &common.UeMessage{}
 		msg.Event = common.SERVICE_REQUEST_EVENT
 		SendToRealUe(ue, msg)
