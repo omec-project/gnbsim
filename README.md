@@ -100,7 +100,7 @@ The gnbsim project welcomes new contributors. Feel free to propose a new feature
 
 Before contributing, please follow these guidelines:
 
-1. gNBSim documentation details [here](./docs/README.md)
+1. gNBSim documentation details [here](./docs/)
 2. Please refer to the official [SD-Core documentation](https://docs.sd-core.opennetworking.org/master/developer/gnbsim.html#gnb-simulator) for more details.
 3. #sdcore-dev channel in [ONF Community Slack](https://onf-community.slack.com/)
 4. Raise Github issues
