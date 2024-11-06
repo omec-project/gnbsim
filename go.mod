@@ -13,7 +13,7 @@ require (
 	github.com/omec-project/ngap v1.3.0
 	github.com/omec-project/openapi v1.3.1
 	github.com/omec-project/util v1.2.3
-	github.com/urfave/cli v1.22.16
+	github.com/urfave/cli/v2 v2.27.5
 	github.com/yerden/go-util v1.1.4
 	go.uber.org/zap v1.27.0
 	golang.org/x/net v0.30.0
@@ -76,6 +76,7 @@ require (
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
+	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.12 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.12 // indirect
