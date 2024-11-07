@@ -12,6 +12,7 @@ import (
 	_ "net/http/pprof" // Using package only for invoking initialization.
 	"os"
 	"os/signal"
+	"path/filepath"
 	"sync"
 	"syscall"
 	"time"
@@ -24,18 +25,18 @@ import (
 	prof "github.com/omec-project/gnbsim/profile"
 	profctx "github.com/omec-project/gnbsim/profile/context"
 	"github.com/omec-project/gnbsim/stats"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"go.uber.org/zap/zapcore"
 )
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "GNBSIM"
-	app.Usage = "./gnbsim --cfg [gnbsim configuration file]"
+	app.Usage = "gnbsim --cfg <gnbsim_config_file.yaml>"
 	app.Action = action
 	app.Flags = getCliFlags()
 
-	logger.AppLog.Infoln("App Name:", app.Name)
+	logger.AppLog.Infoln("app name:", app.Name)
 
 	if err := app.Run(os.Args); err != nil {
 		logger.AppLog.Errorln("failed to run GNBSIM:", err)
@@ -45,13 +46,14 @@ func main() {
 
 func action(c *cli.Context) error {
 	cfg := c.String("cfg")
-	if cfg == "" {
-		logger.AppLog.Warnln("no configuration file provided. Using default configuration file:", factory.GNBSIM_DEFAULT_CONFIG_PATH)
-		logger.AppLog.Infoln("application usage:", c.App.Usage)
-		cfg = factory.GNBSIM_DEFAULT_CONFIG_PATH
+
+	absPath, err := filepath.Abs(cfg)
+	if err != nil {
+		logger.AppLog.Errorln(err)
+		return err
 	}
 
-	if err := factory.InitConfigFactory(cfg); err != nil {
+	if err = factory.InitConfigFactory(absPath); err != nil {
 		logger.AppLog.Errorln("failed to initialize config factory:", err)
 		return err
 	}
@@ -63,7 +65,7 @@ func action(c *cli.Context) error {
 		go func() {
 			endpt := fmt.Sprintf(":%v", config.Configuration.GoProfile.Port)
 			logger.AppLog.Infoln("endpoint for profile server", endpt)
-			err := http.ListenAndServe(endpt, nil)
+			err = http.ListenAndServe(endpt, nil)
 			if err != nil {
 				logger.AppLog.Errorln("failed to start profiling server")
 			}
@@ -76,7 +78,7 @@ func action(c *cli.Context) error {
 	logger.AppLog.Infoln("setting log level to:", lvl)
 	logger.SetLogLevel(lvl)
 
-	err := prof.InitializeAllProfiles()
+	err = prof.InitializeAllProfiles()
 	if err != nil {
 		logger.AppLog.Errorln("failed to initialize Profiles:", err)
 		return err
@@ -156,9 +158,10 @@ func action(c *cli.Context) error {
 
 func getCliFlags() []cli.Flag {
 	return []cli.Flag{
-		cli.StringFlag{
-			Name:  "cfg",
-			Usage: "GNBSIM config file",
+		&cli.StringFlag{
+			Name:     "cfg",
+			Usage:    "gNBSim config file",
+			Required: true,
 		},
 	}
 }
@@ -178,8 +181,8 @@ func ListenAndLogSummary() {
 			logger.AppLog.Fatalln("invalid Message Type")
 		}
 
-		logger.AppSummaryLog.Infoln("Profile Name:", msg.ProfileName, ", Profile Type:", msg.ProfileType)
-		logger.AppSummaryLog.Infoln("Ue's Passed:", msg.UePassedCount, ", Ue's Failed:", msg.UeFailedCount)
+		logger.AppSummaryLog.Infof("Profile Name: %v, Profile Type: %v", msg.ProfileName, msg.ProfileType)
+		logger.AppSummaryLog.Infof("Ue's Passed: %v, Ue's Failed: %v", msg.UePassedCount, msg.UeFailedCount)
 
 		if len(msg.ErrorList) != 0 {
 			result = "FAIL"
