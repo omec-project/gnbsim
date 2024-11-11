@@ -195,8 +195,8 @@ github.com/omec-project/ngap v1.3.0 h1:NuAc6GZRup6E3jg+fGTy8aR4VkOlB1mnkaaYr6OGm
 github.com/omec-project/ngap v1.3.0/go.mod h1:XBHem/s2xtRNCLPgH7Ubs7i72BTAvK1EILTWf7iQ0ao=
 github.com/omec-project/openapi v1.3.1 h1:NCteMRdMtWnMhf1CXYduuLgeu8fEhc/7XO1CiE7fN3Y=
 github.com/omec-project/openapi v1.3.1/go.mod h1:cR6Iharp2TLOzEmskQ/EdCVFZnpKh0zTvUSSuyXAYLE=
-github.com/omec-project/util v1.2.3 h1:h32ZYFT99+fB9VPp1CQUIKwrSP6RtX+PbFDcqmEHmn0=
-github.com/omec-project/util v1.2.3/go.mod h1:Gt9TL5+o6BgBQ5DbpQ+A6gwMEFlMjNHV+e2cuAfnkwE=
+github.com/omec-project/util v1.2.5 h1:LuNti7mJjIgRNXkJ+VrpddthZVAUORXid9HIIACbOh8=
+github.com/omec-project/util v1.2.5/go.mod h1:Gt9TL5+o6BgBQ5DbpQ+A6gwMEFlMjNHV+e2cuAfnkwE=
 github.com/onsi/ginkgo v1.16.5 h1:8xi0RTUf59SOSfEtZMvwTvXYMzG4gV23XVHOZiXNtnE=
 github.com/onsi/ginkgo v1.16.5/go.mod h1:+E8gABHa3K6zRBolWtd+ROzc/U5bkGt0FwiG042wbpU=
 github.com/onsi/gomega v1.18.1 h1:M1GfJqGRrBrrGGsbxzV5dqM2U2ApXefZCQpkukxYRLE=
