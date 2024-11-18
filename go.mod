@@ -8,7 +8,7 @@ require (
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/omec-project/amf v1.6.0
-	github.com/omec-project/aper v1.2.1
+	github.com/omec-project/aper v1.2.2
 	github.com/omec-project/nas v1.4.2
 	github.com/omec-project/ngap v1.3.0
 	github.com/omec-project/openapi v1.3.2
