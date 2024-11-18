@@ -11,7 +11,7 @@ require (
 	github.com/omec-project/aper v1.2.1
 	github.com/omec-project/nas v1.4.2
 	github.com/omec-project/ngap v1.3.0
-	github.com/omec-project/openapi v1.3.1
+	github.com/omec-project/openapi v1.3.2
 	github.com/omec-project/util v1.2.6
 	github.com/urfave/cli/v2 v2.27.5
 	github.com/yerden/go-util v1.1.4
@@ -88,7 +88,7 @@ require (
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230525183740-e7c30c78aeb2 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/crypto v0.29.0 // indirect
-	golang.org/x/oauth2 v0.23.0 // indirect
+	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/sync v0.9.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142 // indirect
