@@ -181,10 +181,20 @@ func HandleDeregAcceptEvent(ue *simuectx.SimUe,
 	return nil
 }
 
-func HandlePduSessEstRequestEvent(ue *simuectx.SimUe,
-	intfcMsg common.InterfaceMessage,
-) (err error) {
-	msg := intfcMsg.(*common.UuMessage)
+func HandlePduSessEstRequestEvent(ue *simuectx.SimUe, intfcMsg common.InterfaceMessage) (err error) {
+	// Safe type assertions
+	if intfcMsg == nil {
+		err := fmt.Errorf("HandlePduSessEstRequestEvent: intfcMsg is nil")
+		ue.Log.Errorln(err)
+		return err
+	}
+
+	msg, ok := intfcMsg.(*common.UuMessage)
+	if !ok {
+		err := fmt.Errorf("HandlePduSessEstRequestEvent: expected *common.UuMessage, got %T", intfcMsg)
+		ue.Log.Errorln(err)
+		return err
+	}
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
 	return nil
