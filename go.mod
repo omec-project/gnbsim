@@ -7,7 +7,7 @@ require (
 	github.com/calee0219/fatal v0.0.1
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
-	github.com/omec-project/amf v1.6.0
+	github.com/omec-project/amf v1.6.2
 	github.com/omec-project/aper v1.2.2
 	github.com/omec-project/nas v1.4.3
 	github.com/omec-project/ngap v1.3.1
@@ -91,10 +91,10 @@ require (
 	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142 // indirect
-	google.golang.org/grpc v1.67.1 // indirect
-	google.golang.org/protobuf v1.35.1 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240903143218-8af14fe29dc1 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
+	google.golang.org/grpc v1.68.1 // indirect
+	google.golang.org/protobuf v1.35.2 // indirect
 	gopkg.in/h2non/gock.v1 v1.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	inet.af/netaddr v0.0.0-20220811202034-502d2d690317 // indirect
