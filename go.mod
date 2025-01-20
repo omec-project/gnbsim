@@ -12,7 +12,7 @@ require (
 	github.com/omec-project/nas v1.4.3
 	github.com/omec-project/ngap v1.3.1
 	github.com/omec-project/openapi v1.3.2
-	github.com/omec-project/util v1.2.8
+	github.com/omec-project/util v1.2.10
 	github.com/urfave/cli/v2 v2.27.5
 	github.com/yerden/go-util v1.1.4
 	go.uber.org/zap v1.27.0
@@ -81,7 +81,7 @@ require (
 	go.etcd.io/etcd/api/v3 v3.5.12 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.12 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.12 // indirect
-	go.mongodb.org/mongo-driver v1.17.1 // indirect
+	go.mongodb.org/mongo-driver v1.17.2 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go4.org/intern v0.0.0-20220617035311-6925f38cc365 // indirect
