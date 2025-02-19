@@ -9,10 +9,10 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/omec-project/amf v1.6.2
 	github.com/omec-project/aper v1.2.2
-	github.com/omec-project/nas v1.4.3
+	github.com/omec-project/nas v1.4.4
 	github.com/omec-project/ngap v1.3.1
-	github.com/omec-project/openapi v1.3.2
-	github.com/omec-project/util v1.2.12
+	github.com/omec-project/openapi v1.3.3
+	github.com/omec-project/util v1.2.13
 	github.com/urfave/cli/v2 v2.27.5
 	github.com/yerden/go-util v1.1.4
 	go.uber.org/zap v1.27.0
@@ -35,7 +35,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/evanphx/json-patch v5.9.0+incompatible // indirect
+	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
 	github.com/gabriel-vasile/mimetype v1.4.7 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -88,7 +88,7 @@ require (
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230525183740-e7c30c78aeb2 // indirect
 	golang.org/x/arch v0.12.0 // indirect
 	golang.org/x/crypto v0.33.0 // indirect
-	golang.org/x/oauth2 v0.24.0 // indirect
+	golang.org/x/oauth2 v0.26.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240903143218-8af14fe29dc1 // indirect
