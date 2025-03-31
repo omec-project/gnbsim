@@ -1,7 +1,6 @@
 module github.com/omec-project/gnbsim
 
 go 1.24.0
-
 require (
 	git.cs.nctu.edu.tw/calee/sctp v1.1.0
 	github.com/calee0219/fatal v0.0.1
@@ -16,7 +15,7 @@ require (
 	github.com/urfave/cli/v2 v2.27.6
 	github.com/yerden/go-util v1.1.4
 	go.uber.org/zap v1.27.0
-	golang.org/x/net v0.37.0
+	golang.org/x/net v0.38.0
 	golang.org/x/sys v0.31.0
 	gopkg.in/yaml.v2 v2.4.0
 )
