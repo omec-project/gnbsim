@@ -1,6 +1,7 @@
 module github.com/omec-project/gnbsim
 
 go 1.24.0
+
 require (
 	git.cs.nctu.edu.tw/calee/sctp v1.1.0
 	github.com/calee0219/fatal v0.0.1
