@@ -60,7 +60,7 @@ func GetNasPduSetupRequest(ue *realuectx.RealUe, msg *ngapType.PDUSessionResourc
 					ue.Log.Infoln("Found NAS PDU inside ResourceSEtupList")
 					pkg := []byte(ie1.PDUSessionNASPDU.Value)
 					m, err := NASDecode(ue, nas.GetSecurityHeaderType(pkg), pkg)
-					ue.Log.Infoln("UE address:", m.GmmMessage.DLNASTransport.Ipaddr)
+					ue.Log.Infoln("UE address:", m.Ipaddr)
 					if err != nil {
 						return nil
 					}
@@ -89,7 +89,7 @@ func NASEncode(ue *realuectx.RealUe, msg *nas.Message, securityContextAvailable 
 		return msg.PlainNasEncode()
 	} else {
 		needCiphering := false
-		switch msg.SecurityHeader.SecurityHeaderType {
+		switch msg.SecurityHeaderType {
 		case nas.SecurityHeaderTypeIntegrityProtected:
 			ue.Log.Debugln("security header type: Integrity Protected")
 		case nas.SecurityHeaderTypeIntegrityProtectedAndCiphered:
@@ -105,7 +105,7 @@ func NASEncode(ue *realuectx.RealUe, msg *nas.Message, securityContextAvailable 
 			ue.DLCount.Set(0, 0)
 			needCiphering = true
 		default:
-			return nil, fmt.Errorf("wrong security header type: 0x%0x", msg.SecurityHeader.SecurityHeaderType)
+			return nil, fmt.Errorf("wrong security header type: 0x%0x", msg.SecurityHeaderType)
 		}
 
 		payload, err = msg.PlainNasEncode()
@@ -135,7 +135,7 @@ func NASEncode(ue *realuectx.RealUe, msg *nas.Message, securityContextAvailable 
 		// Add mac value
 		payload = append(mac32, payload[:]...)
 		// Add EPD and Security Type
-		msgSecurityHeader := []byte{msg.SecurityHeader.ProtocolDiscriminator, msg.SecurityHeader.SecurityHeaderType}
+		msgSecurityHeader := []byte{msg.ProtocolDiscriminator, msg.SecurityHeaderType}
 		payload = append(msgSecurityHeader, payload[:]...)
 
 		// Increase UL Count
@@ -195,7 +195,7 @@ func NASDecode(ue *realuectx.RealUe, securityHeaderType uint8, payload []byte) (
 			ciphered = true
 			ue.DLCount.Set(0, 0)
 		default:
-			return nil, fmt.Errorf("wrong security header type: 0x%0x", msg.SecurityHeader.SecurityHeaderType)
+			return nil, fmt.Errorf("wrong security header type: 0x%0x", msg.SecurityHeaderType)
 		}
 		// Caculate ul count
 		if ue.DLCount.SQN() > sequenceNumber {

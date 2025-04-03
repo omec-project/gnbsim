@@ -364,14 +364,15 @@ func HandleDataBearerSetupResponse(gnbue *gnbctx.GnbCpUe,
 	var ngapPdu []byte
 	var err error
 
-	if msg.TriggeringEvent == common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT {
+	switch msg.TriggeringEvent {
+	case common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT:
 		ngapPdu, err = test.GetPDUSessionResourceSetupResponse(pduSessions,
 			gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, gnbue.Gnb.GnbN3Ip)
 		if err != nil {
 			gnbue.Log.Errorln("failed to create PDU Session Resource Setup Response:", err)
 			return
 		}
-	} else if msg.TriggeringEvent == common.INITIAL_CTX_SETUP_REQUEST_EVENT {
+	case common.INITIAL_CTX_SETUP_REQUEST_EVENT:
 		ngapPdu, err = test.GetInitialContextSetupResponseForServiceRequest(pduSessions,
 			gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, gnbue.Gnb.GnbN3Ip)
 		if err != nil {

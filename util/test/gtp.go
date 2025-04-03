@@ -71,7 +71,7 @@ func BuildGTPv1Header(extHdrFlag bool, snFlag bool, nPduFlag bool,
 	var optHdrPresent bool
 
 	/* Setting GTP-U header flags */
-	var flags uint8 = FLAG_GTP_VERSION_1 | FLAG_PROTOCOL_TYPE_GTP
+	flags := FLAG_GTP_VERSION_1 | FLAG_PROTOCOL_TYPE_GTP
 	if extHdrFlag {
 		flags |= FLAG_EXT_HEADER
 		optHdrPresent = true

@@ -16,7 +16,7 @@ import (
 
 func GetServiceRequest(ue *realuectx.RealUe) ([]byte, error) {
 	nasMsg := nastestpacket.BuildServiceRequest(nasMessage.ServiceTypeData)
-	serviceRequest := nasMsg.GmmMessage.ServiceRequest
+	serviceRequest := nasMsg.ServiceRequest
 
 	guti := nasConvert.GutiToNas(ue.Guti)
 	serviceRequest.SetTypeOfIdentity(nasMessage.MobileIdentity5GSType5gSTmsi)

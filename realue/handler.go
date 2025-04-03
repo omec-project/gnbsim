@@ -418,8 +418,8 @@ func HandleDlInfoTransferEvent(ue *realuectx.RealUe,
 
 		if msgType == nas.MsgTypeDLNASTransport {
 			ue.Log.Info("Payload contaner type:",
-				nasMsg.GmmMessage.DLNASTransport.SpareHalfOctetAndPayloadContainerType)
-			payload := nasMsg.GmmMessage.DLNASTransport.PayloadContainer
+				nasMsg.DLNASTransport.SpareHalfOctetAndPayloadContainerType)
+			payload := nasMsg.DLNASTransport.PayloadContainer
 			if payload.Len == 0 {
 				return fmt.Errorf("payload container length is 0")
 			}

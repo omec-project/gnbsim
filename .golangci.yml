@@ -21,15 +21,15 @@ linters:
     - goconst
     - godox
     - gomodguard
+    - govet
     - misspell
     - nakedret
     - noctx
     - predeclared
+    - staticcheck
     - unconvert
     - unparam
     - whitespace
-  disable:
-    - staticcheck
   settings:
     errcheck:
       check-type-assertions: false

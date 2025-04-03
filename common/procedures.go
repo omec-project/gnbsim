@@ -47,7 +47,7 @@ func (id ProcedureType) String() string {
 }
 
 func GetProcId(name string) ProcedureType {
-	var p ProcedureType = UNKNOWN_PROCEDURE
+	p := UNKNOWN_PROCEDURE
 	for id, v := range procStrMap {
 		if v == name {
 			return id
