@@ -248,6 +248,7 @@ func readStats() {
 			logger.StatsLog.Infoln("Received Event: UE_CTX_CMD_IN: ", m)
 			t := popTrans(m.Id) // remove MSG in trans but use the time msg was received
 			if t == nil {
+				continue
 			}
 			m.T = t.T
 			ue := getUe(m.Supi)

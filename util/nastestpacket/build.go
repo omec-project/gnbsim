@@ -39,6 +39,6 @@ func BuildServiceRequest(serviceType uint8) *nas.Message {
 	case nasMessage.ServiceTypeSignalling:
 	}
 
-	m.GmmMessage.ServiceRequest = serviceRequest
+	m.ServiceRequest = serviceRequest
 	return m
 }
