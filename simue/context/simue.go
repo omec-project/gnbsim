@@ -49,7 +49,10 @@ type SimUe struct {
 	WaitGrp   sync.WaitGroup
 }
 
-var SimUeTable map[string]*SimUe
+var (
+	SimUeTable map[string]*SimUe
+	simUeTableMutex sync.RWMutex
+)
 
 func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile, result chan *common.ProfileMessage) *SimUe {
 	simue := SimUe{}
@@ -68,11 +71,15 @@ func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile, result 
 
 	simue.Log.Debugln("created new SimUe context")
 	simue.MsgRspReceived = make(chan bool, 5)
+	simUeTableMutex.Lock()
+	defer simUeTableMutex.Unlock()
 	SimUeTable[supi] = &simue
 	return &simue
 }
 
 func GetSimUe(supi string) *SimUe {
+	simUeTableMutex.RLock()
+	defer simUeTableMutex.RUnlock()
 	simue, found := SimUeTable[supi]
 	if !found {
 		return nil
