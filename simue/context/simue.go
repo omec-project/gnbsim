@@ -50,7 +50,7 @@ type SimUe struct {
 }
 
 var (
-	SimUeTable map[string]*SimUe
+	SimUeTable      map[string]*SimUe
 	simUeTableMutex sync.RWMutex
 )
 
