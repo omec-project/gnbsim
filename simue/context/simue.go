@@ -17,7 +17,7 @@ import (
 )
 
 func init() {
-	SimUeTable = make(map[string]*SimUe)
+	simUeTable = make(map[string]*SimUe)
 }
 
 // SimUe controls the flow of messages between RealUe and GnbUe as per the test
@@ -49,7 +49,10 @@ type SimUe struct {
 	WaitGrp   sync.WaitGroup
 }
 
-var SimUeTable map[string]*SimUe
+var (
+	simUeTable      map[string]*SimUe
+	simUeTableMutex sync.RWMutex
+)
 
 func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile, result chan *common.ProfileMessage) *SimUe {
 	simue := SimUe{}
@@ -68,12 +71,16 @@ func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile, result 
 
 	simue.Log.Debugln("created new SimUe context")
 	simue.MsgRspReceived = make(chan bool, 5)
-	SimUeTable[supi] = &simue
+	simUeTableMutex.Lock()
+	defer simUeTableMutex.Unlock()
+	simUeTable[supi] = &simue
 	return &simue
 }
 
 func GetSimUe(supi string) *SimUe {
-	simue, found := SimUeTable[supi]
+	simUeTableMutex.RLock()
+	defer simUeTableMutex.RUnlock()
+	simue, found := simUeTable[supi]
 	if !found {
 		return nil
 	}
