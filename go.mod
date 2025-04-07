@@ -9,7 +9,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/omec-project/amf v1.6.5
 	github.com/omec-project/aper v1.2.3
-	github.com/omec-project/nas v1.4.5
+	github.com/omec-project/nas v1.4.6
 	github.com/omec-project/ngap v1.3.2
 	github.com/omec-project/openapi v1.3.4
 	github.com/omec-project/util v1.2.14
