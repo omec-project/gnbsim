@@ -11,6 +11,7 @@ on:
 jobs:
   tag-github:
     uses: omec-project/.github/.github/workflows/tag-github.yml@main
+    secrets: inherit
 
   release-image:
     needs: tag-github
