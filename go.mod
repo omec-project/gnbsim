@@ -6,7 +6,7 @@ require (
 	git.cs.nctu.edu.tw/calee/sctp v1.1.0
 	github.com/calee0219/fatal v0.0.1
 	github.com/gin-contrib/cors v1.7.5
-	github.com/gin-gonic/gin v1.10.0
+	github.com/gin-gonic/gin v1.10.1
 	github.com/omec-project/amf v1.6.5
 	github.com/omec-project/aper v1.3.0
 	github.com/omec-project/nas v1.5.0
