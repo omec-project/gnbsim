@@ -13,7 +13,7 @@ require (
 	github.com/omec-project/ngap v1.4.2
 	github.com/omec-project/openapi v1.4.1
 	github.com/omec-project/util v1.3.2
-	github.com/urfave/cli/v2 v2.27.7
+	github.com/urfave/cli/v3 v3.3.8
 	github.com/yerden/go-util v1.1.4
 	go.uber.org/zap v1.27.0
 	golang.org/x/net v0.41.0
@@ -32,7 +32,6 @@ require (
 	github.com/cloudwego/base64x v0.1.5 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
@@ -67,7 +66,6 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/segmentio/kafka-go v0.4.48 // indirect
 	github.com/thakurajayL/go-ipam v0.0.5-dev // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
@@ -75,7 +73,6 @@ require (
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
-	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.12 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.12 // indirect
