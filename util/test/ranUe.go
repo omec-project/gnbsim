@@ -8,7 +8,7 @@ import (
 	"encoding/hex"
 	"regexp"
 
-	"github.com/calee0219/fatal"
+	"github.com/omec-project/gnbsim/logger"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/nasType"
 	"github.com/omec-project/nas/security"
@@ -83,12 +83,12 @@ func (ue *RanUeContext) DeriveRESstarAndSetKey(
 ) []byte {
 	sqn, err := hex.DecodeString(authSubs.SequenceNumber)
 	if err != nil {
-		fatal.Fatalf("DecodeString error: %+v", err)
+		logger.UtilLog.Fatalf("DecodeString error: %+v", err)
 	}
 
 	amf, err := hex.DecodeString(authSubs.AuthenticationManagementField)
 	if err != nil {
-		fatal.Fatalf("DecodeString error: %+v", err)
+		logger.UtilLog.Fatalf("DecodeString error: %+v", err)
 	}
 
 	// Run milenage
@@ -101,7 +101,7 @@ func (ue *RanUeContext) DeriveRESstarAndSetKey(
 	_ = opc
 	k, err := hex.DecodeString(authSubs.PermanentKey.PermanentKeyValue)
 	if err != nil {
-		fatal.Fatalf("DecodeString error: %+v", err)
+		logger.UtilLog.Fatalf("DecodeString error: %+v", err)
 	}
 
 	if authSubs.Opc.OpcValue == "" {
@@ -109,30 +109,30 @@ func (ue *RanUeContext) DeriveRESstarAndSetKey(
 		var op []byte
 		op, err = hex.DecodeString(opStr)
 		if err != nil {
-			fatal.Fatalf("DecodeString error: %+v", err)
+			logger.UtilLog.Fatalf("DecodeString error: %+v", err)
 		}
 
 		opc, err = milenage.GenerateOPC(k, op)
 		if err != nil {
-			fatal.Fatalf("milenage GenerateOPC error: %+v", err)
+			logger.UtilLog.Fatalf("milenage GenerateOPC error: %+v", err)
 		}
 	} else {
 		opc, err = hex.DecodeString(authSubs.Opc.OpcValue)
 		if err != nil {
-			fatal.Fatalf("DecodeString error: %+v", err)
+			logger.UtilLog.Fatalf("DecodeString error: %+v", err)
 		}
 	}
 
 	// Generate MAC_A, MAC_S
 	err = milenage.F1(opc, k, rand, sqn, amf, macA, macS)
 	if err != nil {
-		fatal.Fatalf("regexp Compile error: %+v", err)
+		logger.UtilLog.Fatalf("regexp Compile error: %+v", err)
 	}
 
 	// Generate RES, CK, IK, AK, AKstar
 	err = milenage.F2345(opc, k, rand, res, ck, ik, ak, akStar)
 	if err != nil {
-		fatal.Fatalf("regexp Compile error: %+v", err)
+		logger.UtilLog.Fatalf("regexp Compile error: %+v", err)
 	}
 
 	// derive RES*
@@ -146,7 +146,7 @@ func (ue *RanUeContext) DeriveRESstarAndSetKey(
 	ue.DerivateAlgKey()
 	kdfVal_for_resStar, err := ueauth.GetKDFValue(key, FC, P0, ueauth.KDFLen(P0), P1, ueauth.KDFLen(P1), P2, ueauth.KDFLen(P2))
 	if err != nil {
-		fatal.Fatalf("Error getting KDF value: %+v", err)
+		logger.UtilLog.Fatalf("Error getting KDF value: %+v", err)
 	}
 	return kdfVal_for_resStar[len(kdfVal_for_resStar)/2:]
 }
@@ -161,17 +161,17 @@ func (ue *RanUeContext) DerivateKamf(key []byte, snName string, SQN, AK []byte) 
 	P1 := SQNxorAK
 	Kausf, err := ueauth.GetKDFValue(key, FC, P0, ueauth.KDFLen(P0), P1, ueauth.KDFLen(P1))
 	if err != nil {
-		fatal.Fatalf("Error getting KDF value: %+v", err)
+		logger.UtilLog.Fatalf("Error getting KDF value: %+v", err)
 	}
 	P0 = []byte(snName)
 	Kseaf, err := ueauth.GetKDFValue(Kausf, ueauth.FC_FOR_KSEAF_DERIVATION, P0, ueauth.KDFLen(P0))
 	if err != nil {
-		fatal.Fatalf("Error getting KDF value: %+v", err)
+		logger.UtilLog.Fatalf("Error getting KDF value: %+v", err)
 	}
 
 	supiRegexp, err := regexp.Compile("(?:imsi|supi)-([0-9]{5,15})")
 	if err != nil {
-		fatal.Fatalf("regexp Compile error: %+v", err)
+		logger.UtilLog.Fatalf("regexp Compile error: %+v", err)
 	}
 	groups := supiRegexp.FindStringSubmatch(ue.Supi)
 
@@ -182,7 +182,7 @@ func (ue *RanUeContext) DerivateKamf(key []byte, snName string, SQN, AK []byte) 
 
 	ue.Kamf, err = ueauth.GetKDFValue(Kseaf, ueauth.FC_FOR_KAMF_DERIVATION, P0, L0, P1, L1)
 	if err != nil {
-		fatal.Fatalf("Error getting KDF value: %+v", err)
+		logger.UtilLog.Fatalf("Error getting KDF value: %+v", err)
 	}
 }
 
@@ -196,7 +196,7 @@ func (ue *RanUeContext) DerivateAlgKey() {
 
 	kenc, err := ueauth.GetKDFValue(ue.Kamf, ueauth.FC_FOR_ALGORITHM_KEY_DERIVATION, P0, L0, P1, L1)
 	if err != nil {
-		fatal.Fatalf("Error getting KDF value: %+v", err)
+		logger.UtilLog.Fatalf("Error getting KDF value: %+v", err)
 	}
 	copy(ue.KnasEnc[:], kenc[16:32])
 
@@ -208,7 +208,7 @@ func (ue *RanUeContext) DerivateAlgKey() {
 
 	kint, err := ueauth.GetKDFValue(ue.Kamf, ueauth.FC_FOR_ALGORITHM_KEY_DERIVATION, P0, L0, P1, L1)
 	if err != nil {
-		fatal.Fatalf("Error getting KDF value: %+v", err)
+		logger.UtilLog.Fatalf("Error getting KDF value: %+v", err)
 	}
 	copy(ue.KnasInt[:], kint[16:32])
 }
