@@ -9,8 +9,8 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 
-	"github.com/calee0219/fatal"
 	"github.com/omec-project/aper"
+	"github.com/omec-project/gnbsim/logger"
 	"github.com/omec-project/ngap/ngapConvert"
 	"github.com/omec-project/ngap/ngapType"
 )
@@ -305,7 +305,7 @@ func BuildInitialUEMessage(ranUeNgapID int64, nasPdu []byte, fiveGSTmsi string) 
 		fiveGSTMSI := ie.Value.FiveGSTMSI
 		amfSetID, err := hex.DecodeString(fiveGSTmsi[:4])
 		if err != nil {
-			fatal.Fatalf("DecodeString error in BuildInitialUEMessage: %+v", err)
+			logger.UtilLog.Fatalf("DecodeString error in BuildInitialUEMessage: %+v", err)
 		}
 		fiveGSTMSI.AMFSetID.Value = aper.BitString{
 			Bytes:     amfSetID,
@@ -313,7 +313,7 @@ func BuildInitialUEMessage(ranUeNgapID int64, nasPdu []byte, fiveGSTmsi string) 
 		}
 		amfPointer, err := hex.DecodeString(fiveGSTmsi[2:4])
 		if err != nil {
-			fatal.Fatalf("DecodeString error in BuildInitialUEMessage: %+v", err)
+			logger.UtilLog.Fatalf("DecodeString error in BuildInitialUEMessage: %+v", err)
 		}
 		fiveGSTMSI.AMFPointer.Value = aper.BitString{
 			Bytes:     amfPointer,
@@ -321,7 +321,7 @@ func BuildInitialUEMessage(ranUeNgapID int64, nasPdu []byte, fiveGSTmsi string) 
 		}
 		tmsi, err := hex.DecodeString(fiveGSTmsi[6:])
 		if err != nil {
-			fatal.Fatalf("DecodeString error in BuildInitialUEMessage: %+v", err)
+			logger.UtilLog.Fatalf("DecodeString error in BuildInitialUEMessage: %+v", err)
 		}
 		fiveGSTMSI.FiveGTMSI.Value = aper.OctetString(tmsi)
 
@@ -3484,7 +3484,7 @@ func GetPDUSessionResourceSetupResponseTransfer(pduSession *PduSession, ipv4 str
 	data := buildPDUSessionResourceSetupResponseTransfer(pduSession, ipv4)
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceSetupResponseTransfer: %+v", err)
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceSetupResponseTransfer: %+v", err)
 	}
 	return encodeData
 }
@@ -3493,7 +3493,7 @@ func GetPDUSessionResourceModifyResponseTransfer() []byte {
 	data := buildPDUSessionResourceModifyResponseTransfer()
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceModifyResponseTransfer: %+v", err)
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceModifyResponseTransfer: %+v", err)
 	}
 	return encodeData
 }
@@ -3502,7 +3502,7 @@ func GetPDUSessionResourceSetupUnsucessfulTransfer() []byte {
 	data := buildPDUSessionResourceSetupUnsucessfulTransfer()
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceSetupUnsucessfulTransfer: %+v", err)
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceSetupUnsucessfulTransfer: %+v", err)
 	}
 	return encodeData
 }
@@ -3511,7 +3511,7 @@ func GetPDUSessionResourceModifyUnsuccessfulTransfer() []byte {
 	data := buildPDUSessionResourceModifyUnsuccessfulTransfer()
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceModifyUnsuccessfulTransfer: %+v", err)
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceModifyUnsuccessfulTransfer: %+v", err)
 	}
 	return encodeData
 }
@@ -3520,7 +3520,7 @@ func GetPDUSessionResourceModifyConfirmTransfer(qfis []int64) []byte {
 	data := buildPDUSessionResourceModifyConfirmTransfer(qfis)
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceModifyConfirmTransfer: %+v", err)
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceModifyConfirmTransfer: %+v", err)
 	}
 	return encodeData
 }
@@ -3529,7 +3529,7 @@ func GetPDUSessionResourceModifyIndicationUnsuccessfulTransfer() []byte {
 	data := buildPDUSessionResourceModifyIndicationUnsuccessfulTransfer()
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf(
+		logger.UtilLog.Fatalf(
 			"aper MarshalWithParams error in GetPDUSessionResourceModifyIndicationUnsuccessfulTransfer: %+v", err)
 	}
 	return encodeData
@@ -3539,7 +3539,7 @@ func GetPDUSessionResourceReleaseCommandTransfer() []byte {
 	data := buildPDUSessionResourceReleaseCommandTransferr()
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceReleaseCommandTransfer: %+v", err)
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceReleaseCommandTransfer: %+v", err)
 	}
 	return encodeData
 }
@@ -3548,7 +3548,7 @@ func GetPathSwitchRequestTransfer() []byte {
 	data := buildPathSwitchRequestTransfer()
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf("aper MarshalWithParams error in GetPathSwitchRequestTransfer: %+v", err)
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetPathSwitchRequestTransfer: %+v", err)
 	}
 	return encodeData
 }
@@ -3557,7 +3557,7 @@ func GetPathSwitchRequestSetupFailedTransfer() []byte {
 	data := buildPathSwitchRequestSetupFailedTransfer()
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf("aper MarshalWithParams error in GetPathSwitchRequestSetupFailedTransfer: %+v", err)
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetPathSwitchRequestSetupFailedTransfer: %+v", err)
 	}
 	return encodeData
 }
@@ -3566,7 +3566,7 @@ func GetPDUSessionResourceModifyIndicationTransfer() []byte {
 	data := buildPDUSessionResourceModifyIndicationTransfer()
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceModifyIndicationTransfer: %+v", err)
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceModifyIndicationTransfer: %+v", err)
 	}
 	return encodeData
 }
@@ -3575,7 +3575,7 @@ func GetPDUSessionResourceReleaseResponseTransfer() []byte {
 	data := buildPDUSessionResourceReleaseResponseTransfer()
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceReleaseResponseTransfer: %+v", err)
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceReleaseResponseTransfer: %+v", err)
 	}
 	return encodeData
 }
@@ -3584,7 +3584,7 @@ func GetPDUSessionResourceNotifyTransfer(qfis []int64, notiCause []uint64, relQf
 	data := buildPDUSessionResourceNotifyTransfer(qfis, notiCause, relQfis)
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceNotifyTransfer: %+v", err)
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceNotifyTransfer: %+v", err)
 	}
 	return encodeData
 }
@@ -3593,7 +3593,7 @@ func GetPDUSessionResourceNotifyReleasedTransfer() []byte {
 	data := buildPDUSessionResourceNotifyReleasedTransfer()
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceNotifyReleasedTransfer: %+v", err)
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceNotifyReleasedTransfer: %+v", err)
 	}
 	return encodeData
 }
@@ -3602,7 +3602,7 @@ func GetHandoverRequestAcknowledgeTransfer() []byte {
 	data := buildHandoverRequestAcknowledgeTransfer()
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf("aper MarshalWithParams error in GetHandoverRequestAcknowledgeTransfer: %+v", err)
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetHandoverRequestAcknowledgeTransfer: %+v", err)
 	}
 	return encodeData
 }
@@ -3611,7 +3611,7 @@ func GetHandoverResourceAllocationUnsuccessfulTransfer() []byte {
 	data := buildHandoverResourceAllocationUnsuccessfulTransfer()
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf("aper MarshalWithParams error in GetHandoverResourceAllocationUnsuccessfulTransfer: %+v", err)
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetHandoverResourceAllocationUnsuccessfulTransfer: %+v", err)
 	}
 	return encodeData
 }
@@ -3620,7 +3620,7 @@ func GetHandoverRequiredTransfer() []byte {
 	data := buildHandoverRequiredTransfer()
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf("aper MarshalWithParams error in GetHandoverRequiredTransfer: %+v", err)
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetHandoverRequiredTransfer: %+v", err)
 	}
 	return encodeData
 }
@@ -3629,7 +3629,7 @@ func GetSourceToTargetTransparentTransfer(targetGNBID []byte, targetCellID []byt
 	data := buildSourceToTargetTransparentTransfer(targetGNBID, targetCellID)
 	encodeData, err := aper.MarshalWithParams(data, "valueExt")
 	if err != nil {
-		fatal.Fatalf("aper MarshalWithParams error in GetSourceToTargetTransparentTransfer: %+v", err)
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetSourceToTargetTransparentTransfer: %+v", err)
 	}
 	return encodeData
 }

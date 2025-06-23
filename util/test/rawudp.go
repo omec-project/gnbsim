@@ -11,7 +11,7 @@ import (
 	"net"
 	"runtime"
 
-	"github.com/calee0219/fatal"
+	"github.com/omec-project/gnbsim/logger"
 	"golang.org/x/sys/unix"
 )
 
@@ -75,7 +75,7 @@ func (h *iphdr) checksum() {
 	var b bytes.Buffer
 	err := binary.Write(&b, binary.BigEndian, h)
 	if err != nil {
-		fatal.Fatalf("binary Write error in checksum: %+v", err)
+		logger.UtilLog.Fatalf("binary Write error in checksum: %+v", err)
 	}
 	h.csum = checksum(b.Bytes())
 }
@@ -92,15 +92,15 @@ func (u *udphdr) checksum(ip *iphdr, payload []byte) {
 	var b bytes.Buffer
 	err := binary.Write(&b, binary.BigEndian, &phdr)
 	if err != nil {
-		fatal.Fatalf("binary Write error in checksum: %+v", err)
+		logger.UtilLog.Fatalf("binary Write error in checksum: %+v", err)
 	}
 	err = binary.Write(&b, binary.BigEndian, u)
 	if err != nil {
-		fatal.Fatalf("binary Write error in checksum: %+v", err)
+		logger.UtilLog.Fatalf("binary Write error in checksum: %+v", err)
 	}
 	err = binary.Write(&b, binary.BigEndian, &payload)
 	if err != nil {
-		fatal.Fatalf("binary Write error in checksum: %+v", err)
+		logger.UtilLog.Fatalf("binary Write error in checksum: %+v", err)
 	}
 	u.csum = checksum(b.Bytes())
 }

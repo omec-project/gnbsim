@@ -9,7 +9,7 @@ import (
 	"net"
 
 	"git.cs.nctu.edu.tw/calee/sctp"
-	"github.com/calee0219/fatal"
+	"github.com/omec-project/gnbsim/logger"
 )
 
 const NgapPPID uint32 = 0x3c000000
@@ -51,7 +51,7 @@ func ConnectToAmf(amfIP, ranIP string, amfPort, ranPort int) (*sctp.SCTPConn, er
 	}
 	info, err := conn.GetDefaultSentParam()
 	if err != nil {
-		fatal.Fatalf("conn GetDefaultSentParam error in ConnectToAmf: %+v", err)
+		logger.UtilLog.Fatalf("conn GetDefaultSentParam error in ConnectToAmf: %+v", err)
 	}
 	info.PPID = NgapPPID
 	err = conn.SetDefaultSentParam(info)
