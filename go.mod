@@ -9,7 +9,7 @@ require (
 	github.com/omec-project/amf v1.6.7
 	github.com/omec-project/aper v1.3.1
 	github.com/omec-project/nas v1.5.3
-	github.com/omec-project/ngap v1.4.2
+	github.com/omec-project/ngap v1.5.0
 	github.com/omec-project/openapi v1.5.0
 	github.com/omec-project/util v1.3.2
 	github.com/urfave/cli/v3 v3.3.8
