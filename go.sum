@@ -189,10 +189,10 @@ github.com/omec-project/amf v1.6.7 h1:uoiui7g2BcUPlfCNnZXvYQ2zcy6QAq6cgp+/sDUsXM
 github.com/omec-project/amf v1.6.7/go.mod h1:/d9ckl1i9ZdO7XK7PlUuYtPhzByiuhlxGtkrMm8VGHA=
 github.com/omec-project/aper v1.3.1 h1:3Vyqn2xQEulzsQ9JganXqxbR1E2IM7oUm4IW1HiPnr0=
 github.com/omec-project/aper v1.3.1/go.mod h1:W0i+XhbXHeeLQ4BhMmAS8h83yZ5pnD3w0sdIlnuPS70=
-github.com/omec-project/nas v1.5.3 h1:xX/Mdc1DQWxxN82NCexPGlxaaPleQp1bnmN4uTmIVMI=
-github.com/omec-project/nas v1.5.3/go.mod h1:am1sKsRpNblkjGbM6I2dtdjFooYqqeL1ZgV4HSd+wUo=
-github.com/omec-project/ngap v1.4.2 h1:1p4tozYxmgD+fqBT+i4DAL0GNd0+/rFgpUKxcxKoyYw=
-github.com/omec-project/ngap v1.4.2/go.mod h1:xYB2+a2t1dAq6F2YTDUGHLuhWESBbOJQ3L1OJvcL0b8=
+github.com/omec-project/nas v1.6.0 h1:Bar13cFszi8l4AStLGRLbznFx93OYNV9n/Ba4A2RN1Y=
+github.com/omec-project/nas v1.6.0/go.mod h1:C5mXN3MiZZBF0YRiPkxB2RWc8RvTFb0xWGcUTZ6efng=
+github.com/omec-project/ngap v1.5.0 h1:Fu0JIDxDxuNnlz9iomehxn2ZSryqwcY0YS8a73cSIsM=
+github.com/omec-project/ngap v1.5.0/go.mod h1:xYB2+a2t1dAq6F2YTDUGHLuhWESBbOJQ3L1OJvcL0b8=
 github.com/omec-project/openapi v1.5.0 h1:WV3JjYwqio1xRTb1Nvc6kpSGgf+/VzrScU9WS9PBNwE=
 github.com/omec-project/openapi v1.5.0/go.mod h1:4nwAVKA4GUXw5OnjxYOU8LAoRrpGTG/ruJLgKiE/Ccs=
 github.com/omec-project/util v1.4.0 h1:LJ29TMOvkdCWBRQWqTsQNW3Wn+Wio6i3oyBIMa+1cPY=
