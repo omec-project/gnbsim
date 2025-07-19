@@ -54,107 +54,125 @@ func action(ctx context.Context, c *cli.Command) error {
 		return err
 	}
 
-	if err = factory.InitConfigFactory(absPath); err != nil {
-		logger.AppLog.Errorln("failed to initialize config factory:", err)
-		return err
+	if err = loadConfig(absPath); err != nil {
+		return nil
 	}
 
-	config := factory.AppConfig
+	setupLogging()
 
-	// Initiating a server for profiling
-	if config.Configuration.GoProfile.Enable {
-		go func() {
-			endpt := fmt.Sprintf(":%v", config.Configuration.GoProfile.Port)
-			logger.AppLog.Infoln("endpoint for profile server", endpt)
-			err = http.ListenAndServe(endpt, nil)
-			if err != nil {
-				logger.AppLog.Errorln("failed to start profiling server")
-			}
-		}()
-	}
-	lvl, errLevel := zapcore.ParseLevel(config.Logger.LogLevel)
-	if errLevel != nil {
-		logger.AppLog.Errorln("can not parse input level")
-	}
-	logger.AppLog.Infoln("setting log level to:", lvl)
-	logger.SetLogLevel(lvl)
+	startProfilingServer()
 
-	err = prof.InitializeAllProfiles()
-	if err != nil {
-		logger.AppLog.Errorln("failed to initialize Profiles:", err)
-		return err
-	}
-
-	err = gnodeb.InitializeAllGnbs()
-	if err != nil {
-		logger.AppLog.Errorln("failed to initialize gNodeBs:", err)
+	if err = initializeProfilesAndGnbs(); err != nil {
 		return err
 	}
 
 	go ListenAndLogSummary()
 
 	var appWaitGrp sync.WaitGroup
-	if config.Configuration.Server.Enable {
-		appWaitGrp.Add(1)
-		go func() {
-			defer appWaitGrp.Done()
-			err := httpserver.StartHttpServer()
-			if err != nil {
-				logger.AppLog.Infoln("StartHttpServer returned :", err)
-			}
-		}()
 
-		signalChannel := make(chan os.Signal, 1)
-		signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
-		go func() {
-			<-signalChannel
-			logger.AppLog.Infoln("StopHttpServer called")
-			httpserver.StopHttpServer()
-			logger.AppLog.Infoln("StopHttpServer returned ")
-		}()
-	}
+	startHttpServerIfEnabled(&appWaitGrp)
 
-	// This configuration enables running the configured profiles
-	// when gnbsim is started. It is enabled by default. If we want no
-	// profiles to run and gnbsim to wait for a command, then we
-	// should disable this config.
-	if config.Configuration.RunConfigProfilesAtStart {
-		var profileWaitGrp sync.WaitGroup
-		// start profile and wait for it to finish (success or failure)
-		// Keep running gnbsim as long as profiles are not finished
-		for _, profile := range config.Configuration.Profiles {
-			if !profile.Enable {
-				logger.AppLog.Errorln("disabled profileType ", profile.ProfileType)
-				continue
-			}
-			profileWaitGrp.Add(1)
-
-			prof.InitProfile(profile, profctx.SummaryChan)
-
-			go func(profileCtx *profctx.Profile) {
-				defer profileWaitGrp.Done()
-				prof.ExecuteProfile(profileCtx, profctx.SummaryChan)
-			}(profile)
-
-			if !config.Configuration.ExecInParallel {
-				profileWaitGrp.Wait()
-			}
-		}
-
-		if config.Configuration.ExecInParallel {
-			profileWaitGrp.Wait()
-		}
-	}
+	runConfiguredProfiles()
 
 	appWaitGrp.Wait()
 
-	// should be good enough to send pending packets out of socket and process events on channel
-	time.Sleep(time.Second * 5)
-	stats.DumpStats()
-	// TODO: To be removed. Allowing summary logger to dump the logs
-	time.Sleep(time.Second * 5)
-
+	gracefulShutdown()
 	return nil
+}
+
+func loadConfig(path string) error {
+	if err := factory.InitConfigFactory(path); err != nil {
+		logger.AppLog.Fatalf("Failed to initialize config: %v", err)
+		return err
+	}
+	return nil
+}
+
+func setupLogging() {
+	config := factory.AppConfig
+	lvl, err := zapcore.ParseLevel(config.Logger.LogLevel)
+	if err != nil {
+		logger.AppLog.Errorln("cannot parse log level:", err)
+	}
+	logger.AppLog.Infoln("setting log level to:", lvl)
+	logger.SetLogLevel(lvl)
+}
+
+func startProfilingServer() {
+	config := factory.AppConfig
+	if config.Configuration.GoProfile.Enable {
+		go func() {
+			endpt := fmt.Sprintf(":%v", config.Configuration.GoProfile.Port)
+			logger.AppLog.Infoln("endpoint for profile server", endpt)
+			if err := http.ListenAndServe(endpt, nil); err != nil {
+				logger.AppLog.Errorln("failed to start profiling server:", err)
+			}
+		}()
+	}
+}
+
+func initializeProfilesAndGnbs() error {
+	if err := prof.InitializeAllProfiles(); err != nil {
+		logger.AppLog.Errorln("failed to initialize Profiles:", err)
+		return err
+	}
+	if err := gnodeb.InitializeAllGnbs(); err != nil {
+		logger.AppLog.Errorln("failed to initialize gNodeBs:", err)
+		return err
+	}
+	return nil
+}
+
+func startHttpServerIfEnabled(wg *sync.WaitGroup) {
+	config := factory.AppConfig
+	if config.Configuration.Server.Enable {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := httpserver.StartHttpServer(); err != nil {
+				logger.AppLog.Infoln("StartHttpServer returned:", err)
+			}
+		}()
+		go handleShutdownSignal()
+	}
+}
+
+// This configuration enables running the configured profiles
+// when gnbsim is started. It is enabled by default. If we want no
+// profiles to run and gnbsim to wait for a command, then we
+// should disable this config.
+func runConfiguredProfiles() {
+	config := factory.AppConfig
+	if !config.Configuration.RunConfigProfilesAtStart {
+		return
+	}
+
+	var profileWaitGrp sync.WaitGroup
+	for _, profile := range config.Configuration.Profiles {
+		if !profile.Enable {
+			logger.AppLog.Errorln("disabled profileType", profile.ProfileType)
+			continue
+		}
+		profileWaitGrp.Add(1)
+		prof.InitProfile(profile, profctx.SummaryChan)
+		go func(profileCtx *profctx.Profile) {
+			defer profileWaitGrp.Done()
+			prof.ExecuteProfile(profileCtx, profctx.SummaryChan)
+		}(profile)
+
+		if !config.Configuration.ExecInParallel {
+			profileWaitGrp.Wait()
+		}
+	}
+	if config.Configuration.ExecInParallel {
+		profileWaitGrp.Wait()
+	}
+}
+
+func gracefulShutdown() {
+	time.Sleep(5 * time.Second)
+	stats.DumpStats()
+	time.Sleep(5 * time.Second)
 }
 
 func getCliFlags() []cli.Flag {
@@ -167,7 +185,6 @@ func getCliFlags() []cli.Flag {
 	}
 }
 
-// TODO: we don't keep track of how many profiles are started...
 func ListenAndLogSummary() {
 	for intfcMsg := range profctx.SummaryChan {
 		// TODO: do we need this event ?
@@ -194,4 +211,13 @@ func ListenAndLogSummary() {
 		}
 		logger.AppSummaryLog.Infoln("Profile Status:", result)
 	}
+}
+
+func handleShutdownSignal() {
+	signalChannel := make(chan os.Signal, 1)
+	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
+	<-signalChannel
+	logger.AppLog.Infoln("StopHttpServer called")
+	httpserver.StopHttpServer()
+	logger.AppLog.Infoln("StopHttpServer returned")
 }

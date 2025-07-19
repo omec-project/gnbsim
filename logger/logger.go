@@ -45,68 +45,54 @@ const (
 
 func init() {
 	atomicLevel = zap.NewAtomicLevelAt(zap.InfoLevel)
-	config := zap.Config{
-		Level:            atomicLevel,
-		Development:      false,
-		Encoding:         "console",
-		EncoderConfig:    zap.NewProductionEncoderConfig(),
-		OutputPaths:      []string{"stdout", "gnbsim.log"},
-		ErrorOutputPaths: []string{"stderr"},
-	}
 
-	config.EncoderConfig.TimeKey = "timestamp"
-	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	config.EncoderConfig.LevelKey = "level"
-	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
-	config.EncoderConfig.CallerKey = "caller"
-	config.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
-	config.EncoderConfig.MessageKey = "message"
-	config.EncoderConfig.StacktraceKey = ""
+	log = buildLogger("gnbsim.log")
+	summaryLog = buildLogger("summary.log")
 
-	var err error
-	log, err = config.Build()
-	if err != nil {
-		panic(err)
-	}
+	base := log.Sugar().With("component", "GNBSIM")
+	summary := summaryLog.Sugar().With("component", "GNBSIM")
 
-	configSummary := zap.Config{
-		Level:            atomicLevel,
-		Development:      false,
-		Encoding:         "console",
-		EncoderConfig:    zap.NewProductionEncoderConfig(),
-		OutputPaths:      []string{"stdout", "summary.log"},
-		ErrorOutputPaths: []string{"stderr"},
-	}
-
-	configSummary.EncoderConfig.TimeKey = "timestamp"
-	configSummary.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	configSummary.EncoderConfig.LevelKey = "level"
-	configSummary.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
-	configSummary.EncoderConfig.CallerKey = "caller"
-	configSummary.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
-	configSummary.EncoderConfig.MessageKey = "message"
-	configSummary.EncoderConfig.StacktraceKey = ""
-
-	summaryLog, err = configSummary.Build()
-	if err != nil {
-		panic(err)
-	}
-
-	AppLog = log.Sugar().With("component", "GNBSIM", "category", "App")
-	AppSummaryLog = summaryLog.Sugar().With("component", "GNBSIM", "category", "Summary")
-	RealUeLog = log.Sugar().With("component", "GNBSIM", "category", "RealUe")
-	SimUeLog = log.Sugar().With("component", "GNBSIM", "category", "SimUe")
-	ProfUeCtxLog = log.Sugar().With("component", "GNBSIM", "category", "ProfUeCtx")
-	ProfileLog = log.Sugar().With("component", "GNBSIM", "category", "Profile")
-	GNodeBLog = log.Sugar().With("component", "GNBSIM", "category", "GNodeB")
-	GinLog = log.Sugar().With("component", "GNBSIM", "category", "Gin")
-	HttpLog = log.Sugar().With("component", "GNBSIM", "category", "HTTP")
-	CfgLog = log.Sugar().With("component", "GNBSIM", "category", "CFG")
-	StatsLog = log.Sugar().With("component", "GNBSIM", "category", "Stats")
-	UtilLog = log.Sugar().With("component", "GNBSIM", "category", "Util")
+	AppLog = base.With("category", "App")
+	AppSummaryLog = summary.With("category", "Summary")
+	RealUeLog = base.With("category", "RealUe")
+	SimUeLog = base.With("category", "SimUe")
+	ProfUeCtxLog = base.With("category", "ProfUeCtx")
+	ProfileLog = base.With("category", "Profile")
+	GNodeBLog = base.With("category", "GNodeB")
+	GinLog = base.With("category", "Gin")
+	HttpLog = base.With("category", "HTTP")
+	CfgLog = base.With("category", "CFG")
+	StatsLog = base.With("category", "Stats")
+	UtilLog = base.With("category", "Util")
 	GtpLog = UtilLog.With("subcategory", "GTP")
 	NgapLog = UtilLog.With("subcategory", "NGAP")
 	PsuppLog = UtilLog.With("subcategory", "PSUPP")
+}
+
+func buildLogger(outputFile string) *zap.Logger {
+	cfg := zap.Config{
+		Level:            atomicLevel,
+		Development:      false,
+		Encoding:         "console",
+		EncoderConfig:    zap.NewProductionEncoderConfig(),
+		OutputPaths:      []string{"stdout", outputFile},
+		ErrorOutputPaths: []string{"stderr"},
+	}
+
+	cfg.EncoderConfig.TimeKey = "timestamp"
+	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	cfg.EncoderConfig.LevelKey = "level"
+	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	cfg.EncoderConfig.CallerKey = "caller"
+	cfg.EncoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+	cfg.EncoderConfig.MessageKey = "message"
+	cfg.EncoderConfig.StacktraceKey = ""
+
+	logger, err := cfg.Build()
+	if err != nil {
+		panic(err)
+	}
+	return logger
 }
 
 func GetLogger() *zap.Logger {
