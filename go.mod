@@ -6,11 +6,11 @@ require (
 	git.cs.nctu.edu.tw/calee/sctp v1.1.0
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.10.1
-	github.com/omec-project/amf v1.6.7
+	github.com/omec-project/amf v1.7.0
 	github.com/omec-project/aper v1.3.1
 	github.com/omec-project/nas v1.6.0
 	github.com/omec-project/ngap v1.5.0
-	github.com/omec-project/openapi v1.5.0
+	github.com/omec-project/openapi v1.6.1
 	github.com/omec-project/util v1.4.0
 	github.com/urfave/cli/v3 v3.3.8
 	github.com/yerden/go-util v1.1.4
@@ -65,6 +65,7 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/segmentio/kafka-go v0.4.48 // indirect
 	github.com/thakurajayL/go-ipam v0.0.5-dev // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
@@ -86,7 +87,7 @@ require (
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250324211829-b45e905df463 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/grpc v1.73.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
