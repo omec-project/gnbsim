@@ -10,7 +10,7 @@ require (
 	github.com/omec-project/aper v1.3.1
 	github.com/omec-project/nas v1.6.0
 	github.com/omec-project/ngap v1.5.0
-	github.com/omec-project/openapi v1.6.2
+	github.com/omec-project/openapi v1.6.3
 	github.com/omec-project/util v1.4.0
 	github.com/urfave/cli/v3 v3.3.8
 	github.com/yerden/go-util v1.1.4
@@ -41,7 +41,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v5 v5.2.3 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 // indirect
