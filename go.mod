@@ -12,7 +12,7 @@ require (
 	github.com/omec-project/ngap v1.5.0
 	github.com/omec-project/openapi v1.6.3
 	github.com/omec-project/util v1.4.0
-	github.com/urfave/cli/v3 v3.3.8
+	github.com/urfave/cli/v3 v3.4.1
 	github.com/yerden/go-util v1.1.4
 	go.uber.org/zap v1.27.0
 	golang.org/x/net v0.43.0
