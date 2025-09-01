@@ -100,8 +100,8 @@ github.com/omec-project/amf v1.7.0 h1:yqkwEyIoJD87Rc+eZnqG+Ewd4GCPMpCwwS79cX2j2L
 github.com/omec-project/amf v1.7.0/go.mod h1:EyDbb9SIlch2eZbDdT1LWvoclfg4MxZXNWFrsiXDums=
 github.com/omec-project/aper v1.3.1 h1:3Vyqn2xQEulzsQ9JganXqxbR1E2IM7oUm4IW1HiPnr0=
 github.com/omec-project/aper v1.3.1/go.mod h1:W0i+XhbXHeeLQ4BhMmAS8h83yZ5pnD3w0sdIlnuPS70=
-github.com/omec-project/nas v1.6.0 h1:Bar13cFszi8l4AStLGRLbznFx93OYNV9n/Ba4A2RN1Y=
-github.com/omec-project/nas v1.6.0/go.mod h1:C5mXN3MiZZBF0YRiPkxB2RWc8RvTFb0xWGcUTZ6efng=
+github.com/omec-project/nas v1.6.1 h1:bAxEILchc9YJ4ZPkKA/cAXFq058/Iqq/6gw3Pp9MTpQ=
+github.com/omec-project/nas v1.6.1/go.mod h1:kjG5yLTQxlpHLjSauEXWrL+6Z1veyJmn/TA503Gflzc=
 github.com/omec-project/ngap v1.5.0 h1:Fu0JIDxDxuNnlz9iomehxn2ZSryqwcY0YS8a73cSIsM=
 github.com/omec-project/ngap v1.5.0/go.mod h1:xYB2+a2t1dAq6F2YTDUGHLuhWESBbOJQ3L1OJvcL0b8=
 github.com/omec-project/openapi v1.6.3 h1:L3pMN8hnkHkbLOg9SsHpRlivyBSZHiW8Lt8oX/q3yvU=
@@ -141,8 +141,8 @@ github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
-github.com/stretchr/testify v1.10.0 h1:Xv5erBjTwe/5IxqUQTdXv5kgmIvbHo3QQyRwhJsOfJA=
-github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
+github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
+github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 github.com/twitchyliquid64/golang-asm v0.15.1 h1:SU5vSMR7hnwNxj24w34ZyCi/FmDZTkS4MhqMhdFk5YI=
 github.com/twitchyliquid64/golang-asm v0.15.1/go.mod h1:a1lVb/DtPvCB8fslRZhAngC2+aY1QWCk3Cedj/Gdt08=
 github.com/ugorji/go/codec v1.3.0 h1:Qd2W2sQawAfG8XSvzwhBeoGq71zXOC/Q1E9y/wUcsUA=
