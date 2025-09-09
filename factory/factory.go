@@ -14,7 +14,7 @@ import (
 	"os"
 
 	"github.com/omec-project/gnbsim/logger"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 )
 
 var AppConfig *Config
