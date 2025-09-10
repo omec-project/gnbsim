@@ -1,5 +1,3 @@
-git.cs.nctu.edu.tw/calee/sctp v1.1.0 h1:caiPJ0g2sH1QmDkC7x2yklKrc01Fuo1rqYW68Tq4mU0=
-git.cs.nctu.edu.tw/calee/sctp v1.1.0/go.mod h1:NeOuBXO1iJBtldmNhkfSH8yFbnxlhI8eEJdUd7DZvws=
 github.com/aead/cmac v0.0.0-20160719120800-7af84192f0b1 h1:+JkXLHME8vLJafGhOH4aoV2Iu8bR55nU6iKMVfYVLjY=
 github.com/aead/cmac v0.0.0-20160719120800-7af84192f0b1/go.mod h1:nuudZmJhzWtx2212z+pkuy7B6nkBqa+xwNXZHL1j8cg=
 github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d h1:Byv0BzEl3/e6D5CLfI0j/7hiIEtvGVFPCZ7Ei2oq8iQ=
@@ -59,6 +57,8 @@ github.com/gopherjs/gopherjs v1.17.2 h1:fQnZVsXk8uxXIStYb0N4bGk7jeyTalG/wsZjQ25d
 github.com/gopherjs/gopherjs v1.17.2/go.mod h1:pRRIvn/QzFLrKfvEz3qUuEhtE/zLCWfreZ6J5gM2i+k=
 github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 h1:2VTzZjLZBgl62/EtslCrtky5vbi9dd7HrQPQIx6wqiw=
 github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542/go.mod h1:Ow0tF8D4Kplbc8s8sSb3V2oUCygFHVp8gC3Dn6U4MNI=
+github.com/ishidawataru/sctp v0.0.0-20250829011129-4b890084db30 h1:SF8DGX8bGAXMAvxtJvFFy2KIAPwxIEDP3XpzZVhz0i4=
+github.com/ishidawataru/sctp v0.0.0-20250829011129-4b890084db30/go.mod h1:co9pwDoBCm1kGxawmb4sPq0cSIOOWNPT4KnHotMP1Zg=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
 github.com/jtolds/gls v4.20.0+incompatible h1:xdiiI2gbIgH/gLH7ADydsJ1uDOEzR8yvV7C0MuV77Wo=
@@ -102,8 +102,8 @@ github.com/omec-project/aper v1.3.1 h1:3Vyqn2xQEulzsQ9JganXqxbR1E2IM7oUm4IW1HiPn
 github.com/omec-project/aper v1.3.1/go.mod h1:W0i+XhbXHeeLQ4BhMmAS8h83yZ5pnD3w0sdIlnuPS70=
 github.com/omec-project/nas v1.6.1 h1:bAxEILchc9YJ4ZPkKA/cAXFq058/Iqq/6gw3Pp9MTpQ=
 github.com/omec-project/nas v1.6.1/go.mod h1:kjG5yLTQxlpHLjSauEXWrL+6Z1veyJmn/TA503Gflzc=
-github.com/omec-project/ngap v1.5.0 h1:Fu0JIDxDxuNnlz9iomehxn2ZSryqwcY0YS8a73cSIsM=
-github.com/omec-project/ngap v1.5.0/go.mod h1:xYB2+a2t1dAq6F2YTDUGHLuhWESBbOJQ3L1OJvcL0b8=
+github.com/omec-project/ngap v1.5.1 h1:tB/FuA+c9e8ElGwcrkJPjXuMltqiKjA2dEUAFO6im4s=
+github.com/omec-project/ngap v1.5.1/go.mod h1:7zDafotBvJKOmin6EaR4iSxNjV6r4i8NZDgRiffL7BI=
 github.com/omec-project/openapi v1.6.3 h1:L3pMN8hnkHkbLOg9SsHpRlivyBSZHiW8Lt8oX/q3yvU=
 github.com/omec-project/openapi v1.6.3/go.mod h1:hUzU8E/QxzsDS7a6RakqQlvl6fjI/a67KndPP1PKMGY=
 github.com/omec-project/util v1.5.0 h1:56/25nm0niqildbgcR+BMRxF56LMP+AasURI9o+KXJg=

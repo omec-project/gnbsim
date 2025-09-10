@@ -6,13 +6,13 @@ package test
 
 import (
 	"fmt"
+	"math/bits"
 	"net"
 
-	"git.cs.nctu.edu.tw/calee/sctp"
+	"github.com/ishidawataru/sctp"
 	"github.com/omec-project/gnbsim/logger"
+	"github.com/omec-project/ngap"
 )
-
-const NgapPPID uint32 = 0x3c000000
 
 func getNgapIp(amfIP, ranIP string, amfPort, ranPort int) (amfAddr, ranAddr *sctp.SCTPAddr, err error) {
 	ips := []net.IPAddr{}
@@ -53,7 +53,7 @@ func ConnectToAmf(amfIP, ranIP string, amfPort, ranPort int) (*sctp.SCTPConn, er
 	if err != nil {
 		logger.UtilLog.Fatalf("conn GetDefaultSentParam error in ConnectToAmf: %+v", err)
 	}
-	info.PPID = NgapPPID
+	info.PPID = bits.ReverseBytes32(ngap.PPID)
 	err = conn.SetDefaultSentParam(info)
 	if err != nil {
 		return nil, err
