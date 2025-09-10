@@ -53,6 +53,9 @@ func ConnectToAmf(amfIP, ranIP string, amfPort, ranPort int) (*sctp.SCTPConn, er
 	if err != nil {
 		logger.UtilLog.Fatalf("conn GetDefaultSentParam error in ConnectToAmf: %+v", err)
 	}
+	// The previous SCTP library expected PPID in network byte order (big-endian),
+	// while the new library expects host byte order. Using bits.ReverseBytes32
+	// ensures the PPID is interpreted correctly by the new SCTP implementation.
 	info.PPID = bits.ReverseBytes32(ngap.PPID)
 	err = conn.SetDefaultSentParam(info)
 	if err != nil {
