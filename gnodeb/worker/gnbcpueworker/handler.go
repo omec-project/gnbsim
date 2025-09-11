@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/omec-project/aper"
 	"github.com/omec-project/gnbsim/common"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/gnodeb/ngap"
@@ -18,6 +17,7 @@ import (
 	"github.com/omec-project/gnbsim/stats"
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 	"github.com/omec-project/gnbsim/util/test"
+	"github.com/omec-project/ngap/aper"
 	"github.com/omec-project/ngap/ngapConvert"
 	"github.com/omec-project/ngap/ngapType"
 )

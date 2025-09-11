@@ -11,10 +11,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/omec-project/aper"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 	"github.com/omec-project/ngap"
+	"github.com/omec-project/ngap/aper"
 	"github.com/omec-project/ngap/ngapConvert"
 	"github.com/omec-project/ngap/ngapType"
 )
