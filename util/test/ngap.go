@@ -30,7 +30,7 @@ func PrintAndGetCause(cause *ngapType.Cause) (present int, value aper.Enumerated
 		logger.NgapLog.Infof("cause Misc[%d]", cause.Misc.Value)
 		value = cause.Misc.Value
 	default:
-		logger.NgapLog.Errorf("invalid Cause group[%d]", cause.Present)
+		logger.NgapLog.Errorf("invalid cause group[%d]", cause.Present)
 	}
 	return
 }
