@@ -7,7 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.11.0
 	github.com/ishidawataru/sctp v0.0.0-20250829011129-4b890084db30
 	github.com/omec-project/amf v1.7.0
-	github.com/omec-project/nas v1.6.1
+	github.com/omec-project/nas v1.6.2
 	github.com/omec-project/ngap v1.6.0
 	github.com/omec-project/openapi v1.6.3
 	github.com/omec-project/util v1.5.0
