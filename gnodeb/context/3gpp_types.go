@@ -6,6 +6,6 @@
 package context
 
 const (
-	MaxNumOfServedGuamiList int   = 256
-	MaxNumOfPLMNs           int   = 12
+	MaxNumOfServedGuamiList int = 256
+	MaxNumOfPLMNs           int = 12
 )
