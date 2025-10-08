@@ -7,8 +7,6 @@ package context
 import (
 	"net"
 
-	amfctx "github.com/omec-project/amf/context"
-	"github.com/omec-project/amf/factory"
 	"github.com/omec-project/gnbsim/logger"
 	"github.com/omec-project/openapi/models"
 	"go.uber.org/zap"
@@ -28,7 +26,7 @@ type GnbAmf struct {
 	Log *zap.SugaredLogger
 
 	ServedGuamiList []models.Guami
-	PlmnSupportList []factory.PlmnSupportItem
+	PlmnSupportList []models.PlmnSnssai
 	AmfPort         int `yaml:"port"`
 
 	/* Relative AMF Capacity */
@@ -75,12 +73,4 @@ func (amf *GnbAmf) GetNgSetupStatus() bool {
 	// TODO Access to this either should not be concurrent or should be
 	// synchronized
 	return amf.NgSetupStatus
-}
-
-func NewServedGUAMIList() []models.Guami {
-	return make([]models.Guami, 0, amfctx.MaxNumOfServedGuamiList)
-}
-
-func NewPlmnSupportList() []factory.PlmnSupportItem {
-	return make([]factory.PlmnSupportItem, 0, amfctx.MaxNumOfPLMNs)
 }
