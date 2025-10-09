@@ -6,7 +6,6 @@
 package gnbamfworker
 
 import (
-	amfctx "github.com/omec-project/amf/context"
 	"github.com/omec-project/gnbsim/common"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/util/test"
@@ -86,7 +85,7 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 	// Initializing the ServedGuamiList slice in GnbAmf if not already initialized
 	// This will also clear any existing contents of ServedGuamiList within GnbAmf
 	if len(amf.ServedGuamiList) != 0 || cap(amf.ServedGuamiList) == 0 {
-		amf.ServedGuamiList = gnbctx.NewServedGUAMIList()
+		amf.ServedGuamiList = make([]models.Guami, 0, gnbctx.MaxNumOfServedGuamiList)
 	}
 
 	capOfGuamiList := cap(amf.ServedGuamiList)
@@ -121,14 +120,15 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 	// Initializing the PlmnSuportList slice in GnbAmf if not already initialized
 	// This will also clear any existing contents of PlmnSupportList within GnbAmf
 	if len(amf.PlmnSupportList) != 0 || cap(amf.PlmnSupportList) == 0 {
-		amf.PlmnSupportList = gnbctx.NewPlmnSupportList()
+		amf.PlmnSupportList = make([]models.PlmnSnssai, 0, gnbctx.MaxNumOfPLMNs)
 	}
 	capOfPlmnSupportList := cap(amf.PlmnSupportList)
 	for _, plmnSupportItem := range plmnSupportList.List {
-		plmnSI := amfctx.NewPlmnSupportItem()
+		var plmnSI models.PlmnSnssai
 
 		// Parsing PLMNID into models.Guami
-		plmnSI.PlmnId = ngapConvert.PlmnIdToModels(plmnSupportItem.PLMNIdentity)
+		plmnId := ngapConvert.PlmnIdToModels(plmnSupportItem.PLMNIdentity)
+		plmnSI.PlmnId = &plmnId
 
 		// Parsing SNssaiList into models.Snssai
 		capOfSNssaiList := cap(plmnSI.SNssaiList)
