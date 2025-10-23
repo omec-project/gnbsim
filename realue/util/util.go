@@ -21,9 +21,19 @@ const (
 
 var ROUTING_INDICATOR []uint8 = []uint8{0xf0, 0xff}
 
-// encodeBCD encodes a string of digits into BCD format using telephony nibble swapping
+// encodeBCD encodes a string of decimal digits into telephony BCD (Binary Coded
+// Decimal) format.
+//
+// Telephony BCD encoding specifics:
+//   - Each byte encodes two digits: the second digit is placed in the upper
+//     nibble (bits 4-7), and the first digit is placed in the lower nibble
+//     (bits 0-3).
+//   - If the input string has an odd number of digits, the final byte's upper
+//     nibble is padded with 0xF.
+//   - For example, "123" encodes to [0x21, 0xF3].
+//   - Only decimal digits ('0'-'9') are allowed; any other character will
+//     result in an error.
 func encodeBCD(digits string) ([]byte, error) {
-	// Validate input contains only digits
 	for _, char := range digits {
 		if char < '0' || char > '9' {
 			return nil, fmt.Errorf("invalid character '%c' in digits string", char)
@@ -33,20 +43,16 @@ func encodeBCD(digits string) ([]byte, error) {
 	digitBytes := []byte(digits)
 	length := len(digitBytes)
 
-	// Calculate the number of bytes needed
 	encodedLen := (length + 1) / 2
 	encoded := make([]byte, encodedLen)
 
 	for i := 0; i < length; i += 2 {
-		// Get the first digit (lower nibble in telephony BCD)
 		firstDigit := digitBytes[i] - '0'
 
 		var secondDigit byte
 		if i+1 < length {
-			// Get the second digit (upper nibble in telephony BCD)
 			secondDigit = digitBytes[i+1] - '0'
 		} else {
-			// Odd number of digits, pad with 0xF
 			secondDigit = 0xF
 		}
 
