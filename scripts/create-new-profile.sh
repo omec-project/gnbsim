@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-# Create new profile 
+# Create new profile
 # ./create-new-profile.sh -p profilenew -n 10
 
 

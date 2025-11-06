@@ -18,7 +18,7 @@ func HandleProcedureEvent(ue *simuectx.SimUe,
 ) (err error) {
 	msg := intfcMsg.(*common.ProfileMessage)
 	ue.Procedure = msg.Proc
-	ue.Log.Infoln("Start new procedure ", ue.Procedure)
+	ue.Log.Infoln("start new procedure:", ue.Procedure)
 	HandleProcedure(ue)
 	return nil
 }

@@ -6,11 +6,11 @@ SPDX-License-Identifier: Apache-2.0
 
 # gNBSim deployment options
 
-## Option1: As docker container 
+## Option1: As docker container
 
-[Aether onRamp](https://docs.aetherproject.org/master/onramp/gnbsim.html) installs gNBSim as docker container 
+[Aether onRamp](https://docs.aetherproject.org/master/onramp/gnbsim.html) installs gNBSim as docker container
 next to SD-Core (5G Core) or can be deployed in a separate host.
-If user wish to use just gNBSim and test it with some other 5G Core then Aether onRamp allows just installation of gNBSim. 
+If user wish to use just gNBSim and test it with some other 5G Core then Aether onRamp allows just installation of gNBSim.
 Aether onRamp makefile files are readable and user can achieve the required goal.
 
 ## Option2: As standalone executable
@@ -104,7 +104,7 @@ Alternatively, if you just want to install 5G Core but not to run any tests then
         # By default, the gNB Sim reads the configuration from  /gnbsim/config/gnb.conf file.
         # To provide a different configuration file, use the below command
         $ ./gnbsim --cfg <config file path>
- 
+
 ## Option4: As kubernetes pod
 
 Helm charts for gNBSim can be found [here](https://github.com/omec-project/sdcore-helm-charts/tree/main/5g-ran-sim)
@@ -113,7 +113,7 @@ gNBSim image can be found in the docker hub [here](https://hub.docker.com/r/omec
 **TBD**: helm chart commands to install gNBSim on any existing kubernetes cluster.
 
 **TBD**: Provide clean steps so that gNBSim can be installed without Aether In a Box need.
- 
+
 If you find a need to change gNBSim code and use the updated image in the test setup then follow below steps.
 To modify gNBSim and build a new docker image:
 

@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0
                configuration:
                    execInParallel: false #run all profiles in parallel
 
-> [!NOTE]  
+> [!NOTE]
 > There is execInParallel option under each profile as well. execInParallel under profile means that all the
 > subscribers in the profile are run in parallel
 

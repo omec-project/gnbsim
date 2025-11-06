@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 
 ## gNBsim can Optionally control profiles through HTTP APIs
 
-gNBSim can process HTTP Requests to launch profiles. 
+gNBSim can process HTTP Requests to launch profiles.
 
 HTTP API to create new profile. Below configuration enables http server in gNBSim.
 
@@ -22,7 +22,7 @@ HTTP API to create new profile. Below configuration enables http server in gNBSi
 ## gNBsim can Optionally launch profiles through HTTP APIs
 
 Refer [create new profile script](/scripts/create-new-profile.sh)
-   
+
 ## gNBsim can Optionally add new calls to existing profiles through HTTP APIs
 
 Refer [add new calls scripts](/scripts/add-new-calls.sh)
