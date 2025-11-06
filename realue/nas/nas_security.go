@@ -161,7 +161,7 @@ func NASDecode(ue *realuectx.RealUe, securityHeaderType uint8, payload []byte) (
 		err = msg.PlainNasDecode(&payload)
 		return msg, err
 	} else if ue.IntegrityAlg == security.AlgIntegrity128NIA0 {
-		ue.Log.Debugln("decode payload is ", payload)
+		ue.Log.Debugln("decode payload is", payload)
 		// remove header
 		payload = payload[3:]
 

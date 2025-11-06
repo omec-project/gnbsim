@@ -5,13 +5,13 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 # Configure gNBSim
-    
+
 ## Config file
-        
+
 >[!NOTE]
 > The configuration for gNBSim can be found [here](../config/gnbsim.yaml)
-            
-- **gnbs:** 
+
+- **gnbs:**
     List of gNB's to be simulated. Each item in the list holds configuration specific to a gNB.
     Support of multiple gNBs: Two gNBs are configured by default. So, User can create profiles by using these gNBs.
     Configuration of two gNBs can be found here
@@ -89,7 +89,7 @@ SPDX-License-Identifier: Apache-2.0
          gnbsim:
            goProfile:
              enable: true #enable/disable golang profile in gnbsim
-             port: 5000        
+             port: 5000
 
 - **Run gNBSim with single Interface or multi interface**
 
@@ -144,7 +144,7 @@ SPDX-License-Identifier: Apache-2.0
                #"next":  "quit" # default value quit. i.e., no further iteration to run
 
 ## Description of Each Profile
-        
+
 Currently following profiles are supported :
 
 ### **register:**
@@ -161,4 +161,3 @@ Currently following profiles are supported :
 
 ### **uetriggservicereq:**
 - Registration + UE initiated PDU Session Establishment + User Data packets + AN Release + UE Initiated Service Request
-

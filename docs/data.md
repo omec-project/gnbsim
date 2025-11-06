@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 
 -->
 
-# gNBsim data support 
+# gNBsim data support
 
 
 gNBSim can generate and send user data packets (ICMP echo request)
