@@ -8,7 +8,7 @@ require (
 	github.com/ishidawataru/sctp v0.0.0-20250829011129-4b890084db30
 	github.com/omec-project/nas v1.6.4
 	github.com/omec-project/ngap v1.6.1
-	github.com/omec-project/openapi v1.6.4
+	github.com/omec-project/openapi v1.6.5
 	github.com/omec-project/util v1.5.7
 	github.com/urfave/cli/v3 v3.6.1
 	go.uber.org/zap v1.27.1
@@ -31,7 +31,6 @@ require (
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/goccy/go-yaml v1.18.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
-	github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
@@ -49,10 +48,9 @@ require (
 	golang.org/x/arch v0.20.0 // indirect
 	golang.org/x/crypto v0.44.0 // indirect
 	golang.org/x/mod v0.29.0 // indirect
-	golang.org/x/oauth2 v0.31.0 // indirect
+	golang.org/x/oauth2 v0.32.0 // indirect
 	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
-	gopkg.in/h2non/gock.v1 v1.1.2 // indirect
 )
