@@ -35,8 +35,8 @@ github.com/golang-jwt/jwt/v5 v5.3.0/go.mod h1:fxCRLWMO43lRc8nhHWY6LGqRcf+1gQWArs
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
-github.com/ishidawataru/sctp v0.0.0-20250829011129-4b890084db30 h1:SF8DGX8bGAXMAvxtJvFFy2KIAPwxIEDP3XpzZVhz0i4=
-github.com/ishidawataru/sctp v0.0.0-20250829011129-4b890084db30/go.mod h1:co9pwDoBCm1kGxawmb4sPq0cSIOOWNPT4KnHotMP1Zg=
+github.com/ishidawataru/sctp v0.0.0-20251114114122-19ddcbc6aae2 h1:36qep4gxKs+JgeHGWeQ040RyZdt9kQlLglL1rFVn/oQ=
+github.com/ishidawataru/sctp v0.0.0-20251114114122-19ddcbc6aae2/go.mod h1:co9pwDoBCm1kGxawmb4sPq0cSIOOWNPT4KnHotMP1Zg=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
 github.com/klauspost/cpuid/v2 v2.3.0 h1:S4CRMLnYUhGeDFDqkGriYKdfoFlDnMtqTiI/sFzhA9Y=
