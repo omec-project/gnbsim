@@ -6,6 +6,7 @@
 package httpserver
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -16,7 +17,6 @@ import (
 	profilerouter "github.com/omec-project/gnbsim/profile/httprouter"
 	"github.com/omec-project/util/http2_util"
 	utilLogger "github.com/omec-project/util/logger"
-	"golang.org/x/net/context"
 )
 
 var server *http.Server
