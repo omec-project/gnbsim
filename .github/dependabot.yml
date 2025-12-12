@@ -28,3 +28,7 @@ updates:
       day: "sunday"
       time: "21:00"
       timezone: "America/Los_Angeles"
+    groups:
+      actions-deps:
+        patterns:
+          - "*"
