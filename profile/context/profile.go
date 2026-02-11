@@ -7,6 +7,7 @@ package context
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/omec-project/gnbsim/common"
@@ -215,9 +216,27 @@ func (profile *Profile) Init() error {
 		return err
 	}
 
+	// Validate Dnn and SNssai for profiles with PDU session establishment
+	if requiresPduSession(profile) {
+		if profile.Dnn == "" {
+			return fmt.Errorf("dnn is required for profile type '%s'", profile.ProfileType)
+		}
+		if profile.SNssai == nil {
+			return fmt.Errorf("sNssai is required for profile type '%s'", profile.ProfileType)
+		}
+		if profile.SNssai.Sst == 0 {
+			return fmt.Errorf("sNssai.sst is required for profile type '%s'", profile.ProfileType)
+		}
+	}
+
 	ProfileMap[profile.Name] = profile
 	profile.Log.Debugln("profile initialized", profile.Name, ", Enable", profile.Enable)
 	return nil
+}
+
+// requiresPduSession checks if a profile requires PDU session establishment
+func requiresPduSession(profile *Profile) bool {
+	return slices.Contains(profile.Procedures, common.PDU_SESSION_ESTABLISHMENT_PROCEDURE)
 }
 
 func initProcedureList(profile *Profile) error {
