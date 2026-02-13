@@ -2,6 +2,8 @@
 # Copyright 2022 Intel Corporation
 # Copyright 2025 Canonical Ltd.
 
+# Timeline for each ecosystem is intentionally staggered to spread
+# Dependabot PRs over the week.
 version: 2
 updates:
 
@@ -17,7 +19,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "sunday"
+      day: "thursday"
       time: "21:00"
       timezone: "America/Los_Angeles"
 
@@ -25,7 +27,7 @@ updates:
     directory: /
     schedule:
       interval: "weekly"
-      day: "sunday"
+      day: "tuesday"
       time: "21:00"
       timezone: "America/Los_Angeles"
     groups:
