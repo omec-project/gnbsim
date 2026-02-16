@@ -9,7 +9,7 @@ require (
 	github.com/omec-project/nas v1.6.4
 	github.com/omec-project/ngap v1.8.0
 	github.com/omec-project/openapi v1.7.0
-	github.com/omec-project/util v1.5.7
+	github.com/omec-project/util v1.7.0
 	github.com/urfave/cli/v3 v3.6.2
 	go.uber.org/zap v1.27.1
 	go.yaml.in/yaml/v4 v4.0.0-rc.4
