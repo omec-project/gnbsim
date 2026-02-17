@@ -114,12 +114,12 @@ func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
 
 func TestProfileInit_ValidatesDnnForCustomProfiles(t *testing.T) {
 	tests := []struct {
-		name        string
 		pIterations map[string]*PIterations
-		dnn         string
 		sNssai      *models.Snssai
-		expectError bool
+		name        string
+		dnn         string
 		errorMsg    string
+		expectError bool
 	}{
 		{
 			name: "custom profile with PDU session without dnn should fail",
@@ -204,17 +204,17 @@ func TestProfileInit_ValidatesDnnForCustomProfiles(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			profile := &Profile{
-				ProfileType:  CUSTOM_PROCEDURE,
-				Name:         "test-custom-profile",
-				GnbName:      "gnb1",
-				StartImsi:    "208930100007487",
-				Key:          "5122250214c33e723a5dd523fc145fc0",
-				Opc:          "981d464c7c52eb6e5036234984ad0bcf",
-				SeqNum:       "16f3b3f70fc2",
-				Dnn:          tt.dnn,
-				SNssai:       tt.sNssai,
-				UeCount:      1,
-				PIterations:  tt.pIterations,
+				ProfileType: CUSTOM_PROCEDURE,
+				Name:        "test-custom-profile",
+				GnbName:     "gnb1",
+				StartImsi:   "208930100007487",
+				Key:         "5122250214c33e723a5dd523fc145fc0",
+				Opc:         "981d464c7c52eb6e5036234984ad0bcf",
+				SeqNum:      "16f3b3f70fc2",
+				Dnn:         tt.dnn,
+				SNssai:      tt.sNssai,
+				UeCount:     1,
+				PIterations: tt.pIterations,
 				Plmn: &models.PlmnId{
 					Mcc: "208",
 					Mnc: "93",
@@ -315,8 +315,8 @@ func TestRequiresPduSession(t *testing.T) {
 
 func TestRequiresPduSessionCustomProfile(t *testing.T) {
 	tests := []struct {
-		name        string
 		pIterations map[string]*PIterations
+		name        string
 		expected    bool
 	}{
 		{
