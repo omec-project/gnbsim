@@ -235,8 +235,24 @@ func (profile *Profile) Init() error {
 }
 
 // requiresPduSession checks if a profile requires PDU session establishment
+// For predefined profiles, it checks profile.Procedures
+// For custom profiles, it scans through profile.PIterations to check if any iteration contains PDU_SESSION_ESTABLISHMENT_PROCEDURE
 func requiresPduSession(profile *Profile) bool {
-	return slices.Contains(profile.Procedures, common.PDU_SESSION_ESTABLISHMENT_PROCEDURE)
+	// Check predefined profiles
+	if slices.Contains(profile.Procedures, common.PDU_SESSION_ESTABLISHMENT_PROCEDURE) {
+		return true
+	}
+
+	// Check custom profiles by scanning through iterations
+	for _, iteration := range profile.PIterations {
+		for _, procedure := range iteration.ProcMap {
+			if procedure == common.PDU_SESSION_ESTABLISHMENT_PROCEDURE {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func initProcedureList(profile *Profile) error {
