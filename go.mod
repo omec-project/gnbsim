@@ -1,6 +1,6 @@
 module github.com/omec-project/gnbsim
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/gin-contrib/cors v1.7.6
@@ -13,7 +13,7 @@ require (
 	github.com/urfave/cli/v3 v3.6.2
 	go.uber.org/zap v1.27.1
 	go.yaml.in/yaml/v4 v4.0.0-rc.4
-	golang.org/x/net v0.50.0
+	golang.org/x/net v0.51.0
 	golang.org/x/sys v0.41.0
 )
 
