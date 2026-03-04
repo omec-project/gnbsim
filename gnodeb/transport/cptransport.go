@@ -5,6 +5,7 @@
 package transport
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -53,7 +54,7 @@ func (cpTprt *GnbCpTransport) ConnectToPeer(peer transportcommon.TransportPeer) 
 			return fmt.Errorf("amf ip or host name not configured")
 		}
 		var addrs []string
-		addrs, err = net.LookupHost(amf.AmfHostName)
+		addrs, err = net.DefaultResolver.LookupHost(context.Background(), amf.AmfHostName)
 		if err != nil {
 			return fmt.Errorf("failed to resolve amf host name: %v, err: %v",
 				amf.AmfHostName, err)

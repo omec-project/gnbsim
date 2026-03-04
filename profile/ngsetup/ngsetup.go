@@ -5,6 +5,7 @@
 package ngsetup
 
 import (
+	"context"
 	"net"
 
 	"github.com/omec-project/gnbsim/factory"
@@ -21,7 +22,7 @@ func NgSetup_test(profile *profctx.Profile) {
 		profile.Log.Errorln("GetGNodeB returned:", err)
 	}
 
-	addrs, err := net.LookupHost("amf")
+	addrs, err := net.DefaultResolver.LookupHost(context.Background(), "amf")
 	if err != nil {
 		profile.Log.Errorln("failed to resolve amf")
 		return
