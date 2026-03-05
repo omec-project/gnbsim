@@ -6,10 +6,10 @@ require (
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.11.0
 	github.com/ishidawataru/sctp v0.0.0-20251114114122-19ddcbc6aae2
-	github.com/omec-project/nas v1.8.0
-	github.com/omec-project/ngap v1.8.0
-	github.com/omec-project/openapi v1.7.0
-	github.com/omec-project/util v1.7.0
+	github.com/omec-project/nas v1.8.1
+	github.com/omec-project/ngap v1.8.1
+	github.com/omec-project/openapi v1.7.1
+	github.com/omec-project/util v1.7.1
 	github.com/urfave/cli/v3 v3.6.2
 	go.uber.org/zap v1.27.1
 	go.yaml.in/yaml/v4 v4.0.0-rc.4
