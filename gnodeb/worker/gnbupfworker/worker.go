@@ -11,7 +11,6 @@ import (
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/logger"
 	"github.com/omec-project/gnbsim/util/test"
-	"github.com/omec-project/ngap/ngapType"
 )
 
 func Init(gnbUpf *gnbctx.GnbUpf) {
@@ -51,12 +50,4 @@ func HandleMessage(gnbUpf *gnbctx.GnbUpf, msg common.InterfaceMessage) error {
 	}
 
 	return nil
-}
-
-func SendToGnbUe(gnbue *gnbctx.GnbCpUe, event common.EventType, ngapPdu *ngapType.NGAPPDU) {
-	gnbue.Log.Debugln("sending:", event)
-	amfmsg := common.N2Message{}
-	amfmsg.Event = event
-	amfmsg.NgapPdu = ngapPdu
-	gnbue.ReadChan <- &amfmsg
 }
