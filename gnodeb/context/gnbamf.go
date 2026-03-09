@@ -35,14 +35,6 @@ type GnbAmf struct {
 	NgSetupStatus bool
 }
 
-func NewGnbAmf(ip string, port int) *GnbAmf {
-	gnbAmf := &GnbAmf{}
-	gnbAmf.AmfIp = ip
-	gnbAmf.AmfPort = port
-	gnbAmf.Log = logger.GNodeBLog.With("subcategory", "GnbAmf", logger.FieldIp, gnbAmf.AmfIp)
-	return gnbAmf
-}
-
 func (amf *GnbAmf) Init() {
 	amf.Log = logger.GNodeBLog.With("subcategory", "GnbAmf", logger.FieldIp, amf.AmfIp)
 }

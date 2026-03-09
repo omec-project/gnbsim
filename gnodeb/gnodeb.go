@@ -6,7 +6,6 @@ package gnodeb
 
 import (
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/omec-project/gnbsim/common"
@@ -75,11 +74,6 @@ func Init(gnb *gnbctx.GNodeB) error {
 
 	gnb.Log.Debugf("GNodeB initialized %v", gnb)
 	return nil
-}
-
-func QuitGnb(gnb *gnbctx.GNodeB) {
-	log.Println("shutting down GNodeB:", gnb.GnbName)
-	close(gnb.Quit)
 }
 
 // PerformNGSetup sends the NGSetupRequest to the provided GnbAmf.

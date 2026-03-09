@@ -14,7 +14,6 @@ import (
 	"github.com/omec-project/nas"
 	"github.com/omec-project/nas/nasMessage"
 	"github.com/omec-project/nas/security"
-	"github.com/omec-project/ngap/ngapType"
 )
 
 var (
@@ -35,41 +34,6 @@ func EncodeNasPduWithSecurity(ue *realuectx.RealUe, pdu []byte, securityHeaderTy
 		SecurityHeaderType:    securityHeaderType,
 	}
 	return NASEncode(ue, m, securityContextAvailable)
-}
-
-func GetNasPdu(ue *realuectx.RealUe, msg *ngapType.DownlinkNASTransport) (m *nas.Message) {
-	for _, ie := range msg.ProtocolIEs.List {
-		if ie.Id.Value == ngapType.ProtocolIEIDNASPDU {
-			pkg := []byte(ie.Value.NASPDU.Value)
-			m, err := NASDecode(ue, nas.GetSecurityHeaderType(pkg), pkg)
-			if err != nil {
-				return nil
-			}
-			return m
-		}
-	}
-	return nil
-}
-
-func GetNasPduSetupRequest(ue *realuectx.RealUe, msg *ngapType.PDUSessionResourceSetupRequest) (m *nas.Message) {
-	for _, ie := range msg.ProtocolIEs.List {
-		if ie.Id.Value == ngapType.ProtocolIEIDPDUSessionResourceSetupListSUReq {
-			x := ie.Value.PDUSessionResourceSetupListSUReq
-			for _, ie1 := range x.List {
-				if ie1.PDUSessionNASPDU != nil {
-					ue.Log.Infoln("Found NAS PDU inside ResourceSEtupList")
-					pkg := []byte(ie1.PDUSessionNASPDU.Value)
-					m, err := NASDecode(ue, nas.GetSecurityHeaderType(pkg), pkg)
-					ue.Log.Infoln("UE address:", m.Ipaddr)
-					if err != nil {
-						return nil
-					}
-					return m
-				}
-			}
-		}
-	}
-	return nil
 }
 
 func NASEncode(ue *realuectx.RealUe, msg *nas.Message, securityContextAvailable bool) (
