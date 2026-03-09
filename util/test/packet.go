@@ -15,7 +15,7 @@ func GetUplinkNASTransport(amfUeNgapID, ranUeNgapID int64, nasPdu []byte) ([]byt
 }
 
 func GetInitialContextSetupResponse(amfUeNgapID int64, ranUeNgapID int64) ([]byte, error) {
-	message := ngapTestpacket.BuildInitialContextSetupResponseForRegistraionTest(amfUeNgapID, ranUeNgapID)
+	message := ngapTestpacket.BuildInitialContextSetupResponseForRegistrationTest(amfUeNgapID, ranUeNgapID)
 
 	return ngap.Encoder(message)
 }

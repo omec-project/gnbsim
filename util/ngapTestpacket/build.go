@@ -612,7 +612,7 @@ func GetPDUSessionResourceReleaseResponseTransfer() []byte {
 	return encodeData
 }
 
-func BuildInitialContextSetupResponseForRegistraionTest(amfUeNgapID, ranUeNgapID int64) (pdu ngapType.NGAPPDU) {
+func BuildInitialContextSetupResponseForRegistrationTest(amfUeNgapID, ranUeNgapID int64) (pdu ngapType.NGAPPDU) {
 	pdu.Present = ngapType.NGAPPDUPresentSuccessfulOutcome
 	pdu.SuccessfulOutcome = new(ngapType.SuccessfulOutcome)
 
