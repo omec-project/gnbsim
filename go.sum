@@ -52,8 +52,8 @@ github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd h1:TRLaZ9cD/w
 github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
 github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9Gz0M=
 github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
-github.com/omec-project/nas v1.8.2 h1:EUB443ReyJAZxVXVveSaQWIrhbKlYYNri7bYyzQo4Wo=
-github.com/omec-project/nas v1.8.2/go.mod h1:4XtmXx41ggYZACk9HJmpW49TMOryfDHpJ2Qc79Dd40c=
+github.com/omec-project/nas v1.8.4 h1:rd9wxotRlBtRXbhOY4rMY9RNNfmWnDSF/FNwpAUrXDg=
+github.com/omec-project/nas v1.8.4/go.mod h1:4XtmXx41ggYZACk9HJmpW49TMOryfDHpJ2Qc79Dd40c=
 github.com/omec-project/ngap v1.8.2 h1:nAz+c96mCWdspwzRYJOIx4Ix1A0yzbtICc0VDChq5Pk=
 github.com/omec-project/ngap v1.8.2/go.mod h1:gW9RZG0uKb8aRicjz4tM6QZ+GnmoCdCuv0oyBJNPf5s=
 github.com/omec-project/openapi v1.7.1 h1:JTQ3ScKjOd83nhtS7eYKwyvR2EuoZrAUII1xBlGLeYs=
