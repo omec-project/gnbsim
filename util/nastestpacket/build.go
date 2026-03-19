@@ -31,11 +31,7 @@ func BuildServiceRequest(serviceType uint8) *nas.Message {
 		serviceRequest.AllowedPDUSessionStatus.SetIei(nasMessage.ServiceRequestAllowedPDUSessionStatusType)
 		serviceRequest.AllowedPDUSessionStatus.SetLen(2)
 		serviceRequest.AllowedPDUSessionStatus.Buffer = []uint8{0x00, 0x08}
-	case nasMessage.ServiceTypeData:
-		serviceRequest.UplinkDataStatus = new(nasType.UplinkDataStatus)
-		serviceRequest.UplinkDataStatus.SetIei(nasMessage.ServiceRequestUplinkDataStatusType)
-		serviceRequest.UplinkDataStatus.SetLen(2)
-		serviceRequest.UplinkDataStatus.Buffer = []uint8{0x00, 0x04}
+	case nasMessage.ServiceTypeData:		
 	case nasMessage.ServiceTypeSignalling:
 	}
 
