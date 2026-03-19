@@ -31,8 +31,8 @@ func BuildServiceRequest(serviceType uint8) *nas.Message {
 		serviceRequest.AllowedPDUSessionStatus.SetIei(nasMessage.ServiceRequestAllowedPDUSessionStatusType)
 		serviceRequest.AllowedPDUSessionStatus.SetLen(2)
 		serviceRequest.AllowedPDUSessionStatus.Buffer = []uint8{0x00, 0x08}
-	case nasMessage.ServiceTypeData:		
-	case nasMessage.ServiceTypeSignalling:
+	case nasMessage.ServiceTypeData, nasMessage.ServiceTypeSignalling:
+		// No additional information elements are needed for Data or Signalling service types.
 	}
 
 	m.ServiceRequest = serviceRequest
