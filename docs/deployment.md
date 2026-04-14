@@ -50,7 +50,10 @@ Update defaultAs value to correct IP address. This address is used to send some 
       defaultAs: "192.168.250.1" #default icmp pkt destination
 
 
-## Option3: As a part of Aether In a Box
+## Option3: As a part of Aether In a Box (Deprecated)
+
+> [!NOTE]
+> This deployment method is deprecated. Please use [Aether OnRamp](https://docs.aetherproject.org/onramp/start.html) instead.
 
 - This is default mode of deployment for gNBSim
 - Multus cni needs to be enabled on cluster. Required for bess-upf and gNBSim

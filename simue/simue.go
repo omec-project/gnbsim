@@ -207,7 +207,7 @@ func ImsiStateMachine(profile *profctx.Profile, pCtx *profctx.ProfileUeContext, 
 			pCtx.Log.Infoln("Procedure Result: FAIL,", err)
 			proc_fail = true
 		case msg := <-pCtx.ReadChan:
-			pCtx.Log.Infoln("imsiStateMachine received result ")
+			pCtx.Log.Infoln("imsiStateMachine received result")
 			end_ts := time.Now()
 			diff := end_ts.Sub(start_ts)
 			pCtx.Log.Infof("procedure: %v, status: %v, E2E latency [ms]: %v", procedure.String(), msg.GetEventType().String(), diff.Milliseconds())
