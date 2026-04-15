@@ -32,10 +32,8 @@ LABEL org.opencontainers.image.source="${VCS_URL}" \
 
 ARG DEBUG_TOOLS
 
-RUN apk add --no-cache bash tcpdump
-
-# Install debug tools only when explicitly requested.
-RUN if [ "$DEBUG_TOOLS" = "true" ]; then \
+RUN apk add --no-cache bash tcpdump && \
+    if [ "$DEBUG_TOOLS" = "true" ]; then \
     apk add --no-cache gcompat vim strace net-tools curl netcat-openbsd bind-tools; \
     fi
 
