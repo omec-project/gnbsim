@@ -32,7 +32,7 @@ LABEL org.opencontainers.image.source="${VCS_URL}" \
 
 ARG DEBUG_TOOLS
 
-RUN apk update && apk add --no-cache bash tcpdump
+RUN apk add --no-cache bash tcpdump
 
 # Install debug tools only when explicitly requested.
 RUN if [ "$DEBUG_TOOLS" = "true" ]; then \
