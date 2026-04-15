@@ -6,12 +6,6 @@
 
 FROM golang:1.26.2-bookworm@sha256:4f4ab2c90005e7e63cb631f0b4427f05422f241622ee3ec4727cc5febbf83e34 AS builder
 
-RUN apt-get update && \
-    apt-get -y install --no-install-recommends \
-    vim \
-    ethtool && \
-    apt-get clean
-
 WORKDIR $GOPATH/src/gnbsim
 COPY . .
 RUN make all
@@ -38,12 +32,10 @@ LABEL org.opencontainers.image.source="${VCS_URL}" \
 
 ARG DEBUG_TOOLS
 
-RUN apk update && apk add --no-cache -U bash tcpdump
-
-# Install debug tools ~ 50MB (if DEBUG_TOOLS is set to true)
-RUN if [ "$DEBUG_TOOLS" = "true" ]; then \
-        apk update && apk add --no-cache -U gcompat vim strace net-tools curl netcat-openbsd bind-tools; \
-        fi
+RUN apk add --no-cache bash tcpdump && \
+    if [ "$DEBUG_TOOLS" = "true" ]; then \
+    apk add --no-cache gcompat vim strace net-tools curl netcat-openbsd bind-tools; \
+    fi
 
 WORKDIR /gnbsim
 
