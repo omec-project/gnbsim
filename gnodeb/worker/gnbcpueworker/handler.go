@@ -540,7 +540,13 @@ func ProcessPduSessResourceSetupList(gnbue *gnbctx.GnbCpUe,
 		upfIp, _ := ngapConvert.IPAddressToString(gtpTunnel.TransportLayerAddress)
 
 		gnbupue := gnbctx.NewGnbUpUe(uint32(dlteid), ulteid, gnbue.Gnb)
-		gnbupue.Snssai = ngapConvert.SNssaiToModels(item.SNSSAI)
+		snssai, err := ngapConvert.SNssaiToModels(item.SNSSAI)
+		if err != nil {
+			gnbue.Gnb.DlTeidGenerator.FreeID(dlteid)
+			gnbue.Log.Errorln("SNssaiToModels returned:", err)
+			return
+		}
+		gnbupue.Snssai = snssai
 		gnbupue.PduSessId = item.PDUSessionID.Value
 		gnbupue.PduSessType = test.PDUSessionTypeToModels(*pduSessType)
 		pduSess := &ngapTestpacket.PduSession{}

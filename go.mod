@@ -6,8 +6,8 @@ require (
 	github.com/gin-contrib/cors v1.7.7
 	github.com/gin-gonic/gin v1.12.0
 	github.com/ishidawataru/sctp v0.0.0-20251114114122-19ddcbc6aae2
-	github.com/omec-project/nas v1.8.4
-	github.com/omec-project/ngap v1.8.2
+	github.com/omec-project/nas v1.9.0
+	github.com/omec-project/ngap v1.9.0
 	github.com/omec-project/openapi v1.7.1
 	github.com/omec-project/util v1.7.2
 	github.com/urfave/cli/v3 v3.8.0
