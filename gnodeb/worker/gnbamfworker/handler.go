@@ -139,18 +139,14 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 		plmnSI.PlmnId = &plmnId
 
 		// Parsing SNssaiList into models.Snssai
-		capOfSNssaiList := cap(plmnSI.SNssaiList)
+		plmnSI.SNssaiList = make([]models.Snssai, 0, len(plmnSupportItem.SliceSupportList.List))
 		for _, sliceSupportItem := range plmnSupportItem.SliceSupportList.List {
-			if len(plmnSI.SNssaiList) < capOfSNssaiList {
-				snssai, err := ngapConvert.SNssaiToModels(sliceSupportItem.SNSSAI)
-				if err != nil {
-					amf.Log.Errorln("SNssaiToModels returned:", err)
-					return
-				}
-				plmnSI.SNssaiList = append(plmnSI.SNssaiList, snssai)
-			} else {
-				break
+			snssai, err := ngapConvert.SNssaiToModels(sliceSupportItem.SNSSAI)
+			if err != nil {
+				amf.Log.Errorln("SNssaiToModels returned:", err)
+				return
 			}
+			plmnSI.SNssaiList = append(plmnSI.SNssaiList, snssai)
 		}
 		if len(amf.PlmnSupportList) < capOfPlmnSupportList {
 			amf.PlmnSupportList = append(amf.PlmnSupportList, plmnSI)

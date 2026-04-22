@@ -542,6 +542,7 @@ func ProcessPduSessResourceSetupList(gnbue *gnbctx.GnbCpUe,
 		gnbupue := gnbctx.NewGnbUpUe(uint32(dlteid), ulteid, gnbue.Gnb)
 		snssai, err := ngapConvert.SNssaiToModels(item.SNSSAI)
 		if err != nil {
+			gnbue.Gnb.DlTeidGenerator.FreeID(dlteid)
 			gnbue.Log.Errorln("SNssaiToModels returned:", err)
 			return
 		}
