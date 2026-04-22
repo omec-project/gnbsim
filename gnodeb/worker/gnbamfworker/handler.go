@@ -95,7 +95,11 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 		var guami models.Guami
 
 		// Parsing PLMNID into models.Guami
-		plmnId := ngapConvert.PlmnIdToModels(guamiSrc.PLMNIdentity)
+		plmnId, err := ngapConvert.PlmnIdToModels(guamiSrc.PLMNIdentity)
+		if err != nil {
+			amf.Log.Errorln("PlmnIdToModels returned:", err)
+			return
+		}
 		guami.PlmnId = &plmnId
 
 		// Parsing AMF Region, Set and Pointer to models.Guami
@@ -127,14 +131,23 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 		var plmnSI models.PlmnSnssai
 
 		// Parsing PLMNID into models.Guami
-		plmnId := ngapConvert.PlmnIdToModels(plmnSupportItem.PLMNIdentity)
+		plmnId, err := ngapConvert.PlmnIdToModels(plmnSupportItem.PLMNIdentity)
+		if err != nil {
+			amf.Log.Errorln("PlmnIdToModels returned:", err)
+			return
+		}
 		plmnSI.PlmnId = &plmnId
 
 		// Parsing SNssaiList into models.Snssai
 		capOfSNssaiList := cap(plmnSI.SNssaiList)
 		for _, sliceSupportItem := range plmnSupportItem.SliceSupportList.List {
 			if len(plmnSI.SNssaiList) < capOfSNssaiList {
-				plmnSI.SNssaiList = append(plmnSI.SNssaiList, ngapConvert.SNssaiToModels(sliceSupportItem.SNSSAI))
+				snssai, err := ngapConvert.SNssaiToModels(sliceSupportItem.SNSSAI)
+				if err != nil {
+					amf.Log.Errorln("SNssaiToModels returned:", err)
+					return
+				}
+				plmnSI.SNssaiList = append(plmnSI.SNssaiList, snssai)
 			} else {
 				break
 			}
