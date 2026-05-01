@@ -11,7 +11,7 @@ require (
 	github.com/omec-project/openapi v1.7.1
 	github.com/omec-project/util v1.7.2
 	github.com/urfave/cli/v3 v3.8.0
-	go.uber.org/zap v1.27.1
+	go.uber.org/zap v1.28.0
 	go.yaml.in/yaml/v4 v4.0.0-rc.4
 	golang.org/x/net v0.53.0
 )
