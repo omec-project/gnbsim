@@ -33,18 +33,18 @@ func GetIdRange() (start, end uint32) {
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	rangeSelectVal := uint32(r.Intn(maxRangeSelectVal))
-	logger.GNodeBLog.Infoln("Current range selector value:", rangeSelectVal)
+	logger.GNodeBLog.Infoln("current range selector value:", rangeSelectVal)
 
 	// Shifting Range Selector value to MSB
 	start = rangeSelectVal << idBitCount
 
-	// Next range start vlalue subtracted by 1
+	// Next range start value subtracted by 1
 	end = ((rangeSelectVal + 1) << idBitCount) - 1
 
 	if start == 0 {
 		start = 1
 	}
 
-	logger.GNodeBLog.Infoln("Current ID range start:", start, "end:", end)
+	logger.GNodeBLog.Infof("current ID range: [%d - %d]", start, end)
 	return
 }

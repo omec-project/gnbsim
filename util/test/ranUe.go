@@ -6,6 +6,7 @@ package test
 
 import (
 	"github.com/omec-project/nas/security"
+	"github.com/omec-project/openapi"
 	"github.com/omec-project/openapi/models"
 	"golang.org/x/net/ipv4"
 )
@@ -42,21 +43,13 @@ func CalculateIpv4HeaderChecksum(hdr *ipv4.Header) uint32 {
 }
 
 func GetAuthSubscription(k, opc, op, seqNum string) *models.AuthenticationSubscription {
-	var authSubs models.AuthenticationSubscription
-	authSubs.PermanentKey = &models.PermanentKey{
-		PermanentKeyValue: k,
+	authSubs := models.NewAuthenticationSubscription(models.AUTHMETHOD__5_G_AKA)
+	authSubs.SetEncPermanentKey(k)
+	authSubs.SetEncOpcKey(opc)
+	authSubs.SetAuthenticationManagementField("8000")
+	seqSeqNum := models.SequenceNumber{
+		Sqn: openapi.PtrString(seqNum),
 	}
-	authSubs.Opc = &models.Opc{
-		OpcValue: opc,
-	}
-	authSubs.Milenage = &models.Milenage{
-		Op: &models.Op{
-			OpValue: op,
-		},
-	}
-	authSubs.AuthenticationManagementField = "8000"
-
-	authSubs.SequenceNumber = seqNum
-	authSubs.AuthenticationMethod = models.AuthMethod__5_G_AKA
-	return &authSubs
+	authSubs.SetSequenceNumber(seqSeqNum)
+	return authSubs
 }

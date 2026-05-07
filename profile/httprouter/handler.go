@@ -18,7 +18,7 @@ import (
 	profile "github.com/omec-project/gnbsim/profile"
 	profCtx "github.com/omec-project/gnbsim/profile/context"
 	"github.com/omec-project/openapi"
-	"github.com/omec-project/openapi/models"
+	"github.com/omec-project/openapi/utils"
 )
 
 func HTTPStepProfile(c *gin.Context) {
@@ -107,24 +107,15 @@ func HTTPExecuteProfile(c *gin.Context) {
 	requestBody, err := c.GetRawData()
 	if err != nil {
 		logger.HttpLog.Errorf("get Request Body error: %+v", err)
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
+		problemDetail := utils.ProblemDetailsSystemFailure(err.Error())
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
 
-	err = openapi.Deserialize(&prof, requestBody, "application/json")
+	err = openapi.Decode(&prof, requestBody, "application/json")
 	if err != nil {
 		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
+		rsp := utils.ProblemDetailsMalformedRequestSyntax(problemDetail)
 		logger.HttpLog.Errorln(problemDetail)
 		c.JSON(http.StatusBadRequest, rsp)
 		return

@@ -20,6 +20,8 @@ import (
 )
 
 func GetNGSetupRequest(gnb *gnbctx.GNodeB) ([]byte, error) {
+	gnb.Log.Debugf("building NG Setup Request for gNB %s with %d supported TAs", gnb.GnbName, len(gnb.SupportedTaList))
+
 	message := ngapTestpacket.BuildNGSetupRequest()
 
 	// GlobalRANNodeID
@@ -64,7 +66,15 @@ func GetNGSetupRequest(gnb *gnbctx.GNodeB) ([]byte, error) {
 		supportedTaList.List = append(supportedTaList.List, supportedTaItem)
 	}
 
-	return ngap.Encoder(message)
+	encodedMessage, err := ngap.Encoder(message)
+	if err != nil {
+		gnb.Log.Errorln("NG Setup Request encoding failed:", err)
+		return nil, err
+	}
+
+	gnb.Log.Debugf("built NG Setup Request for gNB %s (%d bytes)", gnb.GnbName, len(encodedMessage))
+
+	return encodedMessage, nil
 }
 
 // GetInitialUEMessage encodes NGAP InitialUEMessage for the given UE.
@@ -146,7 +156,7 @@ func GetUEContextReleaseComplete(gnbue *gnbctx.GnbCpUe) ([]byte, error) {
 func updateUserLocationInformation(gnb *gnbctx.GNodeB, uli *ngapType.UserLocationInformation) error {
 	nr := uli.UserLocationInformationNR
 
-	nr.NRCGI.PLMNIdentity = ngapConvert.PlmnIdToNgap(*gnb.RanId.PlmnId)
+	nr.NRCGI.PLMNIdentity = ngapConvert.PlmnIdToNgap(gnb.RanId.PlmnId)
 	nr.TAI.PLMNIdentity = nr.NRCGI.PLMNIdentity
 
 	gnbID, e := strconv.ParseUint(gnb.RanId.GNbId.GNBValue, 16, 64)
@@ -154,7 +164,7 @@ func updateUserLocationInformation(gnb *gnbctx.GNodeB, uli *ngapType.UserLocatio
 		return fmt.Errorf("invalid GNB ID: %w", e)
 	}
 	// NRCI contains gnbID and cellID, here we assume cellID is zero
-	nrci := gnbID << uint64(36-gnb.RanId.GNbId.BitLength)
+	nrci := gnbID << uint64(36-gnb.RanId.GetGNbId().BitLength)
 	nrciBuf := [8]byte{}
 	binary.BigEndian.PutUint64(nrciBuf[:], nrci)
 	nr.NRCGI.NRCellIdentity.Value.Bytes = nrciBuf[3:]

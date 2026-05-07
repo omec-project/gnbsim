@@ -121,28 +121,14 @@ func (ue *RealUe) DeriveRESstarAndSetKey(
 
 	opc := make([]byte, 16)
 	_ = opc
-	k, err := hex.DecodeString(authSubs.PermanentKey.PermanentKeyValue)
+	k, err := hex.DecodeString(authSubs.GetEncPermanentKey())
 	if err != nil {
 		ue.Log.Fatalf("DecodeString error: %+v", err)
 	}
 
-	if authSubs.Opc.OpcValue == "" {
-		opStr := authSubs.Milenage.Op.OpValue
-		var op []byte
-		op, err = hex.DecodeString(opStr)
-		if err != nil {
-			ue.Log.Fatalf("DecodeString error: %+v", err)
-		}
-
-		opc, err = milenage.GenerateOPC(k, op)
-		if err != nil {
-			ue.Log.Fatalf("milenage GenerateOPC error: %+v", err)
-		}
-	} else {
-		opc, err = hex.DecodeString(authSubs.Opc.OpcValue)
-		if err != nil {
-			ue.Log.Fatalf("DecodeString error: %+v", err)
-		}
+	opc, err = hex.DecodeString(authSubs.GetEncOpcKey())
+	if err != nil {
+		ue.Log.Fatalf("DecodeString error: %+v", err)
 	}
 
 	// Generate RES, CK, IK, AK, AKstar
@@ -160,7 +146,11 @@ func (ue *RealUe) DeriveRESstarAndSetKey(
 		rcvSQN[i] = ak[i] ^ autn[i]
 	}
 
-	authSubs.SequenceNumber = hex.EncodeToString(rcvSQN)
+	seqNum := hex.EncodeToString(rcvSQN)
+	seqSeqNum := models.SequenceNumber{
+		Sqn: &seqNum,
+	}
+	authSubs.SetSequenceNumber(seqSeqNum)
 
 	// Todo : Figure 9 of 33.102 shows that we can use the SQN received from the
 	// network to calculate XMAC which we can then compare with the received MAC
