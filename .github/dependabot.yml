@@ -15,17 +15,17 @@ updates:
       time: "21:00"
       timezone: "America/Los_Angeles"
 
-  - package-ecosystem: "gomod"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "thursday"
-      time: "21:00"
-      timezone: "America/Los_Angeles"
-    groups:
-      omec-project:
-        patterns:
-          - "github.com/omec-project/*"
+  # - package-ecosystem: "gomod"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "weekly"
+  #     day: "thursday"
+  #     time: "21:00"
+  #     timezone: "America/Los_Angeles"
+  #   groups:
+  #     omec-project:
+  #       patterns:
+  #         - "github.com/omec-project/*"
 
   - package-ecosystem: github-actions
     directory: /
