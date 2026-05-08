@@ -13,10 +13,10 @@ import (
 
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
-	"github.com/omec-project/ngap"
-	"github.com/omec-project/ngap/aper"
-	"github.com/omec-project/ngap/ngapConvert"
-	"github.com/omec-project/ngap/ngapType"
+	"github.com/omec-project/ngap/v2"
+	"github.com/omec-project/ngap/v2/aper"
+	"github.com/omec-project/ngap/v2/ngapConvert"
+	"github.com/omec-project/ngap/v2/ngapType"
 )
 
 func GetNGSetupRequest(gnb *gnbctx.GNodeB) ([]byte, error) {

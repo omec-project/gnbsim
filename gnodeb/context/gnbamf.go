@@ -8,7 +8,7 @@ import (
 	"net"
 
 	"github.com/omec-project/gnbsim/logger"
-	"github.com/omec-project/openapi/models"
+	"github.com/omec-project/openapi/v2/models"
 	"go.uber.org/zap"
 )
 

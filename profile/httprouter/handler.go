@@ -17,8 +17,8 @@ import (
 	"github.com/omec-project/gnbsim/logger"
 	profile "github.com/omec-project/gnbsim/profile"
 	profCtx "github.com/omec-project/gnbsim/profile/context"
-	"github.com/omec-project/openapi"
-	"github.com/omec-project/openapi/utils"
+	"github.com/omec-project/openapi/v2"
+	"github.com/omec-project/openapi/v2/utils"
 )
 
 func HTTPStepProfile(c *gin.Context) {

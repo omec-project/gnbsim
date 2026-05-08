@@ -5,9 +5,9 @@
 package test
 
 import (
-	"github.com/omec-project/nas/security"
-	"github.com/omec-project/openapi"
-	"github.com/omec-project/openapi/models"
+	"github.com/omec-project/nas/v2/security"
+	"github.com/omec-project/openapi/v2"
+	"github.com/omec-project/openapi/v2/models"
 	"golang.org/x/net/ipv4"
 )
 

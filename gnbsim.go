@@ -26,8 +26,8 @@ import (
 	prof "github.com/omec-project/gnbsim/profile"
 	profctx "github.com/omec-project/gnbsim/profile/context"
 	"github.com/omec-project/gnbsim/stats"
-	nasLogger "github.com/omec-project/nas/logger"
-	ngapLogger "github.com/omec-project/ngap/logger"
+	nasLogger "github.com/omec-project/nas/v2/logger"
+	ngapLogger "github.com/omec-project/ngap/v2/logger"
 	"github.com/urfave/cli/v3"
 	"go.uber.org/zap/zapcore"
 )

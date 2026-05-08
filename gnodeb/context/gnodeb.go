@@ -6,7 +6,7 @@ package context
 
 import (
 	transport "github.com/omec-project/gnbsim/transportcommon"
-	"github.com/omec-project/openapi/models"
+	"github.com/omec-project/openapi/v2/models"
 	"github.com/omec-project/util/idgenerator"
 	"go.uber.org/zap"
 	"go.yaml.in/yaml/v4"

@@ -11,7 +11,7 @@ import (
 
 	"github.com/ishidawataru/sctp"
 	"github.com/omec-project/gnbsim/logger"
-	"github.com/omec-project/ngap"
+	"github.com/omec-project/ngap/v2"
 )
 
 func getNgapIp(amfIP, ranIP string, amfPort, ranPort int) (amfAddr, ranAddr *sctp.SCTPAddr, err error) {

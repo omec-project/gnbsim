@@ -5,8 +5,8 @@
 package test
 
 import (
-	"github.com/omec-project/ngap/ngapType"
-	"github.com/omec-project/openapi/models"
+	"github.com/omec-project/ngap/v2/ngapType"
+	"github.com/omec-project/openapi/v2/models"
 )
 
 func PDUSessionTypeToModels(ngapPduSessType ngapType.PDUSessionType) (pduSessType models.PduSessionType) {
