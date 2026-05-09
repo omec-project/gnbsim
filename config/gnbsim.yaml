@@ -39,7 +39,7 @@ configuration:
                 mcc: 208
                 mnc: 93
               taiSliceSupportList:
-                - sst: 1      # Slice/Service Type (uinteger: range 0~255)
+                - sst: 1      # Slice/Service Type (unsigned integer: range 0~255)
                   sd: "010203"      # Slice Differentiator (3 bytes/hex)
                 - sst: 1
                   sd: "000001"
@@ -53,7 +53,7 @@ configuration:
     # NOTE: dnn and sNssai are required if the custom profile includes PDU-SESSION-ESTABLISHMENT-PROCEDURE
     customProfiles1:
       profileType: custom      # Profile type
-      profileName: custom1      # Uniqely identifies profile within application
+      profileName: custom1      # Uniquely identifies profile within application
       enable: false        # True to execute the profile
       execInParallel: true      # Run all subscribers in parallel
       stepTrigger: false      # Wait for trigger to move to next step
@@ -67,7 +67,7 @@ configuration:
       retransMsg: false
       dnn: "internet"
       sNssai:
-        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sst: 1 # Slice/Service Type (unsigned integer, range: 0~255)
         sd: "010203" # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
@@ -94,7 +94,7 @@ configuration:
   # NOTE: dnn and sNssai are required for profiles that establish PDU sessions
   #       (all profiles except 'register' profile type)
     - profileType: register # profile type
-      profileName: profile1 # uniqely identifies a profile within application
+      profileName: profile1 # uniquely identifies a profile within application
       enable: false # Set true to execute the profile, false otherwise.
       gnbName: gnb1 # gNB to be used for this profile
       startImsi: 208930100007487
@@ -108,7 +108,7 @@ configuration:
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
     - profileType: pdusessest # profile type
-      profileName: profile2 # uniqely identifies a profile within application
+      profileName: profile2 # uniquely identifies a profile within application
       enable: false # Set true to execute the profile, false otherwise.
       gnbName: gnb1 # gNB to be used for this profile
       startImsi: 208930100007492 # First IMSI. Subsequent values will be used if ueCount is more than 1
@@ -119,7 +119,7 @@ configuration:
       sequenceNumber: "16f3b3f70fc2"
       dnn: "internet"
       sNssai:
-        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sst: 1 # Slice/Service Type (unsigned integer, range: 0~255)
         sd: "010203" # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       execInParallel: false #run all subscribers within profile in parallel
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
@@ -127,7 +127,7 @@ configuration:
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
       dataPktCount: 5 # Number of UL user data packets to be transmitted. Common for all UEs
     - profileType: anrelease # profile type
-      profileName: profile3 # uniqely identifies a profile within application
+      profileName: profile3 # uniquely identifies a profile within application
       enable: false # Set true to execute the profile, false otherwise.
       gnbName: gnb1 # gNB to be used for this profile
       startImsi: 208930100007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
@@ -138,14 +138,14 @@ configuration:
       sequenceNumber: "16f3b3f70fc2"
       dnn: "internet"
       sNssai:
-        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sst: 1 # Slice/Service Type (unsigned integer, range: 0~255)
         sd: "010203" # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       execInParallel: false #run all subscribers within profile in parallel
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
     - profileType: uetriggservicereq # profile type
-      profileName: profile4 # uniqely identifies a profile within application
+      profileName: profile4 # uniquely identifies a profile within application
       enable: false # Set true to execute the profile, false otherwise.
       gnbName: gnb1 # gNB to be used for this profile
       startImsi: 208930100007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
@@ -157,14 +157,14 @@ configuration:
       dnn: "internet"
       retransMsg: false
       sNssai:
-        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sst: 1 # Slice/Service Type (unsigned integer, range: 0~255)
         sd: "010203" # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       execInParallel: false #run all subscribers within profile in parallel
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
     - profileType: deregister # profile type
-      profileName: profile5 # uniqely identifies a profile within application
+      profileName: profile5 # uniquely identifies a profile within application
       enable: false # Set true to execute the profile, false otherwise.
       gnbName: gnb1 # gNB to be used for this profile
       startImsi: 208930100007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
@@ -175,14 +175,14 @@ configuration:
       sequenceNumber: "16f3b3f70fc2"
       dnn: "internet"
       sNssai:
-        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sst: 1 # Slice/Service Type (unsigned integer, range: 0~255)
         sd: "010203" # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       execInParallel: false #run all subscribers within profile in parallel
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
     - profileType: nwtriggeruedereg # profile type
-      profileName: profile6 # uniqely identifies a profile within application
+      profileName: profile6 # uniquely identifies a profile within application
       enable: false # Set true to execute the profile, false otherwise.
       gnbName: gnb1 # gNB to be used for this profile
       startImsi: 208930100007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
@@ -194,14 +194,14 @@ configuration:
       sequenceNumber: "16f3b3f70fc2"
       dnn: "internet"
       sNssai:
-        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sst: 1 # Slice/Service Type (unsigned integer, range: 0~255)
         sd: "010203" # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       execInParallel: false #run all subscribers within profile in parallel
       plmnId: # Public Land Mobile Network ID, <PLMN ID> = <MCC><MNC>. Should match startImsi
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
     - profileType: uereqpdusessrelease # profile type
-      profileName: profile7 # uniqely identifies a profile within application
+      profileName: profile7 # uniquely identifies a profile within application
       enable: false # Set true to execute the profile, false otherwise.
       gnbName: gnb1 # gNB to be used for this profile
       startImsi: 208930100007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
@@ -211,7 +211,7 @@ configuration:
       sequenceNumber: "16f3b3f70fc2"
       dnn: "internet"
       sNssai:
-        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sst: 1 # Slice/Service Type (unsigned integer, range: 0~255)
         sd: "010203" # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       execInParallel: false #run all subscribers within profile in parallel
       defaultAs: "192.168.250.1" #default icmp pkt destination
@@ -219,7 +219,7 @@ configuration:
         mcc: 208 # Mobile Country Code (3 digits string, digit: 0~9)
         mnc: 93 # Mobile Network Code (2 or 3 digits string, digit: 0~9)
     - profileType: nwreqpdusessrelease # profile type
-      profileName: profile8 # uniqely identifies a profile within application
+      profileName: profile8 # uniquely identifies a profile within application
       enable: false # Set true to execute the profile, false otherwise.
       gnbName: gnb1 # gNB to be used for this profile
       startImsi: 208930100007497 # First IMSI. Subsequent values will be used if ueCount is more than 1
@@ -229,7 +229,7 @@ configuration:
       sequenceNumber: "16f3b3f70fc2"
       dnn: "internet"
       sNssai:
-        sst: 1 # Slice/Service Type (uinteger, range: 0~255)
+        sst: 1 # Slice/Service Type (unsigned integer, range: 0~255)
         sd: "010203" # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
       execInParallel: false #run all subscribers within profile in parallel
       defaultAs: "192.168.250.1" #default icmp pkt destination

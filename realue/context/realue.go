@@ -119,14 +119,12 @@ func (ue *RealUe) DeriveRESstarAndSetKey(
 	res := make([]byte, 8)
 	ak, akStar := make([]byte, 6), make([]byte, 6)
 
-	opc := make([]byte, 16)
-	_ = opc
 	k, err := hex.DecodeString(authSubs.GetEncPermanentKey())
 	if err != nil {
 		ue.Log.Fatalf("DecodeString error: %+v", err)
 	}
 
-	opc, err = hex.DecodeString(authSubs.GetEncOpcKey())
+	opc, err := hex.DecodeString(authSubs.GetEncOpcKey())
 	if err != nil {
 		ue.Log.Fatalf("DecodeString error: %+v", err)
 	}
@@ -147,10 +145,10 @@ func (ue *RealUe) DeriveRESstarAndSetKey(
 	}
 
 	seqNum := hex.EncodeToString(rcvSQN)
-	seqSeqNum := models.SequenceNumber{
+	sequenceNumber := models.SequenceNumber{
 		Sqn: &seqNum,
 	}
-	authSubs.SetSequenceNumber(seqSeqNum)
+	authSubs.SetSequenceNumber(sequenceNumber)
 
 	// Todo : Figure 9 of 33.102 shows that we can use the SQN received from the
 	// network to calculate XMAC which we can then compare with the received MAC

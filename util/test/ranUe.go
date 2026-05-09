@@ -42,14 +42,14 @@ func CalculateIpv4HeaderChecksum(hdr *ipv4.Header) uint32 {
 	return ^(Checksum&0xffff0000>>16 + Checksum&0xffff)
 }
 
-func GetAuthSubscription(k, opc, op, seqNum string) *models.AuthenticationSubscription {
+func GetAuthSubscription(k, opc, seqNum string) *models.AuthenticationSubscription {
 	authSubs := models.NewAuthenticationSubscription(models.AUTHMETHOD__5_G_AKA)
 	authSubs.SetEncPermanentKey(k)
 	authSubs.SetEncOpcKey(opc)
 	authSubs.SetAuthenticationManagementField("8000")
-	seqSeqNum := models.SequenceNumber{
+	sequenceNumber := models.SequenceNumber{
 		Sqn: openapi.PtrString(seqNum),
 	}
-	authSubs.SetSequenceNumber(seqSeqNum)
+	authSubs.SetSequenceNumber(sequenceNumber)
 	return authSubs
 }
