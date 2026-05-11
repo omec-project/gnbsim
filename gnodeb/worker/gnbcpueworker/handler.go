@@ -554,8 +554,8 @@ func ProcessPduSessResourceSetupList(gnbue *gnbctx.GnbCpUe,
 		pduSess.Teid = gnbupue.DlTeid
 
 		gnbue.Log.Infoln("PDU Session ID:", gnbupue.PduSessId)
-		gnbue.Log.Infoln("S-NSSAI - SST: ", gnbupue.Snssai.Sst)
-		gnbue.Log.Infoln("S-NSSAI - SD: ", gnbupue.Snssai.Sd)
+		gnbue.Log.Infoln("S-NSSAI - SST: ", gnbupue.Snssai.GetSst())
+		gnbue.Log.Infoln("S-NSSAI - SD: ", gnbupue.Snssai.GetSd())
 		gnbue.Log.Infoln("UL GTP-TEID: ", ulteid)
 		gnbue.Log.Infoln("DL GTP-TEID: ", dlteid)
 		gnbue.Log.Infoln("UPF Endpoint IP: ", upfIp)

@@ -55,8 +55,8 @@ configuration:
       profileType: custom      # Profile type
       profileName: custom1      # Uniquely identifies profile within application
       enable: false        # True to execute the profile
-      execInParallel: true      # Run all subscribers in parallel
-      stepTrigger: false      # Wait for trigger to move to next step
+      execInParallel: false      # Run all subscribers in parallel
+      stepTrigger: true      # Wait for trigger to move to next step
       gnbName: gnb1        # gNB used for this profile
       startImsi: 208930100007487    # First IMSI (used in sequence for each UE)
       ueCount: 5
