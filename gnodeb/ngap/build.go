@@ -159,12 +159,17 @@ func updateUserLocationInformation(gnb *gnbctx.GNodeB, uli *ngapType.UserLocatio
 	nr.NRCGI.PLMNIdentity = ngapConvert.PlmnIdToNgap(gnb.RanId.PlmnId)
 	nr.TAI.PLMNIdentity = nr.NRCGI.PLMNIdentity
 
-	gnbID, e := strconv.ParseUint(gnb.RanId.GNbId.GNBValue, 16, 64)
+	gnbId := gnb.RanId.GetGNbId()
+	if gnbId.GNBValue == "" || gnbId.BitLength == 0 {
+		return errors.New("missing GNB ID")
+	}
+
+	gnbID, e := strconv.ParseUint(gnbId.GNBValue, 16, 64)
 	if e != nil {
 		return fmt.Errorf("invalid GNB ID: %w", e)
 	}
 	// NRCI contains gnbID and cellID, here we assume cellID is zero
-	nrci := gnbID << uint64(36-gnb.RanId.GetGNbId().BitLength)
+	nrci := gnbID << uint64(36-gnbId.BitLength)
 	nrciBuf := [8]byte{}
 	binary.BigEndian.PutUint64(nrciBuf[:], nrci)
 	nr.NRCGI.NRCellIdentity.Value.Bytes = nrciBuf[3:]
