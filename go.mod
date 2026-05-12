@@ -10,7 +10,7 @@ require (
 	github.com/omec-project/ngap/v2 v2.0.0
 	github.com/omec-project/openapi/v2 v2.0.0
 	github.com/omec-project/util v1.7.3
-	github.com/urfave/cli/v3 v3.8.0
+	github.com/urfave/cli/v3 v3.9.0
 	go.uber.org/zap v1.28.0
 	go.yaml.in/yaml/v4 v4.0.0-rc.4
 	golang.org/x/net v0.53.0
