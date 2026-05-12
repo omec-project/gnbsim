@@ -163,10 +163,16 @@ func updateUserLocationInformation(gnb *gnbctx.GNodeB, uli *ngapType.UserLocatio
 	if gnbId.GNBValue == "" || gnbId.BitLength == 0 {
 		return errors.New("missing GNB ID")
 	}
+	if gnbId.BitLength > 36 {
+		return fmt.Errorf("invalid GNB ID bit length: %d", gnbId.BitLength)
+	}
 
 	gnbID, e := strconv.ParseUint(gnbId.GNBValue, 16, 64)
 	if e != nil {
 		return fmt.Errorf("invalid GNB ID: %w", e)
+	}
+	if gnbID >= (uint64(1) << uint64(gnbId.BitLength)) {
+		return fmt.Errorf("GNB ID 0x%s exceeds bit length %d", gnbId.GNBValue, gnbId.BitLength)
 	}
 	// NRCI contains gnbID and cellID, here we assume cellID is zero
 	nrci := gnbID << uint64(36-gnbId.BitLength)
