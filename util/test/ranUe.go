@@ -5,8 +5,9 @@
 package test
 
 import (
-	"github.com/omec-project/nas/security"
-	"github.com/omec-project/openapi/models"
+	"github.com/omec-project/nas/v2/security"
+	"github.com/omec-project/openapi/v2"
+	"github.com/omec-project/openapi/v2/models"
 	"golang.org/x/net/ipv4"
 )
 
@@ -41,22 +42,14 @@ func CalculateIpv4HeaderChecksum(hdr *ipv4.Header) uint32 {
 	return ^(Checksum&0xffff0000>>16 + Checksum&0xffff)
 }
 
-func GetAuthSubscription(k, opc, op, seqNum string) *models.AuthenticationSubscription {
-	var authSubs models.AuthenticationSubscription
-	authSubs.PermanentKey = &models.PermanentKey{
-		PermanentKeyValue: k,
+func GetAuthSubscription(k, opc, seqNum string) *models.AuthenticationSubscription {
+	authSubs := models.NewAuthenticationSubscription(models.AUTHMETHOD__5_G_AKA)
+	authSubs.SetEncPermanentKey(k)
+	authSubs.SetEncOpcKey(opc)
+	authSubs.SetAuthenticationManagementField("8000")
+	sequenceNumber := models.SequenceNumber{
+		Sqn: openapi.PtrString(seqNum),
 	}
-	authSubs.Opc = &models.Opc{
-		OpcValue: opc,
-	}
-	authSubs.Milenage = &models.Milenage{
-		Op: &models.Op{
-			OpValue: op,
-		},
-	}
-	authSubs.AuthenticationManagementField = "8000"
-
-	authSubs.SequenceNumber = seqNum
-	authSubs.AuthenticationMethod = models.AuthMethod__5_G_AKA
-	return &authSubs
+	authSubs.SetSequenceNumber(sequenceNumber)
+	return authSubs
 }

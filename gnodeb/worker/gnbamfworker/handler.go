@@ -9,9 +9,9 @@ import (
 	"github.com/omec-project/gnbsim/common"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/util/test"
-	"github.com/omec-project/ngap/ngapConvert"
-	"github.com/omec-project/ngap/ngapType"
-	"github.com/omec-project/openapi/models"
+	"github.com/omec-project/ngap/v2/ngapConvert"
+	"github.com/omec-project/ngap/v2/ngapType"
+	"github.com/omec-project/openapi/v2/models"
 )
 
 // HandleNGSetupResponse processes the NG Setup Response and updates GnbAmf
@@ -100,7 +100,10 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 			amf.Log.Errorln("PlmnIdToModels returned:", err)
 			return
 		}
-		guami.PlmnId = &plmnId
+		guami.PlmnId = models.PlmnIdNid{
+			Mcc: plmnId.GetMcc(),
+			Mnc: plmnId.GetMnc(),
+		}
 
 		// Parsing AMF Region, Set and Pointer to models.Guami
 		amfRegId := guamiSrc.AMFRegionID.Value
@@ -136,7 +139,7 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 			amf.Log.Errorln("PlmnIdToModels returned:", err)
 			return
 		}
-		plmnSI.PlmnId = &plmnId
+		plmnSI.PlmnId = plmnId
 
 		// Parsing SNssaiList into models.Snssai
 		plmnSI.SNssaiList = make([]models.Snssai, 0, len(plmnSupportItem.SliceSupportList.List))

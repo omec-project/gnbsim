@@ -5,9 +5,9 @@
 package nastestpacket
 
 import (
-	"github.com/omec-project/nas"
-	"github.com/omec-project/nas/nasMessage"
-	"github.com/omec-project/nas/nasType"
+	"github.com/omec-project/nas/v2"
+	"github.com/omec-project/nas/v2/nasMessage"
+	"github.com/omec-project/nas/v2/nasType"
 )
 
 func BuildServiceRequest(serviceType uint8) *nas.Message {

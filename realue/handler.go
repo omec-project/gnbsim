@@ -15,12 +15,12 @@ import (
 	"github.com/omec-project/gnbsim/realue/util"
 	"github.com/omec-project/gnbsim/realue/worker/pdusessworker"
 	"github.com/omec-project/gnbsim/stats"
-	"github.com/omec-project/nas"
-	"github.com/omec-project/nas/nasConvert"
-	"github.com/omec-project/nas/nasMessage"
-	"github.com/omec-project/nas/nasTestpacket"
-	"github.com/omec-project/nas/nasType"
-	"github.com/omec-project/openapi/models"
+	"github.com/omec-project/nas/v2"
+	"github.com/omec-project/nas/v2/nasConvert"
+	"github.com/omec-project/nas/v2/nasMessage"
+	"github.com/omec-project/nas/v2/nasTestpacket"
+	"github.com/omec-project/nas/v2/nasType"
+	"github.com/omec-project/openapi/v2/models"
 )
 
 // TODO Remove the hardcoding
@@ -235,7 +235,7 @@ func HandlePduSessEstAcceptEvent(ue *realuectx.RealUe,
 
 	var pduAddr net.IP
 	pduSessType := nasConvert.PDUSessionTypeToModels(nasMsg.GetPDUSessionType())
-	if pduSessType == models.PduSessionType_IPV4 {
+	if pduSessType == models.PDUSESSIONTYPE_IPV4 {
 		ip := nasMsg.GetPDUAddressInformation()
 		pduAddr = net.IPv4(ip[0], ip[1], ip[2], ip[3])
 	}

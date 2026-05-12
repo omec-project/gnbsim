@@ -7,8 +7,8 @@ package common
 import (
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 	"github.com/omec-project/gnbsim/util/test"
-	"github.com/omec-project/nas"
-	"github.com/omec-project/ngap/ngapType"
+	"github.com/omec-project/nas/v2"
+	"github.com/omec-project/ngap/v2/ngapType"
 )
 
 type InterfaceMessage interface {

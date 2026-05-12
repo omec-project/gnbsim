@@ -26,6 +26,8 @@ import (
 	prof "github.com/omec-project/gnbsim/profile"
 	profctx "github.com/omec-project/gnbsim/profile/context"
 	"github.com/omec-project/gnbsim/stats"
+	nasLogger "github.com/omec-project/nas/v2/logger"
+	ngapLogger "github.com/omec-project/ngap/v2/logger"
 	"github.com/urfave/cli/v3"
 	"go.uber.org/zap/zapcore"
 )
@@ -78,6 +80,8 @@ func action(ctx context.Context, c *cli.Command) error {
 	}
 	logger.AppLog.Infoln("setting log level to:", lvl)
 	logger.SetLogLevel(lvl)
+	ngapLogger.SetLogLevel(lvl)
+	nasLogger.SetLogLevel(lvl)
 
 	err = prof.InitializeAllProfiles()
 	if err != nil {
@@ -100,7 +104,7 @@ func action(ctx context.Context, c *cli.Command) error {
 			defer appWaitGrp.Done()
 			err := httpserver.StartHttpServer()
 			if err != nil {
-				logger.AppLog.Infoln("StartHttpServer returned :", err)
+				logger.AppLog.Infoln("StartHttpServer returned:", err)
 			}
 		}()
 

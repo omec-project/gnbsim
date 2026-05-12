@@ -6,7 +6,7 @@ package test
 
 import (
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
-	"github.com/omec-project/ngap"
+	"github.com/omec-project/ngap/v2"
 )
 
 func GetUplinkNASTransport(amfUeNgapID, ranUeNgapID int64, nasPdu []byte) ([]byte, error) {

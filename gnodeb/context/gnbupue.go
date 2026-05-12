@@ -7,31 +7,26 @@ package context
 import (
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/logger"
-	"github.com/omec-project/ngap/ngapType"
-	"github.com/omec-project/openapi/models"
+	"github.com/omec-project/ngap/v2/ngapType"
+	"github.com/omec-project/openapi/v2/models"
 	"go.uber.org/zap"
 )
 
 type GnbUpUe struct {
-	Upf         *GnbUpf
-	Gnb         *GNodeB
-	Log         *zap.SugaredLogger
-	PduSessType models.PduSessionType
-	QosFlows    map[int64]*ngapType.QosFlowSetupRequestItem
-
-	// GnbUpUe writes downlink packets to UE on this channel
-	WriteUeChan chan common.InterfaceMessage
-
+	Snssai models.Snssai
 	// GnbUpUe reads up link data packets from UE on this channel
 	ReadUlChan chan common.InterfaceMessage
-
+	Log        *zap.SugaredLogger
+	QosFlows   map[int64]*ngapType.QosFlowSetupRequestItem
+	// GnbUpUe writes downlink packets to UE on this channel
+	WriteUeChan chan common.InterfaceMessage
+	Upf         *GnbUpf
 	// GnbUpUe reads down link data packets from UPF Worker on this channel
 	ReadDlChan chan common.InterfaceMessage
-
 	// GnbUpUe reads commands from GnbCpUe on this channel
-	ReadCmdChan chan common.InterfaceMessage
-
-	Snssai           models.Snssai
+	ReadCmdChan      chan common.InterfaceMessage
+	Gnb              *GNodeB
+	PduSessType      models.PduSessionType
 	PduSessId        int64
 	DlTeid           uint32
 	UlTeid           uint32

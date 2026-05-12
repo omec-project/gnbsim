@@ -6,9 +6,10 @@ package context
 
 import (
 	transport "github.com/omec-project/gnbsim/transportcommon"
-	"github.com/omec-project/openapi/models"
+	"github.com/omec-project/openapi/v2/models"
 	"github.com/omec-project/util/idgenerator"
 	"go.uber.org/zap"
+	"go.yaml.in/yaml/v4"
 )
 
 // GNodeB holds the context for a gNodeB. It manages the control plane and
@@ -40,6 +41,59 @@ type GNodeB struct {
 	SupportedTaList []SupportedTA `yaml:"supportedTaList"`
 	GnbN2Port       int           `yaml:"n2Port"`
 	GnbN3Port       int           `yaml:"n3Port"`
+}
+
+type gNodeBConfig struct {
+	GnbN2Ip         string              `yaml:"n2IpAddr"`
+	GnbN3Ip         string              `yaml:"n3IpAddr"`
+	GnbName         string              `yaml:"name"`
+	RanId           globalRanNodeIDYAML `yaml:"globalRanId"`
+	DefaultAmf      *GnbAmf             `yaml:"defaultAmf"`
+	SupportedTaList []SupportedTA       `yaml:"supportedTaList"`
+	GnbN2Port       int                 `yaml:"n2Port"`
+	GnbN3Port       int                 `yaml:"n3Port"`
+}
+
+type globalRanNodeIDYAML struct {
+	N3IwfId *string       `yaml:"n3IwfId"`
+	GNbId   *models.GNbId `yaml:"gNbId"`
+	NgeNbId *string       `yaml:"ngeNbId"`
+	WagfId  *string       `yaml:"wagfId"`
+	TngfId  *string       `yaml:"tngfId"`
+	Nid     *string       `yaml:"nid"`
+	ENbId   *string       `yaml:"eNbId"`
+	PlmnId  models.PlmnId `yaml:"plmnId"`
+}
+
+func (ranID globalRanNodeIDYAML) toModel() models.GlobalRanNodeId {
+	return models.GlobalRanNodeId{
+		PlmnId:  ranID.PlmnId,
+		N3IwfId: ranID.N3IwfId,
+		GNbId:   ranID.GNbId,
+		NgeNbId: ranID.NgeNbId,
+		WagfId:  ranID.WagfId,
+		TngfId:  ranID.TngfId,
+		Nid:     ranID.Nid,
+		ENbId:   ranID.ENbId,
+	}
+}
+
+func (gnb *GNodeB) UnmarshalYAML(value *yaml.Node) error {
+	var config gNodeBConfig
+	if err := value.Decode(&config); err != nil {
+		return err
+	}
+
+	gnb.GnbN2Ip = config.GnbN2Ip
+	gnb.GnbN3Ip = config.GnbN3Ip
+	gnb.GnbName = config.GnbName
+	gnb.RanId = config.RanId.toModel()
+	gnb.DefaultAmf = config.DefaultAmf
+	gnb.SupportedTaList = config.SupportedTaList
+	gnb.GnbN2Port = config.GnbN2Port
+	gnb.GnbN3Port = config.GnbN3Port
+
+	return nil
 }
 
 func (gnb *GNodeB) GetDefaultAmf() *GnbAmf {

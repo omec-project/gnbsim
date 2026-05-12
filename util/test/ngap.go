@@ -7,8 +7,8 @@ package test
 
 import (
 	"github.com/omec-project/gnbsim/logger"
-	"github.com/omec-project/ngap/aper"
-	"github.com/omec-project/ngap/ngapType"
+	"github.com/omec-project/ngap/v2/aper"
+	"github.com/omec-project/ngap/v2/ngapType"
 )
 
 func PrintAndGetCause(cause *ngapType.Cause) (present int, value aper.Enumerated) {

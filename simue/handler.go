@@ -379,6 +379,9 @@ func HandleServiceAcceptEvent(ue *simuectx.SimUe,
 	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.SVC_ACCEPT_IN, Id: msg.Id}
 	stats.LogStats(e)
 
+	// Service Accept completes the UE-triggered service request procedure.
+	SendProcedureResult(ue)
+
 	return nil
 }
 

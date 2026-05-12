@@ -8,7 +8,8 @@ import (
 	"testing"
 
 	"github.com/omec-project/gnbsim/common"
-	"github.com/omec-project/openapi/models"
+	"github.com/omec-project/openapi/v2"
+	"github.com/omec-project/openapi/v2/models"
 )
 
 func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
@@ -24,7 +25,7 @@ func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
 			name:        "pdusessest profile without dnn should fail",
 			profileType: PDU_SESS_EST,
 			dnn:         "",
-			sNssai:      &models.Snssai{Sst: 1, Sd: "010203"},
+			sNssai:      &models.Snssai{Sst: 1, Sd: openapi.PtrString("010203")},
 			expectError: true,
 			errorMsg:    "dnn is required",
 		},
@@ -40,7 +41,7 @@ func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
 			name:        "pdusessest profile with sst=0 should fail",
 			profileType: PDU_SESS_EST,
 			dnn:         "internet",
-			sNssai:      &models.Snssai{Sst: 0, Sd: "010203"},
+			sNssai:      &models.Snssai{Sst: 0, Sd: openapi.PtrString("010203")},
 			expectError: true,
 			errorMsg:    "sNssai.sst is required",
 		},
@@ -48,7 +49,7 @@ func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
 			name:        "pdusessest profile with valid dnn and sNssai should pass",
 			profileType: PDU_SESS_EST,
 			dnn:         "internet",
-			sNssai:      &models.Snssai{Sst: 1, Sd: "010203"},
+			sNssai:      &models.Snssai{Sst: 1, Sd: openapi.PtrString("010203")},
 			expectError: false,
 		},
 		{
@@ -62,7 +63,7 @@ func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
 			name:        "deregister profile without dnn should fail",
 			profileType: DEREGISTER,
 			dnn:         "",
-			sNssai:      &models.Snssai{Sst: 1, Sd: "010203"},
+			sNssai:      &models.Snssai{Sst: 1, Sd: openapi.PtrString("010203")},
 			expectError: true,
 			errorMsg:    "dnn is required",
 		},
@@ -133,7 +134,7 @@ func TestProfileInit_ValidatesDnnForCustomProfiles(t *testing.T) {
 				},
 			},
 			dnn:         "",
-			sNssai:      &models.Snssai{Sst: 1, Sd: "010203"},
+			sNssai:      &models.Snssai{Sst: 1, Sd: openapi.PtrString("010203")},
 			expectError: true,
 			errorMsg:    "dnn is required",
 		},
@@ -165,7 +166,7 @@ func TestProfileInit_ValidatesDnnForCustomProfiles(t *testing.T) {
 				},
 			},
 			dnn:         "internet",
-			sNssai:      &models.Snssai{Sst: 0, Sd: "010203"},
+			sNssai:      &models.Snssai{Sst: 0, Sd: openapi.PtrString("010203")},
 			expectError: true,
 			errorMsg:    "sNssai.sst is required",
 		},
@@ -181,7 +182,7 @@ func TestProfileInit_ValidatesDnnForCustomProfiles(t *testing.T) {
 				},
 			},
 			dnn:         "internet",
-			sNssai:      &models.Snssai{Sst: 1, Sd: "010203"},
+			sNssai:      &models.Snssai{Sst: 1, Sd: openapi.PtrString("010203")},
 			expectError: false,
 		},
 		{
