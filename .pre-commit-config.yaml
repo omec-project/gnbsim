@@ -19,6 +19,7 @@ repos:
     name: staticcheck
     entry: staticcheck ./...
     language: golang
+    types: [go]
     additional_dependencies:
     - honnef.co/go/tools/cmd/staticcheck@v0.7.0
     pass_filenames: false
@@ -26,6 +27,7 @@ repos:
     name: go test -race
     entry: go test -race ./... -count=1
     language: system
+    types: [go]
     pass_filenames: false
 - repo: https://github.com/golangci/golangci-lint
   rev: v2.11.3
