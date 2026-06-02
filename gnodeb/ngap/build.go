@@ -25,15 +25,15 @@ func GetNGSetupRequest(gnb *gnbctx.GNodeB) ([]byte, error) {
 	message := ngapTestpacket.BuildNGSetupRequest()
 
 	// GlobalRANNodeID
-	ie := message.InitiatingMessage.Value.NGSetupRequest.ProtocolIEs.List[0]
+	ie := message.InitiatingMessage.Value.NGSetup.ProtocolIEs.List[0]
 	*(ie.Value.GlobalRANNodeID) = ngapConvert.RanIDToNgap(gnb.RanId)
 
 	// RANNodeName
-	ie = message.InitiatingMessage.Value.NGSetupRequest.ProtocolIEs.List[1]
+	ie = message.InitiatingMessage.Value.NGSetup.ProtocolIEs.List[1]
 	ie.Value.RANNodeName.Value = gnb.GnbName
 
 	// TAC
-	ie = message.InitiatingMessage.Value.NGSetupRequest.ProtocolIEs.List[2]
+	ie = message.InitiatingMessage.Value.NGSetup.ProtocolIEs.List[2]
 
 	supportedTaList := ie.Value.SupportedTAList
 	// Clearing default entries.
@@ -140,7 +140,7 @@ func GetUEContextReleaseComplete(gnbue *gnbctx.GnbCpUe) ([]byte, error) {
 	})
 
 	message := ngapTestpacket.BuildUEContextReleaseComplete(gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, pduSessIds)
-	ies := message.SuccessfulOutcome.Value.UEContextReleaseComplete.ProtocolIEs.List
+	ies := message.SuccessfulOutcome.Value.UEContextRelease.ProtocolIEs.List
 
 	if e := updateUserLocationInformation(gnbue.Gnb, ies[2].Value.UserLocationInformation); e != nil {
 		return nil, e

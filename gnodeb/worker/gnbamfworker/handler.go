@@ -35,10 +35,10 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 	}
 	successfulOutcome := pdu.SuccessfulOutcome
 	if successfulOutcome == nil {
-		amf.Log.Errorln("InitiatingMessage is nil")
+		amf.Log.Errorln("SuccessfulOutcome is nil")
 		return
 	}
-	ngSetupResponse := successfulOutcome.Value.NGSetupResponse
+	ngSetupResponse := successfulOutcome.Value.NGSetup
 	if ngSetupResponse == nil {
 		amf.Log.Errorln("NGSetupResponse is nil")
 		return
@@ -187,9 +187,9 @@ func HandleNgSetupFailure(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 		amf.Log.Errorln("UnSuccessfulOutcome Message is nil")
 		return
 	}
-	ngSetupFailure := UnSuccessfulOutcome.Value.NGSetupFailure
+	ngSetupFailure := UnSuccessfulOutcome.Value.NGSetup
 	if ngSetupFailure == nil {
-		amf.Log.Errorln("NGSetupResponse is nil")
+		amf.Log.Errorln("NGSetupFailure is nil")
 		return
 	}
 
@@ -291,7 +291,7 @@ func HandleInitialContextSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 		amf.Log.Errorln("InitiatingMessage is nil")
 		return
 	}
-	initialContextSetupRequest := initiatingMessage.Value.InitialContextSetupRequest
+	initialContextSetupRequest := initiatingMessage.Value.InitialContextSetup
 	if initialContextSetupRequest == nil {
 		amf.Log.Errorln("InitialContextSetupRequest is nil")
 		return
@@ -344,7 +344,7 @@ func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 		amf.Log.Errorln("InitiatingMessage is nil")
 		return
 	}
-	pduSessResourceSetupReq := initiatingMessage.Value.PDUSessionResourceSetupRequest
+	pduSessResourceSetupReq := initiatingMessage.Value.PDUSessionResourceSetup
 	if pduSessResourceSetupReq == nil {
 		amf.Log.Errorln("PDUSessionResourceSetupRequest is nil")
 		return
@@ -395,7 +395,7 @@ func HandlePduSessResourceReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 		amf.Log.Errorln("InitiatingMessage is nil")
 		return
 	}
-	pduSessResourceReleaseCmd := initiatingMessage.Value.PDUSessionResourceReleaseCommand
+	pduSessResourceReleaseCmd := initiatingMessage.Value.PDUSessionResourceRelease
 	if pduSessResourceReleaseCmd == nil {
 		amf.Log.Errorln("PDUSessionResourceReleaseCommand is nil")
 		return
@@ -450,7 +450,7 @@ func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 		return
 	}
 
-	ueCtxRelCmd := initiatingMessage.Value.UEContextReleaseCommand
+	ueCtxRelCmd := initiatingMessage.Value.UEContextRelease
 	if ueCtxRelCmd == nil {
 		amf.Log.Errorln("UEContextReleaseCommand is nil")
 		return

@@ -137,7 +137,7 @@ func HandleInitialContextSetupRequest(gnbue *gnbctx.GnbCpUe,
 	pdu := msg.NgapPdu
 
 	initiatingMessage := pdu.InitiatingMessage
-	initialContextSetupRequest := initiatingMessage.Value.InitialContextSetupRequest
+	initialContextSetupRequest := initiatingMessage.Value.InitialContextSetup
 
 	for _, ie := range initialContextSetupRequest.ProtocolIEs.List {
 		switch ie.Id.Value {
@@ -216,7 +216,7 @@ func HandlePduSessResourceSetupRequest(gnbue *gnbctx.GnbCpUe,
 	pdu := msg.NgapPdu
 
 	initiatingMessage := pdu.InitiatingMessage
-	pduSessResourceSetupReq := initiatingMessage.Value.PDUSessionResourceSetupRequest
+	pduSessResourceSetupReq := initiatingMessage.Value.PDUSessionResourceSetup
 
 	for _, ie := range pduSessResourceSetupReq.ProtocolIEs.List {
 		switch ie.Id.Value {
@@ -260,7 +260,7 @@ func HandlePduSessResourceReleaseCommand(gnbue *gnbctx.GnbCpUe,
 	pdu := msg.NgapPdu
 
 	initiatingMessage := pdu.InitiatingMessage
-	pduSessResourceReleaseCmd := initiatingMessage.Value.PDUSessionResourceReleaseCommand
+	pduSessResourceReleaseCmd := initiatingMessage.Value.PDUSessionResourceRelease
 
 	for _, ie := range pduSessResourceReleaseCmd.ProtocolIEs.List {
 		switch ie.Id.Value {
@@ -400,7 +400,7 @@ func HandleUeCtxReleaseCommand(gnbue *gnbctx.GnbCpUe,
 	pdu := msg.NgapPdu
 
 	initiatingMessage := pdu.InitiatingMessage
-	ueCtxRelCmd := initiatingMessage.Value.UEContextReleaseCommand
+	ueCtxRelCmd := initiatingMessage.Value.UEContextRelease
 
 	for _, ie := range ueCtxRelCmd.ProtocolIEs.List {
 		switch ie.Id.Value {
