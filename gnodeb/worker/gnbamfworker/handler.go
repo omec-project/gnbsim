@@ -35,7 +35,7 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 	}
 	successfulOutcome := pdu.SuccessfulOutcome
 	if successfulOutcome == nil {
-		amf.Log.Errorln("InitiatingMessage is nil")
+		amf.Log.Errorln("SuccessfulOutcome is nil")
 		return
 	}
 	ngSetupResponse := successfulOutcome.Value.NGSetup
@@ -189,7 +189,7 @@ func HandleNgSetupFailure(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 	}
 	ngSetupFailure := UnSuccessfulOutcome.Value.NGSetup
 	if ngSetupFailure == nil {
-		amf.Log.Errorln("NGSetupResponse is nil")
+		amf.Log.Errorln("NGSetupFailure is nil")
 		return
 	}
 
