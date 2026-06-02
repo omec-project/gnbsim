@@ -41,10 +41,10 @@ func BuildNGSetupRequest() (pdu ngapType.NGAPPDU) {
 	initiatingMessage.ProcedureCode.Value = ngapType.ProcedureCodeNGSetup
 	initiatingMessage.Criticality.Value = ngapType.CriticalityPresentReject
 
-	initiatingMessage.Value.Present = ngapType.InitiatingMessagePresentNGSetupRequest
-	initiatingMessage.Value.NGSetupRequest = new(ngapType.NGSetupRequest)
+	initiatingMessage.Value.Present = ngapType.InitiatingMessagePresentNGSetup
+	initiatingMessage.Value.NGSetup = new(ngapType.NGSetupRequest)
 
-	nGSetupRequest := initiatingMessage.Value.NGSetupRequest
+	nGSetupRequest := initiatingMessage.Value.NGSetup
 	nGSetupRequestIEs := &nGSetupRequest.ProtocolIEs
 
 	// GlobalRANNodeID
@@ -79,8 +79,9 @@ func BuildNGSetupRequest() (pdu ngapType.NGAPPDU) {
 	ie.Value.RANNodeName = new(ngapType.RANNodeName)
 
 	rANNodeName := ie.Value.RANNodeName
-	rANNodeName.Value = "free5GC"
+	rANNodeName.Value = "aetherGnbsim"
 	nGSetupRequestIEs.List = append(nGSetupRequestIEs.List, ie)
+
 	// SupportedTAList
 	ie = ngapType.NGSetupRequestIEs{}
 	ie.Id.Value = ngapType.ProtocolIEIDSupportedTAList
@@ -333,10 +334,10 @@ func BuildUEContextReleaseComplete(amfUeNgapID, ranUeNgapID int64, pduSessionIDL
 	successfulOutcome.ProcedureCode.Value = ngapType.ProcedureCodeUEContextRelease
 	successfulOutcome.Criticality.Value = ngapType.CriticalityPresentReject
 
-	successfulOutcome.Value.Present = ngapType.SuccessfulOutcomePresentUEContextReleaseComplete
-	successfulOutcome.Value.UEContextReleaseComplete = new(ngapType.UEContextReleaseComplete)
+	successfulOutcome.Value.Present = ngapType.SuccessfulOutcomePresentUEContextRelease
+	successfulOutcome.Value.UEContextRelease = new(ngapType.UEContextReleaseComplete)
 
-	uEContextReleaseComplete := successfulOutcome.Value.UEContextReleaseComplete
+	uEContextReleaseComplete := successfulOutcome.Value.UEContextRelease
 	uEContextReleaseCompleteIEs := &uEContextReleaseComplete.ProtocolIEs
 
 	// AMF UE NGAP ID
@@ -498,10 +499,10 @@ func BuildInitialContextSetupResponse(pduSessions []*PduSession, amfUeNgapID, ra
 	successfulOutcome.ProcedureCode.Value = ngapType.ProcedureCodeInitialContextSetup
 	successfulOutcome.Criticality.Value = ngapType.CriticalityPresentReject
 
-	successfulOutcome.Value.Present = ngapType.SuccessfulOutcomePresentInitialContextSetupResponse
-	successfulOutcome.Value.InitialContextSetupResponse = new(ngapType.InitialContextSetupResponse)
+	successfulOutcome.Value.Present = ngapType.SuccessfulOutcomePresentInitialContextSetup
+	successfulOutcome.Value.InitialContextSetup = new(ngapType.InitialContextSetupResponse)
 
-	initialContextSetupResponse := successfulOutcome.Value.InitialContextSetupResponse
+	initialContextSetupResponse := successfulOutcome.Value.InitialContextSetup
 	initialContextSetupResponseIEs := &initialContextSetupResponse.ProtocolIEs
 
 	// AMF UE NGAP ID
@@ -620,10 +621,10 @@ func BuildInitialContextSetupResponseForRegistrationTest(amfUeNgapID, ranUeNgapI
 	successfulOutcome.ProcedureCode.Value = ngapType.ProcedureCodeInitialContextSetup
 	successfulOutcome.Criticality.Value = ngapType.CriticalityPresentReject
 
-	successfulOutcome.Value.Present = ngapType.SuccessfulOutcomePresentInitialContextSetupResponse
-	successfulOutcome.Value.InitialContextSetupResponse = new(ngapType.InitialContextSetupResponse)
+	successfulOutcome.Value.Present = ngapType.SuccessfulOutcomePresentInitialContextSetup
+	successfulOutcome.Value.InitialContextSetup = new(ngapType.InitialContextSetupResponse)
 
-	initialContextSetupResponse := successfulOutcome.Value.InitialContextSetupResponse
+	initialContextSetupResponse := successfulOutcome.Value.InitialContextSetup
 	initialContextSetupResponseIEs := &initialContextSetupResponse.ProtocolIEs
 
 	// AMF UE NGAP ID
@@ -663,10 +664,10 @@ func BuildPDUSessionResourceSetupResponseForRegistrationTest(pduSessions []*PduS
 	successfulOutcome.ProcedureCode.Value = ngapType.ProcedureCodePDUSessionResourceSetup
 	successfulOutcome.Criticality.Value = ngapType.CriticalityPresentReject
 
-	successfulOutcome.Value.Present = ngapType.SuccessfulOutcomePresentPDUSessionResourceSetupResponse
-	successfulOutcome.Value.PDUSessionResourceSetupResponse = new(ngapType.PDUSessionResourceSetupResponse)
+	successfulOutcome.Value.Present = ngapType.SuccessfulOutcomePresentPDUSessionResourceSetup
+	successfulOutcome.Value.PDUSessionResourceSetup = new(ngapType.PDUSessionResourceSetupResponse)
 
-	pDUSessionResourceSetupResponse := successfulOutcome.Value.PDUSessionResourceSetupResponse
+	pDUSessionResourceSetupResponse := successfulOutcome.Value.PDUSessionResourceSetup
 	pDUSessionResourceSetupResponseIEs := &pDUSessionResourceSetupResponse.ProtocolIEs
 
 	// AMF UE NGAP ID
@@ -745,10 +746,10 @@ func BuildPDUSessionResourceReleaseResponseForReleaseTest(amfUeNgapID, ranUeNgap
 	successfulOutcome.ProcedureCode.Value = ngapType.ProcedureCodePDUSessionResourceRelease
 	successfulOutcome.Criticality.Value = ngapType.CriticalityPresentReject
 
-	successfulOutcome.Value.Present = ngapType.SuccessfulOutcomePresentPDUSessionResourceReleaseResponse
-	successfulOutcome.Value.PDUSessionResourceReleaseResponse = new(ngapType.PDUSessionResourceReleaseResponse)
+	successfulOutcome.Value.Present = ngapType.SuccessfulOutcomePresentPDUSessionResourceRelease
+	successfulOutcome.Value.PDUSessionResourceRelease = new(ngapType.PDUSessionResourceReleaseResponse)
 
-	pDUSessionResourceReleaseResponse := successfulOutcome.Value.PDUSessionResourceReleaseResponse
+	pDUSessionResourceReleaseResponse := successfulOutcome.Value.PDUSessionResourceRelease
 	pDUSessionResourceReleaseResponseIEs := &pDUSessionResourceReleaseResponse.ProtocolIEs
 
 	// AMF UE NGAP ID
