@@ -58,10 +58,10 @@ github.com/omec-project/nas/v2 v2.0.0 h1:6KQQKs8JDT5U1CPtVRZdv/OlbUHv2VQpnwXhAB6
 github.com/omec-project/nas/v2 v2.0.0/go.mod h1:3RsTbm7V4BLR/IjzMv74WauJT0frkAQLtSVwR1LCPXs=
 github.com/omec-project/ngap/v2 v2.1.0 h1:+dBCYZ5esgg7QVy2DzNLvc9OXpZG9B/Swh7KZY9Wyjo=
 github.com/omec-project/ngap/v2 v2.1.0/go.mod h1:VqYpVQGeBbRf8u56hjnI0en1Ee+BRMvmqrTiEymVBtg=
-github.com/omec-project/openapi/v2 v2.0.0 h1:aeNPvcJotm+paJLxxBrxJsoMsSWcnLeyr5z7C/CJ/JQ=
-github.com/omec-project/openapi/v2 v2.0.0/go.mod h1:dgqA/pmWLxUWeEl/lgecPmcDR4oolSzJK/ijbLwveow=
-github.com/omec-project/util v1.7.3 h1:XKtttf8nbFZtk9y+Zat6+cg3k0KYkYekn/5mqGUb7Os=
-github.com/omec-project/util v1.7.3/go.mod h1:D2Blqi9pBZCfrZGsLDR6RzlLBU0UJj4nTyln/LU3Y7M=
+github.com/omec-project/openapi/v2 v2.1.1 h1:2eUA6OcEylFpuLFDIDpaNSKW0yjwkpmHQlfYoQExcNY=
+github.com/omec-project/openapi/v2 v2.1.1/go.mod h1:dgqA/pmWLxUWeEl/lgecPmcDR4oolSzJK/ijbLwveow=
+github.com/omec-project/util v1.7.4 h1:NaDGdIg3BxmFFXT5LTXAfMdAWgDUkwcYP7Mts/4nxho=
+github.com/omec-project/util v1.7.4/go.mod h1:7YKrTd/UMUi+Mpnu7F2xcY3fDZ/3gPmH1xeSUU9+tI0=
 github.com/pelletier/go-toml/v2 v2.3.1 h1:MYEvvGnQjeNkRF1qUuGolNtNExTDwct51yp7olPtrEc=
 github.com/pelletier/go-toml/v2 v2.3.1/go.mod h1:2gIqNv+qfxSVS7cM2xJQKtLSTLUE9V8t9Stt+h56mCY=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
