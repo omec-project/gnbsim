@@ -92,7 +92,6 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 	for i := 0; i < len(servedGUAMIList.List); i++ {
 		servedGuamiItem := servedGUAMIList.List[i]
 		guamiSrc := servedGuamiItem.GUAMI
-		var guami models.Guami
 
 		// Parsing PLMNID into models.Guami
 		plmnId, err := ngapConvert.PlmnIdToModels(guamiSrc.PLMNIdentity)
@@ -100,19 +99,16 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 			amf.Log.Errorln("PlmnIdToModels returned:", err)
 			return
 		}
-		guami.PlmnId = models.PlmnIdNid{
-			Mcc: plmnId.GetMcc(),
-			Mnc: plmnId.GetMnc(),
-		}
+		plmnIdNid := models.NewPlmnIdNid(plmnId.GetMcc(), plmnId.GetMnc())
 
 		// Parsing AMF Region, Set and Pointer to models.Guami
 		amfRegId := guamiSrc.AMFRegionID.Value
 		amfSetId := guamiSrc.AMFSetID.Value
 		amfPtr := guamiSrc.AMFPointer.Value
-		guami.AmfId = ngapConvert.AmfIdToModels(amfRegId, amfSetId, amfPtr)
+		guami := models.NewGuami(*plmnIdNid, ngapConvert.AmfIdToModels(amfRegId, amfSetId, amfPtr))
 
 		if len(amf.ServedGuamiList) < capOfGuamiList {
-			amf.ServedGuamiList = append(amf.ServedGuamiList, guami)
+			amf.ServedGuamiList = append(amf.ServedGuamiList, *guami)
 		} else {
 			break
 		}
@@ -131,28 +127,26 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 	}
 	capOfPlmnSupportList := cap(amf.PlmnSupportList)
 	for _, plmnSupportItem := range plmnSupportList.List {
-		var plmnSI models.PlmnSnssai
-
-		// Parsing PLMNID into models.Guami
+		// Parsing PLMNID into models.PlmnId
 		plmnId, err := ngapConvert.PlmnIdToModels(plmnSupportItem.PLMNIdentity)
 		if err != nil {
 			amf.Log.Errorln("PlmnIdToModels returned:", err)
 			return
 		}
-		plmnSI.PlmnId = plmnId
 
 		// Parsing SNssaiList into models.Snssai
-		plmnSI.SNssaiList = make([]models.Snssai, 0, len(plmnSupportItem.SliceSupportList.List))
+		snssaiList := make([]models.Snssai, 0, len(plmnSupportItem.SliceSupportList.List))
 		for _, sliceSupportItem := range plmnSupportItem.SliceSupportList.List {
 			snssai, err := ngapConvert.SNssaiToModels(sliceSupportItem.SNSSAI)
 			if err != nil {
 				amf.Log.Errorln("SNssaiToModels returned:", err)
 				return
 			}
-			plmnSI.SNssaiList = append(plmnSI.SNssaiList, snssai)
+			snssaiList = append(snssaiList, snssai)
 		}
+		plmnSI := models.NewPlmnSnssai(plmnId, snssaiList)
 		if len(amf.PlmnSupportList) < capOfPlmnSupportList {
-			amf.PlmnSupportList = append(amf.PlmnSupportList, plmnSI)
+			amf.PlmnSupportList = append(amf.PlmnSupportList, *plmnSI)
 		} else {
 			break
 		}
