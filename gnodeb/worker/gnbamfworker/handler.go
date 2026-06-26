@@ -127,6 +127,10 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 	}
 	capOfPlmnSupportList := cap(amf.PlmnSupportList)
 	for _, plmnSupportItem := range plmnSupportList.List {
+		if len(amf.PlmnSupportList) >= capOfPlmnSupportList {
+			break
+		}
+
 		// Parsing PLMNID into models.PlmnId
 		plmnId, err := ngapConvert.PlmnIdToModels(plmnSupportItem.PLMNIdentity)
 		if err != nil {
@@ -148,11 +152,7 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 			PlmnId:     plmnId,
 			SNssaiList: snssaiList,
 		}
-		if len(amf.PlmnSupportList) < capOfPlmnSupportList {
-			amf.PlmnSupportList = append(amf.PlmnSupportList, plmnSI)
-		} else {
-			break
-		}
+		amf.PlmnSupportList = append(amf.PlmnSupportList, plmnSI)
 	}
 
 	if len(amf.PlmnSupportList) == 0 {
