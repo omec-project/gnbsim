@@ -89,8 +89,11 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 	}
 
 	capOfGuamiList := cap(amf.ServedGuamiList)
-	for i := 0; i < len(servedGUAMIList.List); i++ {
-		servedGuamiItem := servedGUAMIList.List[i]
+	for _, servedGuamiItem := range servedGUAMIList.List {
+		if len(amf.ServedGuamiList) >= capOfGuamiList {
+			break
+		}
+
 		guamiSrc := servedGuamiItem.GUAMI
 
 		// Parsing PLMNID into models.Guami
@@ -99,19 +102,16 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 			amf.Log.Errorln("PlmnIdToModels returned:", err)
 			return
 		}
-		plmnIdNid := models.NewPlmnIdNid(plmnId.GetMcc(), plmnId.GetMnc())
 
-		// Parsing AMF Region, Set and Pointer to models.Guami
-		amfRegId := guamiSrc.AMFRegionID.Value
-		amfSetId := guamiSrc.AMFSetID.Value
-		amfPtr := guamiSrc.AMFPointer.Value
-		guami := models.NewGuami(*plmnIdNid, ngapConvert.AmfIdToModels(amfRegId, amfSetId, amfPtr))
-
-		if len(amf.ServedGuamiList) < capOfGuamiList {
-			amf.ServedGuamiList = append(amf.ServedGuamiList, *guami)
-		} else {
-			break
+		guami := models.Guami{
+			PlmnId: models.PlmnIdNid{
+				Mcc: plmnId.GetMcc(),
+				Mnc: plmnId.GetMnc(),
+			},
+			AmfId: ngapConvert.AmfIdToModels(guamiSrc.AMFRegionID.Value, guamiSrc.AMFSetID.Value, guamiSrc.AMFPointer.Value),
 		}
+
+		amf.ServedGuamiList = append(amf.ServedGuamiList, guami)
 	}
 
 	if len(amf.ServedGuamiList) == 0 {
@@ -144,9 +144,12 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 			}
 			snssaiList = append(snssaiList, snssai)
 		}
-		plmnSI := models.NewPlmnSnssai(plmnId, snssaiList)
+		plmnSI := models.PlmnSnssai{
+			PlmnId:     plmnId,
+			SNssaiList: snssaiList,
+		}
 		if len(amf.PlmnSupportList) < capOfPlmnSupportList {
-			amf.PlmnSupportList = append(amf.PlmnSupportList, *plmnSI)
+			amf.PlmnSupportList = append(amf.PlmnSupportList, plmnSI)
 		} else {
 			break
 		}
