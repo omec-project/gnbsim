@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2024 Canonical Ltd.
-# Copyright 2024 Intel Corporation
+# Copyright (c) 2024-present Intel Corporation
 name: CI Pipeline
 
 on:
@@ -120,5 +120,17 @@ jobs:
       statuses: read
       vulnerability-alerts: read
     uses: omec-project/.github/.github/workflows/scorecard-analysis.yml@7d95c1966f0335e8135b833e5a33f1bec71c17c7 # v0.0.29
+    with:
+      branch_name: ${{ github.ref }}
+
+  e2e-tests:
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+      id-token: write
+      attestations: write
+    uses: omec-project/.github/.github/workflows/e2e-test.yml@7d95c1966f0335e8135b833e5a33f1bec71c17c7 # v0.0.29
     with:
       branch_name: ${{ github.ref }}
