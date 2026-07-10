@@ -6,7 +6,7 @@ require (
 	github.com/gin-contrib/cors v1.7.7
 	github.com/gin-gonic/gin v1.12.0
 	github.com/ishidawataru/sctp v0.0.0-20251114114122-19ddcbc6aae2
-	github.com/omec-project/nas/v2 v2.0.0
+	github.com/omec-project/nas/v2 v2.0.2
 	github.com/omec-project/ngap/v2 v2.1.0
 	github.com/omec-project/openapi/v2 v2.1.4
 	github.com/omec-project/util v1.7.5
@@ -17,7 +17,6 @@ require (
 )
 
 require (
-	github.com/aead/cmac v0.0.0-20160719120800-7af84192f0b1 // indirect
 	github.com/bytedance/gopkg v0.1.4 // indirect
 	github.com/bytedance/sonic v1.15.1 // indirect
 	github.com/bytedance/sonic/loader v0.5.1 // indirect
