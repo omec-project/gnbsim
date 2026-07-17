@@ -58,8 +58,8 @@ github.com/omec-project/ngap/v2 v2.1.0 h1:+dBCYZ5esgg7QVy2DzNLvc9OXpZG9B/Swh7KZY
 github.com/omec-project/ngap/v2 v2.1.0/go.mod h1:VqYpVQGeBbRf8u56hjnI0en1Ee+BRMvmqrTiEymVBtg=
 github.com/omec-project/openapi/v2 v2.1.5 h1:Nv7uepc2pwWainbMt0WpMWYnQR07JkZcAPYcIzjAjiU=
 github.com/omec-project/openapi/v2 v2.1.5/go.mod h1:dgqA/pmWLxUWeEl/lgecPmcDR4oolSzJK/ijbLwveow=
-github.com/omec-project/util v1.8.0 h1:MYFbfUJHykXT4Gxrj9lpmXtHcbQDTUqd4GQfmrlbA8I=
-github.com/omec-project/util v1.8.0/go.mod h1:pEhrE4IE0BCe3aDv9nBx3vsywKXzzgyD7g4wdaqFDyQ=
+github.com/omec-project/util v1.8.1 h1:srxTpIAsJdAwrz7NcV0pepVAZISgverxlJNRpSv7/Qc=
+github.com/omec-project/util v1.8.1/go.mod h1:pEhrE4IE0BCe3aDv9nBx3vsywKXzzgyD7g4wdaqFDyQ=
 github.com/pelletier/go-toml/v2 v2.4.3 h1:GTRvJQutkOSftxIFD5xw9aepkYNuPWmVJpffdDPYVpY=
 github.com/pelletier/go-toml/v2 v2.4.3/go.mod h1:2gIqNv+qfxSVS7cM2xJQKtLSTLUE9V8t9Stt+h56mCY=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
