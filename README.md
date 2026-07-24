@@ -4,7 +4,6 @@ SPDX-FileCopyrightText: 2022 Great Software Laboratory Pvt. Ltd
 SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org>
 SPDX-License-Identifier: Apache-2.0
 -->
-[![Go Report Card](https://goreportcard.com/badge/github.com/omec-project/gnbsim)](https://goreportcard.com/report/github.com/omec-project/gnbsim)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/omec-project/gnbsim/badge)](https://scorecard.dev/viewer/?uri=github.com/omec-project/gnbsim)
 ![GitHub latest release (SemVer)](https://img.shields.io/github/v/release/omec-project/gnbsim?sort=semver)
 
