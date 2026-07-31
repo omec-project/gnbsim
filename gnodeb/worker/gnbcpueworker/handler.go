@@ -744,14 +744,21 @@ func HandleHandoverRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.InterfaceMessa
 				gnbue.Log.Warnln("no GTP tunnel found for PDU session, skipping")
 				continue
 			}
-
+			if len(gtpTunnel.GTPTEID.Value) != 4 {
+				gnbue.Log.Errorf("unexpected GTPTEID length %d, skipping PDU session", len(gtpTunnel.GTPTEID.Value))
+				continue
+			}
 			ulteid := binary.BigEndian.Uint32(gtpTunnel.GTPTEID.Value)
+			upfIp, _ := ngapConvert.IPAddressToString(gtpTunnel.TransportLayerAddress)
+			if upfIp == "" {
+				gnbue.Log.Errorln("failed to resolve UPF IP address, skipping PDU session")
+				continue
+			}
 			dlteid, err := gnbue.Gnb.DlTeidGenerator.Allocate()
 			if err != nil {
 				gnbue.Log.Errorln("DlTeid Allocate failed:", err)
 				return
 			}
-			upfIp, _ := ngapConvert.IPAddressToString(gtpTunnel.TransportLayerAddress)
 
 			gnbupue := gnbctx.NewGnbUpUe(uint32(dlteid), ulteid, gnbue.Gnb)
 			gnbupue.PduSessId = item.PDUSessionID.Value

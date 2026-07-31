@@ -204,6 +204,9 @@ func GetHandoverRequired(gnbue *gnbctx.GnbCpUe, targetGnb *gnbctx.GNodeB) ([]byt
 	if err != nil {
 		return nil, fmt.Errorf("invalid target TAC: %w", err)
 	}
+	if len(targetGnb.SupportedTaList[0].BroadcastPLMNList) == 0 {
+		return nil, errors.New("target gNB supported TA has no broadcast PLMN entries")
+	}
 	targetTai := ngapType.TAI{}
 	targetTai.PLMNIdentity = ngapConvert.PlmnIdToNgap(targetGnb.SupportedTaList[0].BroadcastPLMNList[0].PlmnId)
 	targetTai.TAC.Value = aper.OctetString(tac)
@@ -239,9 +242,15 @@ func GetHandoverNotify(gnbue *gnbctx.GnbCpUe) ([]byte, error) {
 	if gnbId.GNBValue == "" || gnbId.BitLength == 0 {
 		return nil, errors.New("missing GNB ID for HandoverNotify")
 	}
+	if gnbId.BitLength > 36 {
+		return nil, fmt.Errorf("invalid GNB ID bit length: %d", gnbId.BitLength)
+	}
 	gnbIDVal, e := strconv.ParseUint(gnbId.GNBValue, 16, 64)
 	if e != nil {
 		return nil, fmt.Errorf("invalid GNB ID: %w", e)
+	}
+	if gnbIDVal >= (uint64(1) << uint64(gnbId.BitLength)) {
+		return nil, fmt.Errorf("GNB ID 0x%s exceeds bit length %d", gnbId.GNBValue, gnbId.BitLength)
 	}
 	nrci := gnbIDVal << uint64(36-gnbId.BitLength)
 	nrciBuf := [8]byte{}

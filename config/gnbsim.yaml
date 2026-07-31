@@ -39,7 +39,7 @@ configuration:
                 mcc: 208
                 mnc: 93
               taiSliceSupportList:
-                - sst: 1      # Slice/Service Type (uinteger: range 0~255)
+                - sst: 1      # Slice/Service Type (unsigned integer: range 0~255)
                   sd: "010203"      # Slice Differentiator (3 bytes/hex)
                 - sst: 1
                   sd: "000001"

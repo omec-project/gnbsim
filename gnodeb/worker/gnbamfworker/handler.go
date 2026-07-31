@@ -19,7 +19,8 @@ import (
 func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
-		amf.Log.Errorln("ran is nil")
+		amf.Init()
+		amf.Log.Errorln("amf is nil")
 		return
 	}
 	amf.Log.Debugln("processing NG Setup Response")
@@ -169,7 +170,8 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 func HandleNgSetupFailure(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
-		amf.Log.Errorln("ran is nil")
+		amf.Init()
+		amf.Log.Errorln("amf is nil")
 		return
 	}
 	amf.Log.Debugln("processing NG Setup Failure")
@@ -216,7 +218,8 @@ func HandleDownlinkNasTransport(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 ) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
-		amf.Log.Errorln("ran is nil")
+		amf.Init()
+		amf.Log.Errorln("amf is nil")
 		return
 	}
 	amf.Log.Debugln("processing Downlink Nas Transport")
@@ -269,7 +272,8 @@ func HandleInitialContextSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 ) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
-		amf.Log.Errorln("ran is nil")
+		amf.Init()
+		amf.Log.Errorln("amf is nil")
 		return
 	}
 	amf.Log.Debugln("processing Initial Context Setup Request")
@@ -322,7 +326,8 @@ func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 ) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
-		amf.Log.Errorln("ran is nil")
+		amf.Init()
+		amf.Log.Errorln("amf is nil")
 		return
 	}
 	amf.Log.Debugln("processing Pdu Session Resource Setup Request")
@@ -373,7 +378,8 @@ func HandlePduSessResourceReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 ) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
-		amf.Log.Errorln("ran is nil")
+		amf.Init()
+		amf.Log.Errorln("amf is nil")
 		return
 	}
 	amf.Log.Debugln("processing Pdu Session Resource Release Command")
@@ -424,7 +430,8 @@ func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 ) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
-		amf.Log.Errorln("ran is nil")
+		amf.Init()
+		amf.Log.Errorln("amf is nil")
 		return
 	}
 
@@ -486,13 +493,15 @@ func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 }
 
 // HandleHandoverRequest processes a HandoverRequest received by the target gNB from AMF.
-// It looks up the pre-registered GnbCpUe (keyed by AMF UE NGAP ID) and routes the message.
+// It routes the message to the next pre-registered target GnbCpUe from a FIFO queue
+// (pre-registration is done by SimUe before triggering N2 handover on the source gNB).
 func HandleHandoverRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU, id uint64,
 ) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
-		amf.Log.Errorln("ran is nil")
+		amf.Init()
+		amf.Log.Errorln("amf is nil")
 		return
 	}
 	amf.Log.Debugln("processing Handover Request")
@@ -554,7 +563,8 @@ func HandleHandoverCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 ) {
 	if amf == nil {
 		amf = new(gnbctx.GnbAmf)
-		amf.Log.Errorln("ran is nil")
+		amf.Init()
+		amf.Log.Errorln("amf is nil")
 		return
 	}
 	amf.Log.Debugln("processing Handover Command")

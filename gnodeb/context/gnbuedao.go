@@ -86,7 +86,11 @@ func (dao *GnbUeDao) RemoveGnbUpUe(teid uint32, downlink bool) {
 // handover queue so gnbamfworker can retrieve it when HandoverRequest arrives.
 func (dao *GnbUeDao) EnqueueHandoverTarget(gnbue *GnbCpUe) {
 	dao.Log.Infoln("enqueueing pending handover target GnbCpUe")
-	dao.pendingHandoverTargets <- gnbue
+	select {
+	case dao.pendingHandoverTargets <- gnbue:
+	default:
+		dao.Log.Errorln("pending handover target queue full; dropping pre-registered target GnbCpUe")
+	}
 }
 
 // DequeueHandoverTarget retrieves and removes the next pre-registered handover
