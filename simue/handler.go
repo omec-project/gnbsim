@@ -390,6 +390,15 @@ func HandleConnectionReleaseRequestEvent(ue *simuectx.SimUe,
 ) (err error) {
 	msg := intfcMsg.(*common.UuMessage)
 
+	// After a successful N2 handover the source gNB sends this event when it
+	// receives UEContextReleaseCommand from the AMF. At that point WriteGnbUeChan
+	// already points to the target gNB, so we must NOT nil it out or complete the
+	// current procedure (which may be USER_DATA_PKT_GENERATION on the target gNB).
+	if msg.TriggeringEvent == common.HO_COMMAND_EVENT {
+		ue.Log.Infoln("ignoring CONNECTION_RELEASE_REQUEST from source gNB after N2 handover")
+		return nil
+	}
+
 	if ue.Procedure == common.AN_RELEASE_PROCEDURE {
 		err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.TRIGGER_AN_RELEASE_EVENT,
 			common.CONNECTION_RELEASE_REQUEST_EVENT)
@@ -401,11 +410,6 @@ func HandleConnectionReleaseRequestEvent(ue *simuectx.SimUe,
 	ue.WriteGnbUeChan = nil
 
 	if msg.TriggeringEvent == common.DEREG_REQUEST_UE_ORIG_EVENT {
-		/*
-			msg := &common.UeMessage{}
-			msg.Event = common.QUIT_EVENT
-			ue.ReadChan <- msg
-		*/
 		// Nothing else to execute. Tell profile we are done.
 		ue.Log.Debugln("debug2")
 		SendToProfile(ue, common.PROC_PASS_EVENT, nil)
@@ -543,5 +547,47 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		ue.Log.Infoln("Waiting for N/W Triggered De-registration Procedure")
 	case common.NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE:
 		ue.Log.Infoln("Waiting for N/W Requested PDU Session Release Procedure")
+	case common.N2_HANDOVER_PROCEDURE:
+		ue.Log.Infoln("initiating N2 Handover Procedure")
+		// Pre-register with target gNB so gnbamfworker can route HandoverRequest
+		if err := ConnectToTargetGnb(ue); err != nil {
+			ue.Log.Errorln("ConnectToTargetGnb failed:", err)
+			SendToProfile(ue, common.PROC_FAIL_EVENT, err)
+			return
+		}
+		// Tell source gNB to send HandoverRequired to AMF
+		msg := &common.UuMessage{}
+		msg.Event = common.TRIGGER_HO_EVENT
+		msg.TargetGnbName = ue.ProfileCtx.TargetGnbName
+		SendToGnbUe(ue, msg)
 	}
+}
+
+// HandleHandoverCommandEvent is called when SimUe receives HO_COMMAND_EVENT from
+// the source gNB. It switches the active gNB to the target gNB and sends
+// HO_NOTIFY_EVENT via the target gNB, which will trigger the data bearer
+// re-setup with the RealUE. The N2_HANDOVER_PROCEDURE completes once
+// DATA_BEARER_SETUP_RESPONSE_EVENT is received (via HandleDataBearerSetupResponseEvent).
+func HandleHandoverCommandEvent(ue *simuectx.SimUe, intfcMsg common.InterfaceMessage) (err error) {
+	ue.Log.Infoln("received HandoverCommand - switching to target gNB")
+
+	if ue.TargetWriteGnbUeChan == nil {
+		return fmt.Errorf("target gNB channel is nil, was ConnectToTargetGnb called?")
+	}
+
+	// Switch SimUe to communicate through the target gNB
+	ue.WriteGnbUeChan = ue.TargetWriteGnbUeChan
+	ue.GnB = ue.TargetGnB
+	ue.TargetWriteGnbUeChan = nil
+	ue.TargetGnB = nil
+
+	ue.Log.Infoln("switched to target gNB:", ue.GnB.GnbName)
+
+	// Tell target gNB to re-setup data bearers with RealUE and then send
+	// HandoverNotify. The procedure result is deferred until the
+	// DATA_BEARER_SETUP_RESPONSE arrives back from the target gNB.
+	notifyMsg := &common.UuMessage{}
+	notifyMsg.Event = common.HO_NOTIFY_EVENT
+	SendToGnbUe(ue, notifyMsg)
+	return nil
 }

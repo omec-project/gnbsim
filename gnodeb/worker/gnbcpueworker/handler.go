@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/factory"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/gnodeb/ngap"
 	"github.com/omec-project/gnbsim/gnodeb/worker/gnbupfworker"
@@ -379,6 +380,32 @@ func HandleDataBearerSetupResponse(gnbue *gnbctx.GnbCpUe,
 			gnbue.Log.Errorln("failed to create Initial Context Setup Response:", err)
 			return
 		}
+	case common.HO_NOTIFY_EVENT:
+		// Target gNB: start UP workers now that RealUE channels are wired up,
+		// then send HandoverNotify to AMF.
+		for _, item := range msg.DBParams {
+			if !item.PduSess.Success {
+				continue
+			}
+			var gnbUpUe *gnbctx.GnbUpUe
+			gnbUpUe, err = gnbue.GetGnbUpUe(item.PduSess.PduSessId)
+			if err != nil {
+				gnbue.Log.Errorln("failed to fetch GnbUpUe for HO:", err)
+				continue
+			}
+			gnbUpUe.Upf.GnbUpUes.AddGnbUpUe(gnbUpUe.DlTeid, true, gnbUpUe)
+			gnbUpUe.WriteUeChan = item.CommChan
+			gnbue.WaitGrp.Add(1)
+			go func() {
+				defer gnbue.WaitGrp.Done()
+				gnbupueworker.Init(gnbUpUe)
+			}()
+		}
+		ngapPdu, err = ngap.GetHandoverNotify(gnbue)
+		if err != nil {
+			gnbue.Log.Errorln("GetHandoverNotify failed:", err)
+			return
+		}
 	}
 
 	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, ngapPdu, msg.Id)
@@ -452,6 +479,13 @@ func HandleUeCtxReleaseCommand(gnbue *gnbctx.GnbCpUe,
 	req.Event = common.CONNECTION_RELEASE_REQUEST_EVENT
 	if causeNum == ngapType.CauseNasPresentDeregister {
 		req.TriggeringEvent = common.DEREG_REQUEST_UE_ORIG_EVENT
+	} else if cause != nil &&
+		cause.Present == ngapType.CausePresentRadioNetwork &&
+		cause.RadioNetwork != nil &&
+		cause.RadioNetwork.Value == ngapType.CauseRadioNetworkPresentSuccessfulHandover {
+		// Released because of successful N2 handover: SimUe must not tear down
+		// its connection to the target gNB, so mark with HO_COMMAND_EVENT.
+		req.TriggeringEvent = common.HO_COMMAND_EVENT
 	} else {
 		req.TriggeringEvent = common.TRIGGER_AN_RELEASE_EVENT
 	}
@@ -627,6 +661,190 @@ func HandleQuitEvent(gnbue *gnbctx.GnbCpUe, intfcMsg common.InterfaceMessage) {
 	gnbue.Gnb.RanUeNGAPIDGenerator.FreeID(gnbue.GnbUeNgapId)
 	gnbue.WaitGrp.Wait()
 	gnbue.Log.Infoln("gNB Control-Plane UE context terminated")
+}
+
+// HandleTriggerHandover is called on the SOURCE gNB when SimUe initiates N2 handover.
+// It sends a HandoverRequired message to the AMF.
+func HandleTriggerHandover(gnbue *gnbctx.GnbCpUe, intfcMsg common.InterfaceMessage) {
+	msg := intfcMsg.(*common.UuMessage)
+	if msg.TargetGnbName == "" {
+		gnbue.Log.Errorln("target gNB name is empty in TRIGGER_HO_EVENT")
+		return
+	}
+	gnbue.Log.Infoln("handling Trigger Handover Event, target gNB:", msg.TargetGnbName)
+
+	targetGnb, err := factory.AppConfig.Configuration.GetGNodeB(msg.TargetGnbName)
+	if err != nil {
+		gnbue.Log.Errorln("failed to get target gNB:", err)
+		return
+	}
+
+	sendMsg, err := ngap.GetHandoverRequired(gnbue, targetGnb)
+	if err != nil {
+		gnbue.Log.Errorln("GetHandoverRequired failed:", err)
+		return
+	}
+	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, sendMsg, 0)
+	if err != nil {
+		gnbue.Log.Errorln("SendToPeer failed for HandoverRequired:", err)
+		return
+	}
+	gnbue.Log.Infoln("sent HandoverRequired to AMF")
+}
+
+// HandleHandoverRequest is called on the TARGET gNB when AMF sends HandoverRequest.
+// It sets up the target-side resources and responds with HandoverRequestAcknowledge.
+func HandleHandoverRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.InterfaceMessage) {
+	msg := intfcMsg.(*common.N2Message)
+	gnbue.Log.Infoln("handling Handover Request from AMF")
+
+	pdu := msg.NgapPdu
+	initiatingMessage := pdu.InitiatingMessage
+	hoReq := initiatingMessage.Value.HandoverResourceAllocation
+
+	var amfUeNgapId *ngapType.AMFUENGAPID
+	var pduSessSetupList *ngapType.PDUSessionResourceSetupListHOReq
+
+	for _, ie := range hoReq.ProtocolIEs.List {
+		switch ie.Id.Value {
+		case ngapType.ProtocolIEIDAMFUENGAPID:
+			amfUeNgapId = ie.Value.AMFUENGAPID
+		case ngapType.ProtocolIEIDPDUSessionResourceSetupListHOReq:
+			pduSessSetupList = ie.Value.PDUSessionResourceSetupListHOReq
+		}
+	}
+	if amfUeNgapId == nil {
+		gnbue.Log.Errorln("AMFUENGAPID is nil in HandoverRequest")
+		return
+	}
+	gnbue.AmfUeNgapId = amfUeNgapId.Value
+
+	var pduSessions []*ngapTestpacket.PduSession
+
+	if pduSessSetupList != nil {
+		for _, item := range pduSessSetupList.List {
+			resourceSetupTransfer := ngapType.PDUSessionResourceSetupRequestTransfer{}
+			if err := aper.UnmarshalWithParams(item.HandoverRequestTransfer,
+				&resourceSetupTransfer, "valueExt"); err != nil {
+				gnbue.Log.Errorln("UnmarshalWithParams HandoverRequest transfer failed:", err)
+				continue
+			}
+
+			var gtpTunnel *ngapType.GTPTunnel
+			var qosFlowSetupReqList *ngapType.QosFlowSetupRequestList
+			for _, tfIE := range resourceSetupTransfer.ProtocolIEs.List {
+				switch tfIE.Id.Value {
+				case ngapType.ProtocolIEIDULNGUUPTNLInformation:
+					gtpTunnel = tfIE.Value.ULNGUUPTNLInformation.GTPTunnel
+				case ngapType.ProtocolIEIDQosFlowSetupRequestList:
+					qosFlowSetupReqList = tfIE.Value.QosFlowSetupRequestList
+				}
+			}
+			if gtpTunnel == nil {
+				gnbue.Log.Warnln("no GTP tunnel found for PDU session, skipping")
+				continue
+			}
+			if len(gtpTunnel.GTPTEID.Value) != 4 {
+				gnbue.Log.Errorf("unexpected GTPTEID length %d, skipping PDU session", len(gtpTunnel.GTPTEID.Value))
+				continue
+			}
+			ulteid := binary.BigEndian.Uint32(gtpTunnel.GTPTEID.Value)
+			upfIp, _ := ngapConvert.IPAddressToString(gtpTunnel.TransportLayerAddress)
+			if upfIp == "" {
+				gnbue.Log.Errorln("failed to resolve UPF IP address, skipping PDU session")
+				continue
+			}
+			dlteid, err := gnbue.Gnb.DlTeidGenerator.Allocate()
+			if err != nil {
+				gnbue.Log.Errorln("DlTeid Allocate failed:", err)
+				return
+			}
+
+			gnbupue := gnbctx.NewGnbUpUe(uint32(dlteid), ulteid, gnbue.Gnb)
+			gnbupue.PduSessId = item.PDUSessionID.Value
+
+			pduSess := &ngapTestpacket.PduSession{}
+			pduSess.PduSessId = gnbupue.PduSessId
+			pduSess.Teid = gnbupue.DlTeid
+			pduSess.Success = true
+
+			if qosFlowSetupReqList != nil {
+				for _, qosItem := range qosFlowSetupReqList.List {
+					pduSess.SuccessQfiList = append(pduSess.SuccessQfiList, qosItem.QosFlowIdentifier.Value)
+					gnbupue.AddQosFlow(qosItem.QosFlowIdentifier.Value, &qosItem)
+				}
+			}
+
+			gnbupf, created := gnbue.Gnb.GnbPeers.GetOrAddGnbUpf(upfIp)
+			if created {
+				go gnbupfworker.Init(gnbupf)
+			}
+			gnbupue.Upf = gnbupf
+			gnbue.AddGnbUpUe(gnbupue.PduSessId, gnbupue)
+
+			pduSessions = append(pduSessions, pduSess)
+		}
+	}
+
+	// Send HandoverRequestAcknowledge to AMF
+	ngapPdu, err := ngap.GetHandoverRequestAcknowledge(gnbue, pduSessions, gnbue.Gnb.GnbN3Ip)
+	if err != nil {
+		gnbue.Log.Errorln("GetHandoverRequestAcknowledge failed:", err)
+		return
+	}
+	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, ngapPdu, msg.Id)
+	if err != nil {
+		gnbue.Log.Errorln("SendToPeer HandoverRequestAcknowledge failed:", err)
+		return
+	}
+	gnbue.Log.Infoln("sent HandoverRequestAcknowledge to AMF")
+}
+
+// HandleHandoverCommand is called on the SOURCE gNB when AMF sends HandoverCommand.
+// It forwards the event to SimUe so it can switch to the target gNB.
+func HandleHandoverCommand(gnbue *gnbctx.GnbCpUe, intfcMsg common.InterfaceMessage) {
+	msg := intfcMsg.(*common.N2Message)
+	gnbue.Log.Infoln("handling Handover Command from AMF - forwarding to SimUe")
+	// Forward to SimUe via the UuMessage channel so SimUe can switch gNBs
+	uemsg := &common.UuMessage{}
+	uemsg.Event = common.HO_COMMAND_EVENT
+	uemsg.Id = msg.Id
+	gnbue.WriteUeChan <- uemsg
+}
+
+// HandleHandoverNotify is called on the TARGET gNB to trigger the data bearer
+// re-setup towards the RealUE.  The UP workers and the actual HandoverNotify
+// NGAP message are sent after the RealUE acknowledges via
+// DATA_BEARER_SETUP_RESPONSE_EVENT (handled by HandleDataBearerSetupResponse).
+func HandleHandoverNotify(gnbue *gnbctx.GnbCpUe, intfcMsg common.InterfaceMessage) {
+	gnbue.Log.Infoln("handling Handover Notify Event - setting up data bearers with RealUE")
+
+	var dbParamSet []*common.DataBearerParams
+
+	gnbue.GnbUpUes.Range(func(k, v interface{}) bool {
+		gnbUpUe := v.(*gnbctx.GnbUpUe)
+		pduSess := &ngapTestpacket.PduSession{}
+		pduSess.PduSessId = gnbUpUe.PduSessId
+		pduSess.Teid = gnbUpUe.DlTeid
+		pduSess.Success = true
+
+		dbParam := &common.DataBearerParams{}
+		dbParam.CommChan = gnbUpUe.ReadUlChan
+		dbParam.PduSess = pduSess
+		dbParamSet = append(dbParamSet, dbParam)
+		return true
+	})
+
+	// Ask RealUE to update its pdusessworker channels to the target gNB.
+	// TriggeringEvent = HO_NOTIFY_EVENT distinguishes this from a normal PDU
+	// session setup response in HandleDataBearerSetupResponse.
+	// TODO: replace sleep with proper synchronization once the ICS race (line 651) is resolved.
+	time.Sleep(500 * time.Millisecond)
+	uemsg := common.UuMessage{}
+	uemsg.Event = common.DATA_BEARER_SETUP_REQUEST_EVENT
+	uemsg.DBParams = dbParamSet
+	uemsg.TriggeringEvent = common.HO_NOTIFY_EVENT
+	gnbue.WriteUeChan <- &uemsg
 }
 
 func terminateUpUeContexts(gnbue *gnbctx.GnbCpUe) {

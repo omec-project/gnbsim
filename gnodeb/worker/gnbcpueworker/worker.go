@@ -42,6 +42,14 @@ func HandleEvents(gnbue *gnbctx.GnbCpUe) (err error) {
 			HandleUeCtxReleaseCommand(gnbue, msg)
 		case common.TRIGGER_AN_RELEASE_EVENT:
 			HandleRanConnectionRelease(gnbue, msg)
+		case common.TRIGGER_HO_EVENT:
+			HandleTriggerHandover(gnbue, msg)
+		case common.HO_REQUEST_EVENT:
+			HandleHandoverRequest(gnbue, msg)
+		case common.HO_COMMAND_EVENT:
+			HandleHandoverCommand(gnbue, msg)
+		case common.HO_NOTIFY_EVENT:
+			HandleHandoverNotify(gnbue, msg)
 		case common.QUIT_EVENT:
 			HandleQuitEvent(gnbue, msg)
 		default:

@@ -75,6 +75,12 @@ const (
 	// SimUe commands gNB to trigger RAN Connection release which further
 	// triggers gNB initiated UE Context Release Request
 	TRIGGER_AN_RELEASE_EVENT
+
+	// SimUe commands source gNB to send HandoverRequired to AMF
+	TRIGGER_HO_EVENT
+
+	// SimUe commands target gNB to send HandoverNotify to AMF after UE arrives
+	HO_NOTIFY_EVENT
 )
 
 /* Events betweem UE and AMF (N1)
@@ -162,6 +168,9 @@ const (
 	PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT
 	PDU_SESS_RESOURCE_RELEASE_COMMAND_EVENT
 	UE_CTX_RELEASE_COMMAND_EVENT
+	// N2 Handover events
+	HO_REQUEST_EVENT // AMF sends HandoverRequest to target gNB
+	HO_COMMAND_EVENT // AMF sends HandoverCommand to source gNB (SuccessfulOutcome of HandoverPreparation)
 )
 
 // Events between GNodeB and UPF (N3)
@@ -246,7 +255,11 @@ var evtStrMap map[EventType]string = map[EventType]string{
 	INITIAL_CTX_SETUP_REQUEST_EVENT:         "INITIAL-CONTEXT-SETUP-REQUEST-EVENT",
 	PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT:   "PDU-SESSION-RESOURCE-SETUP-REQUEST-EVENT",
 	UE_CTX_RELEASE_COMMAND_EVENT:            "UE-CONTEXT-RELEASE-COMMAND-EVENT",
+	HO_REQUEST_EVENT:                        "HANDOVER-REQUEST-EVENT",
+	HO_COMMAND_EVENT:                        "HANDOVER-COMMAND-EVENT",
 	DL_UE_DATA_TRANSPORT_EVENT:              "DL-UE-DATA-TRANSPORT-EVENT",
+	TRIGGER_HO_EVENT:                        "TRIGGER-HANDOVER-EVENT",
+	HO_NOTIFY_EVENT:                         "HANDOVER-NOTIFY-EVENT",
 	PROC_START_EVENT:                        "PROC-START-EVENT",
 	PROC_PASS_EVENT:                         "PROC-PASS-EVENT",
 	PROC_FAIL_EVENT:                         "PROC-FAIL-EVENT",

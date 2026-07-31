@@ -133,3 +133,26 @@ func RequestConnection(gnb *gnbctx.GNodeB, uemsg *common.UuMessage) (chan common
 	ch <- uemsg
 	return ch, nil
 }
+
+// RegisterHandoverTarget pre-registers a GnbCpUe on the target gNB before the AMF sends
+// HandoverRequest. The GnbCpUe is stored by RAN UE NGAP ID (for normal routing after handover)
+// and also enqueued so gnbamfworker can route the next incoming HandoverRequest.
+//
+// Returns the channel on which SimUe can send messages to the new target GnbCpUe.
+func RegisterHandoverTarget(targetGnb *gnbctx.GNodeB, amfUeNgapId int64, simUeReadChan chan common.InterfaceMessage) (chan common.InterfaceMessage, error) {
+	ranUeNgapID, err := targetGnb.AllocateRanUeNgapID()
+	if err != nil {
+		return nil, fmt.Errorf("failed to allocate target RAN UE NGAP ID: %w", err)
+	}
+
+	gnbUe := gnbctx.NewGnbCpUe(ranUeNgapID, targetGnb, targetGnb.DefaultAmf)
+	gnbUe.AmfUeNgapId = amfUeNgapId
+	gnbUe.WriteUeChan = simUeReadChan
+
+	targetGnb.GnbUes.AddGnbCpUe(ranUeNgapID, gnbUe)
+	targetGnb.GnbUes.EnqueueHandoverTarget(gnbUe)
+
+	go gnbcpueworker.Init(gnbUe)
+
+	return gnbUe.ReadChan, nil
+}

@@ -27,6 +27,7 @@ const (
 	UE_REQ_PDU_SESS_RELEASE string = "uereqpdusessrelease"
 	NW_REQ_PDU_SESS_RELEASE string = "nwreqpdusessrelease"
 	CUSTOM_PROCEDURE        string = "custom"
+	N2_HANDOVER             string = "n2handover"
 )
 
 const PER_USER_TIMEOUT uint32 = 100 // seconds
@@ -79,6 +80,7 @@ type Profile struct {
 	ProfileType    string         `yaml:"profileType" json:"profileType"`
 	Name           string         `yaml:"profileName" json:"profileName"`
 	GnbName        string         `yaml:"gnbName" json:"gnbName"`
+	TargetGnbName  string         `yaml:"targetGnbName" json:"targetGnbName"`
 	StartImsi      string         `yaml:"startImsi" json:"startImsi"`
 	DefaultAs      string         `yaml:"defaultAs" json:"defaultAs"`
 	Key            string         `yaml:"key" json:"key"`
@@ -194,6 +196,13 @@ func initProcedureEventMap() {
 		common.PROFILE_PASS_EVENT: common.QUIT_EVENT,
 	}
 	ProceduresMap[common.USER_DATA_PKT_GENERATION_PROCEDURE] = &proc9
+
+	proc10 := ProcedureEventsDetails{}
+	proc10.Events = map[common.EventType]common.EventType{
+		common.TRIGGER_HO_EVENT:   common.HO_COMMAND_EVENT,
+		common.PROFILE_PASS_EVENT: common.QUIT_EVENT,
+	}
+	ProceduresMap[common.N2_HANDOVER_PROCEDURE] = &proc10
 }
 
 func (profile *Profile) Init() error {
@@ -309,6 +318,18 @@ func initProcedureList(profile *Profile) error {
 			common.NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE,
 		}
 
+	case N2_HANDOVER:
+		if profile.TargetGnbName == "" {
+			return fmt.Errorf("targetGnbName is required for profile type '%s'", profile.ProfileType)
+		}
+		profile.Procedures = []common.ProcedureType{
+			common.REGISTRATION_PROCEDURE,
+			common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
+			common.USER_DATA_PKT_GENERATION_PROCEDURE, // verify UP on source gNB
+			common.N2_HANDOVER_PROCEDURE,
+			common.USER_DATA_PKT_GENERATION_PROCEDURE, // verify UP on target gNB
+		}
+
 	case CUSTOM_PROCEDURE:
 		// Custom Profiles do not have prefdefined procedure list
 		return nil
@@ -357,18 +378,21 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 	// check if predefined profiles.
 	if len(p.Iterations) == 0 {
 		if currentProcedure == 0 {
+			pCtx.CurrentProcIndex = 0
 			proc := p.GetFirstProcedure()
 			return proc
 		}
-		for i, procedure := range p.Procedures {
-			if currentProcedure == procedure {
-				// Checking if i is not the last index
-				if length > (i + 1) {
-					nextProcedure = p.Procedures[i+1]
-					break
-				}
-				p.Log.Infoln("no more procedures left")
-			}
+		// Use CurrentProcIndex to find the exact position we are at so that
+		// duplicate procedure types (e.g. two USER_DATA entries) are handled
+		// correctly. A linear scan from the tracked index avoids the bug
+		// where GetNextProcedure would always match the FIRST occurrence of
+		// a repeated type and return the wrong successor.
+		nextIdx := pCtx.CurrentProcIndex + 1
+		if nextIdx < length {
+			nextProcedure = p.Procedures[nextIdx]
+			pCtx.CurrentProcIndex = nextIdx
+		} else {
+			p.Log.Infoln("no more procedures left")
 		}
 		return nextProcedure
 	}

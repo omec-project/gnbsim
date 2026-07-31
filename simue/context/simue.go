@@ -23,30 +23,20 @@ func init() {
 // SimUe controls the flow of messages between RealUe and GnbUe as per the test
 // profile. It is the central entry point for all events
 type SimUe struct {
-	GnB        *gnbctx.GNodeB
-	RealUe     *realuectx.RealUe
-	ProfileCtx *profctx.Profile
-	Log        *zap.SugaredLogger
-
-	// SimUe writes messages to Profile routine on this channel
-	WriteProfileChan chan *common.ProfileMessage
-
-	// SimUe writes messages to RealUE on this channel
-	WriteRealUeChan chan common.InterfaceMessage
-
-	// SimUe writes messages to GnbUE on this channel
-	WriteGnbUeChan chan common.InterfaceMessage
-
-	// SimUe reads messages from other entities on this channel
-	// Entities can be RealUe, GnbUe etc.
-	ReadChan chan common.InterfaceMessage
-
-	// Message response received
-	MsgRspReceived chan bool
-
-	Supi      string
-	Procedure common.ProcedureType
-	WaitGrp   sync.WaitGroup
+	WriteGnbUeChan       chan common.InterfaceMessage
+	TargetGnB            *gnbctx.GNodeB
+	ProfileCtx           *profctx.Profile
+	Log                  *zap.SugaredLogger
+	WriteProfileChan     chan *common.ProfileMessage
+	WriteRealUeChan      chan common.InterfaceMessage
+	MsgRspReceived       chan bool
+	GnB                  *gnbctx.GNodeB
+	RealUe               *realuectx.RealUe
+	TargetWriteGnbUeChan chan common.InterfaceMessage
+	ReadChan             chan common.InterfaceMessage
+	Supi                 string
+	WaitGrp              sync.WaitGroup
+	Procedure            common.ProcedureType
 }
 
 var (

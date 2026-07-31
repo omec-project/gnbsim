@@ -7,6 +7,7 @@ package context
 import (
 	"sync"
 
+	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/logger"
 	"go.uber.org/zap"
 )
@@ -16,21 +17,17 @@ import (
 // GnbUeDao acts as a Data Access Object that stores and provides access to all
 // the GNodeB instances
 type GnbUeDao struct {
-	Log *zap.SugaredLogger
-
-	ngapIdGnbCpUeMap sync.Map
-	dlTeidGnbUpUeMap sync.Map
-
-	// TODO:
-	// ulTeidGnbUpUeMap sync.Map
-	// This map will be helpful when gNb receives an ErrorIndication Message
-	// which will have an UL TEID. In which case gNb can fetch and delete the
-	// GnbUpUe context corresponding to that UL TEID
+	Log                    *zap.SugaredLogger
+	pendingHandoverTargets chan *GnbCpUe
+	ngapIdGnbCpUeMap       sync.Map
+	dlTeidGnbUpUeMap       sync.Map
 }
 
 func NewGnbUeDao() *GnbUeDao {
 	dao := &GnbUeDao{}
 	dao.Log = logger.GNodeBLog.With("subcategory", "GnbUeDao")
+	// Buffer size of 8 is more than enough for simulation workloads.
+	dao.pendingHandoverTargets = make(chan *GnbCpUe, 8)
 	return dao
 }
 
@@ -83,4 +80,43 @@ func (dao *GnbUeDao) RemoveGnbUpUe(teid uint32, downlink bool) {
 	if downlink {
 		dao.dlTeidGnbUpUeMap.Delete(teid)
 	}
+}
+
+// EnqueueHandoverTarget stores a pre-registered target GnbCpUe in the pending
+// handover queue so gnbamfworker can retrieve it when HandoverRequest arrives.
+func (dao *GnbUeDao) EnqueueHandoverTarget(gnbue *GnbCpUe) {
+	dao.Log.Infoln("enqueueing pending handover target GnbCpUe")
+	select {
+	case dao.pendingHandoverTargets <- gnbue:
+	default:
+		dao.Log.Errorln("pending handover target queue full; dropping pre-registered target GnbCpUe")
+	}
+}
+
+// DequeueHandoverTarget retrieves and removes the next pre-registered handover
+// target GnbCpUe. Returns nil immediately if the queue is empty.
+func (dao *GnbUeDao) DequeueHandoverTarget() *GnbCpUe {
+	select {
+	case gnbue := <-dao.pendingHandoverTargets:
+		dao.Log.Infoln("dequeued pending handover target GnbCpUe")
+		return gnbue
+	default:
+		dao.Log.Warnln("no pending handover target GnbCpUe in queue")
+		return nil
+	}
+}
+
+// GetGnbCpUeByUeChan finds a GnbCpUe whose WriteUeChan matches the given channel.
+// Used during N2 handover preparation to retrieve the source GnbCpUe's AMF UE NGAP ID.
+func (dao *GnbUeDao) GetGnbCpUeByUeChan(ch chan common.InterfaceMessage) *GnbCpUe {
+	var found *GnbCpUe
+	dao.ngapIdGnbCpUeMap.Range(func(k, v interface{}) bool {
+		gnbue := v.(*GnbCpUe)
+		if gnbue.WriteUeChan == ch {
+			found = gnbue
+			return false
+		}
+		return true
+	})
+	return found
 }

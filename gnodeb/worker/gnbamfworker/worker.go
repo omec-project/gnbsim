@@ -41,6 +41,8 @@ func HandleMessage(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf, pkt []byte, id uint64
 			HandlePduSessResourceReleaseCommand(gnb, amf, pdu, id)
 		case ngapType.ProcedureCodeUEContextRelease:
 			HandleUeCtxReleaseCommand(gnb, amf, pdu, id)
+		case ngapType.ProcedureCodeHandoverResourceAllocation:
+			HandleHandoverRequest(gnb, amf, pdu, id)
 		}
 	case ngapType.NGAPPDUPresentSuccessfulOutcome:
 		successfulOutcome := pdu.SuccessfulOutcome
@@ -50,6 +52,8 @@ func HandleMessage(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf, pkt []byte, id uint64
 		switch successfulOutcome.ProcedureCode.Value {
 		case ngapType.ProcedureCodeNGSetup:
 			HandleNgSetupResponse(amf, pdu)
+		case ngapType.ProcedureCodeHandoverPreparation:
+			HandleHandoverCommand(gnb, amf, pdu, id)
 		}
 	case ngapType.NGAPPDUPresentUnsuccessfulOutcome:
 		unsuccessfulOutcome := pdu.UnsuccessfulOutcome
