@@ -42,28 +42,15 @@ type NasPduList [][]byte
 
 // UuMessage is used to carry information between the UE and GNodeB
 type UuMessage struct {
-	DefaultMessage
-	Supi string
-
-	// meta data
-	Tmsi string
-
-	// channel that a src entity can optionally send to the target entity.
-	// Target entity will use this channel to write to the src entity
 	CommChan chan InterfaceMessage
-
-	// Encoded NAS message
-	NasPdus  NasPduList
-	DBParams []*DataBearerParams
-
-	/* Real UE simply resends this value in the response message to gNB
-	   While setting up Data Bearers, this helps gNB in understanding the
-	   triggering procedure.
-	*/
+	DefaultMessage
+	Supi            string
+	Tmsi            string
+	TargetGnbName   string
+	NasPdus         NasPduList
+	DBParams        []*DataBearerParams
+	Id              uint64
 	TriggeringEvent EventType
-
-	// Unique Message Id
-	Id uint64
 }
 
 // ProfileMessage is used to carry information between the Profile and SimUe

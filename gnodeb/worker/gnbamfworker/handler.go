@@ -484,3 +484,122 @@ func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 
 	SendToGnbUe(gnbue, common.UE_CTX_RELEASE_COMMAND_EVENT, pdu, id)
 }
+
+// HandleHandoverRequest processes a HandoverRequest received by the target gNB from AMF.
+// It looks up the pre-registered GnbCpUe (keyed by AMF UE NGAP ID) and routes the message.
+func HandleHandoverRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
+	pdu *ngapType.NGAPPDU, id uint64,
+) {
+	if amf == nil {
+		amf = new(gnbctx.GnbAmf)
+		amf.Log.Errorln("ran is nil")
+		return
+	}
+	amf.Log.Debugln("processing Handover Request")
+
+	if pdu == nil {
+		amf.Log.Errorln("NGAP Message is nil")
+		return
+	}
+	if gnb == nil {
+		amf.Log.Errorln("gNodeB context is nil")
+		return
+	}
+
+	initiatingMessage := pdu.InitiatingMessage
+	if initiatingMessage == nil {
+		amf.Log.Errorln("InitiatingMessage is nil")
+		return
+	}
+	hoReq := initiatingMessage.Value.HandoverResourceAllocation
+	if hoReq == nil {
+		amf.Log.Errorln("HandoverRequest is nil")
+		return
+	}
+
+	var amfUeNgapId *ngapType.AMFUENGAPID
+	for _, ie := range hoReq.ProtocolIEs.List {
+		if ie.Id.Value == ngapType.ProtocolIEIDAMFUENGAPID {
+			amfUeNgapId = ie.Value.AMFUENGAPID
+			if amfUeNgapId == nil {
+				amf.Log.Errorln("AMFUENGAPID is nil in HandoverRequest")
+				return
+			}
+			break
+		}
+	}
+	if amfUeNgapId == nil {
+		amf.Log.Errorln("AMF UE NGAP ID not found in HandoverRequest")
+		return
+	}
+
+	// The OMEC AMF allocates a fresh AMF-UE-NGAP-ID for the target-side RanUe
+	// (see NewRanUe → AllocateAmfUeNgapID in the AMF), so we cannot key the
+	// lookup by the source UE's AMF-UE-NGAP-ID.  A FIFO queue is used instead.
+	gnbue := gnb.GnbUes.DequeueHandoverTarget()
+	if gnbue == nil {
+		amf.Log.Errorln("no pre-registered target GnbCpUe found for HandoverRequest")
+		return
+	}
+	// Record the AMF-UE-NGAP-ID assigned for the target side.
+	gnbue.AmfUeNgapId = amfUeNgapId.Value
+
+	SendToGnbUe(gnbue, common.HO_REQUEST_EVENT, pdu, id)
+}
+
+// HandleHandoverCommand processes a HandoverCommand received by the source gNB from AMF.
+// This is the SuccessfulOutcome of the HandoverPreparation procedure.
+func HandleHandoverCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
+	pdu *ngapType.NGAPPDU, id uint64,
+) {
+	if amf == nil {
+		amf = new(gnbctx.GnbAmf)
+		amf.Log.Errorln("ran is nil")
+		return
+	}
+	amf.Log.Debugln("processing Handover Command")
+
+	if pdu == nil {
+		amf.Log.Errorln("NGAP Message is nil")
+		return
+	}
+	if gnb == nil {
+		amf.Log.Errorln("gNodeB context is nil")
+		return
+	}
+
+	successfulOutcome := pdu.SuccessfulOutcome
+	if successfulOutcome == nil {
+		amf.Log.Errorln("SuccessfulOutcome is nil")
+		return
+	}
+	hoCmd := successfulOutcome.Value.HandoverPreparation
+	if hoCmd == nil {
+		amf.Log.Errorln("HandoverCommand is nil")
+		return
+	}
+
+	var gnbUeNgapId *ngapType.RANUENGAPID
+	for _, ie := range hoCmd.ProtocolIEs.List {
+		if ie.Id.Value == ngapType.ProtocolIEIDRANUENGAPID {
+			gnbUeNgapId = ie.Value.RANUENGAPID
+			if gnbUeNgapId == nil {
+				amf.Log.Errorln("RANUENGAPID is nil in HandoverCommand")
+				return
+			}
+			break
+		}
+	}
+	if gnbUeNgapId == nil {
+		amf.Log.Errorln("RAN UE NGAP ID not found in HandoverCommand")
+		return
+	}
+
+	gnbue := gnb.GnbUes.GetGnbCpUe(gnbUeNgapId.Value)
+	if gnbue == nil {
+		amf.Log.Errorln("no GnbCpUe found for RANUENGAPID:", gnbUeNgapId.Value)
+		return
+	}
+
+	SendToGnbUe(gnbue, common.HO_COMMAND_EVENT, pdu, id)
+}

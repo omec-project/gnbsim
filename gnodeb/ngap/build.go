@@ -191,3 +191,80 @@ func updateUserLocationInformation(gnb *gnbctx.GNodeB, uli *ngapType.UserLocatio
 
 	return nil
 }
+
+// GetHandoverRequired builds and encodes a HandoverRequired NGAP message for the source gNB.
+// targetGnb is the target gNodeB context; pduSessionIds are the active PDU sessions to hand over.
+func GetHandoverRequired(gnbue *gnbctx.GnbCpUe, targetGnb *gnbctx.GNodeB) ([]byte, error) {
+	targetRanId := ngapConvert.RanIDToNgap(targetGnb.RanId)
+
+	if len(targetGnb.SupportedTaList) == 0 {
+		return nil, errors.New("target gNB has no supported TAs")
+	}
+	tac, err := hex.DecodeString(targetGnb.SupportedTaList[0].Tac)
+	if err != nil {
+		return nil, fmt.Errorf("invalid target TAC: %w", err)
+	}
+	targetTai := ngapType.TAI{}
+	targetTai.PLMNIdentity = ngapConvert.PlmnIdToNgap(targetGnb.SupportedTaList[0].BroadcastPLMNList[0].PlmnId)
+	targetTai.TAC.Value = aper.OctetString(tac)
+
+	var pduSessionIds []int64
+	gnbue.GnbUpUes.Range(func(k, v interface{}) bool {
+		pduSessionIds = append(pduSessionIds, k.(int64))
+		return true
+	})
+
+	message := ngapTestpacket.BuildHandoverRequired(
+		gnbue.AmfUeNgapId, gnbue.GnbUeNgapId,
+		targetRanId, targetTai, pduSessionIds,
+	)
+	return ngap.Encoder(message)
+}
+
+// GetHandoverRequestAcknowledge builds and encodes a HandoverRequestAcknowledge NGAP message.
+// The target gNB sends this after successfully preparing handover resources.
+func GetHandoverRequestAcknowledge(gnbue *gnbctx.GnbCpUe, pduSessions []*ngapTestpacket.PduSession, n3Ip string) ([]byte, error) {
+	message := ngapTestpacket.BuildHandoverRequestAcknowledge(
+		gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, pduSessions, n3Ip,
+	)
+	return ngap.Encoder(message)
+}
+
+// GetHandoverNotify builds and encodes a HandoverNotify NGAP message.
+// The target gNB sends this to notify the AMF that the UE has arrived.
+func GetHandoverNotify(gnbue *gnbctx.GnbCpUe) ([]byte, error) {
+	gnb := gnbue.Gnb
+
+	gnbId := gnb.RanId.GetGNbId()
+	if gnbId.GNBValue == "" || gnbId.BitLength == 0 {
+		return nil, errors.New("missing GNB ID for HandoverNotify")
+	}
+	gnbIDVal, e := strconv.ParseUint(gnbId.GNBValue, 16, 64)
+	if e != nil {
+		return nil, fmt.Errorf("invalid GNB ID: %w", e)
+	}
+	nrci := gnbIDVal << uint64(36-gnbId.BitLength)
+	nrciBuf := [8]byte{}
+	binary.BigEndian.PutUint64(nrciBuf[:], nrci)
+
+	plmnId := ngapConvert.PlmnIdToNgap(gnb.RanId.PlmnId)
+
+	nrCellIdentity := aper.BitString{
+		Bytes:     nrciBuf[3:],
+		BitLength: 36,
+	}
+
+	if len(gnb.SupportedTaList) == 0 {
+		return nil, errors.New("target gNB has no supported TAs for HandoverNotify")
+	}
+	tac, err := hex.DecodeString(gnb.SupportedTaList[0].Tac)
+	if err != nil {
+		return nil, fmt.Errorf("invalid TAC: %w", err)
+	}
+
+	message := ngapTestpacket.BuildHandoverNotify(
+		gnbue.AmfUeNgapId, gnbue.GnbUeNgapId,
+		plmnId, nrCellIdentity, aper.OctetString(tac),
+	)
+	return ngap.Encoder(message)
+}

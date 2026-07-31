@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/omec-project/gnbsim/common"
+	"github.com/omec-project/gnbsim/factory"
 	"github.com/omec-project/gnbsim/gnodeb"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	profctx "github.com/omec-project/gnbsim/profile/context"
@@ -59,6 +60,37 @@ func ConnectToGnb(simUe *simuectx.SimUe) error {
 
 	simUe.Log.Infof("connected to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
 		gNb.GnbN2Ip, gNb.GnbN2Port)
+	return nil
+}
+
+// ConnectToTargetGnb pre-registers the UE with the target gNB before N2 handover.
+// It allocates a GnbCpUe on the target gNB and stores the channel for later use.
+// Must be called after the source gNB has obtained an AMF UE NGAP ID (i.e., after ICS).
+func ConnectToTargetGnb(simUe *simuectx.SimUe) error {
+	if simUe.ProfileCtx.TargetGnbName == "" {
+		return fmt.Errorf("targetGnbName not set in profile")
+	}
+
+	// Find the source GnbCpUe (keyed by simUe.ReadChan as the WriteUeChan)
+	sourceGnbCpUe := simUe.GnB.GnbUes.GetGnbCpUeByUeChan(simUe.ReadChan)
+	if sourceGnbCpUe == nil {
+		return fmt.Errorf("source GnbCpUe not found for SUPI: %s", simUe.Supi)
+	}
+
+	targetGnb, err := factory.AppConfig.Configuration.GetGNodeB(simUe.ProfileCtx.TargetGnbName)
+	if err != nil {
+		return fmt.Errorf("failed to get target gNB: %w", err)
+	}
+	simUe.TargetGnB = targetGnb
+
+	targetChan, err := gnodeb.RegisterHandoverTarget(targetGnb, sourceGnbCpUe.AmfUeNgapId, simUe.ReadChan)
+	if err != nil {
+		return fmt.Errorf("failed to register target gNB: %w", err)
+	}
+	simUe.TargetWriteGnbUeChan = targetChan
+
+	simUe.Log.Infof("pre-registered with target gNB: %v (AMF-UE-NGAP-ID: %v)",
+		targetGnb.GnbName, sourceGnbCpUe.AmfUeNgapId)
 	return nil
 }
 
@@ -125,6 +157,8 @@ func HandleEvents(ue *simuectx.SimUe) {
 			err = HandleNwDeregRequestEvent(ue, msg)
 		case common.DEREG_ACCEPT_UE_TERM_EVENT:
 			err = HandleNwDeregAcceptEvent(ue, msg)
+		case common.HO_COMMAND_EVENT:
+			err = HandleHandoverCommandEvent(ue, msg)
 		case common.ERROR_EVENT:
 			ue.Log.Warnln("event:", event, " received error")
 			err = HandleErrorEvent(ue, msg)

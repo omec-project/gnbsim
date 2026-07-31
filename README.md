@@ -48,6 +48,7 @@ Supported 3gpp procedures:
 - N/W triggered PDU Session Release
 - UE Requested PDU Session Release
 - N/W triggered UE Deregistration
+- Support for N2 handover profile
 
 Supported System level features
 
@@ -78,7 +79,6 @@ downlink user data (ICMP echo response) over the established data plane path
 - [3gpp] Adding support for handling End Marker packet
 - [3gpp] GUTI based registration
 - [3gpp] Adding support for Resynchronization Profile
-- [3gpp] Adding Support for N2 handover profile
 - Support to handle Paging Request
 - Controlling Profiles - Adding support for aborting profile
 - Controlling Profiles - Suspend & resume  profiles
