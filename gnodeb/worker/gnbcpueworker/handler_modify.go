@@ -48,13 +48,14 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 
 	modified := make(map[int64][]byte)
 	failed := make(map[int64]ngapType.Cause)
-	var nasPdus common.NasPduList
+	// Keyed by session, and only sent for sessions the gNB actually acted on. See below.
+	pendingNas := make(map[int64][]byte)
 
 	for _, item := range modifyList.List {
 		pduSessID := item.PDUSessionID.Value
 
 		if item.NASPDU != nil && item.NASPDU.Value != nil {
-			nasPdus = append(nasPdus, item.NASPDU.Value)
+			pendingNas[pduSessID] = item.NASPDU.Value
 		}
 
 		if gnbue.Gnb.ModifyRejectAll {
@@ -91,6 +92,25 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 		modified[pduSessID] = encoded
 	}
 
+	// The NAS container goes to the UE only for a session the gNB acted on.
+	//
+	// A session it refused outright has had nothing changed at the radio, so telling the UE its
+	// QoS changed would leave the UE applying parameters that do not exist — the same divergence
+	// the core's realignment procedure exists to repair, manufactured by the gNB itself. A
+	// partially accepted session still gets the container: the UE needs to know about the flows
+	// that were admitted, and the core corrects the rest.
+	//
+	// Observed before this was fixed: the gNB refused the only flow, forwarded the command
+	// anyway, and the UE acknowledged a modification that the core had already abandoned.
+	var nasPdus common.NasPduList
+	for pduSessID, nas := range pendingNas {
+		if _, acted := modified[pduSessID]; !acted {
+			gnbue.Log.Infoln("withholding the modification command for PDU session", pduSessID,
+				"because nothing was admitted for it")
+			continue
+		}
+		nasPdus = append(nasPdus, nas)
+	}
 	if len(nasPdus) > 0 {
 		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, nasPdus, msg.Id)
 		gnbue.Log.Debugln("sent the modification command to the UE")
