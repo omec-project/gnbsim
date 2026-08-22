@@ -24,12 +24,13 @@ import (
 
 // RealUe represents a Real UE
 type RealUe struct {
-	Supi               string
-	Guti               string
-	Key                string
-	Opc                string
-	SeqNum             string
-	Dnn                string
+	Supi   string
+	Guti   string
+	Key    string
+	Opc    string
+	SeqNum string
+	Dnn    string
+
 	SNssai             *models.Snssai
 	AuthenticationSubs *models.AuthenticationSubscription
 	Plmn               *models.PlmnId
@@ -52,6 +53,11 @@ type RealUe struct {
 	IntegrityAlg uint8
 	KnasEnc      [16]uint8
 	KnasInt      [16]uint8
+	// ModificationRequestType is the Request type IE value to put on a UE-requested modification,
+	// and OmitModificationRequestType leaves the IE out altogether. Both come from the profile; see
+	// the profile context for why they are configurable.
+	ModificationRequestType     uint8
+	OmitModificationRequestType bool
 }
 
 func NewRealUe(supi string, cipheringAlg, integrityAlg uint8,
@@ -261,4 +267,19 @@ func (ctx *RealUe) GetPduSession(pduSessId int64) (*PduSession, error) {
 func (ctx *RealUe) AddPduSession(pduSessId int64, pduSess *PduSession) {
 	ctx.Log.Infoln("adding new PDU Session for PDU Sess ID:", pduSessId)
 	ctx.PduSessions[pduSessId] = pduSess
+}
+
+// OnlyPduSession returns the UE's single established PDU session.
+//
+// The simulator establishes one session per UE. Returning it rather than assuming its identity
+// keeps a caller correct if that ever stops being true, and gives a clear error instead of a
+// silent zero when no session exists.
+func (ue *RealUe) OnlyPduSession() (int64, *PduSession, error) {
+	if len(ue.PduSessions) != 1 {
+		return 0, nil, fmt.Errorf("expected exactly one PDU session, found %d", len(ue.PduSessions))
+	}
+	for id, sess := range ue.PduSessions {
+		return id, sess, nil
+	}
+	return 0, nil, fmt.Errorf("unreachable")
 }

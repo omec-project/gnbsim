@@ -79,3 +79,80 @@ func GetUlNasTransportPduSessionModificationComplete(pduSessionId uint8, pti uin
 	}
 	return data.Bytes(), nil
 }
+
+// GetPduSessionModificationRequest builds a PDU SESSION MODIFICATION REQUEST.
+//
+// TS 24.501 subclause 8.3.7. Deliberately minimal: this exists so the network's answer can be
+// verified, not so a modification can succeed. The core refuses every UE-requested modification,
+// so there is nothing to be gained by proposing QoS rules it will never evaluate — and a request
+// carrying none is still a well-formed request.
+//
+// The PTI is the UE's, and must be non-zero: zero means "no procedure transaction identity
+// assigned" and marks a network-requested procedure, so a request sent with zero could not be
+// matched to its answer.
+func GetPduSessionModificationRequest(pduSessionId uint8, pti uint8) ([]byte, error) {
+	m := nas.NewMessage()
+	m.GsmMessage = nas.NewGsmMessage()
+	m.GsmHeader.SetMessageType(nas.MsgTypePDUSessionModificationRequest)
+
+	req := nasMessage.NewPDUSessionModificationRequest(0)
+	req.SetExtendedProtocolDiscriminator(nasMessage.Epd5GSSessionManagementMessage)
+	req.SetMessageType(nas.MsgTypePDUSessionModificationRequest)
+	req.SetPDUSessionID(pduSessionId)
+	req.SetPTI(pti)
+
+	m.PDUSessionModificationRequest = req
+
+	data := new(bytes.Buffer)
+	if err := m.GsmMessageEncode(data); err != nil {
+		return nil, err
+	}
+	return data.Bytes(), nil
+}
+
+// GetUlNasTransportPduSessionModificationRequest wraps the request in its UL NAS TRANSPORT.
+//
+// requestType is a parameter rather than a constant on purpose. TS 24.501 subclause 5.4.5.2.2
+// carries the Request type IE on a modification request, and the correct value is
+// "modification request". A UE that sets "initial request" instead makes the AMF read the message
+// as an attempt to establish a session that already exists — which released the session before
+// that was fixed. Being able to send either is what lets the AMF's handling of both be verified;
+// passing zero omits the IE, which is a third thing a UE may do.
+func GetUlNasTransportPduSessionModificationRequest(pduSessionId uint8, pti uint8,
+	requestType uint8,
+) ([]byte, error) {
+	payload, err := GetPduSessionModificationRequest(pduSessionId, pti)
+	if err != nil {
+		return nil, err
+	}
+
+	m := nas.NewMessage()
+	m.GmmMessage = nas.NewGmmMessage()
+	m.GmmHeader.SetMessageType(nas.MsgTypeULNASTransport)
+
+	ulNasTransport := nasMessage.NewULNASTransport(0)
+	ulNasTransport.SetSecurityHeaderType(nas.SecurityHeaderTypePlainNas)
+	ulNasTransport.SetMessageType(nas.MsgTypeULNASTransport)
+	ulNasTransport.SetExtendedProtocolDiscriminator(nasMessage.Epd5GSMobilityManagementMessage)
+	ulNasTransport.PduSessionID2Value = new(nasType.PduSessionID2Value)
+	ulNasTransport.PduSessionID2Value.SetIei(nasMessage.ULNASTransportPduSessionID2ValueType)
+	ulNasTransport.SetPduSessionID2Value(pduSessionId)
+
+	if requestType != 0 {
+		ulNasTransport.RequestType = new(nasType.RequestType)
+		ulNasTransport.RequestType.SetIei(nasMessage.ULNASTransportRequestTypeType)
+		ulNasTransport.SetRequestTypeValue(requestType)
+	}
+
+	ulNasTransport.SetPayloadContainerType(nasMessage.PayloadContainerTypeN1SMInfo)
+	ulNasTransport.PayloadContainer.SetLen(uint16(len(payload)))
+	ulNasTransport.SetPayloadContainerContents(payload)
+
+	m.ULNASTransport = ulNasTransport
+
+	data := new(bytes.Buffer)
+	if err := m.GmmMessageEncode(data); err != nil {
+		return nil, err
+	}
+	return data.Bytes(), nil
+}

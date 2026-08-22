@@ -279,6 +279,30 @@ func HandlePduSessReleaseCompleteEvent(ue *simuectx.SimUe,
 // arrives unprompted with no procedure transaction identity, so the arrival is what begins the
 // procedure. The UE is switched onto it before the answer is decided, or the profile's event map
 // would be consulted for whatever procedure happened to be running.
+// HandlePduSessModificationRequestEvent starts a UE-requested modification.
+func HandlePduSessModificationRequestEvent(ue *simuectx.SimUe,
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	msg := intfcMsg.(*common.UeMessage)
+	SendToRealUe(ue, msg)
+	return nil
+}
+
+// HandlePduSessModificationRejectEvent takes the network's refusal.
+//
+// A refusal is the expected outcome, not a failure: the core declines every UE-requested
+// modification. The procedure therefore passes when the reject arrives, and would fail by timing
+// out if the network said nothing at all — which is what it did before it was taught to refuse.
+func HandlePduSessModificationRejectEvent(ue *simuectx.SimUe,
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	msg := intfcMsg.(*common.UeMessage)
+	SendToRealUe(ue, msg)
+
+	SendProcedureResult(ue)
+	return nil
+}
+
 func HandlePduSessModificationCommandEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage,
 ) (err error) {

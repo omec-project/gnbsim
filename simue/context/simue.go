@@ -54,6 +54,8 @@ func NewSimUe(supi string, gnb *gnbctx.GNodeB, profile *profctx.Profile, result 
 		security.AlgCiphering128NEA0, security.AlgIntegrity128NIA2,
 		simue.ReadChan, profile.Plmn, profile.Key, profile.Opc, profile.SeqNum,
 		profile.Dnn, profile.SNssai)
+	simue.RealUe.ModificationRequestType = profile.ModificationRequestType
+	simue.RealUe.OmitModificationRequestType = profile.OmitModificationRequestType
 	simue.WriteRealUeChan = simue.RealUe.ReadChan
 	simue.WriteProfileChan = result
 

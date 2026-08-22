@@ -45,6 +45,10 @@ func HandleEvents(ue *realuectx.RealUe) (err error) {
 			err = HandlePduSessReleaseCompleteEvent(ue, msg)
 		case common.PDU_SESS_MOD_COMPLETE_EVENT:
 			err = HandlePduSessModificationCompleteEvent(ue, msg)
+		case common.PDU_SESS_MOD_REQUEST_EVENT:
+			err = HandlePduSessModificationRequestEvent(ue, msg)
+		case common.PDU_SESS_MOD_REJECT_EVENT:
+			err = HandlePduSessModificationRejectEvent(ue, msg)
 		case common.PDU_SESS_EST_ACCEPT_EVENT:
 			err = HandlePduSessEstAcceptEvent(ue, msg)
 		case common.DATA_BEARER_SETUP_REQUEST_EVENT:

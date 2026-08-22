@@ -27,6 +27,10 @@ import (
 const (
 	SWITCH_OFF                     uint8 = 0
 	REQUEST_TYPE_EXISTING_PDU_SESS uint8 = 0x02
+	// modificationRequestPTI is the identity the UE puts on its modification requests. One is
+	// enough while only one such procedure runs at a time, and it is non-zero, which is what
+	// distinguishes a UE-requested procedure from a network-requested one.
+	modificationRequestPTI uint8 = 0x01
 )
 
 func HandleRegRequestEvent(ue *realuectx.RealUe,
@@ -316,6 +320,87 @@ func HandlePduSessReleaseCompleteEvent(ue *realuectx.RealUe,
 // carries what the network has decided, not a proposal, so the answer confirms rather than
 // negotiates. What the UE records is therefore the authorized QoS rules and flow descriptions as
 // received, and the acknowledgement echoes the command's PTI so the network can match it.
+// HandlePduSessModificationRequestEvent asks the network to modify a session.
+//
+// This exists to verify the network's refusal, not to obtain a modification: the core declines
+// every UE-requested modification with a 5GSM cause. What matters is that the request is
+// well-formed, that the PTI is the UE's own so the answer can be matched to it, and that the
+// Request type IE carries whatever the profile asked for — including the wrong value, which is
+// the case worth testing.
+func HandlePduSessModificationRequestEvent(ue *realuectx.RealUe,
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	_ = intfcMsg
+
+	// The simulator runs one PDU session per UE, established as session 10, and the request
+	// concerns that one. Taking it from the context rather than assuming the number keeps this
+	// honest if that ever changes.
+	pduSessID, pduSess, err := ue.OnlyPduSession()
+	if err != nil {
+		return fmt.Errorf("cannot request a modification: %v", err)
+	}
+
+	// Any non-zero value identifies the procedure; zero is reserved for network-requested ones.
+	pduSess.PendingPTI = modificationRequestPTI
+
+	requestType := ue.ModificationRequestType
+	if requestType == 0 && !ue.OmitModificationRequestType {
+		requestType = nasMessage.ULNASTransportRequestTypeModificationRequest
+	}
+
+	nasPdu, err := realue_nas.GetUlNasTransportPduSessionModificationRequest(
+		uint8(pduSessID), pduSess.PendingPTI, requestType)
+	if err != nil {
+		return fmt.Errorf("failed to build PDU Session Modification Request: %v", err)
+	}
+
+	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
+		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt PDU Session Modification Request: %v", err)
+	}
+
+	ue.Log.Infof("sending PDU session modification request for session %d, PTI %d, request type %d",
+		pduSessID, pduSess.PendingPTI, requestType)
+
+	m := formUuMessage(common.UL_INFO_TRANSFER_EVENT, nasPdu, 0)
+	SendToSimUe(ue, m)
+	return nil
+}
+
+// HandlePduSessModificationRejectEvent records the network's refusal of a UE-requested
+// modification.
+//
+// The refusal is the expected outcome, so this is not a failure path. What is checked is that the
+// answer belongs to the request: a reject carrying a different PTI cannot be matched to the
+// procedure the UE started, and a UE that accepted it anyway would clear the wrong procedure.
+func HandlePduSessModificationRejectEvent(ue *realuectx.RealUe,
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	msg := intfcMsg.(*common.UeMessage)
+	nasMsg := msg.NasMsg.PDUSessionModificationReject
+	if nasMsg == nil {
+		return fmt.Errorf("PDUSessionModificationReject is nil")
+	}
+
+	pduSessId := nasMsg.PDUSessionID.Octet
+	pti := nasMsg.PTI.Octet
+	cause := nasMsg.Cause5GSM.Octet
+
+	ue.Log.Infof("PDU session modification refused: session %d, PTI %d, 5GSM cause #%d",
+		pduSessId, pti, cause)
+
+	if pduSess, sessErr := ue.GetPduSession(int64(pduSessId)); sessErr == nil {
+		if pduSess.PendingPTI != 0 && pti != pduSess.PendingPTI {
+			ue.Log.Errorf("reject carries PTI %d but this UE's outstanding request used PTI %d; it cannot be matched to the procedure",
+				pti, pduSess.PendingPTI)
+		}
+		pduSess.PendingPTI = 0
+	}
+
+	return nil
+}
+
 func HandlePduSessModificationCompleteEvent(ue *realuectx.RealUe,
 	intfcMsg common.InterfaceMessage,
 ) (err error) {

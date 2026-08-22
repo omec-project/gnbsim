@@ -120,6 +120,18 @@ type Profile struct {
 	// abandonment behaviour from a cluster rather than from a unit test, and on a satellite link it
 	// is an ordinary outcome rather than a fault.
 	WithholdModificationComplete bool `yaml:"withholdModificationComplete" json:"withholdModificationComplete"`
+
+	// ModificationRequestType is the Request type IE value the UE puts on a
+	// PDU SESSION MODIFICATION REQUEST. 5 is "modification request" and correct; 1 is
+	// "initial request", which makes the AMF read the message as an attempt to establish a session
+	// that already exists; 0 omits the IE. Configurable so all three can be verified against the
+	// network, since the failure they guard against is the AMF releasing a working session.
+	// Defaults to 5 when unset.
+	ModificationRequestType uint8 `yaml:"modificationRequestType" json:"modificationRequestType"`
+
+	// OmitModificationRequestType leaves the Request type IE out of the UL NAS TRANSPORT
+	// entirely, which is the third thing a UE may do and a third way the AMF has to cope.
+	OmitModificationRequestType bool `yaml:"omitModificationRequestType" json:"omitModificationRequestType"`
 }
 
 func init() {
@@ -210,6 +222,16 @@ func initProcedureEventMap() {
 		common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
 	}
 	ProceduresMap[common.NW_PDU_SESSION_MODIFICATION_PROCEDURE] = &procNwPduSessMod
+
+	// common.UE_REQUESTED_PDU_SESSION_MODIFICATION_PROCEDURE:
+	// The core refuses every UE-requested modification, so the reject is the expected outcome and
+	// the procedure ends there. There is no accept path to map, because there is none to reach.
+	procUePduSessMod := ProcedureEventsDetails{}
+	procUePduSessMod.Events = map[common.EventType]common.EventType{
+		common.PDU_SESS_MOD_REQUEST_EVENT: common.PDU_SESS_MOD_REJECT_EVENT,
+		common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
+	}
+	ProceduresMap[common.UE_REQUESTED_PDU_SESSION_MODIFICATION_PROCEDURE] = &procUePduSessMod
 
 	// common.USER_DATA_PKT_GENERATION_PROCEDURE:
 	proc9 := ProcedureEventsDetails{}

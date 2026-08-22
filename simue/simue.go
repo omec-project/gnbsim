@@ -129,6 +129,10 @@ func HandleEvents(ue *simuectx.SimUe) {
 			err = HandlePduSessReleaseRequestEvent(ue, msg)
 		case common.PDU_SESS_REL_COMMAND_EVENT:
 			err = HandlePduSessReleaseCommandEvent(ue, msg)
+		case common.PDU_SESS_MOD_REQUEST_EVENT:
+			err = HandlePduSessModificationRequestEvent(ue, msg)
+		case common.PDU_SESS_MOD_REJECT_EVENT:
+			err = HandlePduSessModificationRejectEvent(ue, msg)
 		case common.PDU_SESS_MOD_COMMAND_EVENT:
 			err = HandlePduSessModificationCommandEvent(ue, msg)
 		case common.PDU_SESS_MOD_COMPLETE_EVENT:
