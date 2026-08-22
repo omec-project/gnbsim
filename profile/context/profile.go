@@ -114,6 +114,12 @@ type Profile struct {
 	ExecInParallel bool   `yaml:"execInParallel" json:"execInParallel"`
 	StepTrigger    bool   `yaml:"stepTrigger" json:"stepTrigger"`
 	RetransMsg     bool   `yaml:"retransMsg" json:"retransMsg"`
+
+	// WithholdModificationComplete makes the UE receive a PDU SESSION MODIFICATION COMMAND and
+	// deliberately not answer it. That is the only way to reach the network's retransmission and
+	// abandonment behaviour from a cluster rather than from a unit test, and on a satellite link it
+	// is an ordinary outcome rather than a fault.
+	WithholdModificationComplete bool `yaml:"withholdModificationComplete" json:"withholdModificationComplete"`
 }
 
 func init() {
@@ -193,6 +199,17 @@ func initProcedureEventMap() {
 		common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
 	}
 	ProceduresMap[common.NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE] = &proc8
+
+	// common.NW_PDU_SESSION_MODIFICATION_PROCEDURE:
+	// The network sends the command unprompted, so the procedure begins on receipt rather than on
+	// anything the UE does. Withholding the complete is a profile option rather than a second map:
+	// the network's retransmission behaviour is the thing under test there, not the UE's.
+	procNwPduSessMod := ProcedureEventsDetails{}
+	procNwPduSessMod.Events = map[common.EventType]common.EventType{
+		common.PDU_SESS_MOD_COMMAND_EVENT: common.PDU_SESS_MOD_COMPLETE_EVENT,
+		common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
+	}
+	ProceduresMap[common.NW_PDU_SESSION_MODIFICATION_PROCEDURE] = &procNwPduSessMod
 
 	// common.USER_DATA_PKT_GENERATION_PROCEDURE:
 	proc9 := ProcedureEventsDetails{}

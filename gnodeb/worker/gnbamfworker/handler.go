@@ -425,6 +425,63 @@ func HandlePduSessResourceReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	SendToGnbUe(gnbue, common.PDU_SESS_RESOURCE_RELEASE_COMMAND_EVENT, pdu, id)
 }
 
+// HandlePduSessResourceModifyRequest routes a PDU SESSION RESOURCE MODIFY REQUEST to the UE it
+// concerns, in the same way the release command is routed.
+func HandlePduSessResourceModifyRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
+	pdu *ngapType.NGAPPDU, id uint64,
+) {
+	if amf == nil {
+		amf = new(gnbctx.GnbAmf)
+		amf.Init()
+		amf.Log.Errorln("amf is nil")
+		return
+	}
+	amf.Log.Debugln("processing Pdu Session Resource Modify Request")
+
+	if pdu == nil {
+		amf.Log.Errorln("NGAP Message is nil")
+		return
+	}
+	if gnb == nil {
+		amf.Log.Errorln("gNodeB context is nil")
+		return
+	}
+	initiatingMessage := pdu.InitiatingMessage
+	if initiatingMessage == nil {
+		amf.Log.Errorln("InitiatingMessage is nil")
+		return
+	}
+	modifyRequest := initiatingMessage.Value.PDUSessionResourceModify
+	if modifyRequest == nil {
+		amf.Log.Errorln("PDUSessionResourceModifyRequest is nil")
+		return
+	}
+
+	var gnbUeNgapId *ngapType.RANUENGAPID
+	for _, ie := range modifyRequest.ProtocolIEs.List {
+		if ie.Id.Value == ngapType.ProtocolIEIDRANUENGAPID {
+			gnbUeNgapId = ie.Value.RANUENGAPID
+			if gnbUeNgapId == nil {
+				amf.Log.Errorln("RANUENGAPID is nil")
+				return
+			}
+			break
+		}
+	}
+	if gnbUeNgapId == nil {
+		amf.Log.Errorln("RANUENGAPID IE is absent")
+		return
+	}
+
+	gnbue := gnb.GnbUes.GetGnbCpUe(gnbUeNgapId.Value)
+	if gnbue == nil {
+		amf.Log.Errorln("no GnbUe found corresponding to RANUENGAPID:", gnbUeNgapId.Value)
+		return
+	}
+
+	SendToGnbUe(gnbue, common.PDU_SESS_RESOURCE_MODIFY_REQUEST_EVENT, pdu, id)
+}
+
 func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	pdu *ngapType.NGAPPDU, id uint64,
 ) {

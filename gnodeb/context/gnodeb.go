@@ -39,8 +39,15 @@ type GNodeB struct {
 	UpTransport transport.Transport
 
 	SupportedTaList []SupportedTA `yaml:"supportedTaList"`
-	GnbN2Port       int           `yaml:"n2Port"`
-	GnbN3Port       int           `yaml:"n3Port"`
+
+	/* How this gNodeB answers a PDU session resource modify request. Both default to accepting
+	   everything; they exist so a profile can drive the partial and whole rejection paths, which
+	   the core handles differently and which are otherwise unreachable from a simulator. */
+	ModifyRejectQfis []int64 `yaml:"modifyRejectQfis"`
+
+	GnbN2Port       int  `yaml:"n2Port"`
+	GnbN3Port       int  `yaml:"n3Port"`
+	ModifyRejectAll bool `yaml:"modifyRejectAll"`
 }
 
 type gNodeBConfig struct {

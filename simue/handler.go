@@ -273,6 +273,54 @@ func HandlePduSessReleaseCompleteEvent(ue *simuectx.SimUe,
 	return nil
 }
 
+// HandlePduSessModificationCommandEvent takes a modification the network started on its own.
+//
+// Unlike the release command there is no UE-side procedure to reconcile against: the command
+// arrives unprompted with no procedure transaction identity, so the arrival is what begins the
+// procedure. The UE is switched onto it before the answer is decided, or the profile's event map
+// would be consulted for whatever procedure happened to be running.
+func HandlePduSessModificationCommandEvent(ue *simuectx.SimUe,
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	msg := intfcMsg.(*common.UeMessage)
+
+	if ue.Procedure != common.NW_PDU_SESSION_MODIFICATION_PROCEDURE {
+		ue.Log.Infoln("network started a PDU session modification; switching to it from",
+			ue.Procedure)
+		ue.Procedure = common.NW_PDU_SESSION_MODIFICATION_PROCEDURE
+	}
+
+	if ue.ProfileCtx.WithholdModificationComplete {
+		// Deliberately silent. The network should retransmit and then abandon, and the UE keeps
+		// the parameters it already had.
+		ue.Log.Infoln("withholding the modification complete, as the profile asks")
+		return nil
+	}
+
+	nextEvent, err := ue.ProfileCtx.GetNextEvent(ue.Procedure, msg.Event)
+	if err != nil {
+		ue.Log.Errorln("GetNextEvent returned:", err)
+		return err
+	}
+	ue.Log.Infoln("next event:", nextEvent)
+	msg.Event = nextEvent
+	SendToRealUe(ue, msg)
+	return nil
+}
+
+// HandlePduSessModificationCompleteEvent forwards the UE's acknowledgement to the gNB, and treats
+// the procedure as finished once it is on its way.
+func HandlePduSessModificationCompleteEvent(ue *simuectx.SimUe,
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	msg := intfcMsg.(*common.UuMessage)
+	msg.Event = common.UL_INFO_TRANSFER_EVENT
+	SendToGnbUe(ue, msg)
+
+	SendProcedureResult(ue)
+	return nil
+}
+
 func HandleDlInfoTransferEvent(ue *simuectx.SimUe,
 	msg common.InterfaceMessage,
 ) (err error) {

@@ -310,6 +310,59 @@ func HandlePduSessReleaseCompleteEvent(ue *realuectx.RealUe,
 	return nil
 }
 
+// HandlePduSessModificationCompleteEvent answers a PDU SESSION MODIFICATION COMMAND.
+//
+// The UE takes the authorized parameters as given. TS 24.501 subclause 6.3.2.3: the command
+// carries what the network has decided, not a proposal, so the answer confirms rather than
+// negotiates. What the UE records is therefore the authorized QoS rules and flow descriptions as
+// received, and the acknowledgement echoes the command's PTI so the network can match it.
+func HandlePduSessModificationCompleteEvent(ue *realuectx.RealUe,
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	msg := intfcMsg.(*common.UeMessage)
+	nasMsg := msg.NasMsg.PDUSessionModificationCommand
+	if nasMsg == nil {
+		ue.Log.Errorln("PDUSessionModificationCommand is nil")
+		return fmt.Errorf("invalid NAS Message")
+	}
+
+	pduSessId := nasMsg.PDUSessionID.Octet
+	pti := nasMsg.PTI.Octet
+	ue.Log.Infoln("PDU Session Modification Command, PDU Session ID:", pduSessId, "PTI:", pti)
+
+	// The session must exist. A command for one that does not is not something to answer with a
+	// complete — the network and the UE disagree about what exists, and confirming would hide it.
+	if _, sessErr := ue.GetPduSession(int64(pduSessId)); sessErr != nil {
+		return fmt.Errorf("modification command for an unknown PDU session %d: %v", pduSessId, sessErr)
+	}
+
+	if nasMsg.AuthorizedQosRules != nil {
+		ue.Log.Infoln("authorized QoS rules received, length:", nasMsg.AuthorizedQosRules.GetLen())
+	}
+	if nasMsg.AuthorizedQosFlowDescriptions != nil {
+		ue.Log.Infoln("authorized QoS flow descriptions received, length:",
+			nasMsg.AuthorizedQosFlowDescriptions.GetLen())
+	}
+	if nasMsg.SessionAMBR != nil {
+		ue.Log.Infoln("session AMBR received in the modification command")
+	}
+
+	nasPdu, err := realue_nas.GetUlNasTransportPduSessionModificationComplete(pduSessId, pti)
+	if err != nil {
+		return fmt.Errorf("failed to build PDU Session Modification Complete: %v", err)
+	}
+
+	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
+		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt PDU Session Modification Complete: %v", err)
+	}
+
+	m := formUuMessage(common.PDU_SESS_MOD_COMPLETE_EVENT, nasPdu, 0)
+	SendToSimUe(ue, m)
+	return nil
+}
+
 func HandleDataBearerSetupRequestEvent(ue *realuectx.RealUe,
 	intfcMsg common.InterfaceMessage,
 ) (err error) {
