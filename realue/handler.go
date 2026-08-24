@@ -363,7 +363,10 @@ func HandlePduSessModificationRequestEvent(ue *realuectx.RealUe,
 	ue.Log.Infof("sending PDU session modification request for session %d, PTI %d, request type %d",
 		pduSessID, pduSess.PendingPTI, requestType)
 
-	m := formUuMessage(common.UL_INFO_TRANSFER_EVENT, nasPdu, 0)
+	// The procedure's own event goes back to the SimUe, which turns it into an uplink transfer
+	// for the gNB. Sending UL_INFO_TRANSFER_EVENT from here skips that step and the SimUe drops
+	// it as unsupported — the request is built, encrypted, and never leaves the UE.
+	m := formUuMessage(common.PDU_SESS_MOD_REQUEST_EVENT, nasPdu, 0)
 	SendToSimUe(ue, m)
 	return nil
 }

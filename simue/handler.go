@@ -279,12 +279,17 @@ func HandlePduSessReleaseCompleteEvent(ue *simuectx.SimUe,
 // arrives unprompted with no procedure transaction identity, so the arrival is what begins the
 // procedure. The UE is switched onto it before the answer is decided, or the profile's event map
 // would be consulted for whatever procedure happened to be running.
-// HandlePduSessModificationRequestEvent starts a UE-requested modification.
+// HandlePduSessModificationRequestEvent forwards the UE's built request to the gNB.
+//
+// The procedure is started by HandleProcedure sending this event straight to the RealUe, so what
+// arrives here is the RealUe's answer coming back — a UuMessage carrying the encoded NAS, which
+// becomes an uplink transfer.
 func HandlePduSessModificationRequestEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage,
 ) (err error) {
-	msg := intfcMsg.(*common.UeMessage)
-	SendToRealUe(ue, msg)
+	msg := intfcMsg.(*common.UuMessage)
+	msg.Event = common.UL_INFO_TRANSFER_EVENT
+	SendToGnbUe(ue, msg)
 	return nil
 }
 
