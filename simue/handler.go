@@ -579,6 +579,11 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		msg := &common.UeMessage{}
 		msg.Event = common.PDU_SESS_EST_REQUEST_EVENT
 		SendToRealUe(ue, msg)
+	case common.UE_REQUESTED_PDU_SESSION_MODIFICATION_PROCEDURE:
+		ue.Log.Infoln("initiating UE Requested PDU Session Modification Procedure")
+		msg := &common.UeMessage{}
+		msg.Event = common.PDU_SESS_MOD_REQUEST_EVENT
+		SendToRealUe(ue, msg)
 	case common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE:
 		ue.Log.Infoln("initiating UE Requested PDU Session Release Procedure")
 		msg := &common.UeMessage{}
@@ -632,6 +637,12 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		msg.Event = common.TRIGGER_HO_EVENT
 		msg.TargetGnbName = ue.ProfileCtx.TargetGnbName
 		SendToGnbUe(ue, msg)
+	default:
+		// A procedure registered in procedures.go with no case here starts, logs that it started,
+		// and then does nothing — the UE never sends anything and the silence looks like the
+		// network failing to answer rather than the UE failing to ask. That cost real time once.
+		ue.Log.Errorf("no handler for procedure %v: it will not start, and nothing will be sent",
+			ue.Procedure)
 	}
 }
 
