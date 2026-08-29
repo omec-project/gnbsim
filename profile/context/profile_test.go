@@ -12,6 +12,18 @@ import (
 	"github.com/omec-project/openapi/v2/models"
 )
 
+const (
+	errDnnRequired    = "dnn is required"
+	errSNssaiRequired = "sNssai is required"
+	testDnn           = "internet"
+	testGnbName       = "gnb1"
+	testKey           = "5122250214c33e723a5dd523fc145fc0"
+	testOpc           = "981d464c7c52eb6e5036234984ad0bcf"
+	testSeqNum        = "16f3b3f70fc2"
+	testIteration1    = "iteration1"
+	testIteration2    = "iteration2"
+)
+
 func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
 	tests := []struct {
 		sNssai      *models.Snssai
@@ -27,20 +39,20 @@ func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
 			dnn:         "",
 			sNssai:      &models.Snssai{Sst: 1, Sd: openapi.PtrString("010203")},
 			expectError: true,
-			errorMsg:    "dnn is required",
+			errorMsg:    errDnnRequired,
 		},
 		{
 			name:        "pdusessest profile without sNssai should fail",
 			profileType: PDU_SESS_EST,
-			dnn:         "internet",
+			dnn:         testDnn,
 			sNssai:      nil,
 			expectError: true,
-			errorMsg:    "sNssai is required",
+			errorMsg:    errSNssaiRequired,
 		},
 		{
 			name:        "pdusessest profile with sst=0 should fail",
 			profileType: PDU_SESS_EST,
-			dnn:         "internet",
+			dnn:         testDnn,
 			sNssai:      &models.Snssai{Sst: 0, Sd: openapi.PtrString("010203")},
 			expectError: true,
 			errorMsg:    "sNssai.sst is required",
@@ -48,7 +60,7 @@ func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
 		{
 			name:        "pdusessest profile with valid dnn and sNssai should pass",
 			profileType: PDU_SESS_EST,
-			dnn:         "internet",
+			dnn:         testDnn,
 			sNssai:      &models.Snssai{Sst: 1, Sd: openapi.PtrString("010203")},
 			expectError: false,
 		},
@@ -65,15 +77,15 @@ func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
 			dnn:         "",
 			sNssai:      &models.Snssai{Sst: 1, Sd: openapi.PtrString("010203")},
 			expectError: true,
-			errorMsg:    "dnn is required",
+			errorMsg:    errDnnRequired,
 		},
 		{
 			name:        "anrelease profile without sNssai should fail",
 			profileType: AN_RELEASE,
-			dnn:         "internet",
+			dnn:         testDnn,
 			sNssai:      nil,
 			expectError: true,
-			errorMsg:    "sNssai is required",
+			errorMsg:    errSNssaiRequired,
 		},
 	}
 
@@ -82,11 +94,11 @@ func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
 			profile := &Profile{
 				ProfileType: tt.profileType,
 				Name:        "test-profile",
-				GnbName:     "gnb1",
+				GnbName:     testGnbName,
 				StartImsi:   "208930100007487",
-				Key:         "5122250214c33e723a5dd523fc145fc0",
-				Opc:         "981d464c7c52eb6e5036234984ad0bcf",
-				SeqNum:      "16f3b3f70fc2",
+				Key:         testKey,
+				Opc:         testOpc,
+				SeqNum:      testSeqNum,
 				Dnn:         tt.dnn,
 				SNssai:      tt.sNssai,
 				UeCount:     1,
@@ -125,8 +137,8 @@ func TestProfileInit_ValidatesDnnForCustomProfiles(t *testing.T) {
 		{
 			name: "custom profile with PDU session without dnn should fail",
 			pIterations: map[string]*PIterations{
-				"iteration1": {
-					Name: "iteration1",
+				testIteration1: {
+					Name: testIteration1,
 					ProcMap: map[int]common.ProcedureType{
 						1: common.REGISTRATION_PROCEDURE,
 						2: common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
@@ -136,36 +148,36 @@ func TestProfileInit_ValidatesDnnForCustomProfiles(t *testing.T) {
 			dnn:         "",
 			sNssai:      &models.Snssai{Sst: 1, Sd: openapi.PtrString("010203")},
 			expectError: true,
-			errorMsg:    "dnn is required",
+			errorMsg:    errDnnRequired,
 		},
 		{
 			name: "custom profile with PDU session without sNssai should fail",
 			pIterations: map[string]*PIterations{
-				"iteration1": {
-					Name: "iteration1",
+				testIteration1: {
+					Name: testIteration1,
 					ProcMap: map[int]common.ProcedureType{
 						1: common.REGISTRATION_PROCEDURE,
 						2: common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
 					},
 				},
 			},
-			dnn:         "internet",
+			dnn:         testDnn,
 			sNssai:      nil,
 			expectError: true,
-			errorMsg:    "sNssai is required",
+			errorMsg:    errSNssaiRequired,
 		},
 		{
 			name: "custom profile with PDU session with sst=0 should fail",
 			pIterations: map[string]*PIterations{
-				"iteration1": {
-					Name: "iteration1",
+				testIteration1: {
+					Name: testIteration1,
 					ProcMap: map[int]common.ProcedureType{
 						1: common.REGISTRATION_PROCEDURE,
 						2: common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
 					},
 				},
 			},
-			dnn:         "internet",
+			dnn:         testDnn,
 			sNssai:      &models.Snssai{Sst: 0, Sd: openapi.PtrString("010203")},
 			expectError: true,
 			errorMsg:    "sNssai.sst is required",
@@ -173,23 +185,23 @@ func TestProfileInit_ValidatesDnnForCustomProfiles(t *testing.T) {
 		{
 			name: "custom profile with PDU session with valid dnn and sNssai should pass",
 			pIterations: map[string]*PIterations{
-				"iteration1": {
-					Name: "iteration1",
+				testIteration1: {
+					Name: testIteration1,
 					ProcMap: map[int]common.ProcedureType{
 						1: common.REGISTRATION_PROCEDURE,
 						2: common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
 					},
 				},
 			},
-			dnn:         "internet",
+			dnn:         testDnn,
 			sNssai:      &models.Snssai{Sst: 1, Sd: openapi.PtrString("010203")},
 			expectError: false,
 		},
 		{
 			name: "custom profile without PDU session and without dnn should pass",
 			pIterations: map[string]*PIterations{
-				"iteration1": {
-					Name: "iteration1",
+				testIteration1: {
+					Name: testIteration1,
 					ProcMap: map[int]common.ProcedureType{
 						1: common.REGISTRATION_PROCEDURE,
 						2: common.UE_INITIATED_DEREGISTRATION_PROCEDURE,
@@ -207,11 +219,11 @@ func TestProfileInit_ValidatesDnnForCustomProfiles(t *testing.T) {
 			profile := &Profile{
 				ProfileType: CUSTOM_PROCEDURE,
 				Name:        "test-custom-profile",
-				GnbName:     "gnb1",
+				GnbName:     testGnbName,
 				StartImsi:   "208930100007487",
-				Key:         "5122250214c33e723a5dd523fc145fc0",
-				Opc:         "981d464c7c52eb6e5036234984ad0bcf",
-				SeqNum:      "16f3b3f70fc2",
+				Key:         testKey,
+				Opc:         testOpc,
+				SeqNum:      testSeqNum,
 				Dnn:         tt.dnn,
 				SNssai:      tt.sNssai,
 				UeCount:     1,
@@ -292,11 +304,11 @@ func TestRequiresPduSession(t *testing.T) {
 			profile := &Profile{
 				ProfileType: tt.profileType,
 				Name:        "test-profile",
-				GnbName:     "gnb1",
+				GnbName:     testGnbName,
 				StartImsi:   "208930100007487",
-				Key:         "5122250214c33e723a5dd523fc145fc0",
-				Opc:         "981d464c7c52eb6e5036234984ad0bcf",
-				SeqNum:      "16f3b3f70fc2",
+				Key:         testKey,
+				Opc:         testOpc,
+				SeqNum:      testSeqNum,
 				UeCount:     1,
 			}
 
@@ -323,8 +335,8 @@ func TestRequiresPduSessionCustomProfile(t *testing.T) {
 		{
 			name: "custom profile without PDU session",
 			pIterations: map[string]*PIterations{
-				"iteration1": {
-					Name: "iteration1",
+				testIteration1: {
+					Name: testIteration1,
 					ProcMap: map[int]common.ProcedureType{
 						1: common.REGISTRATION_PROCEDURE,
 						2: common.UE_INITIATED_DEREGISTRATION_PROCEDURE,
@@ -336,8 +348,8 @@ func TestRequiresPduSessionCustomProfile(t *testing.T) {
 		{
 			name: "custom profile with PDU session in iterations",
 			pIterations: map[string]*PIterations{
-				"iteration1": {
-					Name: "iteration1",
+				testIteration1: {
+					Name: testIteration1,
 					ProcMap: map[int]common.ProcedureType{
 						1: common.REGISTRATION_PROCEDURE,
 						2: common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
@@ -350,20 +362,20 @@ func TestRequiresPduSessionCustomProfile(t *testing.T) {
 		{
 			name: "custom profile with multiple iterations, one with PDU session",
 			pIterations: map[string]*PIterations{
-				"iteration1": {
-					Name: "iteration1",
+				testIteration1: {
+					Name: testIteration1,
 					ProcMap: map[int]common.ProcedureType{
 						1: common.REGISTRATION_PROCEDURE,
 					},
-					NextItr: "iteration2",
+					NextItr: testIteration2,
 				},
-				"iteration2": {
-					Name: "iteration2",
+				testIteration2: {
+					Name: testIteration2,
 					ProcMap: map[int]common.ProcedureType{
 						1: common.PDU_SESSION_ESTABLISHMENT_PROCEDURE,
 						2: common.USER_DATA_PKT_GENERATION_PROCEDURE,
 					},
-					NextItr: "quit",
+					NextItr: quit,
 				},
 			},
 			expected: true,
@@ -371,19 +383,19 @@ func TestRequiresPduSessionCustomProfile(t *testing.T) {
 		{
 			name: "custom profile with multiple iterations, none with PDU session",
 			pIterations: map[string]*PIterations{
-				"iteration1": {
-					Name: "iteration1",
+				testIteration1: {
+					Name: testIteration1,
 					ProcMap: map[int]common.ProcedureType{
 						1: common.REGISTRATION_PROCEDURE,
 					},
-					NextItr: "iteration2",
+					NextItr: testIteration2,
 				},
-				"iteration2": {
-					Name: "iteration2",
+				testIteration2: {
+					Name: testIteration2,
 					ProcMap: map[int]common.ProcedureType{
 						1: common.UE_INITIATED_DEREGISTRATION_PROCEDURE,
 					},
-					NextItr: "quit",
+					NextItr: quit,
 				},
 			},
 			expected: false,
@@ -395,11 +407,11 @@ func TestRequiresPduSessionCustomProfile(t *testing.T) {
 			profile := &Profile{
 				ProfileType: CUSTOM_PROCEDURE,
 				Name:        "test-custom-profile",
-				GnbName:     "gnb1",
+				GnbName:     testGnbName,
 				StartImsi:   "208930100007487",
-				Key:         "5122250214c33e723a5dd523fc145fc0",
-				Opc:         "981d464c7c52eb6e5036234984ad0bcf",
-				SeqNum:      "16f3b3f70fc2",
+				Key:         testKey,
+				Opc:         testOpc,
+				SeqNum:      testSeqNum,
 				UeCount:     1,
 				PIterations: tt.pIterations,
 			}

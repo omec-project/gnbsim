@@ -31,15 +31,15 @@ func AddService(engine *gin.Engine) *gin.RouterGroup {
 
 	for _, route := range routes {
 		switch route.Method {
-		case "GET":
+		case http.MethodGet:
 			group.GET(route.Pattern, route.HandlerFunc)
-		case "POST":
+		case http.MethodPost:
 			group.POST(route.Pattern, route.HandlerFunc)
-		case "PUT":
+		case http.MethodPut:
 			group.PUT(route.Pattern, route.HandlerFunc)
-		case "PATCH":
+		case http.MethodPatch:
 			group.PATCH(route.Pattern, route.HandlerFunc)
-		case "DELETE":
+		case http.MethodDelete:
 			group.DELETE(route.Pattern, route.HandlerFunc)
 		}
 	}
@@ -53,24 +53,33 @@ func Index(c *gin.Context) {
 
 var routes = Routes{
 	{
-		Name: "Index", Method: "GET",
-		Pattern: "/", HandlerFunc: Index,
-	},
-
-	{
-		Name: "ExecuteProfile", Method: "POST",
-		Pattern: "/executeProfile", HandlerFunc: HTTPExecuteProfile,
+		Name:        "Index",
+		Method:      http.MethodGet,
+		Pattern:     "/",
+		HandlerFunc: Index,
 	},
 	{
-		Name: "ExecuteConfigProfile", Method: "POST",
-		Pattern: "/executeConfigProfile", HandlerFunc: HTTPExecuteConfigProfile,
+		Name:        "ExecuteProfile",
+		Method:      http.MethodPost,
+		Pattern:     "/executeProfile",
+		HandlerFunc: HTTPExecuteProfile,
 	},
 	{
-		Name: "StepProfile", Method: "POST",
-		Pattern: "/:profile-name/stepProfile", HandlerFunc: HTTPStepProfile,
+		Name:        "ExecuteConfigProfile",
+		Method:      http.MethodPost,
+		Pattern:     "/executeConfigProfile",
+		HandlerFunc: HTTPExecuteConfigProfile,
 	},
 	{
-		Name: "addNewCalls", Method: "POST",
-		Pattern: "/:profile-name/addNewCalls", HandlerFunc: HTTPAddNewCallsProfile,
+		Name:        "StepProfile",
+		Method:      http.MethodPost,
+		Pattern:     "/:profile-name/stepProfile",
+		HandlerFunc: HTTPStepProfile,
+	},
+	{
+		Name:        "addNewCalls",
+		Method:      http.MethodPost,
+		Pattern:     "/:profile-name/addNewCalls",
+		HandlerFunc: HTTPAddNewCallsProfile,
 	},
 }

@@ -30,6 +30,10 @@ const (
 	N2_HANDOVER             string = "n2handover"
 )
 
+const (
+	quit = "quit"
+)
+
 const PER_USER_TIMEOUT uint32 = 100 // seconds
 var SummaryChan = make(chan common.InterfaceMessage)
 
@@ -426,7 +430,7 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 		}
 		pCtx.Log.Infoln("Iteration Complete", pCtx.CurrentItr)
 		nextItr := itp.NextItr
-		if nextItr != "quit" {
+		if nextItr != quit {
 			nItr := p.PIterations[nextItr]
 			pCtx.Log.Infoln("Going to next iteration", nItr.Name)
 			pCtx.CurrentItr = nItr.Name
