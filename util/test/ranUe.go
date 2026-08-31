@@ -31,7 +31,7 @@ func CalculateIpv4HeaderChecksum(hdr *ipv4.Header) uint32 {
 	Checksum += uint32(hdr.TotalLen)
 	Checksum += uint32(hdr.ID)
 	Checksum += uint32((hdr.FragOff & 0x1fff) | (int(hdr.Flags) << 13))
-	Checksum += uint32((hdr.TTL << 8) | (hdr.Protocol))
+	Checksum += uint32((hdr.TTL << 8) | hdr.Protocol)
 
 	src := hdr.Src.To4()
 	Checksum += uint32(src[0])<<8 | uint32(src[1])

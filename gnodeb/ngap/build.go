@@ -26,7 +26,7 @@ func GetNGSetupRequest(gnb *gnbctx.GNodeB) ([]byte, error) {
 
 	// GlobalRANNodeID
 	ie := message.InitiatingMessage.Value.NGSetup.ProtocolIEs.List[0]
-	*(ie.Value.GlobalRANNodeID) = ngapConvert.RanIDToNgap(gnb.RanId)
+	*ie.Value.GlobalRANNodeID = ngapConvert.RanIDToNgap(gnb.RanId)
 
 	// RANNodeName
 	ie = message.InitiatingMessage.Value.NGSetup.ProtocolIEs.List[1]
