@@ -114,9 +114,12 @@ func TestModifyResponseCarriesIdentitiesAndBothSessionLists(t *testing.T) {
 		t.Fatalf("transfer encode failed: %v", err)
 	}
 
-	pdu := BuildPDUSessionResourceModifyResponse(42, 7,
+	pdu, err := BuildPDUSessionResourceModifyResponse(42, 7,
 		map[int64][]byte{10: transfer},
 		map[int64]ngapType.Cause{11: cause()})
+	if err != nil {
+		t.Fatalf("building the response failed: %v", err)
+	}
 
 	if pdu.SuccessfulOutcome == nil {
 		t.Fatal("the response is not a successful outcome")

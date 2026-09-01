@@ -314,12 +314,6 @@ func HandlePduSessReleaseCompleteEvent(ue *realuectx.RealUe,
 	return nil
 }
 
-// HandlePduSessModificationCompleteEvent answers a PDU SESSION MODIFICATION COMMAND.
-//
-// The UE takes the authorized parameters as given. TS 24.501 subclause 6.3.2.3: the command
-// carries what the network has decided, not a proposal, so the answer confirms rather than
-// negotiates. What the UE records is therefore the authorized QoS rules and flow descriptions as
-// received, and the acknowledgement echoes the command's PTI so the network can match it.
 // HandlePduSessModificationRequestEvent asks the network to modify a session.
 //
 // This exists to verify the network's refusal, not to obtain a modification: the core declines
@@ -394,16 +388,34 @@ func HandlePduSessModificationRejectEvent(ue *realuectx.RealUe,
 		pduSessId, pti, cause)
 
 	if pduSess, sessErr := ue.GetPduSession(int64(pduSessId)); sessErr == nil {
-		if pduSess.PendingPTI != 0 && pti != pduSess.PendingPTI {
-			ue.Log.Errorf("reject carries PTI %d but this UE's outstanding request used PTI %d; it cannot be matched to the procedure",
-				pti, pduSess.PendingPTI)
+		outstanding := pduSess.PendingPTI
+
+		// A reject that cannot be matched fails the procedure rather than passing it. It was
+		// only logged before, and the simulated UE reported PASS on the strength of a reject
+		// arriving at all -- so an answer belonging to some other transaction, or none, would
+		// have been recorded as the network refusing correctly, and any later trouble
+		// attributed to whatever ran next.
+		//
+		// The outstanding transaction is left in place in that case, because it is still
+		// outstanding: nothing has answered it. Clearing it would lose the identity the next
+		// answer has to be matched against.
+		if outstanding != 0 && pti != outstanding {
+			return fmt.Errorf("reject carries PTI %d but this UE's outstanding request used PTI %d; it cannot be matched to the procedure",
+				pti, outstanding)
 		}
+
 		pduSess.PendingPTI = 0
 	}
 
 	return nil
 }
 
+// HandlePduSessModificationCompleteEvent answers a PDU SESSION MODIFICATION COMMAND.
+//
+// The UE takes the authorized parameters as given. TS 24.501 subclause 6.3.2.3: the command
+// carries what the network has decided, not a proposal, so the answer confirms rather than
+// negotiates. What the UE records is therefore the authorized QoS rules and flow descriptions as
+// received, and the acknowledgement echoes the command's PTI so the network can match it.
 func HandlePduSessModificationCompleteEvent(ue *realuectx.RealUe,
 	intfcMsg common.InterfaceMessage,
 ) (err error) {

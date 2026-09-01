@@ -41,9 +41,17 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 			modifyList = ie.Value.PDUSessionResourceModifyListModReq
 		}
 	}
-	if modifyList == nil || len(modifyList.List) == 0 {
-		gnbue.Log.Errorln("PDUSessionResourceModifyListModReq is empty")
-		return
+	// An empty request is still answered. The response carries neither list, which is exactly
+	// what BuildPDUSessionResourceModifyResponse produces for one -- whereas returning here left
+	// the core waiting for a message that never came, and a timeout on its side reads as the
+	// core's defect rather than as a request that named nothing.
+	var items []ngapType.PDUSessionResourceModifyItemModReq
+	if modifyList != nil {
+		items = modifyList.List
+	}
+
+	if len(items) == 0 {
+		gnbue.Log.Warnln("PDU Session Resource Modify Request names no sessions; answering with an empty response")
 	}
 
 	modified := make(map[int64][]byte)
@@ -51,7 +59,7 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 	// Keyed by session, and only sent for sessions the gNB actually acted on. See below.
 	pendingNas := make(map[int64][]byte)
 
-	for _, item := range modifyList.List {
+	for _, item := range items {
 		pduSessID := item.PDUSessionID.Value
 
 		if item.NASPDU != nil && item.NASPDU.Value != nil {
@@ -116,8 +124,12 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 		gnbue.Log.Debugln("sent the modification command to the UE")
 	}
 
-	responsePdu := ngapTestpacket.BuildPDUSessionResourceModifyResponse(gnbue.AmfUeNgapId,
+	responsePdu, err := ngapTestpacket.BuildPDUSessionResourceModifyResponse(gnbue.AmfUeNgapId,
 		gnbue.GnbUeNgapId, modified, failed)
+	if err != nil {
+		gnbue.Log.Errorln("failed to build the PDU Session Resource Modify Response:", err)
+		return
+	}
 	encoded, err := ngap.Encoder(responsePdu)
 	if err != nil {
 		gnbue.Log.Errorln("failed to encode the PDU Session Resource Modify Response:", err)

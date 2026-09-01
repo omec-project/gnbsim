@@ -4,6 +4,8 @@
 package ngapTestpacket
 
 import (
+	"fmt"
+
 	"github.com/omec-project/ngap/v2/aper"
 	"github.com/omec-project/ngap/v2/ngapType"
 )
@@ -61,7 +63,7 @@ func BuildPDUSessionResourceModifyResponseTransfer(outcomes []QosFlowOutcome) ([
 // produces.
 func BuildPDUSessionResourceModifyResponse(amfUeNgapID, ranUeNgapID int64,
 	modified map[int64][]byte, failed map[int64]ngapType.Cause,
-) (pdu ngapType.NGAPPDU) {
+) (pdu ngapType.NGAPPDU, err error) {
 	pdu.Present = ngapType.NGAPPDUPresentSuccessfulOutcome
 	pdu.SuccessfulOutcome = new(ngapType.SuccessfulOutcome)
 
@@ -115,9 +117,12 @@ func BuildPDUSessionResourceModifyResponse(amfUeNgapID, ranUeNgapID int64,
 		list := ie.Value.PDUSessionResourceFailedToModifyListModRes
 		for pduSessID, cause := range failed {
 			unsuccessful := ngapType.PDUSessionResourceModifyUnsuccessfulTransfer{Cause: cause}
-			encoded, err := aper.MarshalWithParams(unsuccessful, "valueExt")
-			if err != nil {
-				continue
+			encoded, marshalErr := aper.MarshalWithParams(unsuccessful, "valueExt")
+			if marshalErr != nil {
+				// Refusing to build beats dropping the item. A session missing from both lists
+				// reads to the core as one the gNB never mentioned, so the failure it was told
+				// about would look like a success nobody reported.
+				return pdu, fmt.Errorf("encode unsuccessful transfer for session %d: %w", pduSessID, marshalErr)
 			}
 			item := ngapType.PDUSessionResourceFailedToModifyItemModRes{}
 			item.PDUSessionID.Value = pduSessID
@@ -127,5 +132,5 @@ func BuildPDUSessionResourceModifyResponse(amfUeNgapID, ranUeNgapID int64,
 		ies.List = append(ies.List, ie)
 	}
 
-	return pdu
+	return pdu, nil
 }

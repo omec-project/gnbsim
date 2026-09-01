@@ -273,12 +273,6 @@ func HandlePduSessReleaseCompleteEvent(ue *simuectx.SimUe,
 	return nil
 }
 
-// HandlePduSessModificationCommandEvent takes a modification the network started on its own.
-//
-// Unlike the release command there is no UE-side procedure to reconcile against: the command
-// arrives unprompted with no procedure transaction identity, so the arrival is what begins the
-// procedure. The UE is switched onto it before the answer is decided, or the profile's event map
-// would be consulted for whatever procedure happened to be running.
 // HandlePduSessModificationRequestEvent forwards the UE's built request to the gNB.
 //
 // The procedure is started by HandleProcedure sending this event straight to the RealUe, so what
@@ -308,6 +302,12 @@ func HandlePduSessModificationRejectEvent(ue *simuectx.SimUe,
 	return nil
 }
 
+// HandlePduSessModificationCommandEvent takes a modification the network started on its own.
+//
+// Unlike the release command there is no UE-side procedure to reconcile against: the command
+// arrives unprompted with no procedure transaction identity, so the arrival is what begins the
+// procedure. The UE is switched onto it before the answer is decided, or the profile's event map
+// would be consulted for whatever procedure happened to be running.
 func HandlePduSessModificationCommandEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage,
 ) (err error) {
