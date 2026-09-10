@@ -24,13 +24,12 @@ import (
 
 // RealUe represents a Real UE
 type RealUe struct {
-	Supi   string
-	Guti   string
-	Key    string
-	Opc    string
-	SeqNum string
-	Dnn    string
-
+	Supi               string
+	Guti               string
+	Key                string
+	Opc                string
+	SeqNum             string
+	Dnn                string
 	SNssai             *models.Snssai
 	AuthenticationSubs *models.AuthenticationSubscription
 	Plmn               *models.PlmnId

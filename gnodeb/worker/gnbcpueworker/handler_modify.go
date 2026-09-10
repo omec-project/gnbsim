@@ -196,11 +196,11 @@ func decideQosFlows(gnbue *gnbctx.GnbCpUe, pduSessID int64,
 
 		// Admitted, so the gNB's own view of the session has to carry it. Recording only on
 		// establishment is what would let the gNB report a flow it is not actually serving.
-		if upCtx != nil && upCtx.QosFlows != nil {
-			upCtx.QosFlows[qfi] = &ngapType.QosFlowSetupRequestItem{
+		if upCtx != nil {
+			upCtx.AddQosFlow(qfi, &ngapType.QosFlowSetupRequestItem{
 				QosFlowIdentifier:         item.QosFlowIdentifier,
 				QosFlowLevelQosParameters: qosParamsOrZero(item.QosFlowLevelQosParameters),
-			}
+			})
 		}
 		gnbue.Log.Infoln("admitted QoS flow", qfi, "on PDU session", pduSessID)
 		outcomes = append(outcomes, ngapTestpacket.QosFlowOutcome{QfiValue: qfi, Succeeded: true})
