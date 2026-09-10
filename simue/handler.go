@@ -629,6 +629,8 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		ue.Log.Infoln("Waiting for N/W Triggered De-registration Procedure")
 	case common.NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE:
 		ue.Log.Infoln("Waiting for N/W Requested PDU Session Release Procedure")
+	case common.NW_PDU_SESSION_MODIFICATION_PROCEDURE:
+		ue.Log.Infoln("Waiting for N/W Requested PDU Session Modification Procedure")
 	case common.N2_HANDOVER_PROCEDURE:
 		ue.Log.Infoln("initiating N2 Handover Procedure")
 		// Pre-register with target gNB so gnbamfworker can route HandoverRequest
