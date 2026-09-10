@@ -124,13 +124,13 @@ type Profile struct {
 	// ModificationRequestType is the Request type IE value the UE puts on a
 	// PDU SESSION MODIFICATION REQUEST. 5 is "modification request" and correct; 1 is
 	// "initial request", which makes the AMF read the message as an attempt to establish a session
-	// that already exists; 0 omits the IE. Configurable so all three can be verified against the
-	// network, since the failure they guard against is the AMF releasing a working session.
-	// Defaults to 5 when unset.
+	// that already exists. Unset means 5. Configurable because the failure it guards against is
+	// the AMF releasing a working session.
 	ModificationRequestType uint8 `yaml:"modificationRequestType" json:"modificationRequestType"`
 
 	// OmitModificationRequestType leaves the Request type IE out of the UL NAS TRANSPORT
-	// entirely, which is the third thing a UE may do and a third way the AMF has to cope.
+	// entirely, which is the third thing a UE may do and a third way the AMF has to cope. It
+	// overrides ModificationRequestType rather than combining with it.
 	OmitModificationRequestType bool `yaml:"omitModificationRequestType" json:"omitModificationRequestType"`
 }
 

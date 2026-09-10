@@ -337,10 +337,8 @@ func HandlePduSessModificationRequestEvent(ue *realuectx.RealUe,
 	// Any non-zero value identifies the procedure; zero is reserved for network-requested ones.
 	pduSess.PendingPTI = modificationRequestPTI
 
-	requestType := ue.ModificationRequestType
-	if requestType == 0 && !ue.OmitModificationRequestType {
-		requestType = nasMessage.ULNASTransportRequestTypeModificationRequest
-	}
+	requestType := resolveModificationRequestType(ue.ModificationRequestType,
+		ue.OmitModificationRequestType)
 
 	nasPdu, err := realue_nas.GetUlNasTransportPduSessionModificationRequest(
 		uint8(pduSessID), pduSess.PendingPTI, requestType)
@@ -363,6 +361,22 @@ func HandlePduSessModificationRequestEvent(ue *realuectx.RealUe,
 	m := formUuMessage(common.PDU_SESS_MOD_REQUEST_EVENT, nasPdu, 0)
 	SendToSimUe(ue, m)
 	return nil
+}
+
+// resolveModificationRequestType decides the Request type IE value to hand the builder, where 0
+// means leave the IE out.
+//
+// Omitting wins over a configured value. The earlier form only omitted when the value was also
+// unset, so a profile that set both -- which is how the two settings read sitting side by side in
+// the config -- still sent the IE, and the option that names itself "omit" did nothing at all.
+func resolveModificationRequestType(configured uint8, omit bool) uint8 {
+	if omit {
+		return 0
+	}
+	if configured == 0 {
+		return nasMessage.ULNASTransportRequestTypeModificationRequest
+	}
+	return configured
 }
 
 // HandlePduSessModificationRejectEvent records the network's refusal of a UE-requested
