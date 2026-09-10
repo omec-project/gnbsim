@@ -21,11 +21,7 @@ func HandleUlMessage(gnbue *gnbctx.GnbUpUe, msg common.InterfaceMessage) (err er
 		return nil
 	}
 
-	qf := gnbue.QosFlows
-	var qfi int64
-	for qfi = range qf {
-		break
-	}
+	qfi := gnbue.AnyQfi()
 	userDataMsg := msg.(*common.UserDataMessage)
 	encodedMsg, err := test.BuildGpduMessage(userDataMsg.Payload, gnbue.UlTeid, uint8(qfi))
 	if err != nil {
