@@ -609,11 +609,33 @@ func HandleDlInfoTransferEvent(ue *realuectx.RealUe,
 		m.NasMsg = nasMsg
 		m.Id = msg.Id
 
-		// Simply notify SimUe about the received nas message. Later SimUe will
-		// asynchrously send next event to RealUE informing about what to do with
-		// the received NAS message
-		SendToSimUe(ue, m)
+		if err := forwardDlNasToSimUe(ue, m, msgType); err != nil {
+			return err
+		}
 	}
+	return nil
+}
+
+// forwardDlNasToSimUe notifies the SimUe about a received NAS message, after any check that has
+// to happen before the SimUe is told anything at all.
+//
+// The design is that the RealUe simply reports what arrived and the SimUe decides what to do with
+// it, asynchronously. That makes the SimUe the one that reports the procedure's verdict -- so a
+// check living on the RealUe side of that exchange runs after the verdict has already been sent,
+// and cannot change it. A modification reject is checked here for that reason: on a PTI that does
+// not match the UE's outstanding request the SimUe is never told, so no pass is reported and the
+// error becomes the procedure's result.
+func forwardDlNasToSimUe(ue *realuectx.RealUe, m *common.UeMessage, msgType uint8) error {
+	if msgType == nas.MsgTypePDUSessionModificationReject {
+		if err := HandlePduSessModificationRejectEvent(ue, m); err != nil {
+			return err
+		}
+	}
+
+	// Simply notify SimUe about the received nas message. Later SimUe will
+	// asynchrously send next event to RealUE informing about what to do with
+	// the received NAS message
+	SendToSimUe(ue, m)
 	return nil
 }
 

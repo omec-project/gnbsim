@@ -292,12 +292,14 @@ func HandlePduSessModificationRequestEvent(ue *simuectx.SimUe,
 // A refusal is the expected outcome, not a failure: the core declines every UE-requested
 // modification. The procedure therefore passes when the reject arrives, and would fail by timing
 // out if the network said nothing at all — which is what it did before it was taught to refuse.
+//
+// Reaching this at all means the reject matched the UE's outstanding request: the RealUe checks
+// that before it reports the message, precisely because the pass below is unconditional and is
+// sent before the RealUe could otherwise have looked. The reject is not passed back to the
+// RealUe, which has already handled it.
 func HandlePduSessModificationRejectEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage,
 ) (err error) {
-	msg := intfcMsg.(*common.UeMessage)
-	SendToRealUe(ue, msg)
-
 	SendProcedureResult(ue)
 	return nil
 }
