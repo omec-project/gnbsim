@@ -192,3 +192,54 @@ func TestRejectForUnknownSessionNeverReachesSimUe(t *testing.T) {
 		t.Errorf("outstanding PTI = %d, want it left at 7: nothing has answered that request", got)
 	}
 }
+
+// TestPendingPtiIsRecordedOnlyWhenTheRequestWasSent covers what the reject guard depends on.
+//
+// The guard asks whether a request is outstanding on the session, so the PTI has to mean "a
+// request carrying this PTI left the UE". Recorded before the message was built and encrypted, a
+// failure in either left the UE holding a PTI for a request that never went anywhere -- and the
+// next reject to arrive, belonging to nothing, would have been matched to it and reported as the
+// network refusing correctly.
+func TestPendingPtiIsRecordedOnlyWhenTheRequestWasSent(t *testing.T) {
+	t.Run("the request cannot be encrypted", func(t *testing.T) {
+		ue, simUeChan := newUeWithOutstandingRequest(0)
+		// No such integrity algorithm, so the encryption step fails after the message is built.
+		ue.IntegrityAlg = 0x0f
+
+		if err := HandlePduSessModificationRequestEvent(ue, &common.UeMessage{}); err == nil {
+			t.Fatal("expected an error when the request cannot be encrypted")
+		}
+
+		select {
+		case msg := <-simUeChan:
+			t.Fatalf("a request that could not be encrypted was sent on as %v", msg.GetEventType())
+		default:
+		}
+
+		if got := ue.PduSessions[pduSessID].PendingPTI; got != 0 {
+			t.Errorf("outstanding PTI = %d, want 0: nothing was sent, so nothing is outstanding", got)
+		}
+	})
+
+	t.Run("the request is sent", func(t *testing.T) {
+		ue, simUeChan := newUeWithOutstandingRequest(0)
+
+		if err := HandlePduSessModificationRequestEvent(ue, &common.UeMessage{}); err != nil {
+			t.Fatalf("HandlePduSessModificationRequestEvent returned: %v", err)
+		}
+
+		select {
+		case msg := <-simUeChan:
+			if msg.GetEventType() != common.PDU_SESS_MOD_REQUEST_EVENT {
+				t.Fatalf("SimUe was told %v, want %v", msg.GetEventType(), common.PDU_SESS_MOD_REQUEST_EVENT)
+			}
+		default:
+			t.Fatal("the request never reached the SimUe")
+		}
+
+		if got := ue.PduSessions[pduSessID].PendingPTI; got != modificationRequestPTI {
+			t.Errorf("outstanding PTI = %d, want %d: the answer has to be matchable to this request",
+				got, modificationRequestPTI)
+		}
+	})
+}

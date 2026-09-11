@@ -334,14 +334,12 @@ func HandlePduSessModificationRequestEvent(ue *realuectx.RealUe,
 		return fmt.Errorf("cannot request a modification: %v", err)
 	}
 
-	// Any non-zero value identifies the procedure; zero is reserved for network-requested ones.
-	pduSess.PendingPTI = modificationRequestPTI
-
 	requestType := resolveModificationRequestType(ue.ModificationRequestType,
 		ue.OmitModificationRequestType)
 
+	// Any non-zero value identifies the procedure; zero is reserved for network-requested ones.
 	nasPdu, err := realue_nas.GetUlNasTransportPduSessionModificationRequest(
-		uint8(pduSessID), pduSess.PendingPTI, requestType)
+		uint8(pduSessID), modificationRequestPTI, requestType)
 	if err != nil {
 		return fmt.Errorf("failed to build PDU Session Modification Request: %v", err)
 	}
@@ -352,8 +350,14 @@ func HandlePduSessModificationRequestEvent(ue *realuectx.RealUe,
 		return fmt.Errorf("failed to encrypt PDU Session Modification Request: %v", err)
 	}
 
+	// The transaction is outstanding only now. Recorded before the message was built and
+	// encrypted, a failure in either left the UE holding a PTI for a request that was never sent
+	// -- and the reject guard, which asks whether a request is outstanding, would then match an
+	// answer to nothing.
+	pduSess.PendingPTI = modificationRequestPTI
+
 	ue.Log.Infof("sending PDU session modification request for session %d, PTI %d, request type %d",
-		pduSessID, pduSess.PendingPTI, requestType)
+		pduSessID, modificationRequestPTI, requestType)
 
 	// The procedure's own event goes back to the SimUe, which turns it into an uplink transfer
 	// for the gNB. Sending UL_INFO_TRANSFER_EVENT from here skips that step and the SimUe drops
