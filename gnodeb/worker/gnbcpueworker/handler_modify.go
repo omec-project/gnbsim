@@ -100,21 +100,22 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 		modified[pduSessID] = encoded
 	}
 
-	// The NAS container goes to the UE only for a session the gNB acted on.
+	// The NAS container goes to the UE only for a session reported as modified. That is a decision
+	// about the session, not about its flows.
 	//
-	// A session it refused outright has had nothing changed at the radio, so telling the UE its
-	// QoS changed would leave the UE applying parameters that do not exist — the same divergence
-	// the core's realignment procedure exists to repair, manufactured by the gNB itself. A
-	// partially accepted session still gets the container: the UE needs to know about the flows
-	// that were admitted, and the core corrects the rest.
+	// A session the gNB failed as a whole — refused by modifyRejectAll, or one whose transfer would
+	// not decode or encode — has had nothing changed at the radio, so telling the UE its QoS
+	// changed would leave the UE applying parameters that do not exist: the same divergence the
+	// core's realignment procedure exists to repair, manufactured by the gNB itself.
 	//
-	// Observed before this was fixed: the gNB refused the only flow, forwarded the command
-	// anyway, and the UE acknowledged a modification that the core had already abandoned.
+	// Refusing flows is not that case. A modified session gets the container even when every flow
+	// the request named was refused, because the session itself succeeded and the response names
+	// each refusal; the core then withdraws those flows in a modification of its own.
 	var nasPdus common.NasPduList
 	for pduSessID, nas := range pendingNas {
-		if _, acted := modified[pduSessID]; !acted {
+		if _, wasModified := modified[pduSessID]; !wasModified {
 			gnbue.Log.Infoln("withholding the modification command for PDU session", pduSessID,
-				"because nothing was admitted for it")
+				"because the gNB failed the session as a whole")
 			continue
 		}
 		nasPdus = append(nasPdus, nas)
