@@ -59,46 +59,17 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 	// Keyed by session, and only sent for sessions the gNB reports as modified. See below.
 	pendingNas := make(map[int64][]byte)
 
-	for _, item := range items {
+	for i := range items {
+		item := &items[i]
 		pduSessID := item.PDUSessionID.Value
 
 		if item.NASPDU != nil && item.NASPDU.Value != nil {
 			pendingNas[pduSessID] = item.NASPDU.Value
 		}
 
-		if gnbue.Gnb.ModifyRejectAll {
-			// The whole session is refused. TS 38.413 puts this in the failed list with a cause
-			// rather than in the modify list, and the core treats it as a delivery failure for
-			// the modification as a whole.
-			gnbue.Log.Infoln("refusing the whole modification for PDU session", pduSessID,
-				"as configured")
-			failed[pduSessID] = radioResourcesNotAvailable()
-			continue
-		}
-
-		transfer := ngapType.PDUSessionResourceModifyRequestTransfer{}
-		if err := aper.UnmarshalWithParams(item.PDUSessionResourceModifyRequestTransfer,
-			&transfer, "valueExt"); err != nil {
-			gnbue.Log.Errorln("failed to decode the modify request transfer:", err)
-			failed[pduSessID] = radioResourcesNotAvailable()
-			continue
-		}
-
-		outcomes := decideQosFlows(gnbue, pduSessID, &transfer)
-		if len(outcomes) == 0 {
-			// Nothing to decide: the request names no QoS flows to add or modify, so the session
-			// is reported as modified with an answer that names none. A request carrying only a
-			// QoS Flow to Release List arrives here too, its releases already applied — the
-			// response has no list to report them in, and withdrawing a flow is a modification
-			// that succeeded.
-			gnbue.Log.Infoln("modification for PDU session", pduSessID,
-				"names no QoS flows to add or modify")
-		}
-
-		encoded, err := ngapTestpacket.BuildPDUSessionResourceModifyResponseTransfer(outcomes)
-		if err != nil {
-			gnbue.Log.Errorln("failed to encode the modify response transfer:", err)
-			failed[pduSessID] = radioResourcesNotAvailable()
+		encoded, cause := modifySession(gnbue, item)
+		if cause != nil {
+			failed[pduSessID] = *cause
 			continue
 		}
 		modified[pduSessID] = encoded
@@ -158,6 +129,66 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 		len(modified), "session(s) modified,", len(failed), "failed")
 }
 
+// modifySession decides what happens to one session named by the request, and returns either the
+// response transfer to report it modified with, or the cause to report it failed with.
+//
+// The gNB's own view of the session is changed last, once the answer has been encoded. A session
+// that fails anywhere in here is reported as failed and its modification command withheld, so the
+// core and the UE both go on holding it at its previous parameters — and a gNB that had already
+// released or admitted flows would be the only party that had moved.
+func modifySession(gnbue *gnbctx.GnbCpUe, item *ngapType.PDUSessionResourceModifyItemModReq,
+) ([]byte, *ngapType.Cause) {
+	pduSessID := item.PDUSessionID.Value
+
+	if gnbue.Gnb.ModifyRejectAll {
+		// The whole session is refused. TS 38.413 puts this in the failed list with a cause
+		// rather than in the modify list, and the core treats it as a delivery failure for
+		// the modification as a whole.
+		gnbue.Log.Infoln("refusing the whole modification for PDU session", pduSessID,
+			"as configured")
+		return nil, causePtr(radioResourcesNotAvailable())
+	}
+
+	transfer := ngapType.PDUSessionResourceModifyRequestTransfer{}
+	if err := aper.UnmarshalWithParams(item.PDUSessionResourceModifyRequestTransfer,
+		&transfer, "valueExt"); err != nil {
+		gnbue.Log.Errorln("failed to decode the modify request transfer:", err)
+		return nil, causePtr(radioResourcesNotAvailable())
+	}
+
+	upCtx, err := gnbue.GetGnbUpUe(pduSessID)
+	if err != nil {
+		gnbue.Log.Warnln("no user plane context for PDU session", pduSessID,
+			"so its QoS flows cannot be recorded:", err)
+	}
+
+	plan := decideQosFlows(gnbue, pduSessID, &transfer)
+	if len(plan.outcomes) == 0 {
+		// Nothing to decide: the request names no QoS flows to add or modify, so the session
+		// is reported as modified with an answer that names none. A request carrying only a
+		// QoS Flow to Release List arrives here too — the response has no list to report its
+		// releases in, and withdrawing a flow is a modification that succeeded.
+		gnbue.Log.Infoln("modification for PDU session", pduSessID,
+			"names no QoS flows to add or modify")
+	}
+
+	encoded, err := ngapTestpacket.BuildPDUSessionResourceModifyResponseTransfer(plan.outcomes)
+	if err != nil {
+		gnbue.Log.Errorln("failed to encode the modify response transfer:", err)
+		return nil, causePtr(radioResourcesNotAvailable())
+	}
+
+	if upCtx != nil {
+		plan.apply(upCtx)
+	}
+	return encoded, nil
+}
+
+// causePtr distinguishes "this session failed, with this cause" from "it did not".
+func causePtr(cause ngapType.Cause) *ngapType.Cause {
+	return &cause
+}
+
 // radioResourcesNotAvailable is the cause a gNB gives when it will not admit what was asked of it.
 func radioResourcesNotAvailable() ngapType.Cause {
 	cause := ngapType.Cause{}
@@ -168,8 +199,37 @@ func radioResourcesNotAvailable() ngapType.Cause {
 	return cause
 }
 
-// decideQosFlows records what the gNB will do with each QoS flow the request names, and returns
-// the per-flow outcome to report.
+// qosFlowPlan is what the gNB has decided to do with a session's QoS flows: the per-flow outcomes
+// to report, and the changes to its own view of the session. The two are kept apart so the second
+// can wait until the first has encoded.
+type qosFlowPlan struct {
+	outcomes []ngapTestpacket.QosFlowOutcome
+	admitted []admittedQosFlow
+	released []int64
+}
+
+// admittedQosFlow is a flow to record on the session, under the identity it is recorded by.
+type admittedQosFlow struct {
+	item *ngapType.QosFlowSetupRequestItem
+	qfi  int64
+}
+
+// apply writes the plan to the gNB's view of the session.
+//
+// Releases go first, because a request may carry nothing else: the SMF builds a release-only
+// transfer when it withdraws a flow.
+func (p *qosFlowPlan) apply(upCtx *gnbctx.GnbUpUe) {
+	for _, qfi := range p.released {
+		upCtx.RemoveQosFlow(qfi)
+	}
+	for _, flow := range p.admitted {
+		upCtx.AddQosFlow(flow.qfi, flow.item)
+	}
+}
+
+// decideQosFlows works out what the gNB will do with each QoS flow the request names. It decides
+// and reports; it changes nothing, which is what lets the decision be discarded if the answer
+// cannot be encoded.
 //
 // A refused flow is still recorded as refused rather than skipped: the answer has to name it, or
 // the core cannot tell the difference between a flow the radio would not admit and one the request
@@ -178,20 +238,10 @@ func radioResourcesNotAvailable() ngapType.Cause {
 // asks for when it has the NG-RAN node de-associate a released flow from its bearer.
 func decideQosFlows(gnbue *gnbctx.GnbCpUe, pduSessID int64,
 	transfer *ngapType.PDUSessionResourceModifyRequestTransfer,
-) []ngapTestpacket.QosFlowOutcome {
-	upCtx, err := gnbue.GetGnbUpUe(pduSessID)
-	if err != nil {
-		gnbue.Log.Warnln("no user plane context for PDU session", pduSessID,
-			"so its QoS flows cannot be recorded:", err)
-	}
-
-	// Releases are applied before the add-or-modify list is read, because a request may carry
-	// nothing else: the SMF builds a release-only transfer when it withdraws a flow.
-	if upCtx != nil {
-		for _, qfi := range releasedQfis(transfer) {
-			gnbue.Log.Infoln("releasing QoS flow", qfi, "on PDU session", pduSessID)
-			upCtx.RemoveQosFlow(qfi)
-		}
+) qosFlowPlan {
+	plan := qosFlowPlan{released: releasedQfis(transfer)}
+	for _, qfi := range plan.released {
+		gnbue.Log.Infoln("releasing QoS flow", qfi, "on PDU session", pduSessID)
 	}
 
 	var requested *ngapType.QosFlowAddOrModifyRequestList
@@ -201,7 +251,7 @@ func decideQosFlows(gnbue *gnbctx.GnbCpUe, pduSessID int64,
 		}
 	}
 	if requested == nil {
-		return nil
+		return plan
 	}
 
 	refuse := make(map[int64]bool, len(gnbue.Gnb.ModifyRejectQfis))
@@ -209,12 +259,12 @@ func decideQosFlows(gnbue *gnbctx.GnbCpUe, pduSessID int64,
 		refuse[qfi] = true
 	}
 
-	outcomes := make([]ngapTestpacket.QosFlowOutcome, 0, len(requested.List))
+	plan.outcomes = make([]ngapTestpacket.QosFlowOutcome, 0, len(requested.List))
 	for _, item := range requested.List {
 		qfi := item.QosFlowIdentifier.Value
 		if refuse[qfi] {
 			gnbue.Log.Infoln("refusing QoS flow", qfi, "on PDU session", pduSessID, "as configured")
-			outcomes = append(outcomes, ngapTestpacket.QosFlowOutcome{
+			plan.outcomes = append(plan.outcomes, ngapTestpacket.QosFlowOutcome{
 				QfiValue: qfi, Cause: radioResourcesNotAvailable(),
 			})
 			continue
@@ -222,16 +272,17 @@ func decideQosFlows(gnbue *gnbctx.GnbCpUe, pduSessID int64,
 
 		// Admitted, so the gNB's own view of the session has to carry it. Recording only on
 		// establishment is what would let the gNB report a flow it is not actually serving.
-		if upCtx != nil {
-			upCtx.AddQosFlow(qfi, &ngapType.QosFlowSetupRequestItem{
+		plan.admitted = append(plan.admitted, admittedQosFlow{
+			qfi: qfi,
+			item: &ngapType.QosFlowSetupRequestItem{
 				QosFlowIdentifier:         item.QosFlowIdentifier,
 				QosFlowLevelQosParameters: qosParamsOrZero(item.QosFlowLevelQosParameters),
-			})
-		}
+			},
+		})
 		gnbue.Log.Infoln("admitted QoS flow", qfi, "on PDU session", pduSessID)
-		outcomes = append(outcomes, ngapTestpacket.QosFlowOutcome{QfiValue: qfi, Succeeded: true})
+		plan.outcomes = append(plan.outcomes, ngapTestpacket.QosFlowOutcome{QfiValue: qfi, Succeeded: true})
 	}
-	return outcomes
+	return plan
 }
 
 // qosParamsOrZero keeps the recorded flow usable when the request modified a flow without
