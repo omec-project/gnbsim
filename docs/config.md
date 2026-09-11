@@ -156,8 +156,10 @@ SPDX-License-Identifier: Apache-2.0
 
     The network-requested procedure starts when the PDU SESSION RESOURCE MODIFY REQUEST arrives,
     since nothing the UE does triggers it. The UE-requested procedure passes when the network
-    answers with a reject and fails if nothing answers at all; the accept path is not modelled,
-    because an SMF that refuses UE-requested modifications is what this is written against.
+    answers with a reject carrying the PTI of the request the UE made, and fails if nothing
+    answers at all or if the answer cannot be matched to that request; the accept path is not
+    modelled, because an SMF that refuses UE-requested modifications is what this is written
+    against.
 
     How the simulated gNB answers a modify request is configured per gNB, under `gnbs`:
 
