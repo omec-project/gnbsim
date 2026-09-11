@@ -58,7 +58,7 @@ func BuildPDUSessionResourceModifyResponseTransfer(outcomes []QosFlowOutcome) ([
 // BuildPDUSessionResourceModifyResponse builds the NGAP answer to a
 // PDU SESSION RESOURCE MODIFY REQUEST.
 //
-// A session appears in the modify list when the gNB acted on it and in the failed list when it
+// A session appears in the modify list when the gNB modified it and in the failed list when it
 // could not. Both lists are optional, and a response carrying neither is what an empty request
 // produces.
 func BuildPDUSessionResourceModifyResponse(amfUeNgapID, ranUeNgapID int64,

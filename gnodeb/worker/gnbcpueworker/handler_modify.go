@@ -56,7 +56,7 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 
 	modified := make(map[int64][]byte)
 	failed := make(map[int64]ngapType.Cause)
-	// Keyed by session, and only sent for sessions the gNB actually acted on. See below.
+	// Keyed by session, and only sent for sessions the gNB reports as modified. See below.
 	pendingNas := make(map[int64][]byte)
 
 	for _, item := range items {
@@ -86,9 +86,12 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 
 		outcomes := decideQosFlows(gnbue, pduSessID, &transfer)
 		if len(outcomes) == 0 {
-			// Nothing to decide — a modification that changes only session-level parameters. The
-			// session is still reported as modified, with an answer that names no flows.
-			gnbue.Log.Infoln("modification for PDU session", pduSessID, "names no QoS flows")
+			// Nothing to decide: the request names no QoS flows to add or modify, so the session
+			// is reported as modified with an answer that names none. A request carrying only a
+			// QoS Flow to Release List arrives here too — this gNB does not act on releases, so
+			// a released flow stays in its own view of the session.
+			gnbue.Log.Infoln("modification for PDU session", pduSessID,
+				"names no QoS flows to add or modify")
 		}
 
 		encoded, err := ngapTestpacket.BuildPDUSessionResourceModifyResponseTransfer(outcomes)
@@ -108,9 +111,16 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 	// changed would leave the UE applying parameters that do not exist: the same divergence the
 	// core's realignment procedure exists to repair, manufactured by the gNB itself.
 	//
-	// Refusing flows is not that case. A modified session gets the container even when every flow
-	// the request named was refused, because the session itself succeeded and the response names
-	// each refusal; the core then withdraws those flows in a modification of its own.
+	// TS 38.413 clause 8.2.3.2 ties the two together: the NAS-PDU is passed to the UE "only if at
+	// least one of the requests included in the PDU Session Resource Modify Request Transfer IE is
+	// successful (i.e. the PDU session is included in the PDU Session Resource Modify Response
+	// Item IE ...)" — which is this membership test.
+	//
+	// Refusing flows is not that case here, and that is a deliberate departure worth knowing
+	// about. A modified session gets the container even when every flow the request named was
+	// refused, so the core sees a response that established nothing while the UE has the command.
+	// A conformant gNB would have failed the session instead; keeping it successful is what makes
+	// that core path reachable from a simulator, and docs/config.md says so at modifyRejectQfis.
 	var nasPdus common.NasPduList
 	for pduSessID, nas := range pendingNas {
 		if _, wasModified := modified[pduSessID]; !wasModified {

@@ -164,13 +164,18 @@ SPDX-License-Identifier: Apache-2.0
         gnbs:
           gnb1:
             modifyRejectQfis: [1]  # QFIs the gNB refuses. Those flows are reported in the
-                                   # failed list with cause radio-resources-not-available and
-                                   # the rest are admitted, which is a partial rejection. The
-                                   # session itself still succeeds, so the UE is still given
-                                   # the modification command -- including when every flow the
-                                   # request named is refused. Default: refuse none
+                                   # response's failed-flow list with cause
+                                   # radio-resources-not-available and the rest are admitted,
+                                   # which is a partial rejection. The session itself still
+                                   # succeeds, so the UE is still given the modification
+                                   # command -- including when every flow the request named is
+                                   # refused, which a conformant gNB would instead report as a
+                                   # failed session. Keeping it successful is what makes the
+                                   # core's "the response established nothing" path reachable.
+                                   # Default: refuse none
             modifyRejectAll: false # Refuse the modification for the whole PDU session rather
-                                   # than for named flows. The session goes in the failed list
+                                   # than for named flows. The session goes in the response's
+                                   # failed-session list, one level up from the flows above,
                                    # and the modification command is not passed to the UE, so
                                    # an NW-PDU-SESSION-MODIFICATION-PROCEDURE step never
                                    # completes and ends in perUserTimeout as a failure
