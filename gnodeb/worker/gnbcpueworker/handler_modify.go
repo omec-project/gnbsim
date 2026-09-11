@@ -88,8 +88,9 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 		if len(outcomes) == 0 {
 			// Nothing to decide: the request names no QoS flows to add or modify, so the session
 			// is reported as modified with an answer that names none. A request carrying only a
-			// QoS Flow to Release List arrives here too — this gNB does not act on releases, so
-			// a released flow stays in its own view of the session.
+			// QoS Flow to Release List arrives here too, its releases already applied — the
+			// response has no list to report them in, and withdrawing a flow is a modification
+			// that succeeded.
 			gnbue.Log.Infoln("modification for PDU session", pduSessID,
 				"names no QoS flows to add or modify")
 		}
@@ -169,10 +170,27 @@ func radioResourcesNotAvailable() ngapType.Cause {
 //
 // A refused flow is still recorded as refused rather than skipped: the answer has to name it, or
 // the core cannot tell the difference between a flow the radio would not admit and one the request
-// never mentioned.
+// never mentioned. A released flow is not reported at all -- the response has no list for it --
+// but it is dropped from the gNB's view of the session, which is what TS 38.413 clause 8.2.3.2
+// asks for when it has the NG-RAN node de-associate a released flow from its bearer.
 func decideQosFlows(gnbue *gnbctx.GnbCpUe, pduSessID int64,
 	transfer *ngapType.PDUSessionResourceModifyRequestTransfer,
 ) []ngapTestpacket.QosFlowOutcome {
+	upCtx, err := gnbue.GetGnbUpUe(pduSessID)
+	if err != nil {
+		gnbue.Log.Warnln("no user plane context for PDU session", pduSessID,
+			"so its QoS flows cannot be recorded:", err)
+	}
+
+	// Releases are applied before the add-or-modify list is read, because a request may carry
+	// nothing else: the SMF builds a release-only transfer when it withdraws a flow.
+	if upCtx != nil {
+		for _, qfi := range releasedQfis(transfer) {
+			gnbue.Log.Infoln("releasing QoS flow", qfi, "on PDU session", pduSessID)
+			upCtx.RemoveQosFlow(qfi)
+		}
+	}
+
 	var requested *ngapType.QosFlowAddOrModifyRequestList
 	for _, ie := range transfer.ProtocolIEs.List {
 		if ie.Id.Value == ngapType.ProtocolIEIDQosFlowAddOrModifyRequestList {
@@ -186,12 +204,6 @@ func decideQosFlows(gnbue *gnbctx.GnbCpUe, pduSessID int64,
 	refuse := make(map[int64]bool, len(gnbue.Gnb.ModifyRejectQfis))
 	for _, qfi := range gnbue.Gnb.ModifyRejectQfis {
 		refuse[qfi] = true
-	}
-
-	upCtx, err := gnbue.GetGnbUpUe(pduSessID)
-	if err != nil {
-		gnbue.Log.Warnln("no user plane context for PDU session", pduSessID,
-			"so the admitted flows cannot be recorded:", err)
 	}
 
 	outcomes := make([]ngapTestpacket.QosFlowOutcome, 0, len(requested.List))
@@ -226,4 +238,18 @@ func qosParamsOrZero(p *ngapType.QosFlowLevelQosParameters) ngapType.QosFlowLeve
 		return ngapType.QosFlowLevelQosParameters{}
 	}
 	return *p
+}
+
+// releasedQfis returns the QoS flows the request asks the radio to release.
+func releasedQfis(transfer *ngapType.PDUSessionResourceModifyRequestTransfer) []int64 {
+	var qfis []int64
+	for _, ie := range transfer.ProtocolIEs.List {
+		if ie.Id.Value != ngapType.ProtocolIEIDQosFlowToReleaseList || ie.Value.QosFlowToReleaseList == nil {
+			continue
+		}
+		for _, item := range ie.Value.QosFlowToReleaseList.List {
+			qfis = append(qfis, item.QosFlowIdentifier.Value)
+		}
+	}
+	return qfis
 }

@@ -32,7 +32,7 @@ func TestQosFlowsConcurrentAccess(t *testing.T) {
 
 	const iterations = 1000
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(4)
 
 	go func() {
 		defer wg.Done()
@@ -54,8 +54,38 @@ func TestQosFlowsConcurrentAccess(t *testing.T) {
 			ue.GetQosFlow(int64(i % 8))
 		}
 	}()
+	go func() {
+		defer wg.Done()
+		for i := range iterations {
+			ue.RemoveQosFlow(int64(i % 8))
+		}
+	}()
 
 	wg.Wait()
+}
+
+// TestRemoveQosFlow covers what a modification carrying a QoS Flow to Release List has to leave
+// behind: a flow the core has withdrawn must stop being offered to the uplink path, or the gNB
+// goes on stamping a QFI the user plane has no rule for.
+func TestRemoveQosFlow(t *testing.T) {
+	ue := &GnbUpUe{
+		QosFlows: make(map[int64]*ngapType.QosFlowSetupRequestItem),
+		Log:      logger.GNodeBLog,
+	}
+	ue.AddQosFlow(2, &ngapType.QosFlowSetupRequestItem{})
+	ue.AddQosFlow(3, &ngapType.QosFlowSetupRequestItem{})
+
+	ue.RemoveQosFlow(2)
+
+	if got := ue.GetQosFlow(2); got != nil {
+		t.Error("GetQosFlow(2) still returns a flow the core released")
+	}
+	if got := ue.GetQosFlow(3); got == nil {
+		t.Error("GetQosFlow(3) returns nothing: releasing one flow removed another")
+	}
+	if got := ue.AnyQfi(); got != 3 {
+		t.Errorf("AnyQfi() = %d, want 3: the released flow must not be offered to the uplink", got)
+	}
 }
 
 // TestAnyQfiWithoutFlows pins the answer for a session that has no recorded flow, which is what

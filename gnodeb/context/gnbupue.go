@@ -19,7 +19,8 @@ type GnbUpUe struct {
 	// GnbUpUe reads up link data packets from UE on this channel
 	ReadUlChan chan common.InterfaceMessage
 	Log        *zap.SugaredLogger
-	// QosFlows is reached through AddQosFlow, GetQosFlow and AnyQfi, which hold qosFlowsMu.
+	// QosFlows is reached through AddQosFlow, RemoveQosFlow, GetQosFlow and AnyQfi, which hold
+	// qosFlowsMu.
 	// The control plane records an admitted flow on its own goroutine, and from the moment a
 	// PDU session resource modify request can arrive that is concurrent with this session's
 	// user plane worker reading the map for every uplink packet.
@@ -74,6 +75,17 @@ func (ue *GnbUpUe) AddQosFlow(qfi int64, qosFlow *ngapType.QosFlowSetupRequestIt
 	ue.qosFlowsMu.Lock()
 	defer ue.qosFlowsMu.Unlock()
 	ue.QosFlows[qfi] = qosFlow
+}
+
+// RemoveQosFlow drops a QoS flow the core has released from this session's view.
+//
+// Keeping it would leave the gNB serving a flow the network has withdrawn, and AnyQfi would go on
+// offering its QFI to the uplink path after the user plane has stopped expecting it.
+func (ue *GnbUpUe) RemoveQosFlow(qfi int64) {
+	ue.Log.Infoln("removing QosFlowItem corresponding to QFI:", qfi)
+	ue.qosFlowsMu.Lock()
+	defer ue.qosFlowsMu.Unlock()
+	delete(ue.QosFlows, qfi)
 }
 
 // AnyQfi returns one of the QFIs recorded for this session, or 0 if none is.
