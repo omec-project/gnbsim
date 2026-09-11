@@ -48,3 +48,36 @@ func TestHandleServiceAcceptEventReportsProcedurePass(t *testing.T) {
 		t.Fatal("expected procedure pass message")
 	}
 }
+
+// TestProcedureWithNoHandlerFailsImmediately covers the configuration mistake the default branch
+// exists to surface: a procedure registered in procedures.go with no case in HandleProcedure.
+//
+// Logging alone is not enough. The profile is sitting in a select waiting for a result, so a
+// procedure that starts and sends nothing is indistinguishable from a network that never answered
+// -- the run waits out perUserTimeout and then reports "profile timeout", which is the wrong
+// explanation arriving a minute late. Failing here names the cause while the UE is still on it.
+func TestProcedureWithNoHandlerFailsImmediately(t *testing.T) {
+	profileChan := make(chan *common.ProfileMessage, 1)
+	ue := &simuectx.SimUe{
+		Supi:             "imsi-208930100007487",
+		Log:              zap.NewNop().Sugar(),
+		WriteProfileChan: profileChan,
+		// CUSTOM_PROCEDURE stands in for any procedure added to procedures.go without a case
+		// in HandleProcedure. It has none, and is not one a profile runs directly.
+		Procedure: common.CUSTOM_PROCEDURE,
+	}
+
+	HandleProcedure(ue)
+
+	select {
+	case msg := <-profileChan:
+		if msg.Event != common.PROC_FAIL_EVENT {
+			t.Fatalf("profile was told %v, want %v", msg.Event, common.PROC_FAIL_EVENT)
+		}
+		if msg.Error == nil {
+			t.Error("the failure carries no error, so the run cannot say what went wrong")
+		}
+	default:
+		t.Fatal("nothing was reported to the profile: the procedure fails by timeout, which is the silence this branch exists to end")
+	}
+}

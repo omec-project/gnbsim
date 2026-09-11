@@ -650,8 +650,14 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		// A procedure registered in procedures.go with no case here starts, logs that it started,
 		// and then does nothing — the UE never sends anything and the silence looks like the
 		// network failing to answer rather than the UE failing to ask. That cost real time once.
-		ue.Log.Errorf("no handler for procedure %v: it will not start, and nothing will be sent",
+		//
+		// It fails the procedure rather than only logging, because logging alone leaves the
+		// profile waiting out perUserTimeout and reporting "profile timeout": the same silence
+		// this branch exists to end, arriving a minute later with the wrong explanation.
+		err := fmt.Errorf("no handler for procedure %v: it will not start, and nothing will be sent",
 			ue.Procedure)
+		ue.Log.Errorln(err)
+		SendToProfile(ue, common.PROC_FAIL_EVENT, err)
 	}
 }
 
