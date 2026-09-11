@@ -43,7 +43,7 @@ func TestQosFlowsConcurrentAccess(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		for range iterations {
-			if qfi := ue.AnyQfi(); qfi < 0 {
+			if qfi, _ := ue.AnyQfi(); qfi < 0 {
 				t.Errorf("AnyQfi returned %d", qfi)
 			}
 		}
@@ -83,19 +83,28 @@ func TestRemoveQosFlow(t *testing.T) {
 	if got := ue.GetQosFlow(3); got == nil {
 		t.Error("GetQosFlow(3) returns nothing: releasing one flow removed another")
 	}
-	if got := ue.AnyQfi(); got != 3 {
-		t.Errorf("AnyQfi() = %d, want 3: the released flow must not be offered to the uplink", got)
+	if got, ok := ue.AnyQfi(); got != 3 || !ok {
+		t.Errorf("AnyQfi() = %d, %v, want 3, true: the released flow must not be offered to the uplink",
+			got, ok)
 	}
 }
 
-// TestAnyQfiWithoutFlows pins the answer for a session that has no recorded flow, which is what
-// the uplink path saw when it ranged the map itself.
+// TestAnyQfiWithoutFlows covers the session a modification can now empty: releasing the last flow
+// leaves nothing to stamp an uplink packet with, and the range this replaced could not say so --
+// it returned QFI 0, which is a real QFI, so the uplink path went on sending packets marked with a
+// flow the session does not have.
 func TestAnyQfiWithoutFlows(t *testing.T) {
 	ue := &GnbUpUe{
 		QosFlows: make(map[int64]*ngapType.QosFlowSetupRequestItem),
 		Log:      logger.GNodeBLog,
 	}
-	if qfi := ue.AnyQfi(); qfi != 0 {
-		t.Errorf("AnyQfi() = %d, want 0 for a session with no flows", qfi)
+	ue.AddQosFlow(0, &ngapType.QosFlowSetupRequestItem{})
+	if qfi, ok := ue.AnyQfi(); qfi != 0 || !ok {
+		t.Errorf("AnyQfi() = %d, %v, want 0, true: QFI 0 is a flow like any other", qfi, ok)
+	}
+
+	ue.RemoveQosFlow(0)
+	if qfi, ok := ue.AnyQfi(); ok {
+		t.Errorf("AnyQfi() = %d, %v, want 0, false once the last flow is released", qfi, ok)
 	}
 }

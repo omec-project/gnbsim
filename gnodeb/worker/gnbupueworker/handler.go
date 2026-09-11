@@ -21,7 +21,16 @@ func HandleUlMessage(gnbue *gnbctx.GnbUpUe, msg common.InterfaceMessage) (err er
 		return nil
 	}
 
-	qfi := gnbue.AnyQfi()
+	// A session with no admitted QoS flow has nothing to stamp the packet with. Sending it
+	// anyway marks it QFI 0, which is a QFI the UPF has no rule for once the network has
+	// withdrawn the session's flows -- the packet is lost either way, but the gNB claiming a
+	// flow it does not have hides why.
+	qfi, ok := gnbue.AnyQfi()
+	if !ok {
+		return fmt.Errorf("no QoS flow on PDU session %v: dropping the uplink packet",
+			gnbue.PduSessId)
+	}
+
 	userDataMsg := msg.(*common.UserDataMessage)
 	encodedMsg, err := test.BuildGpduMessage(userDataMsg.Payload, gnbue.UlTeid, uint8(qfi))
 	if err != nil {

@@ -88,17 +88,21 @@ func (ue *GnbUpUe) RemoveQosFlow(qfi int64) {
 	delete(ue.QosFlows, qfi)
 }
 
-// AnyQfi returns one of the QFIs recorded for this session, or 0 if none is.
+// AnyQfi returns one of the QFIs recorded for this session, and whether there was one.
 //
 // The uplink path needs a QFI to stamp on the GTP-U header and any of the session's flows will
 // do. It is an accessor rather than a range at the call site because the control plane can add a
 // flow while that range runs: the network starts a modification whenever it decides to, which
 // includes the middle of a data transfer.
-func (ue *GnbUpUe) AnyQfi() int64 {
+//
+// The second return value is what distinguishes a session whose only flow is QFI 0 from one that
+// has no flow at all -- which a modification releasing the last flow now produces, and which the
+// range this replaced reported as QFI 0 either way.
+func (ue *GnbUpUe) AnyQfi() (int64, bool) {
 	ue.qosFlowsMu.RLock()
 	defer ue.qosFlowsMu.RUnlock()
 	for qfi := range ue.QosFlows {
-		return qfi
+		return qfi, true
 	}
-	return 0
+	return 0, false
 }
