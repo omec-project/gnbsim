@@ -633,7 +633,7 @@ func forwardDlNasToSimUe(ue *realuectx.RealUe, m *common.UeMessage, msgType uint
 	}
 
 	// Simply notify SimUe about the received nas message. Later SimUe will
-	// asynchrously send next event to RealUE informing about what to do with
+	// asynchronously send next event to RealUE informing about what to do with
 	// the received NAS message
 	SendToSimUe(ue, m)
 	return nil
