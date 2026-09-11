@@ -228,6 +228,25 @@ func TestModifySessionLeavesTheSessionAloneWhenItFails(t *testing.T) {
 	}
 }
 
+// TestModifySessionFailsASessionItHoldsNoContextFor covers a request naming a session this gNB is
+// not serving. Answering "admitted" would promise the core flows on a bearer that does not exist,
+// and the UE would be told its QoS changed by a radio that never heard of the session.
+func TestModifySessionFailsASessionItHoldsNoContextFor(t *testing.T) {
+	gnbue := &gnbctx.GnbCpUe{Gnb: &gnbctx.GNodeB{}, Log: logger.GNodeBLog}
+
+	encoded, cause := modifySession(gnbue, modifyItem(t, addOrModifyTransfer(1)))
+	if cause == nil {
+		t.Fatal("a session with no user plane context was reported as modified")
+	}
+	if encoded != nil {
+		t.Error("a failed session carries a response transfer")
+	}
+	if cause.RadioNetwork == nil ||
+		cause.RadioNetwork.Value != ngapType.CauseRadioNetworkPresentUnknownPDUSessionID {
+		t.Errorf("cause = %v, want radio network unknown-PDU-session-ID", cause.RadioNetwork)
+	}
+}
+
 // TestDecideQosFlowsChangesNothing is the same invariant one level down, where it is enforced:
 // deciding is separate from applying, so a decision can be discarded if the answer that reports it
 // cannot be encoded.

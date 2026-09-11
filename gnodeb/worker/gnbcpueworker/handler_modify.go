@@ -78,10 +78,11 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 	// The NAS container goes to the UE only for a session reported as modified. That is a decision
 	// about the session, not about its flows.
 	//
-	// A session the gNB failed as a whole — refused by modifyRejectAll, or one whose transfer would
-	// not decode or encode — has had nothing changed at the radio, so telling the UE its QoS
-	// changed would leave the UE applying parameters that do not exist: the same divergence the
-	// core's realignment procedure exists to repair, manufactured by the gNB itself.
+	// A session the gNB failed as a whole — refused by modifyRejectAll, one it holds no context
+	// for, or one whose transfer would not decode or encode — has had nothing changed at the
+	// radio, so telling the UE its QoS changed would leave the UE applying parameters that do not
+	// exist: the same divergence the core's realignment procedure exists to repair, manufactured
+	// by the gNB itself.
 	//
 	// TS 38.413 clause 8.2.3.2 ties the two together: the NAS-PDU is passed to the UE "only if at
 	// least one of the requests included in the PDU Session Resource Modify Request Transfer IE is
@@ -156,10 +157,15 @@ func modifySession(gnbue *gnbctx.GnbCpUe, item *ngapType.PDUSessionResourceModif
 		return nil, causePtr(radioResourcesNotAvailable())
 	}
 
+	// The session has to be one this gNB is serving. Without a user plane context there is no
+	// bearer to admit a flow onto, and answering "admitted" would promise the core a radio
+	// resource that does not exist — the session would carry flows at the SMF that the gNB
+	// cannot serve, and the UE would be told its QoS changed. TS 38.413 has the cause for this.
 	upCtx, err := gnbue.GetGnbUpUe(pduSessID)
 	if err != nil {
-		gnbue.Log.Warnln("no user plane context for PDU session", pduSessID,
-			"so its QoS flows cannot be recorded:", err)
+		gnbue.Log.Errorln("no user plane context for PDU session", pduSessID,
+			"so the modification cannot be admitted:", err)
+		return nil, causePtr(unknownPduSessionID())
 	}
 
 	plan := decideQosFlows(gnbue, pduSessID, &transfer)
@@ -178,9 +184,7 @@ func modifySession(gnbue *gnbctx.GnbCpUe, item *ngapType.PDUSessionResourceModif
 		return nil, causePtr(radioResourcesNotAvailable())
 	}
 
-	if upCtx != nil {
-		plan.apply(upCtx)
-	}
+	plan.apply(upCtx)
 	return encoded, nil
 }
 
@@ -195,6 +199,16 @@ func radioResourcesNotAvailable() ngapType.Cause {
 	cause.Present = ngapType.CausePresentRadioNetwork
 	cause.RadioNetwork = &ngapType.CauseRadioNetwork{
 		Value: ngapType.CauseRadioNetworkPresentRadioResourcesNotAvailable,
+	}
+	return cause
+}
+
+// unknownPduSessionID is the cause for a request naming a session this gNB is not serving.
+func unknownPduSessionID() ngapType.Cause {
+	cause := ngapType.Cause{}
+	cause.Present = ngapType.CausePresentRadioNetwork
+	cause.RadioNetwork = &ngapType.CauseRadioNetwork{
+		Value: ngapType.CauseRadioNetworkPresentUnknownPDUSessionID,
 	}
 	return cause
 }
