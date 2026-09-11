@@ -171,10 +171,10 @@ SPDX-License-Identifier: Apache-2.0
                                    # which is a partial rejection. The session itself still
                                    # succeeds, so the UE is still given the modification
                                    # command -- including when every flow the request named is
-                                   # refused, which a conformant gNB would instead report as a
-                                   # failed session. Keeping it successful is what makes the
-                                   # core's "the response established nothing" path reachable.
-                                   # Default: refuse none
+                                   # refused, since the session AMBR carried in the same
+                                   # request succeeds whatever happens to the flows. That is
+                                   # how the core's "the response established nothing"
+                                   # handling is reached. Default: refuse none
             modifyRejectAll: false # Refuse the modification for the whole PDU session rather
                                    # than for named flows. The session goes in the response's
                                    # failed-session list, one level up from the flows above,

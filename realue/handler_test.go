@@ -148,10 +148,10 @@ func TestRejectWithMatchingPtiReachesSimUe(t *testing.T) {
 	}
 }
 
-// TestRejectWithNothingOutstandingNeverReachesSimUe covers the reject that matches a transaction
-// which is already over. The first reject clears the outstanding PTI, so a retransmission of it
-// arrives with nothing to match -- and the old guard, which only compared PTIs when one was
-// outstanding, let it through as a pass for whichever procedure the profile had moved on to.
+// TestRejectWithNothingOutstandingNeverReachesSimUe covers the reject that answers a transaction
+// which is already over. The first reject clears the outstanding PTI, so a second one arrives
+// with nothing to match -- and the old guard, which only compared PTIs when one was outstanding,
+// let it through as a pass for whichever procedure the profile had moved on to.
 func TestRejectWithNothingOutstandingNeverReachesSimUe(t *testing.T) {
 	ue, simUeChan := newUeWithOutstandingRequest(0)
 

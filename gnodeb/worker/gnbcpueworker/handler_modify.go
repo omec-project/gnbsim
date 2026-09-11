@@ -117,11 +117,14 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 	// successful (i.e. the PDU session is included in the PDU Session Resource Modify Response
 	// Item IE ...)" — which is this membership test.
 	//
-	// Refusing flows is not that case here, and that is a deliberate departure worth knowing
-	// about. A modified session gets the container even when every flow the request named was
-	// refused, so the core sees a response that established nothing while the UE has the command.
-	// A conformant gNB would have failed the session instead; keeping it successful is what makes
-	// that core path reachable from a simulator, and docs/config.md says so at modifyRejectQfis.
+	// Note what that condition is not: it is not "at least one QoS flow was admitted". The SMF
+	// sends a session AMBR in the same transfer as the flow list, and that request succeeds
+	// whatever the radio decides about the flows — so refusing every flow still leaves the
+	// session successfully modified, and the command still goes to the UE. This gNB reaches the
+	// same answer by a blunter route: any transfer it could decode leaves the session in the
+	// modify list, since it evaluates the flow list and nothing else. A transfer carrying only an
+	// add-or-modify list whose flows were all refused would therefore be reported as successful
+	// where a stricter gNB would fail the session. No core in this stack sends that shape.
 	var nasPdus common.NasPduList
 	for pduSessID, nas := range pendingNas {
 		if _, wasModified := modified[pduSessID]; !wasModified {

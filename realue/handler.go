@@ -409,9 +409,11 @@ func HandlePduSessModificationRejectEvent(ue *realuectx.RealUe,
 	// ran next.
 	//
 	// Each of the three conditions fails on its own. A reject for a session the UE does not hold
-	// answers nothing. A reject arriving with no request outstanding answers nothing either --
-	// which is what a retransmitted one looks like, since the first cleared the transaction. And
-	// a reject carrying another PTI belongs to a transaction that is not this one.
+	// answers nothing. A reject arriving with no request outstanding answers nothing either: the
+	// first answer closed the transaction, so a second one is a core answering twice rather than
+	// any retransmission TS 24.501 defines -- the only timer in this procedure is the UE's own
+	// T3581 on the request, which this UE does not run. And a reject carrying another PTI belongs
+	// to a transaction that is not this one.
 	pduSess, sessErr := ue.GetPduSession(int64(pduSessId))
 	if sessErr != nil {
 		return fmt.Errorf("reject names PDU session %d, which this UE does not hold: %v",
