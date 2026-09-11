@@ -77,7 +77,10 @@ func newRejectMessage(pduSessID, pti uint8) *common.UeMessage {
 	return m
 }
 
-func newUeWithOutstandingRequest(pduSessID int64, outstandingPTI uint8) (*realuectx.RealUe, chan common.InterfaceMessage) {
+// pduSessID is the session the simulator establishes, and the one every case here drives.
+const pduSessID = 10
+
+func newUeWithOutstandingRequest(outstandingPTI uint8) (*realuectx.RealUe, chan common.InterfaceMessage) {
 	simUeChan := make(chan common.InterfaceMessage, 1)
 	ue := &realuectx.RealUe{
 		Supi:           "imsi-208930100007487",
@@ -100,8 +103,7 @@ func newUeWithOutstandingRequest(pduSessID int64, outstandingPTI uint8) (*realue
 // Reordering forwardDlNasToSimUe to send before it checks fails this test, which is the shape of
 // the defect it exists to prevent.
 func TestRejectWithWrongPtiNeverReachesSimUe(t *testing.T) {
-	const pduSessID = 10
-	ue, simUeChan := newUeWithOutstandingRequest(pduSessID, 7)
+	ue, simUeChan := newUeWithOutstandingRequest(7)
 
 	err := forwardDlNasToSimUe(ue, newRejectMessage(pduSessID, 9),
 		nas.MsgTypePDUSessionModificationReject)
@@ -124,8 +126,7 @@ func TestRejectWithWrongPtiNeverReachesSimUe(t *testing.T) {
 // TestRejectWithMatchingPtiReachesSimUe is the other half: a reject that does belong to the
 // UE's request must be reported, or the procedure would fail by timeout instead of passing.
 func TestRejectWithMatchingPtiReachesSimUe(t *testing.T) {
-	const pduSessID = 10
-	ue, simUeChan := newUeWithOutstandingRequest(pduSessID, 7)
+	ue, simUeChan := newUeWithOutstandingRequest(7)
 
 	err := forwardDlNasToSimUe(ue, newRejectMessage(pduSessID, 7),
 		nas.MsgTypePDUSessionModificationReject)
@@ -144,5 +145,50 @@ func TestRejectWithMatchingPtiReachesSimUe(t *testing.T) {
 
 	if got := ue.PduSessions[pduSessID].PendingPTI; got != 0 {
 		t.Errorf("outstanding PTI = %d, want 0: the request has been answered", got)
+	}
+}
+
+// TestRejectWithNothingOutstandingNeverReachesSimUe covers the reject that matches a transaction
+// which is already over. The first reject clears the outstanding PTI, so a retransmission of it
+// arrives with nothing to match -- and the old guard, which only compared PTIs when one was
+// outstanding, let it through as a pass for whichever procedure the profile had moved on to.
+func TestRejectWithNothingOutstandingNeverReachesSimUe(t *testing.T) {
+	ue, simUeChan := newUeWithOutstandingRequest(0)
+
+	err := forwardDlNasToSimUe(ue, newRejectMessage(pduSessID, 7),
+		nas.MsgTypePDUSessionModificationReject)
+	if err == nil {
+		t.Fatal("expected an error for a reject arriving with no request outstanding")
+	}
+
+	select {
+	case msg := <-simUeChan:
+		t.Fatalf("a reject answering nothing was reported to the SimUe as %v, which makes it a pass",
+			msg.GetEventType())
+	default:
+	}
+}
+
+// TestRejectForUnknownSessionNeverReachesSimUe covers a reject naming a PDU session this UE does
+// not hold. The old guard skipped the check entirely in that case -- the answer belongs to no
+// request the UE made, which is the same misattribution one place further out.
+func TestRejectForUnknownSessionNeverReachesSimUe(t *testing.T) {
+	ue, simUeChan := newUeWithOutstandingRequest(7)
+
+	err := forwardDlNasToSimUe(ue, newRejectMessage(pduSessID+1, 7),
+		nas.MsgTypePDUSessionModificationReject)
+	if err == nil {
+		t.Fatal("expected an error for a reject naming a session the UE does not hold")
+	}
+
+	select {
+	case msg := <-simUeChan:
+		t.Fatalf("a reject for an unknown session was reported to the SimUe as %v, which makes it a pass",
+			msg.GetEventType())
+	default:
+	}
+
+	if got := ue.PduSessions[pduSessID].PendingPTI; got != 7 {
+		t.Errorf("outstanding PTI = %d, want it left at 7: nothing has answered that request", got)
 	}
 }

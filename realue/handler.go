@@ -383,8 +383,9 @@ func resolveModificationRequestType(configured uint8, omit bool) uint8 {
 // modification.
 //
 // The refusal is the expected outcome, so this is not a failure path. What is checked is that the
-// answer belongs to the request: a reject carrying a different PTI cannot be matched to the
-// procedure the UE started, and a UE that accepted it anyway would clear the wrong procedure.
+// answer belongs to the request, and three things have to hold for that: the session has to be one
+// this UE holds, a request has to be outstanding on it, and the PTI has to be the one that request
+// used. A UE that accepted an answer failing any of them would clear the wrong procedure.
 func HandlePduSessModificationRejectEvent(ue *realuectx.RealUe,
 	intfcMsg common.InterfaceMessage,
 ) (err error) {
@@ -401,25 +402,37 @@ func HandlePduSessModificationRejectEvent(ue *realuectx.RealUe,
 	ue.Log.Infof("PDU session modification refused: session %d, PTI %d, 5GSM cause #%d",
 		pduSessId, pti, cause)
 
-	if pduSess, sessErr := ue.GetPduSession(int64(pduSessId)); sessErr == nil {
-		outstanding := pduSess.PendingPTI
-
-		// A reject that cannot be matched fails the procedure rather than passing it. It was
-		// only logged before, and the simulated UE reported PASS on the strength of a reject
-		// arriving at all -- so an answer belonging to some other transaction, or none, would
-		// have been recorded as the network refusing correctly, and any later trouble
-		// attributed to whatever ran next.
-		//
-		// The outstanding transaction is left in place in that case, because it is still
-		// outstanding: nothing has answered it. Clearing it would lose the identity the next
-		// answer has to be matched against.
-		if outstanding != 0 && pti != outstanding {
-			return fmt.Errorf("reject carries PTI %d but this UE's outstanding request used PTI %d; it cannot be matched to the procedure",
-				pti, outstanding)
-		}
-
-		pduSess.PendingPTI = 0
+	// A reject that cannot be matched fails the procedure rather than passing it. It was only
+	// logged before, and the simulated UE reported PASS on the strength of a reject arriving at
+	// all -- so an answer belonging to some other transaction, or to none, would have been
+	// recorded as the network refusing correctly, and any later trouble attributed to whatever
+	// ran next.
+	//
+	// Each of the three conditions fails on its own. A reject for a session the UE does not hold
+	// answers nothing. A reject arriving with no request outstanding answers nothing either --
+	// which is what a retransmitted one looks like, since the first cleared the transaction. And
+	// a reject carrying another PTI belongs to a transaction that is not this one.
+	pduSess, sessErr := ue.GetPduSession(int64(pduSessId))
+	if sessErr != nil {
+		return fmt.Errorf("reject names PDU session %d, which this UE does not hold: %v",
+			pduSessId, sessErr)
 	}
+
+	outstanding := pduSess.PendingPTI
+	if outstanding == 0 {
+		return fmt.Errorf("reject carries PTI %d for session %d, on which this UE has no outstanding modification request",
+			pti, pduSessId)
+	}
+
+	// An unmatched reject leaves the outstanding transaction in place, because it is still
+	// outstanding: nothing has answered it. Clearing it would lose the identity the next answer
+	// has to be matched against.
+	if pti != outstanding {
+		return fmt.Errorf("reject carries PTI %d but this UE's outstanding request used PTI %d; it cannot be matched to the procedure",
+			pti, outstanding)
+	}
+
+	pduSess.PendingPTI = 0
 
 	return nil
 }
@@ -622,9 +635,9 @@ func HandleDlInfoTransferEvent(ue *realuectx.RealUe,
 // The design is that the RealUe simply reports what arrived and the SimUe decides what to do with
 // it, asynchronously. That makes the SimUe the one that reports the procedure's verdict -- so a
 // check living on the RealUe side of that exchange runs after the verdict has already been sent,
-// and cannot change it. A modification reject is checked here for that reason: on a PTI that does
-// not match the UE's outstanding request the SimUe is never told, so no pass is reported and the
-// error becomes the procedure's result.
+// and cannot change it. A modification reject is checked here for that reason: a reject that
+// cannot be matched to the UE's outstanding request never reaches the SimUe, so no pass is
+// reported and the error becomes the procedure's result.
 func forwardDlNasToSimUe(ue *realuectx.RealUe, m *common.UeMessage, msgType uint8) error {
 	if msgType == nas.MsgTypePDUSessionModificationReject {
 		if err := HandlePduSessModificationRejectEvent(ue, m); err != nil {
