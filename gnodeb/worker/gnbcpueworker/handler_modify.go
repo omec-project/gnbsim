@@ -141,6 +141,25 @@ func modifySession(gnbue *gnbctx.GnbCpUe, item *ngapType.PDUSessionResourceModif
 ) ([]byte, *ngapType.Cause) {
 	pduSessID := item.PDUSessionID.Value
 
+	// The session has to be one this gNB is serving, and that is settled first. Without a user
+	// plane context there is no bearer to admit a flow onto, and answering "admitted" would
+	// promise the core a radio resource that does not exist — the session would carry flows at
+	// the SMF that the gNB cannot serve, and the UE would be told its QoS changed.
+	//
+	// It is decided ahead of the refusal and the decode because it is a fact about the request's
+	// target rather than about its contents: the PDU Session ID is on the item, not inside the
+	// transfer, so neither a configured refusal nor a transfer that will not decode changes the
+	// answer. Behind them, a session this gNB never heard of was reported as
+	// "radio resources not available", which tells the core to retry later for something that
+	// will never exist -- and the configured refusal is there to exercise a modification both
+	// sides hold being refused, not to describe a session that does not exist.
+	upCtx, err := gnbue.GetGnbUpUe(pduSessID)
+	if err != nil {
+		gnbue.Log.Errorln("no user plane context for PDU session", pduSessID,
+			"so the modification cannot be admitted:", err)
+		return nil, causePtr(unknownPduSessionID())
+	}
+
 	if gnbue.Gnb.ModifyRejectAll {
 		// The whole session is refused. TS 38.413 puts this in the failed list with a cause
 		// rather than in the modify list, and the core treats it as a delivery failure for
@@ -151,21 +170,10 @@ func modifySession(gnbue *gnbctx.GnbCpUe, item *ngapType.PDUSessionResourceModif
 	}
 
 	transfer := ngapType.PDUSessionResourceModifyRequestTransfer{}
-	if err := aper.UnmarshalWithParams(item.PDUSessionResourceModifyRequestTransfer,
+	if err = aper.UnmarshalWithParams(item.PDUSessionResourceModifyRequestTransfer,
 		&transfer, "valueExt"); err != nil {
 		gnbue.Log.Errorln("failed to decode the modify request transfer:", err)
 		return nil, causePtr(radioResourcesNotAvailable())
-	}
-
-	// The session has to be one this gNB is serving. Without a user plane context there is no
-	// bearer to admit a flow onto, and answering "admitted" would promise the core a radio
-	// resource that does not exist — the session would carry flows at the SMF that the gNB
-	// cannot serve, and the UE would be told its QoS changed. TS 38.413 has the cause for this.
-	upCtx, err := gnbue.GetGnbUpUe(pduSessID)
-	if err != nil {
-		gnbue.Log.Errorln("no user plane context for PDU session", pduSessID,
-			"so the modification cannot be admitted:", err)
-		return nil, causePtr(unknownPduSessionID())
 	}
 
 	plan := decideQosFlows(gnbue, pduSessID, &transfer)

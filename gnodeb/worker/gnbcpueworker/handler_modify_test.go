@@ -231,19 +231,59 @@ func TestModifySessionLeavesTheSessionAloneWhenItFails(t *testing.T) {
 // TestModifySessionFailsASessionItHoldsNoContextFor covers a request naming a session this gNB is
 // not serving. Answering "admitted" would promise the core flows on a bearer that does not exist,
 // and the UE would be told its QoS changed by a radio that never heard of the session.
+//
+// The answer is the same whatever else is wrong with the request, which is why the check comes
+// first. Behind the configured refusal, an unknown session was reported as "radio resources not
+// available" -- an answer that tells the core to retry later for a session that will never exist,
+// and one a profile driving modifyRejectAll would produce for every mistyped session id.
 func TestModifySessionFailsASessionItHoldsNoContextFor(t *testing.T) {
-	gnbue := &gnbctx.GnbCpUe{Gnb: &gnbctx.GNodeB{}, Log: logger.GNodeBLog}
+	tests := []struct {
+		gnb  *gnbctx.GNodeB
+		item func(t *testing.T) *ngapType.PDUSessionResourceModifyItemModReq
+		name string
+	}{
+		{
+			name: "an ordinary request",
+			gnb:  &gnbctx.GNodeB{},
+			item: func(t *testing.T) *ngapType.PDUSessionResourceModifyItemModReq {
+				return modifyItem(t, addOrModifyTransfer(1))
+			},
+		},
+		{
+			name: "with the whole modification refused by configuration",
+			gnb:  &gnbctx.GNodeB{ModifyRejectAll: true},
+			item: func(t *testing.T) *ngapType.PDUSessionResourceModifyItemModReq {
+				return modifyItem(t, addOrModifyTransfer(1))
+			},
+		},
+		{
+			name: "with a transfer that will not decode",
+			gnb:  &gnbctx.GNodeB{},
+			item: func(t *testing.T) *ngapType.PDUSessionResourceModifyItemModReq {
+				return &ngapType.PDUSessionResourceModifyItemModReq{
+					PDUSessionID:                            ngapType.PDUSessionID{Value: testPduSessID},
+					PDUSessionResourceModifyRequestTransfer: []byte{0x00, 0x00, 0x05},
+				}
+			},
+		},
+	}
 
-	encoded, cause := modifySession(gnbue, modifyItem(t, addOrModifyTransfer(1)))
-	if cause == nil {
-		t.Fatal("a session with no user plane context was reported as modified")
-	}
-	if encoded != nil {
-		t.Error("a failed session carries a response transfer")
-	}
-	if cause.RadioNetwork == nil ||
-		cause.RadioNetwork.Value != ngapType.CauseRadioNetworkPresentUnknownPDUSessionID {
-		t.Errorf("cause = %v, want radio network unknown-PDU-session-ID", cause.RadioNetwork)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			gnbue := &gnbctx.GnbCpUe{Gnb: tc.gnb, Log: logger.GNodeBLog}
+
+			encoded, cause := modifySession(gnbue, tc.item(t))
+			if cause == nil {
+				t.Fatal("a session with no user plane context was reported as modified")
+			}
+			if encoded != nil {
+				t.Error("a failed session carries a response transfer")
+			}
+			if cause.RadioNetwork == nil ||
+				cause.RadioNetwork.Value != ngapType.CauseRadioNetworkPresentUnknownPDUSessionID {
+				t.Errorf("cause = %v, want radio network unknown-PDU-session-ID", cause.RadioNetwork)
+			}
+		})
 	}
 }
 
