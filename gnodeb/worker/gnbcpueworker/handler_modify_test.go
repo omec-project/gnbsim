@@ -172,6 +172,130 @@ func TestModifySessionAppliesReleases(t *testing.T) {
 	}
 }
 
+// TestModifySessionFailsWhenNoRequestSucceeds covers TS 38.413 clause 8.2.3.2: a PDU session
+// appears in the modified list only if at least one request in its transfer succeeded. A transfer
+// whose only requests all failed -- whether refused by configuration or caught by the duplicate-
+// QFI check -- is reported failed instead, and the session is left exactly as it was.
+func TestModifySessionFailsWhenNoRequestSucceeds(t *testing.T) {
+	tests := []struct {
+		gnb       *gnbctx.GNodeB
+		transfer  *ngapType.PDUSessionResourceModifyRequestTransfer
+		name      string
+		wantCause aper.Enumerated
+	}{
+		{
+			name:      "the one flow named is refused",
+			gnb:       &gnbctx.GNodeB{ModifyRejectQfis: []int64{2}},
+			transfer:  addOrModifyTransfer(2),
+			wantCause: ngapType.CauseRadioNetworkPresentRadioResourcesNotAvailable,
+		},
+		{
+			name:      "the only flow named is repeated in the add-or-modify list",
+			gnb:       &gnbctx.GNodeB{},
+			transfer:  addOrModifyTransfer(2, 2),
+			wantCause: ngapType.CauseRadioNetworkPresentMultipleQosFlowIDInstances,
+		},
+		{
+			name:      "the only flow named is repeated in the release list",
+			gnb:       &gnbctx.GNodeB{},
+			transfer:  releaseTransfer(2, 2),
+			wantCause: ngapType.CauseRadioNetworkPresentMultipleQosFlowIDInstances,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			gnbue, upCtx := newCpUe(tc.gnb, 2)
+
+			encoded, cause := modifySession(gnbue, modifyItem(t, tc.transfer))
+			if cause == nil {
+				t.Fatal("the session was reported as modified, want failed")
+			}
+			if encoded != nil {
+				t.Error("a failed session carries a response transfer")
+			}
+			if cause.RadioNetwork == nil || cause.RadioNetwork.Value != tc.wantCause {
+				t.Errorf("cause = %v, want radio network %v", cause.RadioNetwork, tc.wantCause)
+			}
+			if upCtx.GetQosFlow(2) == nil {
+				t.Error("flow 2 is gone from the session; a failed session must change nothing")
+			}
+		})
+	}
+}
+
+// TestModifySessionFailsWithUnspecifiedWhenMultipleFlowsFailForDifferentReasons covers the
+// fallback cause: TS 38.413 gives no single cause for a session where every flow failed but not
+// for the same reason, so this gNB reports the whole session refused rather than pick one flow's
+// cause to stand for all of them.
+func TestModifySessionFailsWithUnspecifiedWhenMultipleFlowsFailForDifferentReasons(t *testing.T) {
+	gnbue, _ := newCpUe(&gnbctx.GNodeB{ModifyRejectQfis: []int64{2}}, 2, 3)
+
+	transfer := addOrModifyTransfer(2, 3, 3)
+
+	_, cause := modifySession(gnbue, modifyItem(t, transfer))
+	if cause == nil {
+		t.Fatal("the session was reported as modified, want failed")
+	}
+	if cause.RadioNetwork == nil ||
+		cause.RadioNetwork.Value != ngapType.CauseRadioNetworkPresentUnspecified {
+		t.Errorf("cause = %v, want unspecified radio network failure", cause.RadioNetwork)
+	}
+}
+
+// TestModifySessionSucceedsWhenAReleaseSucceedsDespiteEveryFlowFailing covers the other half of TS
+// 38.413 clause 8.2.3.2: a release is itself a request the transfer names, so its success keeps the
+// session modified even when every add-or-modify request in the same transfer failed.
+func TestModifySessionSucceedsWhenAReleaseSucceedsDespiteEveryFlowFailing(t *testing.T) {
+	gnbue, upCtx := newCpUe(&gnbctx.GNodeB{ModifyRejectQfis: []int64{2}}, 1)
+
+	transfer := addOrModifyTransfer(2)
+	transfer.ProtocolIEs.List = append(transfer.ProtocolIEs.List,
+		releaseTransfer(1).ProtocolIEs.List...)
+
+	encoded, cause := modifySession(gnbue, modifyItem(t, transfer))
+	if cause != nil {
+		t.Fatalf("the session was failed with cause %v, want it modified: the release succeeded",
+			cause.Present)
+	}
+	if len(encoded) == 0 {
+		t.Fatal("no response transfer was produced for a modified session")
+	}
+	if upCtx.GetQosFlow(1) != nil {
+		t.Error("flow 1 was not released despite the session being reported as modified")
+	}
+}
+
+// TestModifySessionFailsWhenAReleaseListQfiIsRepeated covers TS 38.413 clause 8.2.3.2: NGAP has no
+// QoS Flow Failed to Release List IE, so a repeated release-list QFI can only be made visible to
+// the core by failing the session as a whole -- even though an add-or-modify request elsewhere in
+// the same transfer succeeds, which would otherwise have kept the session modified.
+func TestModifySessionFailsWhenAReleaseListQfiIsRepeated(t *testing.T) {
+	gnbue, upCtx := newCpUe(&gnbctx.GNodeB{}, 5)
+
+	transfer := addOrModifyTransfer(1)
+	transfer.ProtocolIEs.List = append(transfer.ProtocolIEs.List,
+		releaseTransfer(5, 5).ProtocolIEs.List...)
+
+	encoded, cause := modifySession(gnbue, modifyItem(t, transfer))
+	if cause == nil {
+		t.Fatal("the session was reported as modified, want failed: QFI 5's repeated release has no other way to be reported")
+	}
+	if encoded != nil {
+		t.Error("a failed session carries a response transfer")
+	}
+	if cause.RadioNetwork == nil ||
+		cause.RadioNetwork.Value != ngapType.CauseRadioNetworkPresentMultipleQosFlowIDInstances {
+		t.Errorf("cause = %v, want multiple-QoS-flow-ID-instances", cause.RadioNetwork)
+	}
+	if upCtx.GetQosFlow(1) != nil {
+		t.Error("QFI 1 was admitted despite the session being failed")
+	}
+	if upCtx.GetQosFlow(5) == nil {
+		t.Error("QFI 5 was released despite the session being failed")
+	}
+}
+
 // TestModifySessionLeavesTheSessionAloneWhenItFails is the invariant behind deciding before
 // committing. A session reported as failed has its modification command withheld, so the core and
 // the UE both go on holding it at its previous parameters — a gNB that had already applied the
@@ -393,5 +517,241 @@ func TestModifySessionKeepsQosParametersAModificationOmits(t *testing.T) {
 	}
 	if arp := got.QosFlowLevelQosParameters.AllocationAndRetentionPriority.PriorityLevelARP.Value; arp != 7 {
 		t.Errorf("ARP priority = %d, want 7", arp)
+	}
+}
+
+// TestDuplicatePduSessionIds covers TS 38.413 clause 8.2.3.4: a PDU Session ID named more than
+// once has every occurrence failed, rather than the loop silently keeping whichever it saw last.
+func TestDuplicatePduSessionIds(t *testing.T) {
+	items := []ngapType.PDUSessionResourceModifyItemModReq{
+		{PDUSessionID: ngapType.PDUSessionID{Value: 10}},
+		{PDUSessionID: ngapType.PDUSessionID{Value: 11}},
+		{PDUSessionID: ngapType.PDUSessionID{Value: 10}},
+	}
+
+	got := duplicatePduSessionIds(items)
+	if !got[10] {
+		t.Error("PDU session 10 appears twice and must be reported as duplicated")
+	}
+	if got[11] {
+		t.Error("PDU session 11 appears once and must not be reported as duplicated")
+	}
+}
+
+// addOrModifyTransferWithItems is like addOrModifyTransfer but lets a test attach QoS parameters
+// to an item, which the GBR and delay-critical checks decide on.
+func addOrModifyTransferWithItems(items ...ngapType.QosFlowAddOrModifyRequestItem,
+) *ngapType.PDUSessionResourceModifyRequestTransfer {
+	transfer := &ngapType.PDUSessionResourceModifyRequestTransfer{}
+	transfer.ProtocolIEs.List = append(transfer.ProtocolIEs.List,
+		ngapType.PDUSessionResourceModifyRequestTransferIEs{
+			Id: ngapType.ProtocolIEID{Value: ngapType.ProtocolIEIDQosFlowAddOrModifyRequestList},
+			Value: ngapType.PDUSessionResourceModifyRequestTransferIEsValue{
+				Present:                       ngapType.PDUSessionResourceModifyRequestTransferIEsPresentQosFlowAddOrModifyRequestList,
+				QosFlowAddOrModifyRequestList: &ngapType.QosFlowAddOrModifyRequestList{List: items},
+			},
+		})
+	return transfer
+}
+
+// TestDecideQosFlowsFailsOverlappingQfiWithoutReleasingIt covers TS 38.413 clause 8.2.3.4: a QFI
+// named in both the add-or-modify and release lists is failed rather than admitted, and is left on
+// the session rather than released.
+func TestDecideQosFlowsFailsOverlappingQfiWithoutReleasingIt(t *testing.T) {
+	gnbue, upCtx := newCpUe(&gnbctx.GNodeB{}, 5)
+
+	transfer := addOrModifyTransfer(5, 6)
+	transfer.ProtocolIEs.List = append(transfer.ProtocolIEs.List,
+		releaseTransfer(5).ProtocolIEs.List...)
+
+	plan := decideQosFlows(gnbue, testPduSessID, transfer)
+
+	var failedFive, succeededSix bool
+	for _, o := range plan.outcomes {
+		switch o.QfiValue {
+		case 5:
+			if o.Succeeded {
+				t.Error("QFI 5 is named in both lists and must be reported as failed, not succeeded")
+			}
+			if o.Cause.RadioNetwork == nil ||
+				o.Cause.RadioNetwork.Value != ngapType.CauseRadioNetworkPresentMultipleQosFlowIDInstances {
+				t.Errorf("QFI 5 cause = %v, want multiple-QoS-flow-ID-instances", o.Cause.RadioNetwork)
+			}
+			failedFive = true
+		case 6:
+			succeededSix = o.Succeeded
+		}
+	}
+	if !failedFive {
+		t.Fatal("QFI 5 outcome is missing")
+	}
+	if !succeededSix {
+		t.Error("QFI 6, named only in the add-or-modify list, should still succeed")
+	}
+	for _, qfi := range plan.released {
+		if qfi == 5 {
+			t.Error("QFI 5 must not be released: it already exists and the conflict leaves it in place")
+		}
+	}
+
+	plan.apply(upCtx)
+	if upCtx.GetQosFlow(5) == nil {
+		t.Error("QFI 5 was released despite the conflict; it should have been left exactly as it was")
+	}
+}
+
+// TestDecideQosFlowsFailsRepeatedAddQfi covers TS 38.413 clause 8.2.3.4: a QFI named more than
+// once in the add-or-modify list is failed once, rather than admitted twice or reported twice.
+func TestDecideQosFlowsFailsRepeatedAddQfi(t *testing.T) {
+	gnbue, _ := newCpUe(&gnbctx.GNodeB{})
+
+	transfer := addOrModifyTransfer(5, 5, 6)
+	plan := decideQosFlows(gnbue, testPduSessID, transfer)
+
+	var failedFiveCount int
+	var succeededSix bool
+	for _, o := range plan.outcomes {
+		switch o.QfiValue {
+		case 5:
+			failedFiveCount++
+			if o.Succeeded {
+				t.Error("QFI 5 is named twice and must be reported as failed, not succeeded")
+			}
+			if o.Cause.RadioNetwork == nil ||
+				o.Cause.RadioNetwork.Value != ngapType.CauseRadioNetworkPresentMultipleQosFlowIDInstances {
+				t.Errorf("QFI 5 cause = %v, want multiple-QoS-flow-ID-instances", o.Cause.RadioNetwork)
+			}
+		case 6:
+			succeededSix = o.Succeeded
+		}
+	}
+	if failedFiveCount != 1 {
+		t.Fatalf("QFI 5 outcome count = %d, want exactly 1", failedFiveCount)
+	}
+	if !succeededSix {
+		t.Error("QFI 6, named once, should still succeed")
+	}
+	for _, flow := range plan.admitted {
+		if flow.qfi == 5 {
+			t.Error("QFI 5 must not be admitted: it is repeated in the add-or-modify list")
+		}
+	}
+}
+
+// TestDecideQosFlowsFailsRepeatedReleaseQfi covers TS 38.413 clause 8.2.3.4: a QFI named more than
+// once in the release list is failed once, rather than silently released twice. It is counted in
+// failedReleases rather than outcomes: NGAP has no QoS Flow Failed to Release List IE to encode it
+// into, and it was never named in the add-or-modify list either.
+func TestDecideQosFlowsFailsRepeatedReleaseQfi(t *testing.T) {
+	gnbue, _ := newCpUe(&gnbctx.GNodeB{}, 5)
+
+	transfer := releaseTransfer(5, 5)
+	plan := decideQosFlows(gnbue, testPduSessID, transfer)
+
+	if len(plan.outcomes) != 0 {
+		t.Errorf("outcomes = %+v, want none: a release-list failure has no add-or-modify IE to be encoded into",
+			plan.outcomes)
+	}
+	if len(plan.failedReleases) != 1 || plan.failedReleases[0] != 5 {
+		t.Errorf("failedReleases = %v, want [5]", plan.failedReleases)
+	}
+	for _, qfi := range plan.released {
+		if qfi == 5 {
+			t.Error("QFI 5 must not be released: it is repeated in the release list")
+		}
+	}
+}
+
+// TestInvalidQosParameters covers the three abnormal conditions TS 38.413 clause 8.2.3.4 requires
+// failing a QoS flow for: a GBR 5QI with no GBR QoS Flow Information, a non-GBR 5QI with one, and
+// delay critical with no Maximum Data Burst Volume.
+func TestInvalidQosParameters(t *testing.T) {
+	if _, invalid := invalidQosParameters(nil); invalid {
+		t.Error("a nil IE carries no parameters to check and must not be reported invalid")
+	}
+
+	gbrParams := &ngapType.QosFlowLevelQosParameters{}
+	gbrParams.QosCharacteristics.Present = ngapType.QosCharacteristicsPresentNonDynamic5QI
+	gbrParams.QosCharacteristics.NonDynamic5QI = &ngapType.NonDynamic5QIDescriptor{
+		FiveQI: ngapType.FiveQI{Value: 1}, // conversational voice: GBR
+	}
+	if _, invalid := invalidQosParameters(gbrParams); !invalid {
+		t.Error("a GBR 5QI without GBR QoS Flow Information must be reported invalid")
+	}
+	gbrParams.GBRQosInformation = &ngapType.GBRQosInformation{}
+	if _, invalid := invalidQosParameters(gbrParams); invalid {
+		t.Error("the same flow with GBR QoS Flow Information attached must not be reported invalid")
+	}
+
+	nonGbrParams := &ngapType.QosFlowLevelQosParameters{}
+	nonGbrParams.QosCharacteristics.Present = ngapType.QosCharacteristicsPresentNonDynamic5QI
+	nonGbrParams.QosCharacteristics.NonDynamic5QI = &ngapType.NonDynamic5QIDescriptor{
+		FiveQI: ngapType.FiveQI{Value: 9}, // non-GBR
+	}
+	if _, invalid := invalidQosParameters(nonGbrParams); invalid {
+		t.Error("a non-GBR 5QI needs no GBR QoS Flow Information")
+	}
+	nonGbrParams.GBRQosInformation = &ngapType.GBRQosInformation{}
+	if _, invalid := invalidQosParameters(nonGbrParams); !invalid {
+		t.Error("a non-GBR 5QI with GBR QoS Flow Information attached must be reported invalid")
+	}
+
+	// A dynamically assigned 5QI is used for the non-GBR resource type too (TS 23.501 subclause
+	// 5.7.1.3), so a dynamic descriptor that is not marked delay critical must not be treated as
+	// GBR on the choice discriminator alone.
+	nonGbrDynamicParams := &ngapType.QosFlowLevelQosParameters{}
+	nonGbrDynamicParams.QosCharacteristics.Present = ngapType.QosCharacteristicsPresentDynamic5QI
+	nonGbrDynamicParams.QosCharacteristics.Dynamic5QI = &ngapType.Dynamic5QIDescriptor{}
+	if _, invalid := invalidQosParameters(nonGbrDynamicParams); invalid {
+		t.Error("a dynamically assigned 5QI with no delay-critical marking needs no GBR QoS Flow Information")
+	}
+	// The converse check is standardized-5QI-only for the same reason: a dynamic descriptor's own
+	// GBR QoS Flow Information cannot be called wrong when nothing here says the flow is non-GBR.
+	nonGbrDynamicParams.GBRQosInformation = &ngapType.GBRQosInformation{}
+	if _, invalid := invalidQosParameters(nonGbrDynamicParams); invalid {
+		t.Error("a dynamically assigned 5QI with GBR QoS Flow Information attached must not be reported invalid")
+	}
+
+	delayCritical := &ngapType.QosFlowLevelQosParameters{}
+	delayCritical.QosCharacteristics.Present = ngapType.QosCharacteristicsPresentDynamic5QI
+	delayCritical.QosCharacteristics.Dynamic5QI = &ngapType.Dynamic5QIDescriptor{
+		DelayCritical: &ngapType.DelayCritical{Value: ngapType.DelayCriticalPresentDelayCritical},
+	}
+	delayCritical.GBRQosInformation = &ngapType.GBRQosInformation{} // satisfies the GBR check above
+	if _, invalid := invalidQosParameters(delayCritical); !invalid {
+		t.Error("delay critical without Maximum Data Burst Volume must be reported invalid")
+	}
+	delayCritical.QosCharacteristics.Dynamic5QI.MaximumDataBurstVolume = &ngapType.MaximumDataBurstVolume{}
+	if _, invalid := invalidQosParameters(delayCritical); invalid {
+		t.Error("the same flow with Maximum Data Burst Volume attached must not be reported invalid")
+	}
+}
+
+// TestDecideQosFlowsFailsGbrFlowMissingGbrQosInformation is TestInvalidQosParameters' first case
+// wired through decideQosFlows, pinning that the outcome carries the cause and admits nothing.
+func TestDecideQosFlowsFailsGbrFlowMissingGbrQosInformation(t *testing.T) {
+	gnbue, _ := newCpUe(&gnbctx.GNodeB{})
+
+	params := &ngapType.QosFlowLevelQosParameters{}
+	params.QosCharacteristics.Present = ngapType.QosCharacteristicsPresentNonDynamic5QI
+	params.QosCharacteristics.NonDynamic5QI = &ngapType.NonDynamic5QIDescriptor{
+		FiveQI: ngapType.FiveQI{Value: 1},
+	}
+	params.AllocationAndRetentionPriority.PriorityLevelARP.Value = 1
+	transfer := addOrModifyTransferWithItems(ngapType.QosFlowAddOrModifyRequestItem{
+		QosFlowIdentifier:         ngapType.QosFlowIdentifier{Value: 7},
+		QosFlowLevelQosParameters: params,
+	})
+
+	plan := decideQosFlows(gnbue, testPduSessID, transfer)
+	if len(plan.admitted) != 0 {
+		t.Fatal("a GBR flow with no GBR QoS Flow Information must not be admitted")
+	}
+	if len(plan.outcomes) != 1 || plan.outcomes[0].Succeeded {
+		t.Fatalf("outcomes = %+v, want one failed outcome", plan.outcomes)
+	}
+	if plan.outcomes[0].Cause.RadioNetwork == nil ||
+		plan.outcomes[0].Cause.RadioNetwork.Value != ngapType.CauseRadioNetworkPresentInvalidQosCombination {
+		t.Errorf("cause = %v, want invalid-QoS-combination", plan.outcomes[0].Cause.RadioNetwork)
 	}
 }

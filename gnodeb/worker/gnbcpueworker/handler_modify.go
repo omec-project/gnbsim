@@ -54,6 +54,11 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 		gnbue.Log.Warnln("PDU Session Resource Modify Request names no sessions; answering with an empty response")
 	}
 
+	// Named more than once, a session is failed rather than processed: TS 38.413 clause 8.2.3.4
+	// has the gNB report every repeated PDU Session ID IE as failed, and processing one occurrence
+	// while ignoring the other would apply whichever the loop happened to see last.
+	duplicated := duplicatePduSessionIds(items)
+
 	modified := make(map[int64][]byte)
 	failed := make(map[int64]ngapType.Cause)
 	// Keyed by session, and only sent for sessions the gNB reports as modified. See below.
@@ -62,6 +67,13 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 	for i := range items {
 		item := &items[i]
 		pduSessID := item.PDUSessionID.Value
+
+		if duplicated[pduSessID] {
+			gnbue.Log.Errorln("PDU session", pduSessID,
+				"is named more than once in the modify request; failing it")
+			failed[pduSessID] = multiplePduSessionIdInstances()
+			continue
+		}
 
 		if item.NASPDU != nil && item.NASPDU.Value != nil {
 			pendingNas[pduSessID] = item.NASPDU.Value
@@ -91,12 +103,10 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 	//
 	// Note what that condition is not: it is not "at least one QoS flow was admitted". The SMF
 	// sends a session AMBR in the same transfer as the flow list, and that request succeeds
-	// whatever the radio decides about the flows — so refusing every flow still leaves the
-	// session successfully modified, and the command still goes to the UE. This gNB reaches the
-	// same answer by a blunter route: any transfer it could decode leaves the session in the
-	// modify list, since it evaluates the flow list and nothing else. A transfer carrying only an
-	// add-or-modify list whose flows were all refused would therefore be reported as successful
-	// where a stricter gNB would fail the session. No core in this stack sends that shape.
+	// whatever the radio decides about the flows — so refusing every flow does not by itself fail
+	// the session. What does is modifySession finding no successful request anywhere in the
+	// transfer it evaluates -- no admitted or unchanged flow, and no release -- which is the
+	// membership test below by way of the cause it returns for that case.
 	var nasPdus common.NasPduList
 	for pduSessID, nas := range pendingNas {
 		if _, wasModified := modified[pduSessID]; !wasModified {
@@ -216,6 +226,12 @@ func modifySession(gnbue *gnbctx.GnbCpUe, item *ngapType.PDUSessionResourceModif
 			"names no QoS flows to add or modify")
 	}
 
+	if cause := sessionFailureCause(plan); cause != nil {
+		gnbue.Log.Errorln("failing PDU session", pduSessID,
+			"as a whole: none of the add-or-modify or release requests in its transfer succeeded")
+		return nil, cause
+	}
+
 	encoded, err := ngapTestpacket.BuildPDUSessionResourceModifyResponseTransfer(plan.outcomes)
 	if err != nil {
 		gnbue.Log.Errorln("failed to encode the modify response transfer:", err)
@@ -224,6 +240,67 @@ func modifySession(gnbue *gnbctx.GnbCpUe, item *ngapType.PDUSessionResourceModif
 
 	plan.apply(upCtx)
 	return encoded, nil
+}
+
+// sessionFailureCause reports the cause to fail a session with when TS 38.413 clause 8.2.3.2
+// requires it: when no request in its transfer succeeded, or when one did but the response format
+// has no way to report a different request's failure, which is the same as not reporting it at
+// all.
+//
+// A repeated release-list QFI is that second case, and is checked first because of it. NGAP has
+// no QoS Flow Failed to Release List IE (see qosFlowPlan), so a transfer accepted for plan.released
+// while quietly dropping plan.failedReleases would report itself modified with nothing to say
+// what went wrong -- the core would read every release it asked for, including the repeated one,
+// as having succeeded. Failing the session is the only way this gNB has to make the condition
+// visible at all, which is why it overrides what would otherwise be a successful release
+// elsewhere in the same transfer.
+//
+// Past that: a release is not reported as an outcome when it succeeds (see decideQosFlows), so its
+// success is read from plan.released rather than from plan.outcomes; an add-or-modify request is
+// read from its outcome. A transfer naming neither -- an empty one, or one carrying only a session
+// AMBR modification this gNB does not evaluate -- has nothing here to have failed it, so it is
+// left successful.
+func sessionFailureCause(plan qosFlowPlan) *ngapType.Cause {
+	if len(plan.failedReleases) > 0 {
+		cause := multipleQosFlowIdInstances()
+		return &cause
+	}
+	if len(plan.released) > 0 {
+		return nil
+	}
+	for _, o := range plan.outcomes {
+		if o.Succeeded {
+			return nil
+		}
+	}
+	if len(plan.outcomes) == 0 {
+		return nil
+	}
+	// Every outcome failed. A single flow's cause is reported as the session's; more than one,
+	// possibly for different reasons, has no single 3GPP cause naming all of them, so the
+	// fallback is the same unspecified radio network failure a request this gNB refuses outright
+	// reports.
+	if len(plan.outcomes) == 1 {
+		return &plan.outcomes[0].Cause
+	}
+	cause := unspecifiedRadioNetworkFailure()
+	return &cause
+}
+
+// duplicatePduSessionIds returns the PDU Session IDs that appear more than once among the
+// request's items. TS 38.413 clause 8.2.3.4 has every such session reported as failed rather than
+// processed under whichever occurrence the gNB happens to see last.
+func duplicatePduSessionIds(items []ngapType.PDUSessionResourceModifyItemModReq) map[int64]bool {
+	duplicated := make(map[int64]bool)
+	seen := make(map[int64]bool)
+	for i := range items {
+		id := items[i].PDUSessionID.Value
+		if seen[id] {
+			duplicated[id] = true
+		}
+		seen[id] = true
+	}
+	return duplicated
 }
 
 // causePtr distinguishes "this session failed, with this cause" from "it did not".
@@ -273,13 +350,54 @@ func unspecifiedRadioNetworkFailure() ngapType.Cause {
 	return cause
 }
 
+// multiplePduSessionIdInstances is the cause for a request naming the same PDU session more than
+// once, which TS 38.413 clause 8.2.3.4 requires failing.
+func multiplePduSessionIdInstances() ngapType.Cause {
+	cause := ngapType.Cause{}
+	cause.Present = ngapType.CausePresentRadioNetwork
+	cause.RadioNetwork = &ngapType.CauseRadioNetwork{
+		Value: ngapType.CauseRadioNetworkPresentMultiplePDUSessionIDInstances,
+	}
+	return cause
+}
+
+// multipleQosFlowIdInstances is the cause for a QoS flow named more than once in the same
+// request -- repeated within the add-or-modify list, repeated within the release list, or named
+// in both -- which TS 38.413 clause 8.2.3.4 requires failing without admitting or releasing the
+// flow.
+func multipleQosFlowIdInstances() ngapType.Cause {
+	cause := ngapType.Cause{}
+	cause.Present = ngapType.CausePresentRadioNetwork
+	cause.RadioNetwork = &ngapType.CauseRadioNetwork{
+		Value: ngapType.CauseRadioNetworkPresentMultipleQosFlowIDInstances,
+	}
+	return cause
+}
+
+// invalidQosCombination is the cause for a QoS Flow Level QoS Parameters IE whose fields TS 38.413
+// clause 8.2.3.4 requires to be present together but which the request omitted.
+func invalidQosCombination() ngapType.Cause {
+	cause := ngapType.Cause{}
+	cause.Present = ngapType.CausePresentRadioNetwork
+	cause.RadioNetwork = &ngapType.CauseRadioNetwork{
+		Value: ngapType.CauseRadioNetworkPresentInvalidQosCombination,
+	}
+	return cause
+}
+
 // qosFlowPlan is what the gNB has decided to do with a session's QoS flows: the per-flow outcomes
 // to report, and the changes to its own view of the session. The two are kept apart so the second
 // can wait until the first has encoded.
+//
+// failedReleases is kept apart from outcomes for the same reason: NGAP has no QoS Flow Failed to
+// Release List IE, so a release-list QFI failed for an abnormal condition has nothing to be
+// encoded into, and appending it to outcomes would report it as an add-or-modify failure it was
+// never a request for. It exists only to be counted, not encoded.
 type qosFlowPlan struct {
-	outcomes []ngapTestpacket.QosFlowOutcome
-	admitted []admittedQosFlow
-	released []int64
+	outcomes       []ngapTestpacket.QosFlowOutcome
+	admitted       []admittedQosFlow
+	released       []int64
+	failedReleases []int64
 }
 
 // admittedQosFlow is a flow to record on the session, under the identity it is recorded by.
@@ -343,9 +461,10 @@ func qosParamsFor(upCtx *gnbctx.GnbUpUe, flow admittedQosFlow) ngapType.QosFlowL
 func decideQosFlows(gnbue *gnbctx.GnbCpUe, pduSessID int64,
 	transfer *ngapType.PDUSessionResourceModifyRequestTransfer,
 ) qosFlowPlan {
-	plan := qosFlowPlan{released: releasedQfis(transfer)}
-	for _, qfi := range plan.released {
-		gnbue.Log.Infoln("releasing QoS flow", qfi, "on PDU session", pduSessID)
+	released := releasedQfis(transfer)
+	releaseCount := make(map[int64]int, len(released))
+	for _, qfi := range released {
+		releaseCount[qfi]++
 	}
 
 	var requested *ngapType.QosFlowAddOrModifyRequestList
@@ -354,36 +473,176 @@ func decideQosFlows(gnbue *gnbctx.GnbCpUe, pduSessID int64,
 			requested = ie.Value.QosFlowAddOrModifyRequestList
 		}
 	}
-	if requested == nil {
-		return plan
+	addCount := make(map[int64]int)
+	if requested != nil {
+		for _, item := range requested.List {
+			addCount[item.QosFlowIdentifier.Value]++
+		}
 	}
 
-	refuse := make(map[int64]bool, len(gnbue.Gnb.ModifyRejectQfis))
-	for _, qfi := range gnbue.Gnb.ModifyRejectQfis {
-		refuse[qfi] = true
+	// A QFI repeated within the add-or-modify list, repeated within the release list, or named in
+	// both is the multiple-QoS-flow-ID-instances abnormal condition TS 38.413 clause 8.2.3.4
+	// requires failing, rather than admitted or released under whichever occurrence the gNB
+	// happened to see, or admitted and released both.
+	multiInstance := func(qfi int64) bool {
+		return addCount[qfi] > 1 || releaseCount[qfi] > 1 || (addCount[qfi] > 0 && releaseCount[qfi] > 0)
 	}
 
-	plan.outcomes = make([]ngapTestpacket.QosFlowOutcome, 0, len(requested.List))
-	for _, item := range requested.List {
-		qfi := item.QosFlowIdentifier.Value
-		if refuse[qfi] {
-			gnbue.Log.Infoln("refusing QoS flow", qfi, "on PDU session", pduSessID, "as configured")
+	plan := qosFlowPlan{}
+	reported := make(map[int64]bool)
+	// The QFI is reported as a failed add-or-modify item only when the request named it there;
+	// named only in the release list, its failure has no IE to be encoded into (see qosFlowPlan),
+	// so it is only counted, and only logged here.
+	failMultiInstance := func(qfi int64) {
+		if reported[qfi] {
+			return
+		}
+		reported[qfi] = true
+		gnbue.Log.Errorln("QoS flow", qfi, "on PDU session", pduSessID,
+			"is named more than once across the add-or-modify and release lists; failing it and leaving it in place")
+		if addCount[qfi] > 0 {
 			plan.outcomes = append(plan.outcomes, ngapTestpacket.QosFlowOutcome{
-				QfiValue: qfi, Cause: radioResourcesNotAvailable(),
+				QfiValue: qfi, Cause: multipleQosFlowIdInstances(),
 			})
-			continue
+			return
+		}
+		plan.failedReleases = append(plan.failedReleases, qfi)
+	}
+
+	if requested != nil {
+		refuse := make(map[int64]bool, len(gnbue.Gnb.ModifyRejectQfis))
+		for _, qfi := range gnbue.Gnb.ModifyRejectQfis {
+			refuse[qfi] = true
 		}
 
-		// Admitted, so the gNB's own view of the session has to carry it. Recording only on
-		// establishment is what would let the gNB report a flow it is not actually serving.
-		plan.admitted = append(plan.admitted, admittedQosFlow{
-			qfi:    qfi,
-			params: item.QosFlowLevelQosParameters,
-		})
-		gnbue.Log.Infoln("admitted QoS flow", qfi, "on PDU session", pduSessID)
-		plan.outcomes = append(plan.outcomes, ngapTestpacket.QosFlowOutcome{QfiValue: qfi, Succeeded: true})
+		plan.outcomes = make([]ngapTestpacket.QosFlowOutcome, 0, len(requested.List))
+		for _, item := range requested.List {
+			qfi := item.QosFlowIdentifier.Value
+			if multiInstance(qfi) {
+				failMultiInstance(qfi)
+				continue
+			}
+
+			if refuse[qfi] {
+				gnbue.Log.Infoln("refusing QoS flow", qfi, "on PDU session", pduSessID, "as configured")
+				plan.outcomes = append(plan.outcomes, ngapTestpacket.QosFlowOutcome{
+					QfiValue: qfi, Cause: radioResourcesNotAvailable(),
+				})
+				continue
+			}
+
+			if reason, invalid := invalidQosParameters(item.QosFlowLevelQosParameters); invalid {
+				gnbue.Log.Errorln("refusing QoS flow", qfi, "on PDU session", pduSessID,
+					"because its QoS parameters are inconsistent:", reason)
+				plan.outcomes = append(plan.outcomes, ngapTestpacket.QosFlowOutcome{
+					QfiValue: qfi, Cause: invalidQosCombination(),
+				})
+				continue
+			}
+
+			// Admitted, so the gNB's own view of the session has to carry it. Recording only on
+			// establishment is what would let the gNB report a flow it is not actually serving.
+			plan.admitted = append(plan.admitted, admittedQosFlow{
+				qfi:    qfi,
+				params: item.QosFlowLevelQosParameters,
+			})
+			gnbue.Log.Infoln("admitted QoS flow", qfi, "on PDU session", pduSessID)
+			plan.outcomes = append(plan.outcomes, ngapTestpacket.QosFlowOutcome{QfiValue: qfi, Succeeded: true})
+		}
 	}
+
+	for _, qfi := range released {
+		if multiInstance(qfi) {
+			failMultiInstance(qfi)
+			continue
+		}
+		plan.released = append(plan.released, qfi)
+		gnbue.Log.Infoln("releasing QoS flow", qfi, "on PDU session", pduSessID)
+	}
+
 	return plan
+}
+
+// invalidQosParameters reports whether a QoS Flow Level QoS Parameters IE is internally
+// inconsistent in a way TS 38.413 clause 8.2.3.4 requires failing the flow for, and why.
+//
+// A nil IE carries no parameters to check: the flow is unchanged, which qosParamsFor already
+// handles, so it is never invalid here.
+func invalidQosParameters(params *ngapType.QosFlowLevelQosParameters) (string, bool) {
+	if params == nil {
+		return "", false
+	}
+	if requiresGbrQosInformation(params.QosCharacteristics) && params.GBRQosInformation == nil {
+		return "a GBR 5QI without GBR QoS Flow Information", true
+	}
+	if isNonGbrFiveQIWithGbrInformation(params) {
+		return "a non-GBR 5QI with GBR QoS Flow Information", true
+	}
+	if isDelayCriticalWithoutBurstVolume(params.QosCharacteristics) {
+		return "delay critical without Maximum Data Burst Volume", true
+	}
+	return "", false
+}
+
+// requiresGbrQosInformation reports whether the 5QI carried in a QoS Characteristics IE denotes
+// the GBR or delay-critical GBR resource type, either of which needs the GBR QoS Flow Information
+// IE alongside it.
+//
+// A dynamically assigned 5QI (TS 23.501 subclause 5.7.1.3) is used for the non-GBR, GBR, and
+// delay-critical GBR resource types alike, so the choice discriminator alone does not settle the
+// question the way it does for a standardized 5QI. The Delay Critical field is the one part of
+// the descriptor that does: set to "delay critical", it names the delay-critical GBR resource
+// type, which is GBR. Left unset or "non-delay-critical", the descriptor says nothing about
+// whether the flow is GBR, so this reports false rather than guessing -- the alternative rejects
+// valid non-GBR flows using a dynamically assigned 5QI with "invalid QoS combination".
+func requiresGbrQosInformation(qc ngapType.QosCharacteristics) bool {
+	switch qc.Present {
+	case ngapType.QosCharacteristicsPresentDynamic5QI:
+		return qc.Dynamic5QI != nil && qc.Dynamic5QI.DelayCritical != nil &&
+			qc.Dynamic5QI.DelayCritical.Value == ngapType.DelayCriticalPresentDelayCritical
+	case ngapType.QosCharacteristicsPresentNonDynamic5QI:
+		return qc.NonDynamic5QI != nil && isGbrFiveQI(qc.NonDynamic5QI.FiveQI.Value)
+	default:
+		return false
+	}
+}
+
+// isGbrFiveQI reports whether a standardized 5QI (TS 23.501 table 5.7.4-1) is one of the GBR or
+// delay-critical GBR values.
+func isGbrFiveQI(fiveQI int64) bool {
+	switch fiveQI {
+	case 1, 2, 3, 4, 65, 66, 67, 71, 72, 73, 74, 75, 76, // GBR
+		82, 83, 84, 85, 86, 87, 88, 89, 90: // delay-critical GBR
+		return true
+	default:
+		return false
+	}
+}
+
+// isNonGbrFiveQIWithGbrInformation reports whether a standardized 5QI known to be non-GBR (TS
+// 23.501 table 5.7.4-1) nonetheless carries the GBR QoS Flow Information IE, which TS 38.413
+// clause 8.2.3.4 treats as an invalid QoS combination the same way it treats the converse.
+//
+// A dynamically assigned 5QI is left out here for the reason requiresGbrQosInformation is: its
+// descriptor does not by itself say the flow is non-GBR, so there is no standardized fact to call
+// its GBR QoS Flow Information wrong for.
+func isNonGbrFiveQIWithGbrInformation(params *ngapType.QosFlowLevelQosParameters) bool {
+	qc := params.QosCharacteristics
+	return qc.Present == ngapType.QosCharacteristicsPresentNonDynamic5QI &&
+		qc.NonDynamic5QI != nil && !isGbrFiveQI(qc.NonDynamic5QI.FiveQI.Value) &&
+		params.GBRQosInformation != nil
+}
+
+// isDelayCriticalWithoutBurstVolume reports whether a dynamically assigned 5QI is marked delay
+// critical without the Maximum Data Burst Volume IE that TS 38.413 clause 8.2.3.4 requires
+// alongside it.
+func isDelayCriticalWithoutBurstVolume(qc ngapType.QosCharacteristics) bool {
+	if qc.Present != ngapType.QosCharacteristicsPresentDynamic5QI || qc.Dynamic5QI == nil {
+		return false
+	}
+	dc := qc.Dynamic5QI.DelayCritical
+	return dc != nil && dc.Value == ngapType.DelayCriticalPresentDelayCritical &&
+		qc.Dynamic5QI.MaximumDataBurstVolume == nil
 }
 
 // releasedQfis returns the QoS flows the request asks the radio to release.
