@@ -243,3 +243,51 @@ func TestPendingPtiIsRecordedOnlyWhenTheRequestWasSent(t *testing.T) {
 		}
 	})
 }
+
+// The collision case, from the UE's side. TS 24.501 subclause 6.3.2.6 b): a modification command
+// arriving during the UE's own procedure, with no procedure transaction identity assigned and
+// naming the session the UE asked about, has the UE abort its own procedure internally.
+//
+// Aborting it means forgetting the transaction, and that is the half worth testing: left
+// outstanding, a reject for the UE's request still matches when it arrives, and the SimUe reports
+// a pass for whatever procedure is running by then -- the network's, which the reject answers
+// nothing about.
+func TestNetworkCommandAbortsTheUesOwnModification(t *testing.T) {
+	ue, simUeChan := newUeWithOutstandingRequest(modificationRequestPTI)
+
+	nasMsg := nas.NewMessage()
+	nasMsg.GsmMessage = nas.NewGsmMessage()
+	nasMsg.PDUSessionModificationCommand = nasMessage.NewPDUSessionModificationCommand(nas.MsgTypePDUSessionModificationCommand)
+	nasMsg.PDUSessionModificationCommand.PDUSessionID.Octet = pduSessID
+	nasMsg.PDUSessionModificationCommand.PTI.Octet = 0
+
+	msg := &common.UeMessage{}
+	msg.Event = common.PDU_SESS_MOD_COMMAND_EVENT
+	msg.NasMsg = nasMsg
+
+	if err := HandlePduSessModificationCompleteEvent(ue, msg); err != nil {
+		t.Fatalf("answering the command returned: %v", err)
+	}
+
+	// Take the acknowledgement off the channel before the reject below: the SimUe channel holds
+	// one message, and leaving it full turns the failure this test is looking for into a deadlock
+	// rather than an assertion.
+	select {
+	case ack := <-simUeChan:
+		if ack.GetEventType() != common.PDU_SESS_MOD_COMPLETE_EVENT {
+			t.Fatalf("SimUe was told %v, want %v", ack.GetEventType(), common.PDU_SESS_MOD_COMPLETE_EVENT)
+		}
+	default:
+		t.Fatal("the command was not acknowledged")
+	}
+
+	if got := ue.PduSessions[pduSessID].PendingPTI; got != 0 {
+		t.Errorf("outstanding PTI = %d, want 0: the UE's own procedure is aborted by the collision", got)
+	}
+
+	// And with it forgotten, the reject that answers nothing can no longer be taken for an answer.
+	if err := forwardDlNasToSimUe(ue, newRejectMessage(pduSessID, modificationRequestPTI),
+		nas.MsgTypePDUSessionModificationReject); err == nil {
+		t.Error("a reject for the aborted request was accepted; it would pass the network's procedure")
+	}
+}

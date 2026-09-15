@@ -465,8 +465,24 @@ func HandlePduSessModificationCompleteEvent(ue *realuectx.RealUe,
 
 	// The session must exist. A command for one that does not is not something to answer with a
 	// complete — the network and the UE disagree about what exists, and confirming would hide it.
-	if _, sessErr := ue.GetPduSession(int64(pduSessId)); sessErr != nil {
+	pduSess, sessErr := ue.GetPduSession(int64(pduSessId))
+	if sessErr != nil {
 		return fmt.Errorf("modification command for an unknown PDU session %d: %v", pduSessId, sessErr)
+	}
+
+	// The collision case, and the UE's side of it. TS 24.501 subclause 6.3.2.6 b): a command
+	// arriving during the UE's own modification procedure, with no procedure transaction identity
+	// assigned and naming the session the UE asked about, has the UE "abort internally the
+	// UE-requested PDU session modification procedure" and proceed with the network's.
+	//
+	// Aborting it means forgetting the transaction. Left outstanding, a reject for the UE's
+	// request arriving afterwards still matches -- session held, request outstanding, PTI equal --
+	// and is reported as an answer, which the SimUe turns into a pass for whatever procedure is
+	// running by then. That is the network-requested one, which the reject has nothing to do with.
+	if pti == 0 && pduSess.PendingPTI != 0 {
+		ue.Log.Infof("network started a modification on session %d while this UE's request with PTI %d was outstanding: aborting the UE's procedure, as TS 24.501 6.3.2.6 requires",
+			pduSessId, pduSess.PendingPTI)
+		pduSess.PendingPTI = 0
 	}
 
 	if nasMsg.AuthorizedQosRules != nil {
