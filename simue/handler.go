@@ -554,7 +554,13 @@ func HandleQuitEvent(ue *simuectx.SimUe,
 	if ue.WriteGnbUeChan != nil {
 		SendToGnbUe(ue, msg)
 	}
-	SendToRealUe(ue, msg)
+	// Guarded like the channel above it, and for the reason this function itself creates: the
+	// line below nils the channel, so a second quit for the same UE would send on a nil channel
+	// and block its goroutine for good. Nothing reaches here twice today; the guard costs a line
+	// and the deadlock costs a hung worker with no log to say why.
+	if ue.WriteRealUeChan != nil {
+		SendToRealUe(ue, msg)
+	}
 	ue.WriteRealUeChan = nil
 	ue.WaitGrp.Wait()
 	ue.Log.Infoln("Sim UE terminated")
@@ -654,10 +660,20 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		// It fails the procedure rather than only logging, because logging alone leaves the
 		// profile waiting out perUserTimeout and reporting "profile timeout": the same silence
 		// this branch exists to end, arriving a minute later with the wrong explanation.
+		//
+		// The failure goes through HandleErrorEvent rather than straight to the profile, because
+		// reporting the result is only half of ending a procedure: the other half is the QUIT that
+		// stops this UE's workers and releases its bearer at the gNB. Reported without it, the
+		// profile moves on while the SimUe, the RealUe and the gNB context stay up.
 		err := fmt.Errorf("no handler for procedure %v: it will not start, and nothing will be sent",
 			ue.Procedure)
 		ue.Log.Errorln(err)
-		SendToProfile(ue, common.PROC_FAIL_EVENT, err)
+		errMsg := &common.UeMessage{}
+		errMsg.Event = common.ERROR_EVENT
+		errMsg.Error = err
+		if handleErr := HandleErrorEvent(ue, errMsg); handleErr != nil {
+			ue.Log.Errorln("failed to handle the error event:", handleErr)
+		}
 	}
 }
 
