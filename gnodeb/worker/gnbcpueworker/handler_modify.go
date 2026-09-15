@@ -107,6 +107,24 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 		nasPdus = append(nasPdus, nas)
 	}
 
+	// The NAS-PDU is optional on a modify item, so a session can be modified without the UE being
+	// told anything. The NGAP exchange completes, but a profile step waiting on the
+	// network-requested modification has only the modification command to finish on, and waits out
+	// perUserTimeout instead. Said per session rather than per request: a request naming two
+	// sessions where only one carries a NAS-PDU would otherwise say nothing about the other, which
+	// is the silence this exists to name.
+	for pduSessID := range modified {
+		if _, hasNas := pendingNas[pduSessID]; !hasNas {
+			gnbue.Log.Warnln("modification for PDU session", pduSessID,
+				"carries no NAS container: the UE is told nothing, so a profile step waiting for",
+				"the modification command will not complete on this request")
+		}
+	}
+	if len(nasPdus) > 0 {
+		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, nasPdus, msg.Id)
+		gnbue.Log.Debugln("sent the modification command to the UE")
+	}
+
 	responsePdu, err := ngapTestpacket.BuildPDUSessionResourceModifyResponse(gnbue.AmfUeNgapId,
 		gnbue.GnbUeNgapId, modified, failed)
 	if err != nil {
