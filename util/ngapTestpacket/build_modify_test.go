@@ -6,6 +6,7 @@ package ngapTestpacket
 import (
 	"testing"
 
+	"github.com/omec-project/ngap/v2"
 	"github.com/omec-project/ngap/v2/aper"
 	"github.com/omec-project/ngap/v2/ngapType"
 )
@@ -155,5 +156,23 @@ func TestModifyResponseCarriesIdentitiesAndBothSessionLists(t *testing.T) {
 	}
 	if !sawFailed {
 		t.Error("the failed session list is missing")
+	}
+
+	// The message has to encode, which is the whole reason this branch waited on the aper optional
+	// tags: a response omitting the DL and UL NG-U UP TNL Information -- what a QoS-only
+	// modification produces -- failed to encode at all against a codec that did not mark them
+	// optional, with "nil element in SEQUENCE type". Checking the structure alone would pass on
+	// that codec, since nothing in it is wrong; only the encoder sees the defect.
+	encoded, err := ngap.Encoder(pdu)
+	if err != nil {
+		t.Fatalf("the response this gNB built does not encode: %v", err)
+	}
+	decoded, err := ngap.Decoder(encoded)
+	if err != nil {
+		t.Fatalf("the encoded response does not decode: %v", err)
+	}
+	if decoded.SuccessfulOutcome == nil ||
+		decoded.SuccessfulOutcome.Value.PDUSessionResourceModify == nil {
+		t.Fatal("the decoded message is not a PDU Session Resource Modify Response")
 	}
 }
