@@ -395,3 +395,156 @@ func TestModifySessionKeepsQosParametersAModificationOmits(t *testing.T) {
 		t.Errorf("ARP priority = %d, want 7", arp)
 	}
 }
+
+// TestDuplicatePduSessionIds covers TS 38.413 clause 8.2.3.4: a PDU Session ID named more than
+// once has every occurrence failed, rather than the loop silently keeping whichever it saw last.
+func TestDuplicatePduSessionIds(t *testing.T) {
+	items := []ngapType.PDUSessionResourceModifyItemModReq{
+		{PDUSessionID: ngapType.PDUSessionID{Value: 10}},
+		{PDUSessionID: ngapType.PDUSessionID{Value: 11}},
+		{PDUSessionID: ngapType.PDUSessionID{Value: 10}},
+	}
+
+	got := duplicatePduSessionIds(items)
+	if !got[10] {
+		t.Error("PDU session 10 appears twice and must be reported as duplicated")
+	}
+	if got[11] {
+		t.Error("PDU session 11 appears once and must not be reported as duplicated")
+	}
+}
+
+// addOrModifyTransferWithItems is like addOrModifyTransfer but lets a test attach QoS parameters
+// to an item, which the GBR and delay-critical checks decide on.
+func addOrModifyTransferWithItems(items ...ngapType.QosFlowAddOrModifyRequestItem,
+) *ngapType.PDUSessionResourceModifyRequestTransfer {
+	transfer := &ngapType.PDUSessionResourceModifyRequestTransfer{}
+	transfer.ProtocolIEs.List = append(transfer.ProtocolIEs.List,
+		ngapType.PDUSessionResourceModifyRequestTransferIEs{
+			Id: ngapType.ProtocolIEID{Value: ngapType.ProtocolIEIDQosFlowAddOrModifyRequestList},
+			Value: ngapType.PDUSessionResourceModifyRequestTransferIEsValue{
+				Present:                       ngapType.PDUSessionResourceModifyRequestTransferIEsPresentQosFlowAddOrModifyRequestList,
+				QosFlowAddOrModifyRequestList: &ngapType.QosFlowAddOrModifyRequestList{List: items},
+			},
+		})
+	return transfer
+}
+
+// TestDecideQosFlowsFailsOverlappingQfiWithoutReleasingIt covers TS 38.413 clause 8.2.3.4: a QFI
+// named in both the add-or-modify and release lists is failed rather than admitted, and is left on
+// the session rather than released.
+func TestDecideQosFlowsFailsOverlappingQfiWithoutReleasingIt(t *testing.T) {
+	gnbue, upCtx := newCpUe(&gnbctx.GNodeB{}, 5)
+
+	transfer := addOrModifyTransfer(5, 6)
+	transfer.ProtocolIEs.List = append(transfer.ProtocolIEs.List,
+		releaseTransfer(5).ProtocolIEs.List...)
+
+	plan := decideQosFlows(gnbue, testPduSessID, transfer)
+
+	var failedFive, succeededSix bool
+	for _, o := range plan.outcomes {
+		switch o.QfiValue {
+		case 5:
+			if o.Succeeded {
+				t.Error("QFI 5 is named in both lists and must be reported as failed, not succeeded")
+			}
+			if o.Cause.RadioNetwork == nil ||
+				o.Cause.RadioNetwork.Value != ngapType.CauseRadioNetworkPresentMultipleQosFlowIDInstances {
+				t.Errorf("QFI 5 cause = %v, want multiple-QoS-flow-ID-instances", o.Cause.RadioNetwork)
+			}
+			failedFive = true
+		case 6:
+			succeededSix = o.Succeeded
+		}
+	}
+	if !failedFive {
+		t.Fatal("QFI 5 outcome is missing")
+	}
+	if !succeededSix {
+		t.Error("QFI 6, named only in the add-or-modify list, should still succeed")
+	}
+	for _, qfi := range plan.released {
+		if qfi == 5 {
+			t.Error("QFI 5 must not be released: it already exists and the conflict leaves it in place")
+		}
+	}
+
+	plan.apply(upCtx)
+	if upCtx.GetQosFlow(5) == nil {
+		t.Error("QFI 5 was released despite the conflict; it should have been left exactly as it was")
+	}
+}
+
+// TestInvalidQosParameters covers the two abnormal conditions TS 38.413 clause 8.2.3.4 requires
+// failing a QoS flow for: a GBR 5QI with no GBR QoS Flow Information, and delay critical with no
+// Maximum Data Burst Volume.
+func TestInvalidQosParameters(t *testing.T) {
+	if _, invalid := invalidQosParameters(nil); invalid {
+		t.Error("a nil IE carries no parameters to check and must not be reported invalid")
+	}
+
+	gbrParams := &ngapType.QosFlowLevelQosParameters{}
+	gbrParams.QosCharacteristics.Present = ngapType.QosCharacteristicsPresentNonDynamic5QI
+	gbrParams.QosCharacteristics.NonDynamic5QI = &ngapType.NonDynamic5QIDescriptor{
+		FiveQI: ngapType.FiveQI{Value: 1}, // conversational voice: GBR
+	}
+	if _, invalid := invalidQosParameters(gbrParams); !invalid {
+		t.Error("a GBR 5QI without GBR QoS Flow Information must be reported invalid")
+	}
+	gbrParams.GBRQosInformation = &ngapType.GBRQosInformation{}
+	if _, invalid := invalidQosParameters(gbrParams); invalid {
+		t.Error("the same flow with GBR QoS Flow Information attached must not be reported invalid")
+	}
+
+	nonGbrParams := &ngapType.QosFlowLevelQosParameters{}
+	nonGbrParams.QosCharacteristics.Present = ngapType.QosCharacteristicsPresentNonDynamic5QI
+	nonGbrParams.QosCharacteristics.NonDynamic5QI = &ngapType.NonDynamic5QIDescriptor{
+		FiveQI: ngapType.FiveQI{Value: 9}, // non-GBR
+	}
+	if _, invalid := invalidQosParameters(nonGbrParams); invalid {
+		t.Error("a non-GBR 5QI needs no GBR QoS Flow Information")
+	}
+
+	delayCritical := &ngapType.QosFlowLevelQosParameters{}
+	delayCritical.QosCharacteristics.Present = ngapType.QosCharacteristicsPresentDynamic5QI
+	delayCritical.QosCharacteristics.Dynamic5QI = &ngapType.Dynamic5QIDescriptor{
+		DelayCritical: &ngapType.DelayCritical{Value: ngapType.DelayCriticalPresentDelayCritical},
+	}
+	delayCritical.GBRQosInformation = &ngapType.GBRQosInformation{} // satisfies the GBR check above
+	if _, invalid := invalidQosParameters(delayCritical); !invalid {
+		t.Error("delay critical without Maximum Data Burst Volume must be reported invalid")
+	}
+	delayCritical.QosCharacteristics.Dynamic5QI.MaximumDataBurstVolume = &ngapType.MaximumDataBurstVolume{}
+	if _, invalid := invalidQosParameters(delayCritical); invalid {
+		t.Error("the same flow with Maximum Data Burst Volume attached must not be reported invalid")
+	}
+}
+
+// TestDecideQosFlowsFailsGbrFlowMissingGbrQosInformation is TestInvalidQosParameters' first case
+// wired through decideQosFlows, pinning that the outcome carries the cause and admits nothing.
+func TestDecideQosFlowsFailsGbrFlowMissingGbrQosInformation(t *testing.T) {
+	gnbue, _ := newCpUe(&gnbctx.GNodeB{})
+
+	params := &ngapType.QosFlowLevelQosParameters{}
+	params.QosCharacteristics.Present = ngapType.QosCharacteristicsPresentNonDynamic5QI
+	params.QosCharacteristics.NonDynamic5QI = &ngapType.NonDynamic5QIDescriptor{
+		FiveQI: ngapType.FiveQI{Value: 1},
+	}
+	transfer := addOrModifyTransferWithItems(ngapType.QosFlowAddOrModifyRequestItem{
+		QosFlowIdentifier:         ngapType.QosFlowIdentifier{Value: 7},
+		QosFlowLevelQosParameters: params,
+	})
+
+	plan := decideQosFlows(gnbue, testPduSessID, transfer)
+	if len(plan.admitted) != 0 {
+		t.Fatal("a GBR flow with no GBR QoS Flow Information must not be admitted")
+	}
+	if len(plan.outcomes) != 1 || plan.outcomes[0].Succeeded {
+		t.Fatalf("outcomes = %+v, want one failed outcome", plan.outcomes)
+	}
+	if plan.outcomes[0].Cause.RadioNetwork == nil ||
+		plan.outcomes[0].Cause.RadioNetwork.Value != ngapType.CauseRadioNetworkPresentInvalidQosCombination {
+		t.Errorf("cause = %v, want invalid-QoS-combination", plan.outcomes[0].Cause.RadioNetwork)
+	}
+}
