@@ -106,10 +106,6 @@ func HandlePduSessResourceModifyRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.I
 		}
 		nasPdus = append(nasPdus, nas)
 	}
-	if len(nasPdus) > 0 {
-		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, nasPdus, msg.Id)
-		gnbue.Log.Debugln("sent the modification command to the UE")
-	}
 
 	responsePdu, err := ngapTestpacket.BuildPDUSessionResourceModifyResponse(gnbue.AmfUeNgapId,
 		gnbue.GnbUeNgapId, modified, failed)
@@ -269,9 +265,12 @@ type qosFlowPlan struct {
 }
 
 // admittedQosFlow is a flow to record on the session, under the identity it is recorded by.
+//
+// params is nil when the request named the flow without restating its QoS parameters, which is
+// permitted for a flow the gNB already serves and means "unchanged" rather than "none".
 type admittedQosFlow struct {
-	item *ngapType.QosFlowSetupRequestItem
-	qfi  int64
+	params *ngapType.QosFlowLevelQosParameters
+	qfi    int64
 }
 
 // apply writes the plan to the gNB's view of the session.
@@ -283,8 +282,35 @@ func (p *qosFlowPlan) apply(upCtx *gnbctx.GnbUpUe) {
 		upCtx.RemoveQosFlow(qfi)
 	}
 	for _, flow := range p.admitted {
-		upCtx.AddQosFlow(flow.qfi, flow.item)
+		upCtx.AddQosFlow(flow.qfi, &ngapType.QosFlowSetupRequestItem{
+			QosFlowIdentifier:         ngapType.QosFlowIdentifier{Value: flow.qfi},
+			QosFlowLevelQosParameters: qosParamsFor(upCtx, flow),
+		})
 	}
+}
+
+// qosParamsFor decides what a modified flow's parameters become.
+//
+// A request may name a flow without restating its parameters: the QoS Flow Level QoS Parameters IE
+// is OPTIONAL in the add-or-modify item, and an item conveying only UL NG-U UP TNL Information
+// carries none. What the gNB keeps for that case is read here as the parameters the flow already
+// has, so a modification silent about them changes nothing about them.
+//
+// TS 38.413 clause 8.2.3.2 is in tension with itself on this, and the reading is a choice rather
+// than a quotation: it says the NG-RAN node "shall overwrite the content of the full QoS Flow Add
+// or Modify Request Item IE" for an existing flow, which read literally would have an item that
+// omits the parameters erase them -- while the same clause has items that carry nothing but tunnel
+// information. Overwriting what the item carries, and leaving what it does not, is the reading
+// that loses nothing; recording a zero-value struct emptied the gNB's own view of a flow it is
+// still serving.
+func qosParamsFor(upCtx *gnbctx.GnbUpUe, flow admittedQosFlow) ngapType.QosFlowLevelQosParameters {
+	if flow.params != nil {
+		return *flow.params
+	}
+	if existing := upCtx.GetQosFlow(flow.qfi); existing != nil {
+		return existing.QosFlowLevelQosParameters
+	}
+	return ngapType.QosFlowLevelQosParameters{}
 }
 
 // decideQosFlows works out what the gNB will do with each QoS flow the request names. It decides
@@ -333,25 +359,13 @@ func decideQosFlows(gnbue *gnbctx.GnbCpUe, pduSessID int64,
 		// Admitted, so the gNB's own view of the session has to carry it. Recording only on
 		// establishment is what would let the gNB report a flow it is not actually serving.
 		plan.admitted = append(plan.admitted, admittedQosFlow{
-			qfi: qfi,
-			item: &ngapType.QosFlowSetupRequestItem{
-				QosFlowIdentifier:         item.QosFlowIdentifier,
-				QosFlowLevelQosParameters: qosParamsOrZero(item.QosFlowLevelQosParameters),
-			},
+			qfi:    qfi,
+			params: item.QosFlowLevelQosParameters,
 		})
 		gnbue.Log.Infoln("admitted QoS flow", qfi, "on PDU session", pduSessID)
 		plan.outcomes = append(plan.outcomes, ngapTestpacket.QosFlowOutcome{QfiValue: qfi, Succeeded: true})
 	}
 	return plan
-}
-
-// qosParamsOrZero keeps the recorded flow usable when the request modified a flow without
-// restating its parameters, which is permitted.
-func qosParamsOrZero(p *ngapType.QosFlowLevelQosParameters) ngapType.QosFlowLevelQosParameters {
-	if p == nil {
-		return ngapType.QosFlowLevelQosParameters{}
-	}
-	return *p
 }
 
 // releasedQfis returns the QoS flows the request asks the radio to release.

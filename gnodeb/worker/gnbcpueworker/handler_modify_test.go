@@ -359,3 +359,39 @@ func TestModifySessionRefusesAMoveOfTheUplinkTunnel(t *testing.T) {
 		t.Errorf("recorded flows 1,2 = %v, want [true false]: a refused session changed nothing", held)
 	}
 }
+
+// A request may name a flow without restating its QoS parameters, which is permitted and means the
+// ones it already has. Recording a zero-value struct for that case emptied the gNB's own view of a
+// flow it is still serving -- characteristics and ARP gone, on a modification that said nothing
+// about them.
+func TestModifySessionKeepsQosParametersAModificationOmits(t *testing.T) {
+	gnbue, upCtx := newCpUe(&gnbctx.GNodeB{})
+
+	established := &ngapType.QosFlowSetupRequestItem{
+		QosFlowIdentifier: ngapType.QosFlowIdentifier{Value: 1},
+	}
+	established.QosFlowLevelQosParameters.QosCharacteristics.Present = ngapType.QosCharacteristicsPresentNonDynamic5QI
+	established.QosFlowLevelQosParameters.QosCharacteristics.NonDynamic5QI = &ngapType.NonDynamic5QIDescriptor{
+		FiveQI: ngapType.FiveQI{Value: 9},
+	}
+	established.QosFlowLevelQosParameters.AllocationAndRetentionPriority.PriorityLevelARP.Value = 7
+	upCtx.AddQosFlow(1, established)
+
+	if _, cause := modifySession(gnbue, modifyItem(t, addOrModifyTransfer(1))); cause != nil {
+		t.Fatalf("the session was failed with cause %v", cause.Present)
+	}
+
+	got := upCtx.GetQosFlow(1)
+	if got == nil {
+		t.Fatal("the flow is gone from the session")
+	}
+	if got.QosFlowLevelQosParameters.QosCharacteristics.NonDynamic5QI == nil {
+		t.Fatal("the 5QI the flow was set up with was erased by a modification that did not name it")
+	}
+	if fiveQi := got.QosFlowLevelQosParameters.QosCharacteristics.NonDynamic5QI.FiveQI.Value; fiveQi != 9 {
+		t.Errorf("5QI = %d, want 9", fiveQi)
+	}
+	if arp := got.QosFlowLevelQosParameters.AllocationAndRetentionPriority.PriorityLevelARP.Value; arp != 7 {
+		t.Errorf("ARP priority = %d, want 7", arp)
+	}
+}
