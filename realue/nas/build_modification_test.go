@@ -142,3 +142,19 @@ func TestModificationCompleteCarriesTheCommandsPti(t *testing.T) {
 		})
 	}
 }
+
+// The PTI is the only identity a UE-requested modification has, and zero is the value that means
+// there is none. The doc comment has said so since this builder existed; nothing enforced it, so a
+// caller passing zero got a well-formed message that the network would read as its own
+// transaction, and the reject it earned could not be matched to the UE's procedure.
+func TestModificationRequestRefusesAZeroPti(t *testing.T) {
+	if _, err := GetPduSessionModificationRequest(10, 0); err == nil {
+		t.Error("a request with PTI 0 was built; it cannot be matched to the answer it gets")
+	}
+	if _, err := GetUlNasTransportPduSessionModificationRequest(10, 0, 5); err == nil {
+		t.Error("the UL NAS TRANSPORT wrapper built a request with PTI 0")
+	}
+	if _, err := GetPduSessionModificationRequest(10, 1); err != nil {
+		t.Errorf("a request with a valid PTI was refused: %v", err)
+	}
+}

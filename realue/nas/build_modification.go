@@ -5,6 +5,7 @@ package nas
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/omec-project/nas/v2"
 	"github.com/omec-project/nas/v2/nasMessage"
@@ -91,6 +92,14 @@ func GetUlNasTransportPduSessionModificationComplete(pduSessionId uint8, pti uin
 // assigned" and marks a network-requested procedure, so a request sent with zero could not be
 // matched to its answer.
 func GetPduSessionModificationRequest(pduSessionId uint8, pti uint8) ([]byte, error) {
+	// Refused rather than encoded, because the message would be well-formed and unanswerable: a
+	// request carrying "no procedure transaction identity assigned" reads to the network as a
+	// network-requested transaction, and the reject it earns cannot be matched to the UE's
+	// procedure by the only identity that procedure has.
+	if pti == 0 {
+		return nil, fmt.Errorf("a UE-requested modification needs a non-zero PTI; 0 means no procedure transaction identity assigned")
+	}
+
 	m := nas.NewMessage()
 	m.GsmMessage = nas.NewGsmMessage()
 	m.GsmHeader.SetMessageType(nas.MsgTypePDUSessionModificationRequest)
