@@ -8,6 +8,7 @@ import (
 
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	"github.com/omec-project/gnbsim/logger"
+	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 	"github.com/omec-project/ngap/v2/aper"
 	"github.com/omec-project/ngap/v2/ngapType"
 )
@@ -90,6 +91,24 @@ func addOrModifyTransfer(qfis ...int64) *ngapType.PDUSessionResourceModifyReques
 			Value: ngapType.PDUSessionResourceModifyRequestTransferIEsValue{
 				Present:                       ngapType.PDUSessionResourceModifyRequestTransferIEsPresentQosFlowAddOrModifyRequestList,
 				QosFlowAddOrModifyRequestList: list,
+			},
+		})
+	return transfer
+}
+
+// withAmbr adds a PDU Session Aggregate Maximum Bit Rate IE to a transfer, which is how the SMF
+// carries a session AMBR update alongside (or instead of) a QoS flow list.
+func withAmbr(transfer *ngapType.PDUSessionResourceModifyRequestTransfer,
+) *ngapType.PDUSessionResourceModifyRequestTransfer {
+	transfer.ProtocolIEs.List = append(transfer.ProtocolIEs.List,
+		ngapType.PDUSessionResourceModifyRequestTransferIEs{
+			Id: ngapType.ProtocolIEID{Value: ngapType.ProtocolIEIDPDUSessionAggregateMaximumBitRate},
+			Value: ngapType.PDUSessionResourceModifyRequestTransferIEsValue{
+				Present: ngapType.PDUSessionResourceModifyRequestTransferIEsPresentPDUSessionAggregateMaximumBitRate,
+				PDUSessionAggregateMaximumBitRate: &ngapType.PDUSessionAggregateMaximumBitRate{
+					PDUSessionAggregateMaximumBitRateDL: ngapType.BitRate{Value: 100000},
+					PDUSessionAggregateMaximumBitRateUL: ngapType.BitRate{Value: 100000},
+				},
 			},
 		})
 	return transfer
@@ -753,5 +772,79 @@ func TestDecideQosFlowsFailsGbrFlowMissingGbrQosInformation(t *testing.T) {
 	if plan.outcomes[0].Cause.RadioNetwork == nil ||
 		plan.outcomes[0].Cause.RadioNetwork.Value != ngapType.CauseRadioNetworkPresentInvalidQosCombination {
 		t.Errorf("cause = %v, want invalid-QoS-combination", plan.outcomes[0].Cause.RadioNetwork)
+	}
+}
+
+// TestInvalidQosParametersNonDynamicDelayCritical covers the standardized-5QI counterpart of
+// TestInvalidQosParameters' delay-critical case: a NonDynamic5QI descriptor using one of the
+// delay-critical GBR values (TS 23.501 table 5.7.4-1, 82-90) also needs Maximum Data Burst Volume,
+// not only a Dynamic5QI descriptor marked delay critical.
+func TestInvalidQosParametersNonDynamicDelayCritical(t *testing.T) {
+	params := &ngapType.QosFlowLevelQosParameters{}
+	params.QosCharacteristics.Present = ngapType.QosCharacteristicsPresentNonDynamic5QI
+	params.QosCharacteristics.NonDynamic5QI = &ngapType.NonDynamic5QIDescriptor{
+		FiveQI: ngapType.FiveQI{Value: 82}, // delay-critical GBR
+	}
+	params.GBRQosInformation = &ngapType.GBRQosInformation{} // satisfies the GBR check
+
+	if _, invalid := invalidQosParameters(params); !invalid {
+		t.Error("a standardized delay-critical 5QI without Maximum Data Burst Volume must be reported invalid")
+	}
+	params.QosCharacteristics.NonDynamic5QI.MaximumDataBurstVolume = &ngapType.MaximumDataBurstVolume{}
+	if _, invalid := invalidQosParameters(params); invalid {
+		t.Error("the same flow with Maximum Data Burst Volume attached must not be reported invalid")
+	}
+}
+
+// TestDecideQosFlowsTracksSessionAmbr pins that decideQosFlows sees the PDU Session Aggregate
+// Maximum Bit Rate IE regardless of what the QoS flow lists in the same transfer contain: it is
+// what lets sessionFailureCause tell an AMBR-only success apart from a transfer with nothing that
+// succeeded at all.
+func TestDecideQosFlowsTracksSessionAmbr(t *testing.T) {
+	gnbue, _ := newCpUe(&gnbctx.GNodeB{})
+
+	if plan := decideQosFlows(gnbue, testPduSessID, addOrModifyTransfer(1)); plan.ambrRequested {
+		t.Error("a transfer with no AMBR IE must not be tracked as requesting one")
+	}
+	if plan := decideQosFlows(gnbue, testPduSessID, withAmbr(addOrModifyTransfer(1))); !plan.ambrRequested {
+		t.Error("a transfer carrying the AMBR IE must be tracked as requesting one")
+	}
+}
+
+// TestSessionFailureCauseAmbrKeepsSessionModified covers TS 38.413 clause 8.2.3.2: a session AMBR
+// request succeeds independently of the radio's decision about the flows named in the same
+// transfer, so refusing every one of those flows must not fail the session when AMBR was also
+// requested.
+func TestSessionFailureCauseAmbrKeepsSessionModified(t *testing.T) {
+	failedOutcome := qosFlowPlan{
+		outcomes: []ngapTestpacket.QosFlowOutcome{{QfiValue: 1, Cause: radioResourcesNotAvailable()}},
+	}
+	if cause := sessionFailureCause(failedOutcome); cause == nil {
+		t.Fatal("a transfer with only failed QoS flows and no AMBR request must fail the session")
+	}
+
+	failedOutcome.ambrRequested = true
+	if cause := sessionFailureCause(failedOutcome); cause != nil {
+		t.Errorf("cause = %v, want nil: the AMBR request succeeds even though every QoS flow was refused",
+			cause.RadioNetwork)
+	}
+}
+
+// TestModifySessionAdmitsAmbrOnlyRequestWithAllFlowsRefused wires
+// TestSessionFailureCauseAmbrKeepsSessionModified through modifySession, pinning that the session
+// is reported modified -- and its NAS command therefore not withheld -- when AMBR succeeds even
+// though the configured refusal rejects every named QoS flow.
+func TestModifySessionAdmitsAmbrOnlyRequestWithAllFlowsRefused(t *testing.T) {
+	gnb := &gnbctx.GNodeB{ModifyRejectQfis: []int64{1}}
+	gnbue, _ := newCpUe(gnb, 1)
+
+	transfer := withAmbr(addOrModifyTransfer(1))
+	encoded, cause := modifySession(gnbue, modifyItem(t, transfer))
+	if cause != nil {
+		t.Fatalf("the session was failed with cause %v, want it modified: AMBR succeeds independently of the refused flow",
+			cause.RadioNetwork)
+	}
+	if len(encoded) == 0 {
+		t.Error("a modified session must encode a response transfer")
 	}
 }

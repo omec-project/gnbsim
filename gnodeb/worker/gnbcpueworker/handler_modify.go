@@ -257,8 +257,9 @@ func modifySession(gnbue *gnbctx.GnbCpUe, item *ngapType.PDUSessionResourceModif
 //
 // Past that: a release is not reported as an outcome when it succeeds (see decideQosFlows), so its
 // success is read from plan.released rather than from plan.outcomes; an add-or-modify request is
-// read from its outcome. A transfer naming neither -- an empty one, or one carrying only a session
-// AMBR modification this gNB does not evaluate -- has nothing here to have failed it, so it is
+// read from its outcome; a session AMBR request is read from plan.ambrRequested, since it leaves
+// no outcome of its own but still succeeds independently of the QoS flows in the same transfer. A
+// transfer naming none of these -- an empty one -- has nothing here to have failed it, so it is
 // left successful.
 func sessionFailureCause(plan qosFlowPlan) *ngapType.Cause {
 	if len(plan.failedReleases) > 0 {
@@ -266,6 +267,9 @@ func sessionFailureCause(plan qosFlowPlan) *ngapType.Cause {
 		return &cause
 	}
 	if len(plan.released) > 0 {
+		return nil
+	}
+	if plan.ambrRequested {
 		return nil
 	}
 	for _, o := range plan.outcomes {
@@ -393,11 +397,17 @@ func invalidQosCombination() ngapType.Cause {
 // Release List IE, so a release-list QFI failed for an abnormal condition has nothing to be
 // encoded into, and appending it to outcomes would report it as an add-or-modify failure it was
 // never a request for. It exists only to be counted, not encoded.
+//
+// ambrRequested records that the transfer carried a PDU Session Aggregate Maximum Bit Rate IE.
+// This gNB does not evaluate it -- there is nothing here to admit or refuse -- but TS 38.413
+// clause 8.2.3.2 has it succeed independently of whatever the QoS flows in the same transfer
+// decide, so its presence has to be seen by sessionFailureCause even though it leaves no outcome.
 type qosFlowPlan struct {
 	outcomes       []ngapTestpacket.QosFlowOutcome
 	admitted       []admittedQosFlow
 	released       []int64
 	failedReleases []int64
+	ambrRequested  bool
 }
 
 // admittedQosFlow is a flow to record on the session, under the identity it is recorded by.
@@ -468,9 +478,14 @@ func decideQosFlows(gnbue *gnbctx.GnbCpUe, pduSessID int64,
 	}
 
 	var requested *ngapType.QosFlowAddOrModifyRequestList
+	var ambrRequested bool
 	for _, ie := range transfer.ProtocolIEs.List {
 		if ie.Id.Value == ngapType.ProtocolIEIDQosFlowAddOrModifyRequestList {
 			requested = ie.Value.QosFlowAddOrModifyRequestList
+		}
+		if ie.Id.Value == ngapType.ProtocolIEIDPDUSessionAggregateMaximumBitRate &&
+			ie.Value.PDUSessionAggregateMaximumBitRate != nil {
+			ambrRequested = true
 		}
 	}
 	addCount := make(map[int64]int)
@@ -488,7 +503,7 @@ func decideQosFlows(gnbue *gnbctx.GnbCpUe, pduSessID int64,
 		return addCount[qfi] > 1 || releaseCount[qfi] > 1 || (addCount[qfi] > 0 && releaseCount[qfi] > 0)
 	}
 
-	plan := qosFlowPlan{}
+	plan := qosFlowPlan{ambrRequested: ambrRequested}
 	reported := make(map[int64]bool)
 	// The QFI is reported as a failed add-or-modify item only when the request named it there;
 	// named only in the release list, its failure has no IE to be encoded into (see qosFlowPlan),
@@ -633,16 +648,40 @@ func isNonGbrFiveQIWithGbrInformation(params *ngapType.QosFlowLevelQosParameters
 		params.GBRQosInformation != nil
 }
 
-// isDelayCriticalWithoutBurstVolume reports whether a dynamically assigned 5QI is marked delay
-// critical without the Maximum Data Burst Volume IE that TS 38.413 clause 8.2.3.4 requires
-// alongside it.
+// isDelayCriticalWithoutBurstVolume reports whether a 5QI known to be delay-critical GBR is
+// missing the Maximum Data Burst Volume IE that TS 38.413 clause 8.2.3.4 requires alongside it.
+//
+// A dynamically assigned 5QI names the resource type itself via the Delay Critical field. A
+// standardized 5QI names it by value instead (TS 23.501 table 5.7.4-1, the 82-90 range
+// isGbrFiveQI also recognizes as delay-critical GBR), so the two descriptor forms are checked on
+// different grounds even though the required IE is the same in both.
 func isDelayCriticalWithoutBurstVolume(qc ngapType.QosCharacteristics) bool {
-	if qc.Present != ngapType.QosCharacteristicsPresentDynamic5QI || qc.Dynamic5QI == nil {
+	switch qc.Present {
+	case ngapType.QosCharacteristicsPresentDynamic5QI:
+		if qc.Dynamic5QI == nil {
+			return false
+		}
+		dc := qc.Dynamic5QI.DelayCritical
+		return dc != nil && dc.Value == ngapType.DelayCriticalPresentDelayCritical &&
+			qc.Dynamic5QI.MaximumDataBurstVolume == nil
+	case ngapType.QosCharacteristicsPresentNonDynamic5QI:
+		return qc.NonDynamic5QI != nil && isDelayCriticalGbrFiveQI(qc.NonDynamic5QI.FiveQI.Value) &&
+			qc.NonDynamic5QI.MaximumDataBurstVolume == nil
+	default:
 		return false
 	}
-	dc := qc.Dynamic5QI.DelayCritical
-	return dc != nil && dc.Value == ngapType.DelayCriticalPresentDelayCritical &&
-		qc.Dynamic5QI.MaximumDataBurstVolume == nil
+}
+
+// isDelayCriticalGbrFiveQI reports whether a standardized 5QI (TS 23.501 table 5.7.4-1) is one of
+// the delay-critical GBR values, the subset of isGbrFiveQI that also requires Maximum Data Burst
+// Volume.
+func isDelayCriticalGbrFiveQI(fiveQI int64) bool {
+	switch fiveQI {
+	case 82, 83, 84, 85, 86, 87, 88, 89, 90:
+		return true
+	default:
+		return false
+	}
 }
 
 // releasedQfis returns the QoS flows the request asks the radio to release.
