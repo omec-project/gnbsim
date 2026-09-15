@@ -114,6 +114,24 @@ type Profile struct {
 	ExecInParallel bool   `yaml:"execInParallel" json:"execInParallel"`
 	StepTrigger    bool   `yaml:"stepTrigger" json:"stepTrigger"`
 	RetransMsg     bool   `yaml:"retransMsg" json:"retransMsg"`
+
+	// WithholdModificationComplete makes the UE receive a PDU SESSION MODIFICATION COMMAND and
+	// deliberately not answer it. That is the only way to reach the network's retransmission and
+	// abandonment behaviour from a cluster rather than from a unit test, and on a satellite link it
+	// is an ordinary outcome rather than a fault.
+	WithholdModificationComplete bool `yaml:"withholdModificationComplete" json:"withholdModificationComplete"`
+
+	// ModificationRequestType is the Request type IE value the UE puts on a
+	// PDU SESSION MODIFICATION REQUEST. 5 is "modification request" and correct; 1 is
+	// "initial request", which makes the AMF read the message as an attempt to establish a session
+	// that already exists. Unset means 5. Configurable because the failure it guards against is
+	// the AMF releasing a working session.
+	ModificationRequestType uint8 `yaml:"modificationRequestType" json:"modificationRequestType"`
+
+	// OmitModificationRequestType leaves the Request type IE out of the UL NAS TRANSPORT
+	// entirely, which is the third thing a UE may do and a third way the AMF has to cope. It
+	// overrides ModificationRequestType rather than combining with it.
+	OmitModificationRequestType bool `yaml:"omitModificationRequestType" json:"omitModificationRequestType"`
 }
 
 func init() {
@@ -193,6 +211,27 @@ func initProcedureEventMap() {
 		common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
 	}
 	ProceduresMap[common.NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE] = &proc8
+
+	// common.NW_PDU_SESSION_MODIFICATION_PROCEDURE:
+	// The network sends the command unprompted, so the procedure begins on receipt rather than on
+	// anything the UE does. Withholding the complete is a profile option rather than a second map:
+	// the network's retransmission behaviour is the thing under test there, not the UE's.
+	procNwPduSessMod := ProcedureEventsDetails{}
+	procNwPduSessMod.Events = map[common.EventType]common.EventType{
+		common.PDU_SESS_MOD_COMMAND_EVENT: common.PDU_SESS_MOD_COMPLETE_EVENT,
+		common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
+	}
+	ProceduresMap[common.NW_PDU_SESSION_MODIFICATION_PROCEDURE] = &procNwPduSessMod
+
+	// common.UE_REQUESTED_PDU_SESSION_MODIFICATION_PROCEDURE:
+	// The core refuses every UE-requested modification, so the reject is the expected outcome and
+	// the procedure ends there. There is no accept path to map, because there is none to reach.
+	procUePduSessMod := ProcedureEventsDetails{}
+	procUePduSessMod.Events = map[common.EventType]common.EventType{
+		common.PDU_SESS_MOD_REQUEST_EVENT: common.PDU_SESS_MOD_REJECT_EVENT,
+		common.PROFILE_PASS_EVENT:         common.QUIT_EVENT,
+	}
+	ProceduresMap[common.UE_REQUESTED_PDU_SESSION_MODIFICATION_PROCEDURE] = &procUePduSessMod
 
 	// common.USER_DATA_PKT_GENERATION_PROCEDURE:
 	proc9 := ProcedureEventsDetails{}

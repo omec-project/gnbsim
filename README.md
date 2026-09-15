@@ -47,6 +47,8 @@ Supported 3gpp procedures:
 - UE Initiated Service Request
 - N/W triggered PDU Session Release
 - UE Requested PDU Session Release
+- N/W requested PDU Session Modification
+- UE Requested PDU Session Modification (request and reject; the accept path is not modelled)
 - N/W triggered UE Deregistration
 - Support for N2 handover profile
 
@@ -67,6 +69,8 @@ downlink user data (ICMP echo response) over the established data plane path
 - Timeout for every profile
 - Logic to calculate latency per transaction/ operation
 - Support retransmission of Service Request Message
+- Configurable refusal of a PDU Session Modification, either for named QoS flows or
+for the whole session, and withholding the PDU Session Modification Complete
 - Support deployment of gNBSim as standalone container
 - Reporting profile errors from all levels
 

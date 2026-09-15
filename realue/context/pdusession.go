@@ -49,6 +49,12 @@ type PduSession struct {
 
 	// Inidicates that a Go routine already exists for this PDU Session
 	Launched bool
+
+	// PendingPTI is the procedure transaction identity of a UE-requested modification that has
+	// been sent and not yet answered. TS 24.501 subclause 7.3.1: the UE allocates it, and the
+	// network echoes it back, which is what lets the answer be matched to the request. Zero means
+	// no UE-requested procedure is outstanding.
+	PendingPTI uint8
 }
 
 func NewPduSession(realUe *RealUe, pduSessId int64) *PduSession {

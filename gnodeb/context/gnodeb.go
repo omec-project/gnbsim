@@ -39,8 +39,15 @@ type GNodeB struct {
 	UpTransport transport.Transport
 
 	SupportedTaList []SupportedTA `yaml:"supportedTaList"`
-	GnbN2Port       int           `yaml:"n2Port"`
-	GnbN3Port       int           `yaml:"n3Port"`
+
+	/* How this gNodeB answers a PDU session resource modify request. Both default to accepting
+	   everything; they exist so a profile can drive the partial and whole rejection paths, which
+	   the core handles differently and which are otherwise unreachable from a simulator. */
+	ModifyRejectQfis []int64 `yaml:"modifyRejectQfis"`
+
+	GnbN2Port       int  `yaml:"n2Port"`
+	GnbN3Port       int  `yaml:"n3Port"`
+	ModifyRejectAll bool `yaml:"modifyRejectAll"`
 }
 
 type gNodeBConfig struct {
@@ -50,8 +57,15 @@ type gNodeBConfig struct {
 	RanId           globalRanNodeIDYAML `yaml:"globalRanId"`
 	DefaultAmf      *GnbAmf             `yaml:"defaultAmf"`
 	SupportedTaList []SupportedTA       `yaml:"supportedTaList"`
-	GnbN2Port       int                 `yaml:"n2Port"`
-	GnbN3Port       int                 `yaml:"n3Port"`
+
+	// Kept in step with GNodeB: the yaml tags on GNodeB itself are decorative, because
+	// UnmarshalYAML below decodes into this struct and copies field by field. A field added to
+	// GNodeB alone parses as absent and silently defaults, which reads as the feature not working.
+	ModifyRejectQfis []int64 `yaml:"modifyRejectQfis"`
+
+	GnbN2Port       int  `yaml:"n2Port"`
+	GnbN3Port       int  `yaml:"n3Port"`
+	ModifyRejectAll bool `yaml:"modifyRejectAll"`
 }
 
 type globalRanNodeIDYAML struct {
@@ -92,6 +106,8 @@ func (gnb *GNodeB) UnmarshalYAML(value *yaml.Node) error {
 	gnb.SupportedTaList = config.SupportedTaList
 	gnb.GnbN2Port = config.GnbN2Port
 	gnb.GnbN3Port = config.GnbN3Port
+	gnb.ModifyRejectQfis = config.ModifyRejectQfis
+	gnb.ModifyRejectAll = config.ModifyRejectAll
 
 	return nil
 }

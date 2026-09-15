@@ -143,6 +143,66 @@ SPDX-License-Identifier: Apache-2.0
                #"repeat": 0 # default value 0. i.e., execute once
                #"next":  "quit" # default value quit. i.e., no further iteration to run
 
+- **PDU Session Modification**
+    Both directions of the PDU session modification procedure are driven from a custom profile,
+    by naming the procedure in `iterations`. There is no dedicated profile type for either.
+
+        iterations:
+          - "name": "iteration1"
+            "1": "REGISTRATION-PROCEDURE 5"
+            "2": "PDU-SESSION-ESTABLISHMENT-PROCEDURE 5"
+            "3": "NW-PDU-SESSION-MODIFICATION-PROCEDURE 5"           # wait for the network to modify the session
+            "4": "UE-REQUESTED-PDU-SESSION-MODIFICATION-PROCEDURE 5" # ask the network to modify it
+
+    The network-requested procedure starts when the PDU SESSION RESOURCE MODIFY REQUEST arrives,
+    since nothing the UE does triggers it. The UE-requested procedure passes when the network
+    answers with a reject carrying the PTI of the request the UE made, and fails if nothing
+    answers at all or if the answer cannot be matched to that request; the accept path is not
+    modelled, because an SMF that refuses UE-requested modifications is what this is written
+    against.
+
+    How the simulated gNB answers a modify request is configured per gNB, under `gnbs`:
+
+        gnbs:
+          gnb1:
+            modifyRejectQfis: [1]  # QFIs the gNB refuses. Those flows are reported in the
+                                   # response's failed-flow list with cause
+                                   # radio-resources-not-available and the rest are admitted,
+                                   # which is a partial rejection. The session itself still
+                                   # succeeds, so the UE is still given the modification
+                                   # command -- including when every flow the request named is
+                                   # refused, since the session AMBR carried in the same
+                                   # request succeeds whatever happens to the flows. That is
+                                   # how the core's "the response established nothing"
+                                   # handling is reached. Default: refuse none
+            modifyRejectAll: false # Refuse the modification for the whole PDU session rather
+                                   # than for named flows. The session goes in the response's
+                                   # failed-session list, one level up from the flows above,
+                                   # and the modification command is not passed to the UE, so
+                                   # an NW-PDU-SESSION-MODIFICATION-PROCEDURE step never
+                                   # completes and ends in perUserTimeout as a failure
+
+    What the UE does with a modification is configured per profile:
+
+        withholdModificationComplete: false # Receive the PDU SESSION MODIFICATION COMMAND and
+                                            # deliberately not acknowledge it, which is how the
+                                            # network's retransmission and abandonment
+                                            # behaviour is reached. The procedure then reports
+                                            # nothing, so the profile ends in perUserTimeout and
+                                            # is recorded as a failure -- deliberately, since
+                                            # what is under test is on the network's side
+        modificationRequestType: 5          # Request type IE value on a UE-requested
+                                            # modification. 5 is "modification request" and is
+                                            # correct; 1 is "initial request", which makes the
+                                            # AMF read the message as an attempt to establish a
+                                            # session that already exists. Unset means 5
+        omitModificationRequestType: false  # Leave the Request type IE out of the UL NAS
+                                            # TRANSPORT altogether, which is the third thing a
+                                            # real UE may do. Overrides modificationRequestType
+                                            # rather than combining with it. Default: false
+
+    All of these appear commented out in [gNBSim config](../config/gnbsim.yaml).
+
 ## Description of Each Profile
 
 Currently following profiles are supported :

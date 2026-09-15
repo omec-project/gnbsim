@@ -21,6 +21,9 @@ configuration:
       #n3IpAddr: "POD_IP"      # Use when in singleInterface mode
       n3Port: 2152 # N3 Port to connect to UPF
       name: gnb1 # Uniquely identify gNB within application
+      #modifyRejectQfis: [1]  # QFIs to refuse in a modify request. Default: refuse none
+      #modifyRejectAll: false # Refuse the whole modification rather than named flows. The UE is
+      #                       # then not given the command, so the procedure ends in perUserTimeout
       globalRanId:
         plmnId:
           mcc: 208 # Mobile Country Code
@@ -90,6 +93,11 @@ configuration:
       key: "5122250214c33e723a5dd523fc145fc0"
       sequenceNumber: "16f3b3f70fc2"
       retransMsg: false
+      #withholdModificationComplete: false # Receive the modification command and do not answer it.
+      #                                     # The profile then ends in perUserTimeout, on purpose
+      #modificationRequestType: 5          # Request type IE on a UE requested modification
+      #omitModificationRequestType: false  # Leave the Request type IE out altogether. Overrides
+      #                                     # modificationRequestType rather than combining with it
       dnn: "internet"
       sNssai:
         sst: 1 # Slice/Service Type (unsigned integer, range: 0~255)
@@ -104,6 +112,8 @@ configuration:
           "1": "REGISTRATION-PROCEDURE 5"
           "2": "PDU-SESSION-ESTABLISHMENT-PROCEDURE 5"
           "3": "USER-DATA-PACKET-GENERATION-PROCEDURE 10"
+          #"4": "NW-PDU-SESSION-MODIFICATION-PROCEDURE 5"           # Wait for the network to modify the session
+          #"5": "UE-REQUESTED-PDU-SESSION-MODIFICATION-PROCEDURE 5" # Ask for a modification; a reject is the pass
           "next": "iteration2"
         - "name": "iteration2"
           "1": "AN-RELEASE-PROCEDURE 100"

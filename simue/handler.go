@@ -273,6 +273,85 @@ func HandlePduSessReleaseCompleteEvent(ue *simuectx.SimUe,
 	return nil
 }
 
+// HandlePduSessModificationRequestEvent forwards the UE's built request to the gNB.
+//
+// The procedure is started by HandleProcedure sending this event straight to the RealUe, so what
+// arrives here is the RealUe's answer coming back — a UuMessage carrying the encoded NAS, which
+// becomes an uplink transfer.
+func HandlePduSessModificationRequestEvent(ue *simuectx.SimUe,
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	msg := intfcMsg.(*common.UuMessage)
+	msg.Event = common.UL_INFO_TRANSFER_EVENT
+	SendToGnbUe(ue, msg)
+	return nil
+}
+
+// HandlePduSessModificationRejectEvent takes the network's refusal.
+//
+// A refusal is the expected outcome, not a failure: the core declines every UE-requested
+// modification. The procedure therefore passes when the reject arrives, and would fail by timing
+// out if the network said nothing at all — which is what it did before it was taught to refuse.
+//
+// Reaching this at all means the reject matched the UE's outstanding request: the RealUe checks
+// that before it reports the message, precisely because the pass below is unconditional and is
+// sent before the RealUe could otherwise have looked. The reject is not passed back to the
+// RealUe, which has already handled it.
+func HandlePduSessModificationRejectEvent(ue *simuectx.SimUe,
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	SendProcedureResult(ue)
+	return nil
+}
+
+// HandlePduSessModificationCommandEvent takes a modification the network started on its own.
+//
+// Unlike the release command there is no UE-side procedure to reconcile against: the command
+// arrives unprompted with no procedure transaction identity, so the arrival is what begins the
+// procedure. The UE is switched onto it before the answer is decided, or the profile's event map
+// would be consulted for whatever procedure happened to be running.
+func HandlePduSessModificationCommandEvent(ue *simuectx.SimUe,
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	msg := intfcMsg.(*common.UeMessage)
+
+	if ue.Procedure != common.NW_PDU_SESSION_MODIFICATION_PROCEDURE {
+		ue.Log.Infoln("network started a PDU session modification; switching to it from",
+			ue.Procedure)
+		ue.Procedure = common.NW_PDU_SESSION_MODIFICATION_PROCEDURE
+	}
+
+	if ue.ProfileCtx.WithholdModificationComplete {
+		// Deliberately silent. The network should retransmit and then abandon, and the UE keeps
+		// the parameters it already had.
+		ue.Log.Infoln("withholding the modification complete, as the profile asks")
+		return nil
+	}
+
+	nextEvent, err := ue.ProfileCtx.GetNextEvent(ue.Procedure, msg.Event)
+	if err != nil {
+		ue.Log.Errorln("GetNextEvent returned:", err)
+		return err
+	}
+	ue.Log.Infoln("next event:", nextEvent)
+	msg.Event = nextEvent
+	SendToRealUe(ue, msg)
+	return nil
+}
+
+// HandlePduSessModificationCompleteEvent forwards the UE's acknowledgement to the gNB, and treats
+// the procedure as finished once it is on its way.
+func HandlePduSessModificationCompleteEvent(ue *simuectx.SimUe,
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	msg := intfcMsg.(*common.UuMessage)
+	msg.Event = common.UL_INFO_TRANSFER_EVENT
+	SendToGnbUe(ue, msg)
+
+	SendProcedureResult(ue)
+	return nil
+}
+
 func HandleDlInfoTransferEvent(ue *simuectx.SimUe,
 	msg common.InterfaceMessage,
 ) (err error) {
@@ -475,7 +554,13 @@ func HandleQuitEvent(ue *simuectx.SimUe,
 	if ue.WriteGnbUeChan != nil {
 		SendToGnbUe(ue, msg)
 	}
-	SendToRealUe(ue, msg)
+	// Guarded like the channel above it, and for the reason this function itself creates: the
+	// line below nils the channel, so a second quit for the same UE would send on a nil channel
+	// and block its goroutine for good. Nothing reaches here twice today; the guard costs a line
+	// and the deadlock costs a hung worker with no log to say why.
+	if ue.WriteRealUeChan != nil {
+		SendToRealUe(ue, msg)
+	}
 	ue.WriteRealUeChan = nil
 	ue.WaitGrp.Wait()
 	ue.Log.Infoln("Sim UE terminated")
@@ -506,6 +591,11 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		stats.LogStats(e)
 		msg := &common.UeMessage{}
 		msg.Event = common.PDU_SESS_EST_REQUEST_EVENT
+		SendToRealUe(ue, msg)
+	case common.UE_REQUESTED_PDU_SESSION_MODIFICATION_PROCEDURE:
+		ue.Log.Infoln("initiating UE Requested PDU Session Modification Procedure")
+		msg := &common.UeMessage{}
+		msg.Event = common.PDU_SESS_MOD_REQUEST_EVENT
 		SendToRealUe(ue, msg)
 	case common.UE_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE:
 		ue.Log.Infoln("initiating UE Requested PDU Session Release Procedure")
@@ -547,6 +637,8 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		ue.Log.Infoln("Waiting for N/W Triggered De-registration Procedure")
 	case common.NW_REQUESTED_PDU_SESSION_RELEASE_PROCEDURE:
 		ue.Log.Infoln("Waiting for N/W Requested PDU Session Release Procedure")
+	case common.NW_PDU_SESSION_MODIFICATION_PROCEDURE:
+		ue.Log.Infoln("Waiting for N/W Requested PDU Session Modification Procedure")
 	case common.N2_HANDOVER_PROCEDURE:
 		ue.Log.Infoln("initiating N2 Handover Procedure")
 		// Pre-register with target gNB so gnbamfworker can route HandoverRequest
@@ -560,6 +652,28 @@ func HandleProcedure(ue *simuectx.SimUe) {
 		msg.Event = common.TRIGGER_HO_EVENT
 		msg.TargetGnbName = ue.ProfileCtx.TargetGnbName
 		SendToGnbUe(ue, msg)
+	default:
+		// A procedure registered in procedures.go with no case here starts, logs that it started,
+		// and then does nothing — the UE never sends anything and the silence looks like the
+		// network failing to answer rather than the UE failing to ask. That cost real time once.
+		//
+		// It fails the procedure rather than only logging, because logging alone leaves the
+		// profile waiting out perUserTimeout and reporting "profile timeout": the same silence
+		// this branch exists to end, arriving a minute later with the wrong explanation.
+		//
+		// The failure goes through HandleErrorEvent rather than straight to the profile, because
+		// reporting the result is only half of ending a procedure: the other half is the QUIT that
+		// stops this UE's workers and releases its bearer at the gNB. Reported without it, the
+		// profile moves on while the SimUe, the RealUe and the gNB context stay up.
+		err := fmt.Errorf("no handler for procedure %v: it will not start, and nothing will be sent",
+			ue.Procedure)
+		ue.Log.Errorln(err)
+		errMsg := &common.UeMessage{}
+		errMsg.Event = common.ERROR_EVENT
+		errMsg.Error = err
+		if handleErr := HandleErrorEvent(ue, errMsg); handleErr != nil {
+			ue.Log.Errorln("failed to handle the error event:", handleErr)
+		}
 	}
 }
 

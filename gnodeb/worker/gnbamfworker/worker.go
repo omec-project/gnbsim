@@ -39,6 +39,8 @@ func HandleMessage(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf, pkt []byte, id uint64
 			HandlePduSessResourceSetupRequest(gnb, amf, pdu, id)
 		case ngapType.ProcedureCodePDUSessionResourceRelease:
 			HandlePduSessResourceReleaseCommand(gnb, amf, pdu, id)
+		case ngapType.ProcedureCodePDUSessionResourceModify:
+			HandlePduSessResourceModifyRequest(gnb, amf, pdu, id)
 		case ngapType.ProcedureCodeUEContextRelease:
 			HandleUeCtxReleaseCommand(gnb, amf, pdu, id)
 		case ngapType.ProcedureCodeHandoverResourceAllocation:

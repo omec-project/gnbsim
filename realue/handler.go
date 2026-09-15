@@ -27,6 +27,10 @@ import (
 const (
 	SWITCH_OFF                     uint8 = 0
 	REQUEST_TYPE_EXISTING_PDU_SESS uint8 = 0x02
+	// modificationRequestPTI is the identity the UE puts on its modification requests. One is
+	// enough while only one such procedure runs at a time, and it is non-zero, which is what
+	// distinguishes a UE-requested procedure from a network-requested one.
+	modificationRequestPTI uint8 = 0x01
 )
 
 func HandleRegRequestEvent(ue *realuectx.RealUe,
@@ -310,6 +314,204 @@ func HandlePduSessReleaseCompleteEvent(ue *realuectx.RealUe,
 	return nil
 }
 
+// HandlePduSessModificationRequestEvent asks the network to modify a session.
+//
+// This exists to verify the network's refusal, not to obtain a modification: the core declines
+// every UE-requested modification with a 5GSM cause. What matters is that the request is
+// well-formed, that the PTI is the UE's own so the answer can be matched to it, and that the
+// Request type IE carries whatever the profile asked for — including the wrong value, which is
+// the case worth testing.
+func HandlePduSessModificationRequestEvent(ue *realuectx.RealUe,
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	_ = intfcMsg
+
+	// The simulator runs one PDU session per UE, established as session 10, and the request
+	// concerns that one. Taking it from the context rather than assuming the number keeps this
+	// honest if that ever changes.
+	pduSessID, pduSess, err := ue.OnlyPduSession()
+	if err != nil {
+		return fmt.Errorf("cannot request a modification: %v", err)
+	}
+
+	requestType := resolveModificationRequestType(ue.ModificationRequestType,
+		ue.OmitModificationRequestType)
+
+	// Any non-zero value identifies the procedure; zero is reserved for network-requested ones.
+	nasPdu, err := realue_nas.GetUlNasTransportPduSessionModificationRequest(
+		uint8(pduSessID), modificationRequestPTI, requestType)
+	if err != nil {
+		return fmt.Errorf("failed to build PDU Session Modification Request: %v", err)
+	}
+
+	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
+		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt PDU Session Modification Request: %v", err)
+	}
+
+	// The transaction is outstanding only now. Recorded before the message was built and
+	// encrypted, a failure in either left the UE holding a PTI for a request that was never sent
+	// -- and the reject guard, which asks whether a request is outstanding, would then match an
+	// answer to nothing.
+	pduSess.PendingPTI = modificationRequestPTI
+
+	ue.Log.Infof("sending PDU session modification request for session %d, PTI %d, request type %d",
+		pduSessID, modificationRequestPTI, requestType)
+
+	// The procedure's own event goes back to the SimUe, which turns it into an uplink transfer
+	// for the gNB. Sending UL_INFO_TRANSFER_EVENT from here skips that step and the SimUe drops
+	// it as unsupported — the request is built, encrypted, and never leaves the UE.
+	m := formUuMessage(common.PDU_SESS_MOD_REQUEST_EVENT, nasPdu, 0)
+	SendToSimUe(ue, m)
+	return nil
+}
+
+// resolveModificationRequestType decides the Request type IE value to hand the builder, where 0
+// means leave the IE out.
+//
+// Omitting wins over a configured value. The earlier form only omitted when the value was also
+// unset, so a profile that set both -- which is how the two settings read sitting side by side in
+// the config -- still sent the IE, and the option that names itself "omit" did nothing at all.
+func resolveModificationRequestType(configured uint8, omit bool) uint8 {
+	if omit {
+		return 0
+	}
+	if configured == 0 {
+		return nasMessage.ULNASTransportRequestTypeModificationRequest
+	}
+	return configured
+}
+
+// HandlePduSessModificationRejectEvent records the network's refusal of a UE-requested
+// modification.
+//
+// The refusal is the expected outcome, so this is not a failure path. What is checked is that the
+// answer belongs to the request, and three things have to hold for that: the session has to be one
+// this UE holds, a request has to be outstanding on it, and the PTI has to be the one that request
+// used. A UE that accepted an answer failing any of them would clear the wrong procedure.
+func HandlePduSessModificationRejectEvent(ue *realuectx.RealUe,
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	msg := intfcMsg.(*common.UeMessage)
+	nasMsg := msg.NasMsg.PDUSessionModificationReject
+	if nasMsg == nil {
+		return fmt.Errorf("PDUSessionModificationReject is nil")
+	}
+
+	pduSessId := nasMsg.PDUSessionID.Octet
+	pti := nasMsg.PTI.Octet
+	cause := nasMsg.Cause5GSM.Octet
+
+	ue.Log.Infof("PDU session modification refused: session %d, PTI %d, 5GSM cause #%d",
+		pduSessId, pti, cause)
+
+	// A reject that cannot be matched fails the procedure rather than passing it. It was only
+	// logged before, and the simulated UE reported PASS on the strength of a reject arriving at
+	// all -- so an answer belonging to some other transaction, or to none, would have been
+	// recorded as the network refusing correctly, and any later trouble attributed to whatever
+	// ran next.
+	//
+	// Each of the three conditions fails on its own. A reject for a session the UE does not hold
+	// answers nothing. A reject arriving with no request outstanding answers nothing either: the
+	// first answer closed the transaction, so a second one is a core answering twice rather than
+	// any retransmission TS 24.501 defines -- the only timer in this procedure is the UE's own
+	// T3581 on the request, which this UE does not run. And a reject carrying another PTI belongs
+	// to a transaction that is not this one.
+	pduSess, sessErr := ue.GetPduSession(int64(pduSessId))
+	if sessErr != nil {
+		return fmt.Errorf("reject names PDU session %d, which this UE does not hold: %v",
+			pduSessId, sessErr)
+	}
+
+	outstanding := pduSess.PendingPTI
+	if outstanding == 0 {
+		return fmt.Errorf("reject carries PTI %d for session %d, on which this UE has no outstanding modification request",
+			pti, pduSessId)
+	}
+
+	// An unmatched reject leaves the outstanding transaction in place, because it is still
+	// outstanding: nothing has answered it. Clearing it would lose the identity the next answer
+	// has to be matched against.
+	if pti != outstanding {
+		return fmt.Errorf("reject carries PTI %d but this UE's outstanding request used PTI %d; it cannot be matched to the procedure",
+			pti, outstanding)
+	}
+
+	pduSess.PendingPTI = 0
+
+	return nil
+}
+
+// HandlePduSessModificationCompleteEvent answers a PDU SESSION MODIFICATION COMMAND.
+//
+// The UE takes the authorized parameters as given. TS 24.501 subclause 6.3.2.3: the command
+// carries what the network has decided, not a proposal, so the answer confirms rather than
+// negotiates. What the UE records is therefore the authorized QoS rules and flow descriptions as
+// received, and the acknowledgement echoes the command's PTI so the network can match it.
+func HandlePduSessModificationCompleteEvent(ue *realuectx.RealUe,
+	intfcMsg common.InterfaceMessage,
+) (err error) {
+	msg := intfcMsg.(*common.UeMessage)
+	nasMsg := msg.NasMsg.PDUSessionModificationCommand
+	if nasMsg == nil {
+		ue.Log.Errorln("PDUSessionModificationCommand is nil")
+		return fmt.Errorf("invalid NAS Message")
+	}
+
+	pduSessId := nasMsg.PDUSessionID.Octet
+	pti := nasMsg.PTI.Octet
+	ue.Log.Infoln("PDU Session Modification Command, PDU Session ID:", pduSessId, "PTI:", pti)
+
+	// The session must exist. A command for one that does not is not something to answer with a
+	// complete — the network and the UE disagree about what exists, and confirming would hide it.
+	pduSess, sessErr := ue.GetPduSession(int64(pduSessId))
+	if sessErr != nil {
+		return fmt.Errorf("modification command for an unknown PDU session %d: %v", pduSessId, sessErr)
+	}
+
+	// The collision case, and the UE's side of it. TS 24.501 subclause 6.3.2.6 b): a command
+	// arriving during the UE's own modification procedure, with no procedure transaction identity
+	// assigned and naming the session the UE asked about, has the UE "abort internally the
+	// UE-requested PDU session modification procedure" and proceed with the network's.
+	//
+	// Aborting it means forgetting the transaction. Left outstanding, a reject for the UE's
+	// request arriving afterwards still matches -- session held, request outstanding, PTI equal --
+	// and is reported as an answer, which the SimUe turns into a pass for whatever procedure is
+	// running by then. That is the network-requested one, which the reject has nothing to do with.
+	if pti == 0 && pduSess.PendingPTI != 0 {
+		ue.Log.Infof("network started a modification on session %d while this UE's request with PTI %d was outstanding: aborting the UE's procedure, as TS 24.501 6.3.2.6 requires",
+			pduSessId, pduSess.PendingPTI)
+		pduSess.PendingPTI = 0
+	}
+
+	if nasMsg.AuthorizedQosRules != nil {
+		ue.Log.Infoln("authorized QoS rules received, length:", nasMsg.AuthorizedQosRules.GetLen())
+	}
+	if nasMsg.AuthorizedQosFlowDescriptions != nil {
+		ue.Log.Infoln("authorized QoS flow descriptions received, length:",
+			nasMsg.AuthorizedQosFlowDescriptions.GetLen())
+	}
+	if nasMsg.SessionAMBR != nil {
+		ue.Log.Infoln("session AMBR received in the modification command")
+	}
+
+	nasPdu, err := realue_nas.GetUlNasTransportPduSessionModificationComplete(pduSessId, pti)
+	if err != nil {
+		return fmt.Errorf("failed to build PDU Session Modification Complete: %v", err)
+	}
+
+	nasPdu, err = realue_nas.EncodeNasPduWithSecurity(ue, nasPdu,
+		nas.SecurityHeaderTypeIntegrityProtectedAndCiphered, true)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt PDU Session Modification Complete: %v", err)
+	}
+
+	m := formUuMessage(common.PDU_SESS_MOD_COMPLETE_EVENT, nasPdu, 0)
+	SendToSimUe(ue, m)
+	return nil
+}
+
 func HandleDataBearerSetupRequestEvent(ue *realuectx.RealUe,
 	intfcMsg common.InterfaceMessage,
 ) (err error) {
@@ -442,11 +644,33 @@ func HandleDlInfoTransferEvent(ue *realuectx.RealUe,
 		m.NasMsg = nasMsg
 		m.Id = msg.Id
 
-		// Simply notify SimUe about the received nas message. Later SimUe will
-		// asynchrously send next event to RealUE informing about what to do with
-		// the received NAS message
-		SendToSimUe(ue, m)
+		if err := forwardDlNasToSimUe(ue, m, msgType); err != nil {
+			return err
+		}
 	}
+	return nil
+}
+
+// forwardDlNasToSimUe notifies the SimUe about a received NAS message, after any check that has
+// to happen before the SimUe is told anything at all.
+//
+// The design is that the RealUe simply reports what arrived and the SimUe decides what to do with
+// it, asynchronously. That makes the SimUe the one that reports the procedure's verdict -- so a
+// check living on the RealUe side of that exchange runs after the verdict has already been sent,
+// and cannot change it. A modification reject is checked here for that reason: a reject that
+// cannot be matched to the UE's outstanding request never reaches the SimUe, so no pass is
+// reported and the error becomes the procedure's result.
+func forwardDlNasToSimUe(ue *realuectx.RealUe, m *common.UeMessage, msgType uint8) error {
+	if msgType == nas.MsgTypePDUSessionModificationReject {
+		if err := HandlePduSessModificationRejectEvent(ue, m); err != nil {
+			return err
+		}
+	}
+
+	// Simply notify SimUe about the received nas message. Later SimUe will
+	// asynchronously send next event to RealUE informing about what to do with
+	// the received NAS message
+	SendToSimUe(ue, m)
 	return nil
 }
 
