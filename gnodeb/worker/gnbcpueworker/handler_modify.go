@@ -176,6 +176,22 @@ func modifySession(gnbue *gnbctx.GnbCpUe, item *ngapType.PDUSessionResourceModif
 		return nil, causePtr(radioResourcesNotAvailable())
 	}
 
+	// A request that moves the session's uplink tunnel is refused rather than answered. The
+	// UL NG-U UP TNL Modify List names the tunnel the gNB is to send uplink to from now on, and
+	// TS 38.413 clause 8.2.3.2 has the NG-RAN node use it and report the new endpoint back in the
+	// response transfer. This gNB does neither: it would keep sending to the tunnel it has while
+	// telling the core the modification succeeded, so the uplink would arrive nowhere and the core
+	// would have no reason to look. Failing the session says what is true -- the gNB did not make
+	// the change -- and leaves the session on its old parameters at both ends.
+	//
+	// No core in this stack sends the IE, so this is the answer to a request that has not been
+	// seen rather than a path in use.
+	if modifiesTheUplinkTunnel(&transfer) {
+		gnbue.Log.Errorln("refusing the modification for PDU session", pduSessID,
+			"because it moves the uplink tunnel, which this gNB does not do")
+		return nil, causePtr(unspecifiedRadioNetworkFailure())
+	}
+
 	plan := decideQosFlows(gnbue, pduSessID, &transfer)
 	if len(plan.outcomes) == 0 {
 		// Nothing to decide: the request names no QoS flows to add or modify, so the session
@@ -217,6 +233,28 @@ func unknownPduSessionID() ngapType.Cause {
 	cause.Present = ngapType.CausePresentRadioNetwork
 	cause.RadioNetwork = &ngapType.CauseRadioNetwork{
 		Value: ngapType.CauseRadioNetworkPresentUnknownPDUSessionID,
+	}
+	return cause
+}
+
+// modifiesTheUplinkTunnel reports whether the request asks the gNB to send uplink somewhere new.
+func modifiesTheUplinkTunnel(transfer *ngapType.PDUSessionResourceModifyRequestTransfer) bool {
+	for _, ie := range transfer.ProtocolIEs.List {
+		if ie.Id.Value == ngapType.ProtocolIEIDULNGUUPTNLModifyList &&
+			ie.Value.ULNGUUPTNLModifyList != nil {
+			return true
+		}
+	}
+	return false
+}
+
+// unspecifiedRadioNetworkFailure is the cause for a request this gNB will not carry out, where no
+// more specific cause describes it: the radio network layer refused, and the log says why.
+func unspecifiedRadioNetworkFailure() ngapType.Cause {
+	cause := ngapType.Cause{}
+	cause.Present = ngapType.CausePresentRadioNetwork
+	cause.RadioNetwork = &ngapType.CauseRadioNetwork{
+		Value: ngapType.CauseRadioNetworkPresentUnspecified,
 	}
 	return cause
 }

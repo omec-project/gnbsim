@@ -310,3 +310,52 @@ func TestDecideQosFlowsChangesNothing(t *testing.T) {
 		t.Errorf("recorded flows 1,2,3,4 = %v after applying, want [true false false true]", held)
 	}
 }
+
+// tunnelModifyTransfer builds a request that moves the session's uplink tunnel, alongside a QoS
+// change the gNB would otherwise admit.
+func tunnelModifyTransfer(qfi int64) *ngapType.PDUSessionResourceModifyRequestTransfer {
+	transfer := addOrModifyTransfer(qfi)
+
+	gtpTunnel := &ngapType.GTPTunnel{}
+	gtpTunnel.TransportLayerAddress.Value = aper.BitString{Bytes: []byte{10, 0, 0, 1}, BitLength: 32}
+	gtpTunnel.GTPTEID.Value = aper.OctetString{0x00, 0x00, 0x00, 0x02}
+
+	item := ngapType.ULNGUUPTNLModifyItem{}
+	item.ULNGUUPTNLInformation.Present = ngapType.UPTransportLayerInformationPresentGTPTunnel
+	item.ULNGUUPTNLInformation.GTPTunnel = gtpTunnel
+	item.DLNGUUPTNLInformation.Present = ngapType.UPTransportLayerInformationPresentGTPTunnel
+	item.DLNGUUPTNLInformation.GTPTunnel = gtpTunnel
+
+	transfer.ProtocolIEs.List = append(transfer.ProtocolIEs.List,
+		ngapType.PDUSessionResourceModifyRequestTransferIEs{
+			Id: ngapType.ProtocolIEID{Value: ngapType.ProtocolIEIDULNGUUPTNLModifyList},
+			Value: ngapType.PDUSessionResourceModifyRequestTransferIEsValue{
+				Present:              ngapType.PDUSessionResourceModifyRequestTransferIEsPresentULNGUUPTNLModifyList,
+				ULNGUUPTNLModifyList: &ngapType.ULNGUUPTNLModifyList{List: []ngapType.ULNGUUPTNLModifyItem{item}},
+			},
+		})
+	return transfer
+}
+
+// TestModifySessionRefusesAMoveOfTheUplinkTunnel covers the request this gNB cannot carry out. The
+// UL NG-U UP TNL Modify List names the tunnel it is to send uplink to from now on; this gNB keeps
+// the tunnel it has, so answering "modified" would leave the core believing the uplink had moved
+// while the packets went on arriving nowhere -- with no report to say otherwise.
+func TestModifySessionRefusesAMoveOfTheUplinkTunnel(t *testing.T) {
+	gnbue, upCtx := newCpUe(&gnbctx.GNodeB{}, 1)
+
+	encoded, cause := modifySession(gnbue, modifyItem(t, tunnelModifyTransfer(2)))
+	if cause == nil {
+		t.Fatal("a request moving the uplink tunnel was reported as modified")
+	}
+	if encoded != nil {
+		t.Error("a failed session carries a response transfer")
+	}
+	if cause.RadioNetwork == nil ||
+		cause.RadioNetwork.Value != ngapType.CauseRadioNetworkPresentUnspecified {
+		t.Errorf("cause = %v, want radio network unspecified", cause.RadioNetwork)
+	}
+	if held := recordedQfis(upCtx, 1, 2); held[0] != true || held[1] != false {
+		t.Errorf("recorded flows 1,2 = %v, want [true false]: a refused session changed nothing", held)
+	}
+}
