@@ -821,7 +821,7 @@ func HandleHandoverNotify(gnbue *gnbctx.GnbCpUe, intfcMsg common.InterfaceMessag
 
 	var dbParamSet []*common.DataBearerParams
 
-	gnbue.GnbUpUes.Range(func(k, v interface{}) bool {
+	gnbue.GnbUpUes.Range(func(k, v any) bool {
 		gnbUpUe := v.(*gnbctx.GnbUpUe)
 		pduSess := &ngapTestpacket.PduSession{}
 		pduSess.PduSessId = gnbUpUe.PduSessId
@@ -848,7 +848,7 @@ func HandleHandoverNotify(gnbue *gnbctx.GnbCpUe, intfcMsg common.InterfaceMessag
 }
 
 func terminateUpUeContexts(gnbue *gnbctx.GnbCpUe) {
-	f := func(key, value interface{}) bool {
+	f := func(key, value any) bool {
 		terminateUpUeContext(value.(*gnbctx.GnbUpUe))
 		return true
 	}

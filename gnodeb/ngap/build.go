@@ -109,7 +109,7 @@ func GetUplinkNASTransport(gnbue *gnbctx.GnbCpUe, nasPdu []byte) ([]byte, error)
 
 func GetUEContextReleaseRequest(gnbue *gnbctx.GnbCpUe) ([]byte, error) {
 	var pduSessIds []int64
-	f := func(k interface{}, v interface{}) bool {
+	f := func(k any, v any) bool {
 		pduSessIds = append(pduSessIds, k.(int64))
 		return true
 	}
@@ -134,7 +134,7 @@ func GetUEContextReleaseRequest(gnbue *gnbctx.GnbCpUe) ([]byte, error) {
 //	nasPdu: value of id-NAS-PDU from the UE.
 func GetUEContextReleaseComplete(gnbue *gnbctx.GnbCpUe) ([]byte, error) {
 	var pduSessIds []int64
-	gnbue.GnbUpUes.Range(func(k interface{}, v interface{}) bool {
+	gnbue.GnbUpUes.Range(func(k any, v any) bool {
 		pduSessIds = append(pduSessIds, k.(int64))
 		return true
 	})
@@ -212,7 +212,7 @@ func GetHandoverRequired(gnbue *gnbctx.GnbCpUe, targetGnb *gnbctx.GNodeB) ([]byt
 	targetTai.TAC.Value = aper.OctetString(tac)
 
 	var pduSessionIds []int64
-	gnbue.GnbUpUes.Range(func(k, v interface{}) bool {
+	gnbue.GnbUpUes.Range(func(k, v any) bool {
 		pduSessionIds = append(pduSessionIds, k.(int64))
 		return true
 	})
