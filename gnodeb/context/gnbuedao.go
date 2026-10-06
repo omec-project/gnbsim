@@ -52,7 +52,7 @@ func (dao *GnbUeDao) AddGnbCpUe(gnbUeNgapId int64, gnbue *GnbCpUe) {
 // GetGnbUpUe returns the GnbUpUe instance corresponding to provided TEID
 func (dao *GnbUeDao) GetGnbUpUe(teid uint32, downlink bool) *GnbUpUe {
 	dao.Log.Debugf("fetching GnbUpUe for TEID: %d downlink: %v", teid, downlink)
-	var val interface{}
+	var val any
 	var ok bool
 	if downlink {
 		val, ok = dao.dlTeidGnbUpUeMap.Load(teid)
@@ -110,7 +110,7 @@ func (dao *GnbUeDao) DequeueHandoverTarget() *GnbCpUe {
 // Used during N2 handover preparation to retrieve the source GnbCpUe's AMF UE NGAP ID.
 func (dao *GnbUeDao) GetGnbCpUeByUeChan(ch chan common.InterfaceMessage) *GnbCpUe {
 	var found *GnbCpUe
-	dao.ngapIdGnbCpUeMap.Range(func(k, v interface{}) bool {
+	dao.ngapIdGnbCpUeMap.Range(func(k, v any) bool {
 		gnbue := v.(*GnbCpUe)
 		if gnbue.WriteUeChan == ch {
 			found = gnbue
