@@ -54,8 +54,8 @@ github.com/omec-project/ngap/v2 v2.1.8 h1:iSWyMQmuj/w+v5IJiV8/ESrh9H7GPtm03IrLeS
 github.com/omec-project/ngap/v2 v2.1.8/go.mod h1:HjDXoNHJSqX5R0Blxxk6K1fKm98uSzbV7+9ZukJgD98=
 github.com/omec-project/openapi/v2 v2.2.5 h1:G2mqm2W56+Gdgehu6L+fAmPMlVVqdvqnse4GutnIaEI=
 github.com/omec-project/openapi/v2 v2.2.5/go.mod h1:eCINoLdvAXP3BBFx93kOOfq0KHGqfMUshJzaYwNadPM=
-github.com/omec-project/util v1.8.13 h1:AZt8QDXjqZy3Od8qmVA0KV4v9VOqBMk8f87zYAcxcpU=
-github.com/omec-project/util v1.8.13/go.mod h1:g850w4VFZEIzxYLJTU/XM9nRyMXE1UvIgYhWla/fkSw=
+github.com/omec-project/util v1.9.1 h1:oHcQXj8impvHmX4+JNyI6Gyx2U4OEhwZNhS6RgA6Fk8=
+github.com/omec-project/util v1.9.1/go.mod h1:ogG9rA4hBMsSnXfzXFO4WsW0Dl8Mi5bITdZ6nlKmFRY=
 github.com/pelletier/go-toml/v2 v2.4.3 h1:GTRvJQutkOSftxIFD5xw9aepkYNuPWmVJpffdDPYVpY=
 github.com/pelletier/go-toml/v2 v2.4.3/go.mod h1:2gIqNv+qfxSVS7cM2xJQKtLSTLUE9V8t9Stt+h56mCY=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
@@ -80,10 +80,10 @@ github.com/twitchyliquid64/golang-asm v0.15.1 h1:SU5vSMR7hnwNxj24w34ZyCi/FmDZTkS
 github.com/twitchyliquid64/golang-asm v0.15.1/go.mod h1:a1lVb/DtPvCB8fslRZhAngC2+aY1QWCk3Cedj/Gdt08=
 github.com/ugorji/go/codec v1.3.2 h1:zkEASHHyEClGeURfgNT9PJZVfAbs9oEX9QXggwWNJbc=
 github.com/ugorji/go/codec v1.3.2/go.mod h1:pRBVtBSKl77K30Bv8R2P+cLSGaTtex6fsA2Wjqmfxj4=
-github.com/urfave/cli/v3 v3.13.0 h1:Dr6jqMfIyyFsRVn7Nz5mqLsMY+ZMpfh3a0aMs+umPVY=
-github.com/urfave/cli/v3 v3.13.0/go.mod h1:vXn6HxPNccJSzQr2QvwVncOKrgYGIHU0HY5h8B2nQj4=
-go.mongodb.org/mongo-driver/v2 v2.9.1 h1:jewiFs2m1/VOQp8qhFshX6hWZ+EAXDhZHXExAUMcOgQ=
-go.mongodb.org/mongo-driver/v2 v2.9.1/go.mod h1:SHKN0IWkKmEVGHLjXnni6s4wPKX4v86FTgOeJJFuXcA=
+github.com/urfave/cli/v3 v3.14.0 h1:a8414NQlHJs0c/iBsulKLzlES0n/lEAskbL2LKpU4/s=
+github.com/urfave/cli/v3 v3.14.0/go.mod h1:vXn6HxPNccJSzQr2QvwVncOKrgYGIHU0HY5h8B2nQj4=
+go.mongodb.org/mongo-driver/v2 v2.9.2 h1:OCAdjI37pC/SVxucz/9CM8zD4jCdegtsY5QcKzYFCgE=
+go.mongodb.org/mongo-driver/v2 v2.9.2/go.mod h1:SHKN0IWkKmEVGHLjXnni6s4wPKX4v86FTgOeJJFuXcA=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
 go.uber.org/goleak v1.3.0/go.mod h1:CoHD4mav9JJNrW/WLlf7HGZPjdw8EucARQHekz1X6bE=
 go.uber.org/mock v0.6.0 h1:hyF9dfmbgIX5EfOdasqLsWD6xqpNZlXblLB/Dbnwv3Y=
