@@ -15,11 +15,11 @@ import (
 	"github.com/omec-project/gnbsim/gnodeb/ngap"
 	"github.com/omec-project/gnbsim/gnodeb/worker/gnbupfworker"
 	"github.com/omec-project/gnbsim/gnodeb/worker/gnbupueworker"
+	"github.com/omec-project/gnbsim/ngapconv"
 	"github.com/omec-project/gnbsim/stats"
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 	"github.com/omec-project/gnbsim/util/test"
 	"github.com/omec-project/ngap/v2/aper"
-	"github.com/omec-project/ngap/v2/ngapConvert"
 	"github.com/omec-project/ngap/v2/ngapType"
 )
 
@@ -571,10 +571,10 @@ func ProcessPduSessResourceSetupList(gnbue *gnbctx.GnbCpUe,
 			gnbue.Log.Errorln("ID Generator Allocate() returned:", err)
 			return
 		}
-		upfIp, _ := ngapConvert.IPAddressToString(gtpTunnel.TransportLayerAddress)
+		upfIp, _ := ngapconv.IPAddressToString(gtpTunnel.TransportLayerAddress)
 
 		gnbupue := gnbctx.NewGnbUpUe(uint32(dlteid), ulteid, gnbue.Gnb)
-		snssai, err := ngapConvert.SNssaiToModels(item.SNSSAI)
+		snssai, err := ngapconv.SNssaiToModels(item.SNSSAI)
 		if err != nil {
 			gnbue.Gnb.DlTeidGenerator.FreeID(dlteid)
 			gnbue.Log.Errorln("SNssaiToModels returned:", err)
@@ -749,7 +749,7 @@ func HandleHandoverRequest(gnbue *gnbctx.GnbCpUe, intfcMsg common.InterfaceMessa
 				continue
 			}
 			ulteid := binary.BigEndian.Uint32(gtpTunnel.GTPTEID.Value)
-			upfIp, _ := ngapConvert.IPAddressToString(gtpTunnel.TransportLayerAddress)
+			upfIp, _ := ngapconv.IPAddressToString(gtpTunnel.TransportLayerAddress)
 			if upfIp == "" {
 				gnbue.Log.Errorln("failed to resolve UPF IP address, skipping PDU session")
 				continue

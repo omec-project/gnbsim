@@ -12,10 +12,10 @@ import (
 	"strconv"
 
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
+	"github.com/omec-project/gnbsim/ngapconv"
 	"github.com/omec-project/gnbsim/util/ngapTestpacket"
 	"github.com/omec-project/ngap/v2"
 	"github.com/omec-project/ngap/v2/aper"
-	"github.com/omec-project/ngap/v2/ngapConvert"
 	"github.com/omec-project/ngap/v2/ngapType"
 )
 
@@ -26,7 +26,7 @@ func GetNGSetupRequest(gnb *gnbctx.GNodeB) ([]byte, error) {
 
 	// GlobalRANNodeID
 	ie := message.InitiatingMessage.Value.NGSetup.ProtocolIEs.List[0]
-	*ie.Value.GlobalRANNodeID = ngapConvert.RanIDToNgap(gnb.RanId)
+	*ie.Value.GlobalRANNodeID = ngapconv.RanIDToNgap(gnb.RanId)
 
 	// RANNodeName
 	ie = message.InitiatingMessage.Value.NGSetup.ProtocolIEs.List[1]
@@ -52,13 +52,13 @@ func GetNGSetupRequest(gnb *gnbctx.GNodeB) ([]byte, error) {
 		for _, plmnItem := range ta.BroadcastPLMNList {
 			// BroadcastPLMNItem in BroadcastPLMNList
 			broadcastPLMNItem := ngapType.BroadcastPLMNItem{}
-			broadcastPLMNItem.PLMNIdentity = ngapConvert.PlmnIdToNgap(plmnItem.PlmnId)
+			broadcastPLMNItem.PLMNIdentity = ngapconv.PlmnIdToNgap(plmnItem.PlmnId)
 
 			sliceSupportList := &broadcastPLMNItem.TAISliceSupportList
 			for _, snssai := range plmnItem.TaiSliceSupportList {
 				// SliceSupportItem in SliceSupportList
 				sliceSupportItem := ngapType.SliceSupportItem{}
-				sliceSupportItem.SNSSAI = ngapConvert.SNssaiToNgap(snssai)
+				sliceSupportItem.SNSSAI = ngapconv.SNssaiToNgap(snssai)
 				sliceSupportList.List = append(sliceSupportList.List, sliceSupportItem)
 			}
 			broadcastPLMNList.List = append(broadcastPLMNList.List, broadcastPLMNItem)
@@ -156,7 +156,7 @@ func GetUEContextReleaseComplete(gnbue *gnbctx.GnbCpUe) ([]byte, error) {
 func updateUserLocationInformation(gnb *gnbctx.GNodeB, uli *ngapType.UserLocationInformation) error {
 	nr := uli.UserLocationInformationNR
 
-	nr.NRCGI.PLMNIdentity = ngapConvert.PlmnIdToNgap(gnb.RanId.PlmnId)
+	nr.NRCGI.PLMNIdentity = ngapconv.PlmnIdToNgap(gnb.RanId.PlmnId)
 	nr.TAI.PLMNIdentity = nr.NRCGI.PLMNIdentity
 
 	gnbId := gnb.RanId.GetGNbId()
@@ -195,7 +195,7 @@ func updateUserLocationInformation(gnb *gnbctx.GNodeB, uli *ngapType.UserLocatio
 // GetHandoverRequired builds and encodes a HandoverRequired NGAP message for the source gNB.
 // targetGnb is the target gNodeB context; pduSessionIds are the active PDU sessions to hand over.
 func GetHandoverRequired(gnbue *gnbctx.GnbCpUe, targetGnb *gnbctx.GNodeB) ([]byte, error) {
-	targetRanId := ngapConvert.RanIDToNgap(targetGnb.RanId)
+	targetRanId := ngapconv.RanIDToNgap(targetGnb.RanId)
 
 	if len(targetGnb.SupportedTaList) == 0 {
 		return nil, errors.New("target gNB has no supported TAs")
@@ -208,7 +208,7 @@ func GetHandoverRequired(gnbue *gnbctx.GnbCpUe, targetGnb *gnbctx.GNodeB) ([]byt
 		return nil, errors.New("target gNB supported TA has no broadcast PLMN entries")
 	}
 	targetTai := ngapType.TAI{}
-	targetTai.PLMNIdentity = ngapConvert.PlmnIdToNgap(targetGnb.SupportedTaList[0].BroadcastPLMNList[0].PlmnId)
+	targetTai.PLMNIdentity = ngapconv.PlmnIdToNgap(targetGnb.SupportedTaList[0].BroadcastPLMNList[0].PlmnId)
 	targetTai.TAC.Value = aper.OctetString(tac)
 
 	var pduSessionIds []int64
@@ -256,7 +256,7 @@ func GetHandoverNotify(gnbue *gnbctx.GnbCpUe) ([]byte, error) {
 	nrciBuf := [8]byte{}
 	binary.BigEndian.PutUint64(nrciBuf[:], nrci)
 
-	plmnId := ngapConvert.PlmnIdToNgap(gnb.RanId.PlmnId)
+	plmnId := ngapconv.PlmnIdToNgap(gnb.RanId.PlmnId)
 
 	nrCellIdentity := aper.BitString{
 		Bytes:     nrciBuf[3:],

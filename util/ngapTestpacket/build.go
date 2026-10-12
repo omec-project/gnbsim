@@ -10,8 +10,8 @@ import (
 	"encoding/hex"
 
 	"github.com/omec-project/gnbsim/logger"
+	"github.com/omec-project/gnbsim/ngapconv"
 	"github.com/omec-project/ngap/v2/aper"
-	"github.com/omec-project/ngap/v2/ngapConvert"
 	"github.com/omec-project/ngap/v2/ngapType"
 )
 
@@ -576,7 +576,7 @@ func buildPDUSessionResourceSetupResponseTransfer(pduSession *PduSession,
 	teidOct := make([]byte, 4)
 	binary.BigEndian.PutUint32(teidOct, pduSession.Teid)
 	upTransportLayerInformation.GTPTunnel.GTPTEID.Value = teidOct
-	upTransportLayerInformation.GTPTunnel.TransportLayerAddress = ngapConvert.IPAddressToNgap(ipv4, "")
+	upTransportLayerInformation.GTPTunnel.TransportLayerAddress = ngapconv.IPAddressToNgap(ipv4, "")
 
 	// Associated QoS Flow List in QoS Flow per TNL Information
 	associatedQosFlowList := &qosFlowPerTNLInformation.AssociatedQosFlowList
