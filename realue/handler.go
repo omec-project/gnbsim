@@ -12,11 +12,11 @@ import (
 	"github.com/omec-project/gnbsim/common"
 	realuectx "github.com/omec-project/gnbsim/realue/context"
 	realue_nas "github.com/omec-project/gnbsim/realue/nas"
+	"github.com/omec-project/gnbsim/realue/nasconv"
 	"github.com/omec-project/gnbsim/realue/util"
 	"github.com/omec-project/gnbsim/realue/worker/pdusessworker"
 	"github.com/omec-project/gnbsim/stats"
 	"github.com/omec-project/nas/v2"
-	"github.com/omec-project/nas/v2/nasConvert"
 	"github.com/omec-project/nas/v2/nasMessage"
 	"github.com/omec-project/nas/v2/nasTestpacket"
 	"github.com/omec-project/nas/v2/nasType"
@@ -75,7 +75,7 @@ func HandleAuthResponseEvent(ue *realuectx.RealUe,
 	ue.Log.Debugln("processing corresponding Authentication Request Message")
 	authReq := msg.NasMsg.AuthenticationRequest
 
-	ue.NgKsi = nasConvert.SpareHalfOctetAndNgksiToModels(authReq.SpareHalfOctetAndNgksi)
+	ue.NgKsi = nasconv.SpareHalfOctetAndNgksiToModels(authReq.SpareHalfOctetAndNgksi)
 
 	mcc, err := strconv.Atoi(ue.Plmn.Mcc)
 	if err != nil {
@@ -148,7 +148,7 @@ func HandleRegCompleteEvent(ue *realuectx.RealUe,
 		guti = msg.GUTI5G.Octet[:]
 	}
 
-	_, ue.Guti = nasConvert.GutiToString(guti)
+	_, ue.Guti = nasconv.GutiToString(guti)
 
 	ue.Log.Debugln("generating Registration Complete Message")
 	nasPdu := nasTestpacket.GetRegistrationComplete(nil)
@@ -180,7 +180,7 @@ func HandleDeregRequestEvent(ue *realuectx.RealUe,
 	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.DEREG_REQ_OUT, Id: id}
 	stats.LogStats(e)
 
-	gutiNas := nasConvert.GutiToNas(ue.Guti)
+	gutiNas := nasconv.GutiToNas(ue.Guti)
 	mobileIdentity5GS := nasType.MobileIdentity5GS{
 		Len:    11, // 5g-guti
 		Buffer: gutiNas.Octet[:],
@@ -238,7 +238,7 @@ func HandlePduSessEstAcceptEvent(ue *realuectx.RealUe,
 	}
 
 	var pduAddr net.IP
-	pduSessType := nasConvert.PDUSessionTypeToModels(nasMsg.GetPDUSessionType())
+	pduSessType := nasconv.PDUSessionTypeToModels(nasMsg.GetPDUSessionType())
 	if pduSessType == models.PDUSESSIONTYPE_IPV4 {
 		ip := nasMsg.GetPDUAddressInformation()
 		pduAddr = net.IPv4(ip[0], ip[1], ip[2], ip[3])

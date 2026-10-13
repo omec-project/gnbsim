@@ -9,8 +9,8 @@ import (
 	"fmt"
 
 	realuectx "github.com/omec-project/gnbsim/realue/context"
+	"github.com/omec-project/gnbsim/realue/nasconv"
 	"github.com/omec-project/gnbsim/util/nastestpacket"
-	"github.com/omec-project/nas/v2/nasConvert"
 	"github.com/omec-project/nas/v2/nasMessage"
 )
 
@@ -18,7 +18,7 @@ func GetServiceRequest(ue *realuectx.RealUe) ([]byte, error) {
 	nasMsg := nastestpacket.BuildServiceRequest(nasMessage.ServiceTypeData)
 	serviceRequest := nasMsg.ServiceRequest
 
-	guti := nasConvert.GutiToNas(ue.Guti)
+	guti := nasconv.GutiToNas(ue.Guti)
 	serviceRequest.SetTypeOfIdentity(nasMessage.MobileIdentity5GSType5gSTmsi)
 	serviceRequest.SetAMFSetID(guti.GetAMFSetID())
 	serviceRequest.SetAMFPointer(guti.GetAMFPointer())
