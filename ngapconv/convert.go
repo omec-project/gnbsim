@@ -86,12 +86,12 @@ func PlmnIdToNgap(plmn models.PlmnId) ngapType.PLMNIdentity {
 		logger.NgapLog.Warnf("invalid PLMN lengths: MCC %q, MNC %q", plmn.Mcc, plmn.Mnc)
 		return ngapType.PLMNIdentity{}
 	}
-	mcc, mnc := strings.Split(plmn.Mcc, ""), strings.Split(plmn.Mnc, "")
+	mcc, mnc := []byte(plmn.Mcc), []byte(plmn.Mnc)
 	var hexString string
-	if len(plmn.Mnc) == 2 {
-		hexString = mcc[1] + mcc[0] + "f" + mcc[2] + mnc[1] + mnc[0]
+	if len(mnc) == 2 {
+		hexString = string([]byte{mcc[1], mcc[0], 'f', mcc[2], mnc[1], mnc[0]})
 	} else {
-		hexString = mcc[1] + mcc[0] + mnc[0] + mcc[2] + mnc[2] + mnc[1]
+		hexString = string([]byte{mcc[1], mcc[0], mnc[0], mcc[2], mnc[2], mnc[1]})
 	}
 	value, err := hex.DecodeString(hexString)
 	if err != nil {
