@@ -82,6 +82,10 @@ func PlmnIdToModels(ngapPlmnID ngapType.PLMNIdentity) (models.PlmnId, error) {
 
 // PlmnIdToNgap converts an OpenAPI PLMN model to an NGAP identity.
 func PlmnIdToNgap(plmn models.PlmnId) ngapType.PLMNIdentity {
+	if len(plmn.Mcc) != 3 || (len(plmn.Mnc) != 2 && len(plmn.Mnc) != 3) {
+		logger.NgapLog.Warnf("invalid PLMN lengths: MCC %q, MNC %q", plmn.Mcc, plmn.Mnc)
+		return ngapType.PLMNIdentity{}
+	}
 	mcc, mnc := strings.Split(plmn.Mcc, ""), strings.Split(plmn.Mnc, "")
 	var hexString string
 	if len(plmn.Mnc) == 2 {
@@ -216,11 +220,21 @@ func IPAddressToNgap(ipv4, ipv6 string) ngapType.TransportLayerAddress {
 	var bytes []byte
 	var bitLength uint64
 	if ipv4 != "" {
-		bytes = append(bytes, net.ParseIP(ipv4).To4()...)
+		parsed := net.ParseIP(ipv4)
+		if parsed == nil || parsed.To4() == nil {
+			logger.NgapLog.Warnf("IPAddressToNgap: invalid IPv4 address %q", ipv4)
+			return ngapType.TransportLayerAddress{}
+		}
+		bytes = append(bytes, parsed.To4()...)
 		bitLength = 32
 	}
 	if ipv6 != "" {
-		bytes = append(bytes, net.ParseIP(ipv6).To16()...)
+		parsed := net.ParseIP(ipv6)
+		if parsed == nil || parsed.To16() == nil {
+			logger.NgapLog.Warnf("IPAddressToNgap: invalid IPv6 address %q", ipv6)
+			return ngapType.TransportLayerAddress{}
+		}
+		bytes = append(bytes, parsed.To16()...)
 		bitLength += 128
 	}
 	if bitLength == 0 {
