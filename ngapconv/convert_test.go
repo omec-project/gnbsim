@@ -18,6 +18,13 @@ func TestPlmnRoundTrip(t *testing.T) {
 	}
 }
 
+func TestPlmnIdToNgapRejectsMalformedDigits(t *testing.T) {
+	got := PlmnIdToNgap(models.PlmnId{Mcc: "208", Mnc: "9g"})
+	if len(got.Value) != 0 {
+		t.Fatalf("PlmnIdToNgap() returned partial identity %#v", got.Value)
+	}
+}
+
 func TestSNssaiRoundTrip(t *testing.T) {
 	sd := "010203"
 	want := models.Snssai{Sst: 1, Sd: &sd}
