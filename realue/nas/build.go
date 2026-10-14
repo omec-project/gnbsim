@@ -67,7 +67,6 @@ func GetUlNasTransportPduSessionEstablishmentRequest(pduSessionID uint8, request
 		}
 		transport.DNN = new(nasType.DNN)
 		transport.DNN.SetIei(nasMessage.ULNASTransportDNNType)
-		transport.DNN.SetLen(uint8(len(dnn)))
 		transport.SetDNN([]byte(dnn))
 	}
 	if snssai != nil {
