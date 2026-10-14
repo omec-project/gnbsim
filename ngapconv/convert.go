@@ -230,7 +230,7 @@ func IPAddressToNgap(ipv4, ipv6 string) ngapType.TransportLayerAddress {
 	}
 	if ipv6 != "" {
 		parsed := net.ParseIP(ipv6)
-		if parsed == nil || parsed.To16() == nil {
+		if parsed == nil || parsed.To4() != nil || parsed.To16() == nil {
 			logger.NgapLog.Warnf("IPAddressToNgap: invalid IPv6 address %q", ipv6)
 			return ngapType.TransportLayerAddress{}
 		}
