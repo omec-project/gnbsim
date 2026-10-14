@@ -8,8 +8,8 @@ package gnbamfworker
 import (
 	"github.com/omec-project/gnbsim/common"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
+	"github.com/omec-project/gnbsim/ngapconv"
 	"github.com/omec-project/gnbsim/util/test"
-	"github.com/omec-project/ngap/v2/ngapConvert"
 	"github.com/omec-project/ngap/v2/ngapType"
 	"github.com/omec-project/openapi/v2/models"
 )
@@ -98,7 +98,7 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 		guamiSrc := servedGuamiItem.GUAMI
 
 		// Parsing PLMNID into models.Guami
-		plmnId, err := ngapConvert.PlmnIdToModels(guamiSrc.PLMNIdentity)
+		plmnId, err := ngapconv.PlmnIdToModels(guamiSrc.PLMNIdentity)
 		if err != nil {
 			amf.Log.Errorln("PlmnIdToModels returned:", err)
 			return
@@ -109,7 +109,7 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 				Mcc: plmnId.GetMcc(),
 				Mnc: plmnId.GetMnc(),
 			},
-			AmfId: ngapConvert.AmfIdToModels(guamiSrc.AMFRegionID.Value, guamiSrc.AMFSetID.Value, guamiSrc.AMFPointer.Value),
+			AmfId: ngapconv.AmfIdToModels(guamiSrc.AMFRegionID.Value, guamiSrc.AMFSetID.Value, guamiSrc.AMFPointer.Value),
 		}
 
 		amf.ServedGuamiList = append(amf.ServedGuamiList, guami)
@@ -133,7 +133,7 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 		}
 
 		// Parsing PLMNID into models.PlmnId
-		plmnId, err := ngapConvert.PlmnIdToModels(plmnSupportItem.PLMNIdentity)
+		plmnId, err := ngapconv.PlmnIdToModels(plmnSupportItem.PLMNIdentity)
 		if err != nil {
 			amf.Log.Errorln("PlmnIdToModels returned:", err)
 			return
@@ -142,7 +142,7 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 		// Parsing SNssaiList into models.Snssai
 		snssaiList := make([]models.Snssai, 0, len(plmnSupportItem.SliceSupportList.List))
 		for _, sliceSupportItem := range plmnSupportItem.SliceSupportList.List {
-			snssai, err := ngapConvert.SNssaiToModels(sliceSupportItem.SNSSAI)
+			snssai, err := ngapconv.SNssaiToModels(sliceSupportItem.SNSSAI)
 			if err != nil {
 				amf.Log.Errorln("SNssaiToModels returned:", err)
 				return
