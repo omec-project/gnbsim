@@ -5,6 +5,7 @@
 package nas
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/omec-project/nas/v2"
@@ -93,7 +94,7 @@ func TestGetUlNasTransportPduSessionEstablishmentRequestRejectsInvalidSNssai(t *
 	}
 }
 
-func TestGetUlNasTransportPduSessionEstablishmentRequestEncodesSSTOnlySNssai(t *testing.T) {
+func TestGetUlNasTransportPduSessionEstablishmentRequestPreservesZeroSD(t *testing.T) {
 	encoded, err := GetUlNasTransportPduSessionEstablishmentRequest(
 		10,
 		nasMessage.ULNASTransportRequestTypeInitialRequest,
@@ -111,10 +112,26 @@ func TestGetUlNasTransportPduSessionEstablishmentRequestEncodesSSTOnlySNssai(t *
 	if m.ULNASTransport == nil || m.ULNASTransport.SNSSAI == nil {
 		t.Fatal("UL NAS transport is missing S-NSSAI")
 	}
-	if got := m.ULNASTransport.SNSSAI.GetLen(); got != 1 {
-		t.Errorf("S-NSSAI length = %d, want 1 for SST-only S-NSSAI", got)
+	if got := m.ULNASTransport.SNSSAI.GetLen(); got != 4 {
+		t.Errorf("S-NSSAI length = %d, want 4 to preserve legacy encoding", got)
 	}
 	if got := m.ULNASTransport.GetSST(); got != 1 {
 		t.Errorf("SST = %d, want 1", got)
+	}
+	if got := m.ULNASTransport.GetSD(); got != [3]uint8{} {
+		t.Errorf("SD = %#v, want zero SD", got)
+	}
+}
+
+func TestGetUlNasTransportPduSessionEstablishmentRequestValidatesDNNLength(t *testing.T) {
+	if _, err := GetUlNasTransportPduSessionEstablishmentRequest(
+		10, nasMessage.ULNASTransportRequestTypeInitialRequest, strings.Repeat("a", 254), nil,
+	); err != nil {
+		t.Errorf("builder rejected a 254-byte DNN: %v", err)
+	}
+	if _, err := GetUlNasTransportPduSessionEstablishmentRequest(
+		10, nasMessage.ULNASTransportRequestTypeInitialRequest, strings.Repeat("a", 255), nil,
+	); err == nil {
+		t.Error("builder accepted a DNN that cannot fit in its one-octet IE length")
 	}
 }
