@@ -13,7 +13,6 @@ import (
 	"github.com/omec-project/gnbsim/realue/nasconv"
 	"github.com/omec-project/gnbsim/util/nastestpacket"
 	"github.com/omec-project/nas/v2"
-	"github.com/omec-project/nas/v2/logger"
 	"github.com/omec-project/nas/v2/nasMessage"
 	"github.com/omec-project/nas/v2/nasTestpacket"
 	"github.com/omec-project/nas/v2/nasType"
@@ -70,14 +69,22 @@ func GetUlNasTransportPduSessionEstablishmentRequest(pduSessionID uint8, request
 	}
 	if snssai != nil {
 		var sd [3]uint8
-		decoded, err := hex.DecodeString(snssai.GetSd())
-		if err != nil {
-			logger.NasMsgLog.Errorf("sNssai decode error: %+v", err)
+		if encodedSD := snssai.GetSd(); encodedSD != "" {
+			decoded, err := hex.DecodeString(encodedSD)
+			if err != nil {
+				return nil, fmt.Errorf("decode S-NSSAI SD: %w", err)
+			}
+			if len(decoded) != len(sd) {
+				return nil, fmt.Errorf("invalid S-NSSAI SD length %d, want %d", len(decoded), len(sd))
+			}
+			copy(sd[:], decoded)
 		}
-		copy(sd[:], decoded)
+		if sst := snssai.GetSst(); sst < 0 || sst > 255 {
+			return nil, fmt.Errorf("S-NSSAI SST %d is outside the one-octet range", sst)
+		}
 		transport.SNSSAI = nasType.NewSNSSAI(nasMessage.ULNASTransportSNSSAIType)
 		transport.SNSSAI.SetLen(4)
-		transport.SetSST(uint8(snssai.Sst))
+		transport.SetSST(uint8(snssai.GetSst()))
 		transport.SetSD(sd)
 	}
 
