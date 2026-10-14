@@ -32,10 +32,10 @@ func TestGetUlNasTransportPduSessionEstablishmentRequest(t *testing.T) {
 	if transport == nil || transport.SNSSAI == nil {
 		t.Fatal("UL NAS transport is missing S-NSSAI")
 	}
-	if got := transport.SNSSAI.GetSST(); got != 1 {
+	if got := transport.GetSST(); got != 1 {
 		t.Errorf("SST = %d, want 1", got)
 	}
-	if got := transport.SNSSAI.GetSD(); got != [3]uint8{1, 2, 3} {
+	if got := transport.GetSD(); got != [3]uint8{1, 2, 3} {
 		t.Errorf("SD = %#v, want [3]uint8{1, 2, 3}", got)
 	}
 }
