@@ -10,6 +10,8 @@ import (
 	"github.com/omec-project/openapi/v2/models"
 )
 
+const invalidIP = "not-an-ip"
+
 func TestPlmnRoundTrip(t *testing.T) {
 	want := models.PlmnId{Mcc: "208", Mnc: "93"}
 	got, err := PlmnIdToModels(PlmnIdToNgap(want))
@@ -55,7 +57,7 @@ func TestIPAddressRoundTrip(t *testing.T) {
 }
 
 func TestIPAddressToNgapRejectsMalformedAddresses(t *testing.T) {
-	for _, testCase := range [][2]string{{"not-an-ip", ""}, {"", "not-an-ip"}, {"192.0.2.1", "not-an-ip"}} {
+	for _, testCase := range [][2]string{{invalidIP, ""}, {"", invalidIP}, {"192.0.2.1", invalidIP}} {
 		got := IPAddressToNgap(testCase[0], testCase[1])
 		if got.Value.BitLength != 0 || len(got.Value.Bytes) != 0 {
 			t.Errorf("IPAddressToNgap(%q, %q) = %#v, want zero address", testCase[0], testCase[1], got.Value)
