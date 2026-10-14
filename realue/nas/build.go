@@ -68,24 +68,24 @@ func GetUlNasTransportPduSessionEstablishmentRequest(pduSessionID uint8, request
 		transport.SetDNN([]byte(dnn))
 	}
 	if snssai != nil {
-		var sd [3]uint8
-		if encodedSD := snssai.GetSd(); encodedSD != "" {
-			decoded, err := hex.DecodeString(encodedSD)
-			if err != nil {
-				return nil, fmt.Errorf("decode S-NSSAI SD: %w", err)
-			}
-			if len(decoded) != len(sd) {
-				return nil, fmt.Errorf("invalid S-NSSAI SD length %d, want %d", len(decoded), len(sd))
-			}
-			copy(sd[:], decoded)
-		}
 		if sst := snssai.GetSst(); sst < 0 || sst > 255 {
 			return nil, fmt.Errorf("S-NSSAI SST %d is outside the one-octet range", sst)
 		}
 		transport.SNSSAI = nasType.NewSNSSAI(nasMessage.ULNASTransportSNSSAIType)
-		transport.SNSSAI.SetLen(4)
 		transport.SetSST(uint8(snssai.GetSst()))
-		transport.SetSD(sd)
+		if encodedSD := snssai.GetSd(); encodedSD == "" {
+			transport.SNSSAI.SetLen(1)
+		} else {
+			decoded, err := hex.DecodeString(encodedSD)
+			if err != nil {
+				return nil, fmt.Errorf("decode S-NSSAI SD: %w", err)
+			}
+			if len(decoded) != 3 {
+				return nil, fmt.Errorf("invalid S-NSSAI SD length %d, want 3", len(decoded))
+			}
+			transport.SNSSAI.SetLen(4)
+			transport.SetSD([3]uint8(decoded))
+		}
 	}
 
 	transport.SetPayloadContainerType(nasMessage.PayloadContainerTypeN1SMInfo)
