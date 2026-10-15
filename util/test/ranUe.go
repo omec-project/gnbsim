@@ -6,7 +6,6 @@ package test
 
 import (
 	"github.com/omec-project/nas/v2/security"
-	"github.com/omec-project/openapi/v2"
 	"github.com/omec-project/openapi/v2/models"
 	"golang.org/x/net/ipv4"
 )
@@ -47,9 +46,8 @@ func GetAuthSubscription(k, opc, seqNum string) *models.AuthenticationSubscripti
 	authSubs.SetEncPermanentKey(k)
 	authSubs.SetEncOpcKey(opc)
 	authSubs.SetAuthenticationManagementField("8000")
-	sequenceNumber := models.SequenceNumber{
-		Sqn: openapi.PtrString(seqNum),
-	}
-	authSubs.SetSequenceNumber(sequenceNumber)
+	sequenceNumber := models.NewSequenceNumber()
+	sequenceNumber.SetSqn(seqNum)
+	authSubs.SetSequenceNumber(*sequenceNumber)
 	return authSubs
 }

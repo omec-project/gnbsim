@@ -13,12 +13,19 @@ import (
 	"github.com/omec-project/openapi/v2/models"
 )
 
+func newSnssai(sd string) *models.Snssai {
+	sNssai := models.NewSnssai(1)
+	sNssai.SetSd(sd)
+	return sNssai
+}
+
 func TestGetUlNasTransportPduSessionEstablishmentRequest(t *testing.T) {
+	snssai := newSnssai("010203")
 	encoded, err := GetUlNasTransportPduSessionEstablishmentRequest(
 		10,
 		nasMessage.ULNASTransportRequestTypeInitialRequest,
 		"internet",
-		&models.Snssai{Sst: 1, Sd: new("010203")},
+		snssai,
 	)
 	if err != nil {
 		t.Fatalf("build failed: %v", err)
@@ -76,11 +83,11 @@ func TestGetUlNasTransportPduSessionEstablishmentRequestRejectsInvalidSNssai(t *
 		snssai *models.Snssai
 		name   string
 	}{
-		{name: "malformed SD", snssai: &models.Snssai{Sst: 1, Sd: new("not-hex")}},
-		{name: "short SD", snssai: &models.Snssai{Sst: 1, Sd: new("0102")}},
-		{name: "long SD", snssai: &models.Snssai{Sst: 1, Sd: new("01020304")}},
-		{name: "negative SST", snssai: &models.Snssai{Sst: -1}},
-		{name: "oversized SST", snssai: &models.Snssai{Sst: 256}},
+		{name: "malformed SD", snssai: newSnssai("not-hex")},
+		{name: "short SD", snssai: newSnssai("0102")},
+		{name: "long SD", snssai: newSnssai("01020304")},
+		{name: "negative SST", snssai: models.NewSnssai(-1)},
+		{name: "oversized SST", snssai: models.NewSnssai(256)},
 	}
 
 	for _, tc := range tests {
@@ -99,7 +106,7 @@ func TestGetUlNasTransportPduSessionEstablishmentRequestPreservesZeroSD(t *testi
 		10,
 		nasMessage.ULNASTransportRequestTypeInitialRequest,
 		"internet",
-		&models.Snssai{Sst: 1},
+		models.NewSnssai(1),
 	)
 	if err != nil {
 		t.Fatalf("build failed: %v", err)

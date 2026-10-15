@@ -14,7 +14,6 @@ import (
 	"github.com/omec-project/ngap/v2/aper"
 	"github.com/omec-project/ngap/v2/logger"
 	"github.com/omec-project/ngap/v2/ngapType"
-	"github.com/omec-project/openapi/v2"
 	"github.com/omec-project/openapi/v2/models"
 )
 
@@ -111,7 +110,7 @@ func SNssaiToModels(ngapSNssai ngapType.SNSSAI) (models.Snssai, error) {
 		if len(ngapSNssai.SD.Value) != 3 {
 			return models.Snssai{}, fmt.Errorf("invalid S-NSSAI SD length %d", len(ngapSNssai.SD.Value))
 		}
-		snssai.Sd = openapi.PtrString(hex.EncodeToString(ngapSNssai.SD.Value))
+		snssai.Sd = new(hex.EncodeToString(ngapSNssai.SD.Value))
 	}
 	return snssai, nil
 }

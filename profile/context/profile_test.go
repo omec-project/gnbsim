@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/omec-project/gnbsim/common"
-	"github.com/omec-project/openapi/v2"
 	"github.com/omec-project/openapi/v2/models"
 )
 
@@ -24,6 +23,12 @@ const (
 	testIteration2    = "iteration2"
 )
 
+func newSnssai(sst int32) *models.Snssai {
+	sNssai := models.NewSnssai(sst)
+	sNssai.SetSd("010203")
+	return sNssai
+}
+
 func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
 	tests := []struct {
 		sNssai      *models.Snssai
@@ -37,7 +42,7 @@ func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
 			name:        "pdusessest profile without dnn should fail",
 			profileType: PDU_SESS_EST,
 			dnn:         "",
-			sNssai:      &models.Snssai{Sst: 1, Sd: openapi.PtrString("010203")},
+			sNssai:      newSnssai(1),
 			expectError: true,
 			errorMsg:    errDnnRequired,
 		},
@@ -53,7 +58,7 @@ func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
 			name:        "pdusessest profile with sst=0 should fail",
 			profileType: PDU_SESS_EST,
 			dnn:         testDnn,
-			sNssai:      &models.Snssai{Sst: 0, Sd: openapi.PtrString("010203")},
+			sNssai:      newSnssai(0),
 			expectError: true,
 			errorMsg:    "sNssai.sst is required",
 		},
@@ -61,7 +66,7 @@ func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
 			name:        "pdusessest profile with valid dnn and sNssai should pass",
 			profileType: PDU_SESS_EST,
 			dnn:         testDnn,
-			sNssai:      &models.Snssai{Sst: 1, Sd: openapi.PtrString("010203")},
+			sNssai:      newSnssai(1),
 			expectError: false,
 		},
 		{
@@ -75,7 +80,7 @@ func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
 			name:        "deregister profile without dnn should fail",
 			profileType: DEREGISTER,
 			dnn:         "",
-			sNssai:      &models.Snssai{Sst: 1, Sd: openapi.PtrString("010203")},
+			sNssai:      newSnssai(1),
 			expectError: true,
 			errorMsg:    errDnnRequired,
 		},
@@ -102,10 +107,7 @@ func TestProfileInit_ValidatesDnnForPduSessionProfiles(t *testing.T) {
 				Dnn:         tt.dnn,
 				SNssai:      tt.sNssai,
 				UeCount:     1,
-				Plmn: &models.PlmnId{
-					Mcc: "208",
-					Mnc: "93",
-				},
+				Plmn:        models.NewPlmnId("208", "93"),
 			}
 
 			err := profile.Init()
@@ -146,7 +148,7 @@ func TestProfileInit_ValidatesDnnForCustomProfiles(t *testing.T) {
 				},
 			},
 			dnn:         "",
-			sNssai:      &models.Snssai{Sst: 1, Sd: openapi.PtrString("010203")},
+			sNssai:      newSnssai(1),
 			expectError: true,
 			errorMsg:    errDnnRequired,
 		},
@@ -178,7 +180,7 @@ func TestProfileInit_ValidatesDnnForCustomProfiles(t *testing.T) {
 				},
 			},
 			dnn:         testDnn,
-			sNssai:      &models.Snssai{Sst: 0, Sd: openapi.PtrString("010203")},
+			sNssai:      newSnssai(0),
 			expectError: true,
 			errorMsg:    "sNssai.sst is required",
 		},
@@ -194,7 +196,7 @@ func TestProfileInit_ValidatesDnnForCustomProfiles(t *testing.T) {
 				},
 			},
 			dnn:         testDnn,
-			sNssai:      &models.Snssai{Sst: 1, Sd: openapi.PtrString("010203")},
+			sNssai:      newSnssai(1),
 			expectError: false,
 		},
 		{
@@ -228,10 +230,7 @@ func TestProfileInit_ValidatesDnnForCustomProfiles(t *testing.T) {
 				SNssai:      tt.sNssai,
 				UeCount:     1,
 				PIterations: tt.pIterations,
-				Plmn: &models.PlmnId{
-					Mcc: "208",
-					Mnc: "93",
-				},
+				Plmn:        models.NewPlmnId("208", "93"),
 			}
 
 			err := profile.Init()
