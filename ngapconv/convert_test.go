@@ -156,7 +156,7 @@ func TestRanIDToNgapRejectsMalformedPayloads(t *testing.T) {
 		name string
 	}{
 		{name: "short GNBID payload", ran: func() models.GlobalRanNodeId {
-			return models.GlobalRanNodeId{PlmnId: plmn, GNbId: &models.GNbId{BitLength: 22, GNBValue: "0001"}}
+			return models.GlobalRanNodeId{PlmnId: plmn, GNbId: models.NewGNbId(22, "0001")}
 		}},
 		{name: "malformed MacroNGeNB payload", ran: func() models.GlobalRanNodeId {
 			ran := models.GlobalRanNodeId{PlmnId: plmn}
