@@ -21,11 +21,11 @@ HTTP API to create new profile. Below configuration enables http server in gNBSi
 
 ## gNBsim can Optionally launch profiles through HTTP APIs
 
-Refer [create new profile script](/scripts/create-new-profile.sh)
+Refer [create new profile script](../scripts/create-new-profile.sh)
 
 ## gNBsim can Optionally add new calls to existing profiles through HTTP APIs
 
-Refer [add new calls scripts](/scripts/add-new-calls.sh)
+Refer [add new calls scripts](../scripts/add-new-calls.sh)
 
 ## gNBsim can Optionally calls APIs to step through executions through HTTP APIs
 
@@ -38,4 +38,4 @@ custom profile to enable stepTrigger.
          stepTrigger: true #wait for trigger to move to next step
 
 
-Refer [step profiles scripts](/scripts/step-profile.sh)
+Refer [step profiles scripts](../scripts/step-profile.sh)

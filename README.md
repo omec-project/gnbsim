@@ -5,7 +5,8 @@ SPDX-FileCopyrightText: 2021 Open Networking Foundation <info@opennetworking.org
 SPDX-License-Identifier: Apache-2.0
 -->
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/omec-project/gnbsim/badge)](https://scorecard.dev/viewer/?uri=github.com/omec-project/gnbsim)
-![GitHub latest release (SemVer)](https://img.shields.io/github/v/release/omec-project/gnbsim?sort=semver)
+[![GitHub latest release (SemVer)](https://img.shields.io/github/v/release/omec-project/gnbsim?sort=semver)](https://github.com/omec-project/gnbsim/releases)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://spdx.org/licenses/Apache-2.0.html)
 
 # Table Of Contents
 * [Introduction](#Introduction)
@@ -14,15 +15,15 @@ SPDX-License-Identifier: Apache-2.0
 * [Pending Features](#pending-features)
 * [Support & Contributions](#Support-and-contributions)
 * [License](#license)
-* [Deployment model](/docs/deployment.md)
-* [Configuration](/docs/config.md)
+* [Deployment model](docs/deployment.md)
+* [Configuration](docs/config.md)
 * Advanced Configuration/Features
-  * [API Based Configuration](/docs/apis.md)
-  * [Data Support](/docs/data.md)
-  * [Message Flow](/docs/gnbsim_flow.md)
-  * [Profile Details](/docs/profile_manager_design.md)
-  * [UE Originated Message Flow](/docs/ue_originated_flow.md)
-  * [UE Terminated Message Flow](/docs/ue_terminated_flow.md)
+  * [API Based Configuration](docs/apis.md)
+  * [Data Support](docs/data.md)
+  * [Message Flow](docs/gnbsim_flow.md)
+  * [Profile Details](docs/profile_manager_design.md)
+  * [UE Originated Message Flow](docs/ue_originated_flow.md)
+  * [UE Terminated Message Flow](docs/ue_terminated_flow.md)
 
 
 # Introduction
@@ -33,7 +34,7 @@ and UE by generating NAS and NGAP messages for the configured UEs and call flows
 
 # gNBSim Simulator Block Diagram
 
-![gNBSim](/docs/images/gnbsim_flow_diagram.png)
+![gNBSim](docs/images/gnbsim_flow_diagram.png)
 
 
 # Supported features
@@ -105,8 +106,8 @@ The gnbsim project welcomes new contributors. Feel free to propose a new feature
 Before contributing, please follow these guidelines:
 
 1. gNBSim documentation details [here](./docs/)
-2. Please refer to the official [SD-Core documentation](https://docs.sd-core.opennetworking.org/master/developer/gnbsim.html#gnb-simulator) for more details.
-3. #sdcore-dev channel in [ONF Community Slack](https://onf-community.slack.com/)
+2. Please refer to the official [SD-Core documentation](https://docs.sd-core.aetherproject.org/developer/gnbsim.html#gnb-simulator) for more details.
+3. #sdcore-dev channel in [ONF Community Slack](https://aether5g-project.slack.com/)
 4. Raise Github issues
 
 # License
