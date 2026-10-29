@@ -9,8 +9,8 @@ SPDX-License-Identifier: Apache-2.0
 
 ## gNBsim UE Terminated NAS message
 
-![gNBSim](/docs/images/ue_terminated_nas_message.png)
+![gNBSim](./images/ue_terminated_nas_message.png)
 
 ## gNBsim UE Terminated DATA message
 
-![gNBSim](/docs/images/ue_terminated_user_data_packet.png)
+![gNBSim](./images/ue_terminated_user_data_packet.png)

@@ -9,8 +9,8 @@ SPDX-License-Identifier: Apache-2.0
 
 ## gNBsim UE Originated NAS message
 
-![gNBSim](/docs/images/ue_originating_nas_message.png)
+![gNBSim](./images/ue_originating_nas_message.png)
 
 ## gNBsim UE Originated DATA message
 
-![gNBSim](/docs/images/ue_originating_user_data_packet.png)
+![gNBSim](./images/ue_originating_user_data_packet.png)

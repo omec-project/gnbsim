@@ -28,8 +28,8 @@ SPDX-License-Identifier: Apache-2.0
 
 ## Profile Manager Overview
 
-![gNBSim](/docs/images/profile_manager_overview.png)
+![gNBSim](./images/profile_manager_overview.png)
 
 ## Profile Manager Initialization Sequence
 
-![gNBSim](/docs/images/profile_manager_initialization_seq_diag.png)
+![gNBSim](./images/profile_manager_initialization_seq_diag.png)
