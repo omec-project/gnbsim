@@ -101,6 +101,12 @@ func HandleDownlinkNasTransport(gnbue *gnbctx.GnbCpUe,
 		}
 	}
 
+	// the decoder does not enforce mandatory IEs
+	if amfUeNgapId == nil || nasPdu == nil {
+		gnbue.Log.Errorln("DownlinkNASTransport is missing AMFUENGAPID or NASPDU")
+		return
+	}
+
 	// TODO: check what needs to be done with AmfUeNgapId on every DownlinkNasTransport message
 	gnbue.AmfUeNgapId = amfUeNgapId.Value
 	var pdus common.NasPduList
@@ -164,7 +170,8 @@ func HandleInitialContextSetupRequest(gnbue *gnbctx.GnbCpUe,
 		}
 	}
 
-	if nasPdu.Value != nil {
+	// NAS-PDU is optional in the Initial Context Setup Request (TS 38.413 clause 9.2.2.1)
+	if nasPdu != nil && nasPdu.Value != nil {
 		var pdus common.NasPduList
 		pdus = append(pdus, nasPdu.Value)
 		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, pdus, msg.Id)
@@ -236,6 +243,11 @@ func HandlePduSessResourceSetupRequest(gnbue *gnbctx.GnbCpUe,
 		}
 	}
 
+	if pduSessResourceSetupReqList == nil {
+		gnbue.Log.Errorln("PDUSessionResourceSetupListSUReq is missing")
+		return
+	}
+
 	var list []pduSessResourceSetupItem
 	for _, v := range pduSessResourceSetupReqList.List {
 		dst := pduSessResourceSetupItem{}
@@ -286,6 +298,11 @@ func HandlePduSessResourceReleaseCommand(gnbue *gnbctx.GnbCpUe,
 		}
 	}
 
+	if pduSessResourceToReleaseList == nil {
+		gnbue.Log.Errorln("PDUSessionResourceToReleaseListRelCmd is missing")
+		return
+	}
+
 	for _, item := range pduSessResourceToReleaseList.List {
 		resourceReleaseCmdTransfer := ngapType.PDUSessionResourceReleaseCommandTransfer{}
 		err := aper.UnmarshalWithParams(item.PDUSessionResourceReleaseCommandTransfer,
@@ -310,7 +327,8 @@ func HandlePduSessResourceReleaseCommand(gnbue *gnbctx.GnbCpUe,
 		gnbue.RemoveGnbUpUe(pduSessId)
 	}
 
-	if nasPdu.Value != nil {
+	// NAS-PDU is optional in the PDU Session Resource Release Command (TS 38.413 clause 9.2.1.3)
+	if nasPdu != nil && nasPdu.Value != nil {
 		var pdus common.NasPduList
 		pdus = append(pdus, nasPdu.Value)
 		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, pdus, msg.Id)
@@ -341,12 +359,20 @@ func HandleDataBearerSetupResponse(gnbue *gnbctx.GnbCpUe,
 	var pduSessions []*ngapTestpacket.PduSession
 	for _, item := range msg.DBParams {
 		pduSess := item.PduSess
+		if pduSess == nil {
+			gnbue.Log.Errorln("data bearer params without PDU session, skipping")
+			continue
+		}
 		if !pduSess.Success {
 			gnbue.RemoveGnbUpUe(pduSess.PduSessId)
 		} else {
 			gnbUpUe, err := gnbue.GetGnbUpUe(pduSess.PduSessId)
 			if err != nil {
 				gnbue.Log.Errorln("failed to fetch PDU session context:", err)
+				// there is no user plane context to attach to, so the session cannot be reported as set up
+				pduSess.Success = false
+				pduSessions = append(pduSessions, pduSess)
+				continue
 			}
 			// TODO: Addition to this map should only be through GnbUpfWorker
 			// routine. This will help in replacing sync map with normal map
@@ -446,9 +472,14 @@ func HandleUeCtxReleaseCommand(gnbue *gnbctx.GnbCpUe,
 		}
 	}
 
+	if ueNgapIds == nil || cause == nil {
+		gnbue.Log.Errorln("UEContextReleaseCommand is missing UENGAPIDs or Cause")
+		return
+	}
+
 	_, causeNum := test.PrintAndGetCause(cause)
 
-	if ueNgapIds.Present == ngapType.UENGAPIDsPresentUENGAPIDPair {
+	if ueNgapIds.Present == ngapType.UENGAPIDsPresentUENGAPIDPair && ueNgapIds.UENGAPIDPair != nil {
 		amfUeNgapId = ueNgapIds.UENGAPIDPair.AMFUENGAPID
 		if gnbue.AmfUeNgapId != amfUeNgapId.Value {
 			gnbue.Log.Errorln("AmfUeNgapId mismatch")
@@ -479,8 +510,7 @@ func HandleUeCtxReleaseCommand(gnbue *gnbctx.GnbCpUe,
 	req.Event = common.CONNECTION_RELEASE_REQUEST_EVENT
 	if causeNum == ngapType.CauseNasPresentDeregister {
 		req.TriggeringEvent = common.DEREG_REQUEST_UE_ORIG_EVENT
-	} else if cause != nil &&
-		cause.Present == ngapType.CausePresentRadioNetwork &&
+	} else if cause.Present == ngapType.CausePresentRadioNetwork &&
 		cause.RadioNetwork != nil &&
 		cause.RadioNetwork.Value == ngapType.CauseRadioNetworkPresentSuccessfulHandover {
 		// Released because of successful N2 handover: SimUe must not tear down
@@ -565,13 +595,26 @@ func ProcessPduSessResourceSetupList(gnbue *gnbctx.GnbCpUe,
 			}
 		}
 
+		// the decoder does not enforce mandatory IEs
+		if gtpTunnel == nil || pduSessType == nil || qosFlowSetupReqList == nil {
+			gnbue.Log.Errorln("PDUSessionResourceSetupRequestTransfer is missing a mandatory IE")
+			return
+		}
+		if len(gtpTunnel.GTPTEID.Value) != 4 {
+			gnbue.Log.Errorf("unexpected GTPTEID length %d", len(gtpTunnel.GTPTEID.Value))
+			return
+		}
+		upfIp, _ := ngapconv.IPAddressToString(gtpTunnel.TransportLayerAddress)
+		if upfIp == "" {
+			gnbue.Log.Errorln("failed to resolve UPF IP address")
+			return
+		}
 		ulteid := binary.BigEndian.Uint32(gtpTunnel.GTPTEID.Value)
 		dlteid, err := gnbue.Gnb.DlTeidGenerator.Allocate()
 		if err != nil {
 			gnbue.Log.Errorln("ID Generator Allocate() returned:", err)
 			return
 		}
-		upfIp, _ := ngapconv.IPAddressToString(gtpTunnel.TransportLayerAddress)
 
 		gnbupue := gnbctx.NewGnbUpUe(uint32(dlteid), ulteid, gnbue.Gnb)
 		snssai, err := ngapconv.SNssaiToModels(item.SNSSAI)

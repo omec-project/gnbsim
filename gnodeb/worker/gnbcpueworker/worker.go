@@ -21,46 +21,59 @@ func HandleEvents(gnbue *gnbctx.GnbCpUe) (err error) {
 		evt := msg.GetEventType()
 		gnbue.Log.Infoln("Handling event:", evt)
 
-		switch msg.GetEventType() {
-		case common.CONNECTION_REQUEST_EVENT:
-			HandleConnectRequest(gnbue, msg)
-		case common.REG_REQUEST_EVENT, common.SERVICE_REQUEST_EVENT:
-			HandleInitialUEMessage(gnbue, msg)
-		case common.UL_INFO_TRANSFER_EVENT:
-			HandleUlInfoTransfer(gnbue, msg)
-		case common.DATA_BEARER_SETUP_RESPONSE_EVENT:
-			HandleDataBearerSetupResponse(gnbue, msg)
-		case common.DOWNLINK_NAS_TRANSPORT_EVENT:
-			HandleDownlinkNasTransport(gnbue, msg)
-		case common.INITIAL_CTX_SETUP_REQUEST_EVENT:
-			HandleInitialContextSetupRequest(gnbue, msg)
-		case common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT:
-			HandlePduSessResourceSetupRequest(gnbue, msg)
-		case common.PDU_SESS_RESOURCE_RELEASE_COMMAND_EVENT:
-			HandlePduSessResourceReleaseCommand(gnbue, msg)
-		case common.PDU_SESS_RESOURCE_MODIFY_REQUEST_EVENT:
-			HandlePduSessResourceModifyRequest(gnbue, msg)
-		case common.UE_CTX_RELEASE_COMMAND_EVENT:
-			HandleUeCtxReleaseCommand(gnbue, msg)
-		case common.TRIGGER_AN_RELEASE_EVENT:
-			HandleRanConnectionRelease(gnbue, msg)
-		case common.TRIGGER_HO_EVENT:
-			HandleTriggerHandover(gnbue, msg)
-		case common.HO_REQUEST_EVENT:
-			HandleHandoverRequest(gnbue, msg)
-		case common.HO_COMMAND_EVENT:
-			HandleHandoverCommand(gnbue, msg)
-		case common.HO_NOTIFY_EVENT:
-			HandleHandoverNotify(gnbue, msg)
-		case common.QUIT_EVENT:
-			HandleQuitEvent(gnbue, msg)
-		default:
-			gnbue.Log.Infoln("event", evt, "is not supported")
-		}
+		handleEvent(gnbue, msg, evt)
 
 		// TODO: Need to return and handle errors from handlers
 	}
 	return nil
+}
+
+// handleEvent dispatches one event. A panic caused by a malformed message (the NGAP decoder
+// does not enforce mandatory IEs) is contained so that it neither kills the process nor the
+// event loop of this UE.
+func handleEvent(gnbue *gnbctx.GnbCpUe, msg common.InterfaceMessage, evt common.EventType) {
+	defer func() {
+		if r := recover(); r != nil {
+			gnbue.Log.Errorf("panic while handling event %v: %v", evt, r)
+		}
+	}()
+
+	switch evt {
+	case common.CONNECTION_REQUEST_EVENT:
+		HandleConnectRequest(gnbue, msg)
+	case common.REG_REQUEST_EVENT, common.SERVICE_REQUEST_EVENT:
+		HandleInitialUEMessage(gnbue, msg)
+	case common.UL_INFO_TRANSFER_EVENT:
+		HandleUlInfoTransfer(gnbue, msg)
+	case common.DATA_BEARER_SETUP_RESPONSE_EVENT:
+		HandleDataBearerSetupResponse(gnbue, msg)
+	case common.DOWNLINK_NAS_TRANSPORT_EVENT:
+		HandleDownlinkNasTransport(gnbue, msg)
+	case common.INITIAL_CTX_SETUP_REQUEST_EVENT:
+		HandleInitialContextSetupRequest(gnbue, msg)
+	case common.PDU_SESS_RESOURCE_SETUP_REQUEST_EVENT:
+		HandlePduSessResourceSetupRequest(gnbue, msg)
+	case common.PDU_SESS_RESOURCE_RELEASE_COMMAND_EVENT:
+		HandlePduSessResourceReleaseCommand(gnbue, msg)
+	case common.PDU_SESS_RESOURCE_MODIFY_REQUEST_EVENT:
+		HandlePduSessResourceModifyRequest(gnbue, msg)
+	case common.UE_CTX_RELEASE_COMMAND_EVENT:
+		HandleUeCtxReleaseCommand(gnbue, msg)
+	case common.TRIGGER_AN_RELEASE_EVENT:
+		HandleRanConnectionRelease(gnbue, msg)
+	case common.TRIGGER_HO_EVENT:
+		HandleTriggerHandover(gnbue, msg)
+	case common.HO_REQUEST_EVENT:
+		HandleHandoverRequest(gnbue, msg)
+	case common.HO_COMMAND_EVENT:
+		HandleHandoverCommand(gnbue, msg)
+	case common.HO_NOTIFY_EVENT:
+		HandleHandoverNotify(gnbue, msg)
+	case common.QUIT_EVENT:
+		HandleQuitEvent(gnbue, msg)
+	default:
+		gnbue.Log.Infoln("event", evt, "is not supported")
+	}
 }
 
 func SendToUe(gnbue *gnbctx.GnbCpUe, event common.EventType, nasPdus common.NasPduList, id uint64) {

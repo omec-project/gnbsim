@@ -21,6 +21,13 @@ import (
 	"github.com/omec-project/openapi/v2/utils"
 )
 
+const (
+	// maxRequestBodyBytes bounds the profile JSON accepted by executeProfile.
+	maxRequestBodyBytes = 1 << 20
+	// maxAddNewCalls bounds the "number" query parameter of addNewCalls.
+	maxAddNewCalls = 10000
+)
+
 func HTTPStepProfile(c *gin.Context) {
 	logger.HttpLog.Infoln("HTTPStepProfile")
 	profName, exists := c.Params.Get("profile-name")
@@ -52,8 +59,10 @@ func HTTPAddNewCallsProfile(c *gin.Context) {
 		number = 1
 	} else {
 		n, err := strconv.Atoi(n)
-		if err != nil {
-			log.Println(err)
+		if err != nil || n < 1 || n > maxAddNewCalls {
+			logger.HttpLog.Warnf("invalid number of calls %q, expected an integer in [1, %d]", c.Query("number"), maxAddNewCalls)
+			c.JSON(http.StatusBadRequest, gin.H{})
+			return
 		}
 		number = int32(n)
 	}
@@ -82,7 +91,11 @@ func HTTPExecuteConfigProfile(c *gin.Context) {
 			}
 			profileWaitGrp.Add(1)
 
-			profile.InitProfile(profileVal, profCtx.SummaryChan)
+			if err := profile.InitProfile(profileVal, profCtx.SummaryChan); err != nil {
+				logger.HttpLog.Errorf("failed to initialize profile %s: %v", profileVal.Name, err)
+				profileWaitGrp.Done()
+				continue
+			}
 
 			go func(profileCtx *profCtx.Profile) {
 				defer profileWaitGrp.Done()
@@ -104,6 +117,7 @@ func HTTPExecuteProfile(c *gin.Context) {
 	logger.HttpLog.Infoln("ExecuteProfile API called")
 	var prof profCtx.Profile
 
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxRequestBodyBytes)
 	requestBody, err := c.GetRawData()
 	if err != nil {
 		logger.HttpLog.Errorf("get Request Body error: %+v", err)
@@ -120,11 +134,19 @@ func HTTPExecuteProfile(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
-	logger.HttpLog.Debugf("%#v", prof)
+	// the profile carries the subscriber key and OPc, so it is deliberately not logged
 
 	err = prof.Init()
 	if err != nil {
-		logger.HttpLog.Infoln("failed to initiale profile", err)
+		logger.HttpLog.Errorln("failed to initialize profile:", err)
+		c.JSON(http.StatusBadRequest, utils.ProblemDetailsMalformedRequestSyntax("[Profile] "+err.Error()))
+		return
+	}
+	// create the SimUe contexts; ExecuteProfile has nothing to run without them
+	if err = profile.InitProfile(&prof, profCtx.SummaryChan); err != nil {
+		logger.HttpLog.Errorln("failed to create profile UEs:", err)
+		c.JSON(http.StatusBadRequest, utils.ProblemDetailsMalformedRequestSyntax("[Profile] "+err.Error()))
+		return
 	}
 	go profile.ExecuteProfile(&prof, profCtx.SummaryChan)
 	c.JSON(http.StatusOK, gin.H{})
