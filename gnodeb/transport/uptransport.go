@@ -5,6 +5,7 @@
 package transport
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -95,6 +96,14 @@ func (upTprt *GnbUpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 		n, srcAddr, err := upTprt.Conn.ReadFromUDP(recvMsg)
 		if err != nil {
 			upTprt.Log.Errorln("ReadFromUDP returned:", err)
+			if errors.Is(err, net.ErrClosed) {
+				// the socket is gone, nothing more can be received
+				return
+			}
+			continue
+		}
+		if srcAddr == nil {
+			continue
 		}
 		srcIp := srcAddr.IP.String()
 		upTprt.Log.Infof("read %v bytes from %v:%v", n, srcIp, srcAddr.Port)

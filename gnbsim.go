@@ -8,12 +8,13 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"net"
 	"net/http"
 	_ "net/http/pprof" // Using package only for invoking initialization.
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -66,11 +67,17 @@ func action(ctx context.Context, c *cli.Command) error {
 	// Initiating a server for profiling
 	if config.Configuration.GoProfile.Enable {
 		go func() {
-			endpt := fmt.Sprintf(":%v", config.Configuration.GoProfile.Port)
+			// pprof exposes heap and goroutine dumps (which include key material), so it is
+			// reachable from the local host only; use `kubectl port-forward` to reach it remotely.
+			endpt := net.JoinHostPort("127.0.0.1", strconv.Itoa(config.Configuration.GoProfile.Port))
 			logger.AppLog.Infoln("endpoint for profile server", endpt)
-			err = http.ListenAndServe(endpt, nil)
-			if err != nil {
-				logger.AppLog.Errorln("failed to start profiling server")
+			pprofServer := &http.Server{
+				Addr:              endpt,
+				Handler:           http.DefaultServeMux,
+				ReadHeaderTimeout: 10 * time.Second,
+			}
+			if perr := pprofServer.ListenAndServe(); perr != nil {
+				logger.AppLog.Errorln("failed to start profiling server:", perr)
 			}
 		}()
 	}
@@ -133,7 +140,11 @@ func action(ctx context.Context, c *cli.Command) error {
 			}
 			profileWaitGrp.Add(1)
 
-			prof.InitProfile(profile, profctx.SummaryChan)
+			if err := prof.InitProfile(profile, profctx.SummaryChan); err != nil {
+				logger.AppLog.Errorf("failed to initialize profile %s: %v", profile.Name, err)
+				profileWaitGrp.Done()
+				continue
+			}
 
 			go func(profileCtx *profctx.Profile) {
 				defer profileWaitGrp.Done()

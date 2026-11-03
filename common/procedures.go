@@ -4,7 +4,7 @@
 
 package common
 
-import "github.com/omec-project/gnbsim/logger"
+import "fmt"
 
 type ProcedureType uint8
 
@@ -47,7 +47,7 @@ var procStrMap = map[ProcedureType]string{
 func (id ProcedureType) String() string {
 	procStr, ok := procStrMap[id]
 	if !ok {
-		logger.AppLog.Fatalf("Invalid Procedure ID: %#v", id)
+		return fmt.Sprintf("UNKNOWN-PROCEDURE(%d)", uint8(id))
 	}
 	return procStr
 }

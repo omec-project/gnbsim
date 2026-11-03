@@ -89,7 +89,12 @@ func (c *Config) Validate() (err error) {
 	}
 
 	if c.Configuration.Server.IpAddr == "POD_IP" {
-		c.Configuration.Server.IpAddr = os.Getenv("POD_IP")
+		podIP := os.Getenv("POD_IP")
+		if podIP == "" && c.Configuration.Server.Enable {
+			// an empty address would make the listener bind to every interface
+			return fmt.Errorf("httpServer.ipAddr is POD_IP but the POD_IP environment variable is not set")
+		}
+		c.Configuration.Server.IpAddr = podIP
 	}
 
 	if c.Configuration.SingleInterface {
@@ -116,63 +121,33 @@ func (c *Config) Validate() (err error) {
 				PIter.ProcMap = make(map[int]common.ProcedureType)
 				PIter.WaitMap = make(map[int]int)
 				PIter.WaitMap[0] = 0
-				if len(v1.First) > 0 {
-					x := strings.Fields(v1.First)
-					PIter.ProcMap[1] = common.GetProcId(x[0])
-					PIter.WaitMap[1], err = strconv.Atoi(x[1])
-					if err != nil {
-						return fmt.Errorf("value is not converted to integer: %v", err)
+				steps := []string{v1.First, v1.Second, v1.Third, v1.Fourth, v1.Fifth, v1.Sixth, v1.Seventh}
+				for i, step := range steps {
+					if len(step) == 0 {
+						continue
 					}
-				}
-				if len(v1.Second) > 0 {
-					x := strings.Fields(v1.Second)
-					PIter.ProcMap[2] = common.GetProcId(x[0])
-					PIter.WaitMap[2], err = strconv.Atoi(x[1])
-					if err != nil {
-						return fmt.Errorf("value is not converted to integer: %v", err)
+					proc, wait, perr := parseIterationStep(step)
+					if perr != nil {
+						return fmt.Errorf("iteration %q step %d: %v", v1.Name, i+1, perr)
 					}
-				}
-				if len(v1.Third) > 0 {
-					x := strings.Fields(v1.Third)
-					PIter.ProcMap[3] = common.GetProcId(x[0])
-					PIter.WaitMap[3], err = strconv.Atoi(x[1])
-					if err != nil {
-						return fmt.Errorf("value is not converted to integer: %v", err)
-					}
-				}
-				if len(v1.Fourth) > 0 {
-					x := strings.Fields(v1.Fourth)
-					PIter.ProcMap[4] = common.GetProcId(x[0])
-					PIter.WaitMap[4], err = strconv.Atoi(x[1])
-					if err != nil {
-						return fmt.Errorf("value is not converted to integer: %v", err)
-					}
-				}
-				if len(v1.Fifth) > 0 {
-					x := strings.Fields(v1.Fifth)
-					PIter.ProcMap[5] = common.GetProcId(x[0])
-					PIter.WaitMap[5], err = strconv.Atoi(x[1])
-					if err != nil {
-						return fmt.Errorf("value is not converted to integer: %v", err)
-					}
-				}
-				if len(v1.Sixth) > 0 {
-					x := strings.Fields(v1.Sixth)
-					PIter.ProcMap[6] = common.GetProcId(x[0])
-					PIter.WaitMap[6], err = strconv.Atoi(x[1])
-					if err != nil {
-						return fmt.Errorf("value is not converted to integer: %v", err)
-					}
-				}
-				if len(v1.Seventh) > 0 {
-					x := strings.Fields(v1.Seventh)
-					PIter.ProcMap[7] = common.GetProcId(x[0])
-					PIter.WaitMap[7], err = strconv.Atoi(x[1])
-					if err != nil {
-						return fmt.Errorf("value is not converted to integer: %v", err)
-					}
+					PIter.ProcMap[i+1] = proc
+					PIter.WaitMap[i+1] = wait
 				}
 				v.PIterations[v1.Name] = PIter // add iterations in the custom profile
+			}
+			// every reference must resolve, otherwise the profile dereferences a nil iteration at run time
+			if len(v.PIterations) > 0 {
+				if _, ok := v.PIterations[v.StartIteration]; !ok {
+					return fmt.Errorf("custom profile %q: startiteration %q is not a defined iteration", v.Name, v.StartIteration)
+				}
+			}
+			for _, pit := range v.PIterations {
+				if pit.NextItr == "quit" {
+					continue
+				}
+				if _, ok := v.PIterations[pit.NextItr]; !ok {
+					return fmt.Errorf("custom profile %q: iteration %q has unknown next iteration %q", v.Name, pit.Name, pit.NextItr)
+				}
 			}
 		}
 
@@ -182,6 +157,26 @@ func (c *Config) Validate() (err error) {
 	}
 
 	return nil
+}
+
+// parseIterationStep parses a custom profile step of the form "<PROCEDURE-NAME> <wait-ms>".
+func parseIterationStep(step string) (common.ProcedureType, int, error) {
+	fields := strings.Fields(step)
+	if len(fields) != 2 {
+		return common.UNKNOWN_PROCEDURE, 0, fmt.Errorf("expected \"<procedure> <wait>\", got %q", step)
+	}
+	proc := common.GetProcId(fields[0])
+	if proc == common.UNKNOWN_PROCEDURE {
+		return common.UNKNOWN_PROCEDURE, 0, fmt.Errorf("unknown procedure %q", fields[0])
+	}
+	wait, err := strconv.Atoi(fields[1])
+	if err != nil {
+		return common.UNKNOWN_PROCEDURE, 0, fmt.Errorf("value is not converted to integer: %v", err)
+	}
+	if wait < 0 {
+		return common.UNKNOWN_PROCEDURE, 0, fmt.Errorf("wait must not be negative, got %d", wait)
+	}
+	return proc, wait, nil
 }
 
 func (c *Configuration) GetGNodeB(name string) (*gnbctx.GNodeB, error) {
