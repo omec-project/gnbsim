@@ -4,7 +4,7 @@
 
 package common
 
-import "github.com/omec-project/gnbsim/logger"
+import "fmt"
 
 type EventType uint32
 
@@ -128,7 +128,9 @@ const (
 	SEC_MOD_COMPLETE_EVENT
 	SEC_MOD_REJECT_EVENT // 95
 
-	FIVE_GMM_STATUS_EVENT = 100 + iota // 100
+	// 5GMM STATUS is 0x64 (100) in TS 24.501 table 9.7.1. Without the explicit base the value is an
+	// untyped constant (129) that never matches EventType(msgType)|N1_EVENT built for received NAS.
+	FIVE_GMM_STATUS_EVENT = UE_5GS_MOBILITY_MANAGEMENT_EVENTS + 7 + iota // 100
 	NOTIFICATION_EVENT
 	NOTIFICATION_RESPONSE_EVENT
 	UL_NAS_TRANSPORT_EVENT
@@ -270,7 +272,9 @@ var evtStrMap map[EventType]string = map[EventType]string{
 func (id EventType) String() string {
 	evtStr, ok := evtStrMap[id]
 	if !ok {
-		logger.AppLog.Fatalf("Invalid Event ID: %#v", id)
+		// String is used when logging events received from the network, so an event
+		// this application does not know must not terminate the process.
+		return fmt.Sprintf("UNKNOWN-EVENT(%#x)", uint32(id))
 	}
 	return evtStr
 }

@@ -229,12 +229,15 @@ func ImsiStateMachine(profile *profctx.Profile, pCtx *profctx.ProfileUeContext, 
 	var err error
 
 	procedure := profile.GetNextProcedure(pCtx, 0)
+	if procedure == common.UNKNOWN_PROCEDURE {
+		return fmt.Errorf("imsi:%v, no procedure to execute for profile %v", imsiStr, profile.Name)
+	}
 	for {
 		// select procedure to execute for imsi
 		simUe := simuectx.GetSimUe(imsiStr)
-		//if simUe == nil {
-		// pass readChan to simUe
-		//}
+		if simUe == nil {
+			return fmt.Errorf("imsi:%v, simue context not found", imsiStr)
+		}
 		pCtx.Log.Infoln("execute procedure ", procedure)
 		// proc result -  success, fail or timeout
 		timeout := time.Duration(profile.PerUserTimeout) * time.Second

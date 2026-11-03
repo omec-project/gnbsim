@@ -8,6 +8,7 @@ package context
 import (
 	"fmt"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/omec-project/gnbsim/common"
@@ -44,7 +45,18 @@ type ProcedureEventsDetails struct {
 var (
 	ProceduresMap map[common.ProcedureType]*ProcedureEventsDetails
 	ProfileMap    map[string]*Profile
+	// ProfileMapMu guards ProfileMap, which is written by profile initialisation and
+	// read by the REST handlers on different goroutines.
+	ProfileMapMu sync.RWMutex
 )
+
+// GetProfile returns the registered profile with the given name.
+func GetProfile(name string) (*Profile, bool) {
+	ProfileMapMu.RLock()
+	defer ProfileMapMu.RUnlock()
+	p, ok := ProfileMap[name]
+	return p, ok
+}
 
 type PIterations struct {
 	Name    string
@@ -281,7 +293,9 @@ func (profile *Profile) Init() error {
 		}
 	}
 
+	ProfileMapMu.Lock()
 	ProfileMap[profile.Name] = profile
+	ProfileMapMu.Unlock()
 	profile.Log.Debugln("profile initialized", profile.Name, ", Enable", profile.Enable)
 	return nil
 }
@@ -407,9 +421,12 @@ func (p *Profile) CheckCurrentEvent(Procedure common.ProcedureType, triggerEvent
 	return err
 }
 
+// GetFirstProcedure returns the first procedure of a predefined profile, or
+// UNKNOWN_PROCEDURE if the list is empty, which callers treat as "nothing to execute".
 func (p *Profile) GetFirstProcedure() common.ProcedureType {
 	if len(p.Procedures) == 0 {
-		p.Log.Fatalln("Procedure List Empty")
+		p.Log.Errorln("Procedure List Empty")
+		return common.UNKNOWN_PROCEDURE
 	}
 	return p.Procedures[0]
 }
@@ -444,7 +461,11 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 	if len(p.Iterations) > 0 {
 		pCtx.Log.Infoln("Current UE iteration", pCtx.CurrentItr)
 		pCtx.Log.Infoln("Current UE procedure index", pCtx.CurrentProcIndex)
-		itp := p.PIterations[pCtx.CurrentItr]
+		itp, ok := p.PIterations[pCtx.CurrentItr]
+		if !ok {
+			pCtx.Log.Errorln("unknown iteration:", pCtx.CurrentItr)
+			return nextProcedure
+		}
 		pCtx.Log.Infoln("Current Iteration map - ", itp)
 		if itp.WaitMap[pCtx.CurrentProcIndex] != 0 {
 			time.Sleep(time.Millisecond * time.Duration(itp.WaitMap[pCtx.CurrentProcIndex]))
@@ -470,7 +491,11 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 		pCtx.Log.Infoln("Iteration Complete", pCtx.CurrentItr)
 		nextItr := itp.NextItr
 		if nextItr != quit {
-			nItr := p.PIterations[nextItr]
+			nItr, ok := p.PIterations[nextItr]
+			if !ok {
+				pCtx.Log.Errorln("unknown next iteration:", nextItr)
+				return common.UNKNOWN_PROCEDURE
+			}
 			pCtx.Log.Infoln("Going to next iteration", nItr.Name)
 			pCtx.CurrentItr = nItr.Name
 			pCtx.CurrentProcIndex = 1

@@ -32,7 +32,9 @@ func InitializeAllProfiles() error {
 	return nil
 }
 
-func InitProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMessage) {
+// InitProfile creates the SimUe contexts of a profile. Failures are also reported on
+// summaryChan; the returned error lets the caller refuse to execute a half-initialised profile.
+func InitProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMessage) error {
 	summary := &common.SummaryMessage{
 		ProfileType: profile.ProfileType,
 		ProfileName: profile.Name,
@@ -44,7 +46,7 @@ func InitProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMess
 		err = fmt.Errorf("invalid imsi value:%v", profile.StartImsi)
 		summary.ErrorList = append(summary.ErrorList, err)
 		summaryChan <- summary
-		return
+		return err
 	}
 
 	startImsi := imsi
@@ -58,7 +60,7 @@ func InitProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMess
 		err = fmt.Errorf("failed to fetch gNB context: %v", err)
 		summary.ErrorList = append(summary.ErrorList, err)
 		summaryChan <- summary
-		return
+		return err
 	}
 
 	for count := 1; count <= profile.UeCount; count++ {
@@ -66,6 +68,7 @@ func InitProfile(profile *profctx.Profile, summaryChan chan common.InterfaceMess
 		initImsi(profile, gnb, imsiStr)
 		startImsi++
 	}
+	return nil
 }
 
 // makeImsiStr constructs IMSI string with specified integer value and proper length.
@@ -155,8 +158,16 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 	for count := 1; count <= profile.UeCount; count++ {
 		imsiStr := makeImsiStr(profile, imsi)
 		imsi++
-		wg.Add(1)
 		pCtx := profile.PSimUe[imsiStr]
+		if pCtx == nil {
+			// the profile was not initialised for this UE (see InitProfile)
+			Mu.Lock()
+			summary.UeFailedCount++
+			summary.ErrorList = append(summary.ErrorList, fmt.Errorf("imsi:%v, UE context not initialised", imsiStr))
+			Mu.Unlock()
+			continue
+		}
+		wg.Add(1)
 
 		go func(pCtx *profctx.ProfileUeContext) {
 			defer wg.Done()
@@ -186,9 +197,9 @@ func ExecuteProfile(profile *profctx.Profile, summaryChan chan common.InterfaceM
 
 // enable step trigger only if execParallel is enabled in profile
 func SendStepEventProfile(name string) error {
-	profile, found := profctx.ProfileMap[name]
+	profile, found := profctx.GetProfile(name)
 	if !found {
-		err := fmt.Errorf("unknown profile:%+v", profile)
+		err := fmt.Errorf("unknown profile:%v", name)
 		log.Println(err)
 		return err
 	}
@@ -202,26 +213,26 @@ func SendStepEventProfile(name string) error {
 	// msg.ProcedureType =
 	msg.Event = common.PROFILE_STEP_EVENT
 	for _, ctx := range profile.PSimUe {
-		profile.Log.Debugln("profile", profile, ", writing on trig channel - start")
+		profile.Log.Debugln("profile", profile.Name, ", writing on trig channel - start")
 		ctx.TrigEventsChan <- msg
-		profile.Log.Debugln("profile", profile, ", writing on trig channel - end")
+		profile.Log.Debugln("profile", profile.Name, ", writing on trig channel - end")
 	}
 	return nil
 }
 
 func SendAddNewCallsEventProfile(name string, number int32) error {
-	profile, found := profctx.ProfileMap[name]
+	profile, found := profctx.GetProfile(name)
 	if !found {
-		err := fmt.Errorf("unknown profile:%+v", profile)
+		err := fmt.Errorf("unknown profile:%v", name)
 		return err
 	}
 	msg := &common.ProfileMessage{}
 	msg.Event = common.PROFILE_ADDCALLS_EVENT
 	var i int32
 	for i = 0; i < number; i++ {
-		profile.Log.Debugln("profile", profile, ", writing on trig channel - start")
+		profile.Log.Debugln("profile", profile.Name, ", writing on trig channel - start")
 		profile.ReadChan <- msg
-		profile.Log.Debugln("profile", profile, ", writing on trig channel - end")
+		profile.Log.Debugln("profile", profile.Name, ", writing on trig channel - end")
 	}
 	return nil
 }

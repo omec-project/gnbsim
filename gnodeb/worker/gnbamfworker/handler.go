@@ -80,6 +80,13 @@ func HandleNgSetupResponse(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 		}
 	}
 
+	// all four IEs are mandatory in the NG Setup Response and the decoder does not enforce that
+	if amfName == nil || servedGUAMIList == nil || relativeAMFCapacity == nil || plmnSupportList == nil {
+		amf.Log.Errorln("NG Setup Response is missing a mandatory IE")
+		amf.SetNgSetupStatus(false)
+		return
+	}
+
 	amf.SetAMFName(amfName.Value)
 	amf.SetRelativeAMFCapacity(relativeAMFCapacity.Value)
 
@@ -207,7 +214,11 @@ func HandleNgSetupFailure(amf *gnbctx.GnbAmf, pdu *ngapType.NGAPPDU) {
 		// TODO handle TimeToWait IE
 	}
 
-	test.PrintAndGetCause(cause)
+	if cause == nil {
+		amf.Log.Errorln("NG Setup Failure is missing the Cause IE")
+	} else {
+		test.PrintAndGetCause(cause)
+	}
 	amf.SetNgSetupStatus(false)
 
 	amf.Log.Debugln("processed NG Setup Failure")
@@ -256,6 +267,10 @@ func HandleDownlinkNasTransport(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 			}
 			break
 		}
+	}
+	if gnbUeNgapId == nil {
+		amf.Log.Errorln("RANUENGAPID IE is missing")
+		return
 	}
 	ngapId := gnbUeNgapId.Value
 	gnbue := gnb.GnbUes.GetGnbCpUe(ngapId)
@@ -310,6 +325,10 @@ func HandleInitialContextSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 			break
 		}
 	}
+	if gnbUeNgapId == nil {
+		amf.Log.Errorln("RANUENGAPID IE is missing")
+		return
+	}
 	ngapId := gnbUeNgapId.Value
 	gnbue := gnb.GnbUes.GetGnbCpUe(ngapId)
 	if gnbue == nil {
@@ -363,6 +382,10 @@ func HandlePduSessResourceSetupRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 			break
 		}
 	}
+	if gnbUeNgapId == nil {
+		amf.Log.Errorln("RANUENGAPID IE is missing")
+		return
+	}
 	ngapId := gnbUeNgapId.Value
 	gnbue := gnb.GnbUes.GetGnbCpUe(ngapId)
 	if gnbue == nil {
@@ -414,6 +437,10 @@ func HandlePduSessResourceReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 			}
 			break
 		}
+	}
+	if gnbUeNgapId == nil {
+		amf.Log.Errorln("RANUENGAPID IE is missing")
+		return
 	}
 	ngapId := gnbUeNgapId.Value
 	gnbue := gnb.GnbUes.GetGnbCpUe(ngapId)
@@ -528,6 +555,10 @@ func HandleUeCtxReleaseCommand(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 		}
 	}
 
+	if ueNgapIds == nil {
+		amf.Log.Errorln("UENGAPIDs IE is missing")
+		return
+	}
 	if ueNgapIds.Present == ngapType.UENGAPIDsPresentUENGAPIDPair {
 		if ueNgapIds.UENGAPIDPair == nil {
 			amf.Log.Errorln("UENGAPIDPair is nil")
