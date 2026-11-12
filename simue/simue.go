@@ -18,19 +18,24 @@ import (
 	simuectx "github.com/omec-project/gnbsim/simue/context"
 )
 
-func InitUE(imsiStr string, gnb *gnbctx.GNodeB, profile *profctx.Profile, result chan *common.ProfileMessage) chan common.InterfaceMessage {
+// InitUE creates a SimUe and starts it. A connection failure is returned rather than sent to the
+// profile: the profile only reads its result channel once it executes, which is after
+// initialisation, so sending there would block the caller forever.
+func InitUE(imsiStr string, gnb *gnbctx.GNodeB, profile *profctx.Profile, result chan *common.ProfileMessage) (*simuectx.SimUe, error) {
 	simUe := simuectx.NewSimUe(imsiStr, gnb, profile, result)
-	Init(simUe) // Initialize simUE, realUE & wait for events
-	return simUe.ReadChan
+	if err := Init(simUe); err != nil { // Initialize simUE, realUE & wait for events
+		simuectx.DeleteSimUe(simUe)
+		return nil, err
+	}
+	return simUe, nil
 }
 
-func Init(simUe *simuectx.SimUe) {
+func Init(simUe *simuectx.SimUe) error {
 	err := ConnectToGnb(simUe)
 	if err != nil {
 		err = fmt.Errorf("failed to connect to gnodeb: %v", err)
-		simUe.Log.Infoln("sent Profile Fail Event to Profile routine****:", err)
-		SendToProfile(simUe, common.PROC_FAIL_EVENT, err)
-		return
+		simUe.Log.Errorln(err)
+		return err
 	}
 
 	simUe.WaitGrp.Add(1)
@@ -41,6 +46,7 @@ func Init(simUe *simuectx.SimUe) {
 
 	go HandleEvents(simUe)
 	simUe.Log.Infoln("SIM UE Init complete")
+	return nil
 }
 
 func ConnectToGnb(simUe *simuectx.SimUe) error {
@@ -50,14 +56,16 @@ func ConnectToGnb(simUe *simuectx.SimUe) error {
 	uemsg.Supi = simUe.Supi
 
 	var err error
+	var gnbCtx *gnbctx.GnbCpUe
 	gNb := simUe.GnB
-	simUe.WriteGnbUeChan, err = gnodeb.RequestConnection(gNb, &uemsg)
+	simUe.WriteGnbUeChan, gnbCtx, err = gnodeb.RequestConnection(gNb, &uemsg)
 	if err != nil {
 		simUe.Log.Errorf("connecting to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
 			gNb.GnbN2Ip, gNb.GnbN2Port)
 		return err
 	}
 
+	simUe.AddGnbContext(gnbCtx)
 	simUe.Log.Infof("connected to gNodeB, Name:%v, IP:%v, Port:%v", gNb.GnbName,
 		gNb.GnbN2Ip, gNb.GnbN2Port)
 	return nil
@@ -83,10 +91,11 @@ func ConnectToTargetGnb(simUe *simuectx.SimUe) error {
 	}
 	simUe.TargetGnB = targetGnb
 
-	targetChan, err := gnodeb.RegisterHandoverTarget(targetGnb, sourceGnbCpUe.AmfUeNgapId, simUe.ReadChan)
+	targetChan, targetCtx, err := gnodeb.RegisterHandoverTarget(targetGnb, sourceGnbCpUe.AmfUeNgapId, simUe.ReadChan)
 	if err != nil {
 		return fmt.Errorf("failed to register target gNB: %w", err)
 	}
+	simUe.AddGnbContext(targetCtx)
 	simUe.TargetWriteGnbUeChan = targetChan
 
 	simUe.Log.Infof("pre-registered with target gNB: %v (AMF-UE-NGAP-ID: %v)",
@@ -94,9 +103,38 @@ func ConnectToTargetGnb(simUe *simuectx.SimUe) error {
 	return nil
 }
 
+// nextEvent returns the next event for the SimUe. A quit request is returned as a QUIT_EVENT and
+// takes precedence over queued events.
+func nextEvent(ue *simuectx.SimUe) (common.InterfaceMessage, bool) {
+	quit := ue.QuitRequested()
+	quitMsg := &common.DefaultMessage{Event: common.QUIT_EVENT}
+	select {
+	case <-quit:
+		return quitMsg, true
+	default:
+	}
+	select {
+	case msg, ok := <-ue.ReadChan:
+		return msg, ok
+	case <-quit:
+		return quitMsg, true
+	}
+}
+
 func HandleEvents(ue *simuectx.SimUe) {
+	// Once the SimUe has terminated nothing looks it up any more and its SUPI can be used by
+	// another profile. The reservation is released here, and not when the profile stops waiting
+	// for the UE, so that two UEs with the same SUPI never have live workers at the same time.
+	defer ue.MarkTerminated() // runs last, after the SUPI is free
+	defer simuectx.ReleaseSupi(ue.Supi)
+	defer simuectx.DeleteSimUe(ue)
+
 	var err error
-	for msg := range ue.ReadChan {
+	for {
+		msg, ok := nextEvent(ue)
+		if !ok {
+			return
+		}
 		event := msg.GetEventType()
 		ue.Log.Infoln("handling event:", event)
 
@@ -149,6 +187,10 @@ func HandleEvents(ue *simuectx.SimUe) {
 			err = HandleDataBearerSetupRequestEvent(ue, msg)
 		case common.DATA_BEARER_SETUP_RESPONSE_EVENT:
 			err = HandleDataBearerSetupResponseEvent(ue, msg)
+		case common.BEARER_SETUP_PENDING_EVENT:
+			err = HandleBearerSetupPendingEvent(ue, msg)
+		case common.DATA_BEARER_SETUP_RESULT_EVENT:
+			err = HandleDataBearerSetupResultEvent(ue, msg)
 		case common.DATA_BEARER_RELEASE_REQUEST_EVENT:
 			err = HandleDataBearerReleaseRequestEvent(ue, msg)
 		case common.DATA_PKT_GEN_SUCCESS_EVENT:
@@ -200,12 +242,22 @@ func HandleEvents(ue *simuectx.SimUe) {
 
 func SendToRealUe(ue *simuectx.SimUe, msg common.InterfaceMessage) {
 	ue.Log.Debugln("sending", msg.GetEventType(), "to RealUe")
-	ue.WriteRealUeChan <- msg
+	// A full queue must not keep the event loop from reaching its teardown, which is what a
+	// quit request asks for: the message is no longer wanted by then.
+	select {
+	case ue.WriteRealUeChan <- msg:
+	case <-ue.QuitRequested():
+		ue.Log.Debugln("dropped", msg.GetEventType(), "for the RealUe, the SimUe is quitting")
+	}
 }
 
 func SendToGnbUe(ue *simuectx.SimUe, msg common.InterfaceMessage) {
 	ue.Log.Debugln("sending", msg.GetEventType(), "to GnbUe")
-	ue.WriteGnbUeChan <- msg
+	select {
+	case ue.WriteGnbUeChan <- msg:
+	case <-ue.QuitRequested():
+		ue.Log.Debugln("dropped", msg.GetEventType(), "for the GnbUe, the SimUe is quitting")
+	}
 }
 
 func SendToProfile(ue *simuectx.SimUe, event common.EventType, errMsg error) {
@@ -215,26 +267,76 @@ func SendToProfile(ue *simuectx.SimUe, event common.EventType, errMsg error) {
 	msg.Supi = ue.Supi
 	msg.Proc = ue.Procedure
 	msg.Error = errMsg
-	ue.WriteProfileChan <- msg
-	ue.Log.Debugln("sent ", event, "to Profile routine")
+	// The profile stops reading once it has given up on this UE (timeout). Without the quit case
+	// the event loop would block here forever and could never run the teardown.
+	select {
+	case ue.WriteProfileChan <- msg:
+		ue.Log.Debugln("sent ", event, "to Profile routine")
+	case <-ue.QuitRequested():
+		ue.Log.Debugln("dropped", event, "for Profile routine, SimUe is quitting")
+	}
 }
 
 func RunProcedure(simUe *simuectx.SimUe, procedure common.ProcedureType) {
 	util.SendToSimUe(simUe, common.PROC_START_EVENT, procedure)
 }
 
+// QuitUe starts the teardown of the SimUe, which stops its RealUe and GnbUe workers, releases the
+// gNB UE NGAP ID and, once done, frees the SUPI. It returns without waiting and can be called
+// more than once.
+func QuitUe(pCtx *profctx.ProfileUeContext) {
+	if pCtx.Quit != nil {
+		pCtx.Quit()
+	}
+}
+
+// teardownWarnInterval is how often a caller that waits for a UE to terminate says that it is
+// still waiting.
+const teardownWarnInterval = 30 * time.Second
+
+// QuitUeAndWait starts the teardown of the SimUe and waits until it has finished and the SUPI is
+// free. The profile runners start the next profile as soon as a UE's execution returns, and that
+// profile may use the same IMSI. The wait is unbounded: giving up would let a second UE with the
+// same SUPI run next to workers that are still live, so a stuck teardown is reported instead.
+func QuitUeAndWait(pCtx *profctx.ProfileUeContext) {
+	QuitUe(pCtx)
+	if pCtx.Terminated == nil {
+		return
+	}
+	ticker := time.NewTicker(teardownWarnInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-pCtx.Terminated:
+			return
+		case <-ticker.C:
+			pCtx.Log.Warnln("still waiting for the UE to terminate")
+		}
+	}
+}
+
 func ImsiStateMachine(profile *profctx.Profile, pCtx *profctx.ProfileUeContext, imsiStr string, summaryChan chan common.InterfaceMessage) error {
 	var no_more_proc bool
 	var proc_fail bool
-	var err error
 
-	procedure := profile.GetNextProcedure(pCtx, 0)
+	// whichever way this returns, the UE must be gone, and its SUPI free, before the caller moves on
+	defer QuitUeAndWait(pCtx)
+
+	procedure, err := profile.GetNextProcedure(pCtx, 0)
+	if err != nil {
+		QuitUe(pCtx)
+		return fmt.Errorf("imsi:%v, %v", imsiStr, err)
+	}
+	if procedure == common.UNKNOWN_PROCEDURE {
+		QuitUe(pCtx)
+		return fmt.Errorf("imsi:%v, no procedure to execute for profile %v", imsiStr, profile.Name)
+	}
 	for {
 		// select procedure to execute for imsi
 		simUe := simuectx.GetSimUe(imsiStr)
-		//if simUe == nil {
-		// pass readChan to simUe
-		//}
+		if simUe == nil {
+			return fmt.Errorf("imsi:%v, simue context not found", imsiStr)
+		}
 		pCtx.Log.Infoln("execute procedure ", procedure)
 		// proc result -  success, fail or timeout
 		timeout := time.Duration(profile.PerUserTimeout) * time.Second
@@ -247,6 +349,8 @@ func ImsiStateMachine(profile *profctx.Profile, pCtx *profctx.ProfileUeContext, 
 		case <-ticker.C:
 			err = fmt.Errorf("imsi:%v, profile timeout", imsiStr)
 			pCtx.Log.Infoln("Procedure Result: FAIL,", err)
+			// do not leave the UE's workers, and a procedure still in flight, running
+			QuitUe(pCtx)
 			proc_fail = true
 		case msg := <-pCtx.ReadChan:
 			pCtx.Log.Infoln("imsiStateMachine received result")
@@ -257,19 +361,30 @@ func ImsiStateMachine(profile *profctx.Profile, pCtx *profctx.ProfileUeContext, 
 			switch msg.Event {
 			case common.PROC_PASS_EVENT:
 				pCtx.Log.Infoln("Procedure Result: PASS, imsi:", msg.Supi)
-				procedure = profile.GetNextProcedure(pCtx, simUe.Procedure)
-				if procedure == 0 {
+				procedure, err = profile.GetNextProcedure(pCtx, simUe.Procedure)
+				if err != nil {
+					err = fmt.Errorf("imsi:%v, %v", imsiStr, err)
+					pCtx.Log.Infoln("Result: FAIL,", err)
+					QuitUe(pCtx)
+					proc_fail = true
+				} else if procedure == common.UNKNOWN_PROCEDURE {
 					no_more_proc = true
 				}
 			case common.PROC_FAIL_EVENT:
 				err = fmt.Errorf("imsi:%v, procedure:%v, error:%v", msg.Supi, msg.Proc, msg.Error)
 				pCtx.Log.Infoln("Result: FAIL,", err)
+				// most failures already tore the UE down through the event loop, but not those
+				// that are reported straight to the profile (for example a failed connection to
+				// the handover target); asking again is harmless
+				QuitUe(pCtx)
 				proc_fail = true
 			}
 		}
 		ticker.Stop()
 		if no_more_proc {
 			pCtx.Log.Infoln("imsiStateMachine no more proc to execute")
+			// the profile is done with this UE, so do not leave its workers running
+			QuitUe(pCtx)
 			break
 		} else if proc_fail {
 			break

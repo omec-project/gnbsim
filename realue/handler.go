@@ -599,11 +599,33 @@ func HandleErrorEvent(ue *realuectx.RealUe,
 
 func HandleQuitEvent(ue *realuectx.RealUe, intfcMsg common.InterfaceMessage) (err error) {
 	ue.WriteSimUeChan = nil
+	// The session workers send their results to ReadChan, which only this goroutine reads. While
+	// they are told to quit and waited for it must keep reading, and discard what it reads, or a
+	// worker that is blocked on a full queue can neither receive the quit nor end.
 	for _, pdusess := range ue.PduSessions {
-		pdusess.ReadCmdChan <- intfcMsg
+	send:
+		for {
+			select {
+			case pdusess.ReadCmdChan <- intfcMsg:
+				break send
+			case <-ue.ReadChan:
+			}
+		}
 	}
 	ue.PduSessions = nil
-	ue.WaitGrp.Wait()
+	done := make(chan struct{})
+	go func() {
+		ue.WaitGrp.Wait()
+		close(done)
+	}()
+wait:
+	for {
+		select {
+		case <-done:
+			break wait
+		case <-ue.ReadChan:
+		}
+	}
 	ue.Log.Infoln("Real UE terminated")
 	return nil
 }

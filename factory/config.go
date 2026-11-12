@@ -13,10 +13,7 @@ package factory
 import (
 	"fmt"
 	"os"
-	"strconv"
-	"strings"
 
-	"github.com/omec-project/gnbsim/common"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	profctx "github.com/omec-project/gnbsim/profile/context"
 )
@@ -89,7 +86,12 @@ func (c *Config) Validate() (err error) {
 	}
 
 	if c.Configuration.Server.IpAddr == "POD_IP" {
-		c.Configuration.Server.IpAddr = os.Getenv("POD_IP")
+		podIP := os.Getenv("POD_IP")
+		if podIP == "" && c.Configuration.Server.Enable {
+			// an empty address would make the listener bind to every interface
+			return fmt.Errorf("httpServer.ipAddr is POD_IP but the POD_IP environment variable is not set")
+		}
+		c.Configuration.Server.IpAddr = podIP
 	}
 
 	if c.Configuration.SingleInterface {
@@ -106,73 +108,8 @@ func (c *Config) Validate() (err error) {
 
 	if len(c.Configuration.CustomProfiles) != 0 {
 		for _, v := range c.Configuration.CustomProfiles {
-			it := v.Iterations
-			v.PIterations = make(map[string]*profctx.PIterations)
-			for _, v1 := range it {
-				if len(v1.Next) == 0 {
-					v1.Next = "quit" // default value
-				}
-				PIter := &profctx.PIterations{Name: v1.Name, NextItr: v1.Next, Repeat: v1.Repeat}
-				PIter.ProcMap = make(map[int]common.ProcedureType)
-				PIter.WaitMap = make(map[int]int)
-				PIter.WaitMap[0] = 0
-				if len(v1.First) > 0 {
-					x := strings.Fields(v1.First)
-					PIter.ProcMap[1] = common.GetProcId(x[0])
-					PIter.WaitMap[1], err = strconv.Atoi(x[1])
-					if err != nil {
-						return fmt.Errorf("value is not converted to integer: %v", err)
-					}
-				}
-				if len(v1.Second) > 0 {
-					x := strings.Fields(v1.Second)
-					PIter.ProcMap[2] = common.GetProcId(x[0])
-					PIter.WaitMap[2], err = strconv.Atoi(x[1])
-					if err != nil {
-						return fmt.Errorf("value is not converted to integer: %v", err)
-					}
-				}
-				if len(v1.Third) > 0 {
-					x := strings.Fields(v1.Third)
-					PIter.ProcMap[3] = common.GetProcId(x[0])
-					PIter.WaitMap[3], err = strconv.Atoi(x[1])
-					if err != nil {
-						return fmt.Errorf("value is not converted to integer: %v", err)
-					}
-				}
-				if len(v1.Fourth) > 0 {
-					x := strings.Fields(v1.Fourth)
-					PIter.ProcMap[4] = common.GetProcId(x[0])
-					PIter.WaitMap[4], err = strconv.Atoi(x[1])
-					if err != nil {
-						return fmt.Errorf("value is not converted to integer: %v", err)
-					}
-				}
-				if len(v1.Fifth) > 0 {
-					x := strings.Fields(v1.Fifth)
-					PIter.ProcMap[5] = common.GetProcId(x[0])
-					PIter.WaitMap[5], err = strconv.Atoi(x[1])
-					if err != nil {
-						return fmt.Errorf("value is not converted to integer: %v", err)
-					}
-				}
-				if len(v1.Sixth) > 0 {
-					x := strings.Fields(v1.Sixth)
-					PIter.ProcMap[6] = common.GetProcId(x[0])
-					PIter.WaitMap[6], err = strconv.Atoi(x[1])
-					if err != nil {
-						return fmt.Errorf("value is not converted to integer: %v", err)
-					}
-				}
-				if len(v1.Seventh) > 0 {
-					x := strings.Fields(v1.Seventh)
-					PIter.ProcMap[7] = common.GetProcId(x[0])
-					PIter.WaitMap[7], err = strconv.Atoi(x[1])
-					if err != nil {
-						return fmt.Errorf("value is not converted to integer: %v", err)
-					}
-				}
-				v.PIterations[v1.Name] = PIter // add iterations in the custom profile
+			if err := v.BuildIterations(); err != nil {
+				return err
 			}
 		}
 

@@ -6,6 +6,7 @@ package context
 
 import (
 	"net"
+	"sync"
 
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/logger"
@@ -18,25 +19,17 @@ import (
  * Real UE control plane
  */
 type PduSession struct {
-	/* uplink packets are written to gNB UE user plane context on this channel */
-	WriteGnbChan chan common.InterfaceMessage
-
-	/* command replies are written to RealUE over this channel */
-	WriteUeChan chan common.InterfaceMessage
-
-	/* Downlink packets from gNB UE user plane context are read over this channel */
-	ReadDlChan chan common.InterfaceMessage
-
-	// commands from RealUE control plane are read on this channel
-	ReadCmdChan chan common.InterfaceMessage
-
-	Log *zap.SugaredLogger
-
-	/* Number of UL data packets to be transmitted as requested by Sim UE*/
 	Snssai           models.Snssai
-	PduSessType      models.PduSessionType
+	WriteUeChan      chan common.InterfaceMessage
+	ReadDlChan       chan common.InterfaceMessage
+	ReadCmdChan      chan common.InterfaceMessage
+	Log              *zap.SugaredLogger
+	GenStop          chan struct{}
+	WriteGnbChan     chan common.InterfaceMessage
 	DefaultAs        string
+	PduSessType      models.PduSessionType
 	PduAddress       net.IP
+	GenWg            sync.WaitGroup
 	PktCount         int
 	SeqNum           int
 	ReqDataPktCount  int
@@ -46,15 +39,8 @@ type PduSession struct {
 	PduSessId        int64
 	SscMode          uint8
 	LastDataPktRecvd bool
-
-	// Inidicates that a Go routine already exists for this PDU Session
-	Launched bool
-
-	// PendingPTI is the procedure transaction identity of a UE-requested modification that has
-	// been sent and not yet answered. TS 24.501 subclause 7.3.1: the UE allocates it, and the
-	// network echoes it back, which is what lets the answer be matched to the request. Zero means
-	// no UE-requested procedure is outstanding.
-	PendingPTI uint8
+	Launched         bool
+	PendingPTI       uint8
 }
 
 func NewPduSession(realUe *RealUe, pduSessId int64) *PduSession {

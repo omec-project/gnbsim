@@ -529,27 +529,42 @@ func BuildInitialContextSetupResponse(pduSessions []*PduSession, amfUeNgapID, ra
 
 	initialContextSetupResponseIEs.List = append(initialContextSetupResponseIEs.List, ie)
 
-	// PDU Session Resource Setup Response List
-	ie = ngapType.InitialContextSetupResponseIEs{}
-	ie.Id.Value = ngapType.ProtocolIEIDPDUSessionResourceSetupListCxtRes
-	ie.Criticality.Value = ngapType.CriticalityPresentIgnore
-	ie.Value.Present = ngapType.InitialContextSetupResponseIEsPresentPDUSessionResourceSetupListCxtRes
-	ie.Value.PDUSessionResourceSetupListCxtRes = new(ngapType.PDUSessionResourceSetupListCxtRes)
+	// PDU Session Resource Setup Response List. Sessions that were not established must not be
+	// reported here, they go to the failed to setup list (TS 38.413 clause 9.2.2.2).
+	succeeded, failed := splitPduSessions(pduSessions)
+	if len(succeeded) > 0 {
+		ie = ngapType.InitialContextSetupResponseIEs{}
+		ie.Id.Value = ngapType.ProtocolIEIDPDUSessionResourceSetupListCxtRes
+		ie.Criticality.Value = ngapType.CriticalityPresentIgnore
+		ie.Value.Present = ngapType.InitialContextSetupResponseIEsPresentPDUSessionResourceSetupListCxtRes
+		ie.Value.PDUSessionResourceSetupListCxtRes = new(ngapType.PDUSessionResourceSetupListCxtRes)
 
-	pDUSessionResourceSetupListCxtRes := ie.Value.PDUSessionResourceSetupListCxtRes
+		pDUSessionResourceSetupListCxtRes := ie.Value.PDUSessionResourceSetupListCxtRes
 
-	for _, pduSess := range pduSessions {
-		// PDU Session Resource Setup Response Item in PDU Session Resource Setup Response List
-		pDUSessionResourceSetupItemCxtRes := ngapType.PDUSessionResourceSetupItemCxtRes{}
-		pDUSessionResourceSetupItemCxtRes.PDUSessionID.Value = pduSess.PduSessId
-		pDUSessionResourceSetupItemCxtRes.PDUSessionResourceSetupResponseTransfer = GetPDUSessionResourceSetupResponseTransfer(pduSess, ipv4)
+		for _, pduSess := range succeeded {
+			// PDU Session Resource Setup Response Item in PDU Session Resource Setup Response List
+			pDUSessionResourceSetupItemCxtRes := ngapType.PDUSessionResourceSetupItemCxtRes{}
+			pDUSessionResourceSetupItemCxtRes.PDUSessionID.Value = pduSess.PduSessId
+			pDUSessionResourceSetupItemCxtRes.PDUSessionResourceSetupResponseTransfer = GetPDUSessionResourceSetupResponseTransfer(pduSess, ipv4)
 
-		pDUSessionResourceSetupListCxtRes.List = append(pDUSessionResourceSetupListCxtRes.List, pDUSessionResourceSetupItemCxtRes)
+			pDUSessionResourceSetupListCxtRes.List = append(pDUSessionResourceSetupListCxtRes.List, pDUSessionResourceSetupItemCxtRes)
+		}
+
+		initialContextSetupResponseIEs.List = append(initialContextSetupResponseIEs.List, ie)
 	}
 
-	initialContextSetupResponseIEs.List = append(initialContextSetupResponseIEs.List, ie)
-
 	// PDU Session Resource Failed to Setup List
+	if len(failed) > 0 {
+		if pduSessionFailedList == nil {
+			pduSessionFailedList = new(ngapType.PDUSessionResourceFailedToSetupListCxtRes)
+		}
+		for _, pduSess := range failed {
+			item := ngapType.PDUSessionResourceFailedToSetupItemCxtRes{}
+			item.PDUSessionID.Value = pduSess.PduSessId
+			item.PDUSessionResourceSetupUnsuccessfulTransfer = GetPDUSessionResourceSetupUnsuccessfulTransfer()
+			pduSessionFailedList.List = append(pduSessionFailedList.List, item)
+		}
+	}
 	if pduSessionFailedList != nil {
 		ie = ngapType.InitialContextSetupResponseIEs{}
 		ie.Id.Value = ngapType.ProtocolIEIDPDUSessionResourceFailedToSetupListCxtRes
@@ -560,6 +575,31 @@ func BuildInitialContextSetupResponse(pduSessions []*PduSession, amfUeNgapID, ra
 	}
 	// Criticality Diagnostics (optional)
 	return pdu
+}
+
+// splitPduSessions separates the sessions that were established from those that were not.
+func splitPduSessions(pduSessions []*PduSession) (succeeded, failed []*PduSession) {
+	for _, pduSess := range pduSessions {
+		if pduSess.Success {
+			succeeded = append(succeeded, pduSess)
+		} else {
+			failed = append(failed, pduSess)
+		}
+	}
+	return succeeded, failed
+}
+
+// GetPDUSessionResourceSetupUnsuccessfulTransfer encodes the transfer IE for a session the
+// gNB could not set up. The cause is "unspecified" because the gNB has no finer reason to give.
+func GetPDUSessionResourceSetupUnsuccessfulTransfer() []byte {
+	data := ngapType.PDUSessionResourceSetupUnsuccessfulTransfer{}
+	data.Cause.Present = ngapType.CausePresentMisc
+	data.Cause.Misc = &ngapType.CauseMisc{Value: ngapType.CauseMiscPresentUnspecified}
+	encodeData, err := aper.MarshalWithParams(data, "valueExt")
+	if err != nil {
+		logger.UtilLog.Fatalf("aper MarshalWithParams error in GetPDUSessionResourceSetupUnsuccessfulTransfer: %+v", err)
+	}
+	return encodeData
 }
 
 func buildPDUSessionResourceSetupResponseTransfer(pduSession *PduSession,
@@ -694,46 +734,50 @@ func BuildPDUSessionResourceSetupResponseForRegistrationTest(pduSessions []*PduS
 
 	pDUSessionResourceSetupResponseIEs.List = append(pDUSessionResourceSetupResponseIEs.List, ie)
 
-	// PDU Session Resource Setup Response List
-	ie = ngapType.PDUSessionResourceSetupResponseIEs{}
-	ie.Id.Value = ngapType.ProtocolIEIDPDUSessionResourceSetupListSURes
-	ie.Criticality.Value = ngapType.CriticalityPresentIgnore
-	ie.Value.Present = ngapType.PDUSessionResourceSetupResponseIEsPresentPDUSessionResourceSetupListSURes
-	ie.Value.PDUSessionResourceSetupListSURes = new(ngapType.PDUSessionResourceSetupListSURes)
+	// PDU Session Resource Setup Response List. Sessions that were not established are reported
+	// in the failed to setup list instead (TS 38.413 clause 9.2.1.2).
+	succeeded, failed := splitPduSessions(pduSessions)
+	if len(succeeded) > 0 {
+		ie = ngapType.PDUSessionResourceSetupResponseIEs{}
+		ie.Id.Value = ngapType.ProtocolIEIDPDUSessionResourceSetupListSURes
+		ie.Criticality.Value = ngapType.CriticalityPresentIgnore
+		ie.Value.Present = ngapType.PDUSessionResourceSetupResponseIEsPresentPDUSessionResourceSetupListSURes
+		ie.Value.PDUSessionResourceSetupListSURes = new(ngapType.PDUSessionResourceSetupListSURes)
 
-	pDUSessionResourceSetupListSURes := ie.Value.PDUSessionResourceSetupListSURes
+		pDUSessionResourceSetupListSURes := ie.Value.PDUSessionResourceSetupListSURes
 
-	for _, pduSess := range pduSessions {
-		// PDU Session Resource Setup Response Item in PDU Session Resource Setup Response List
-		pDUSessionResourceSetupItemSURes := ngapType.PDUSessionResourceSetupItemSURes{}
-		pDUSessionResourceSetupItemSURes.PDUSessionID.Value = pduSess.PduSessId
+		for _, pduSess := range succeeded {
+			// PDU Session Resource Setup Response Item in PDU Session Resource Setup Response List
+			pDUSessionResourceSetupItemSURes := ngapType.PDUSessionResourceSetupItemSURes{}
+			pDUSessionResourceSetupItemSURes.PDUSessionID.Value = pduSess.PduSessId
 
-		pDUSessionResourceSetupItemSURes.PDUSessionResourceSetupResponseTransfer = GetPDUSessionResourceSetupResponseTransfer(pduSess, ipv4)
+			pDUSessionResourceSetupItemSURes.PDUSessionResourceSetupResponseTransfer = GetPDUSessionResourceSetupResponseTransfer(pduSess, ipv4)
 
-		pDUSessionResourceSetupListSURes.List = append(pDUSessionResourceSetupListSURes.List, pDUSessionResourceSetupItemSURes)
+			pDUSessionResourceSetupListSURes.List = append(pDUSessionResourceSetupListSURes.List, pDUSessionResourceSetupItemSURes)
+		}
+
+		pDUSessionResourceSetupResponseIEs.List = append(pDUSessionResourceSetupResponseIEs.List, ie)
 	}
 
-	pDUSessionResourceSetupResponseIEs.List = append(pDUSessionResourceSetupResponseIEs.List, ie)
+	// PDU Session Resource Failed to Setup List
+	if len(failed) > 0 {
+		ie = ngapType.PDUSessionResourceSetupResponseIEs{}
+		ie.Id.Value = ngapType.ProtocolIEIDPDUSessionResourceFailedToSetupListSURes
+		ie.Criticality.Value = ngapType.CriticalityPresentIgnore
+		ie.Value.Present = ngapType.PDUSessionResourceSetupResponseIEsPresentPDUSessionResourceFailedToSetupListSURes
+		ie.Value.PDUSessionResourceFailedToSetupListSURes = new(ngapType.PDUSessionResourceFailedToSetupListSURes)
 
-	// PDU Sessuin Resource Failed to Setup List
-	// ie = ngapType.PDUSessionResourceSetupResponseIEs{}
-	// ie.Id.Value = ngapType.ProtocolIEIDPDUSessionResourceFailedToSetupListSURes
-	// ie.Criticality.Value = ngapType.CriticalityPresentIgnore
-	// ie.Value.Present = ngapType.PDUSessionResourceSetupResponseIEsPresentPDUSessionResourceFailedToSetupListSURes
-	// ie.Value.PDUSessionResourceFailedToSetupListSURes = new(ngapType.PDUSessionResourceFailedToSetupListSURes)
+		pDUSessionResourceFailedToSetupListSURes := ie.Value.PDUSessionResourceFailedToSetupListSURes
 
-	// pDUSessionResourceFailedToSetupListSURes := ie.Value.PDUSessionResourceFailedToSetupListSURes
+		for _, pduSess := range failed {
+			item := ngapType.PDUSessionResourceFailedToSetupItemSURes{}
+			item.PDUSessionID.Value = pduSess.PduSessId
+			item.PDUSessionResourceSetupUnsuccessfulTransfer = GetPDUSessionResourceSetupUnsuccessfulTransfer()
+			pDUSessionResourceFailedToSetupListSURes.List = append(pDUSessionResourceFailedToSetupListSURes.List, item)
+		}
 
-	// // PDU Session Resource Failed to Setup Item in PDU Sessuin Resource Failed to Setup List
-	// pDUSessionResourceFailedToSetupItemSURes := ngapType.PDUSessionResourceFailedToSetupItemSURes{}
-	// pDUSessionResourceFailedToSetupItemSURes.PDUSessionID.Value = 10
-	// pDUSessionResourceFailedToSetupItemSURes.PDUSessionResourceSetupUnsuccessfulTransfer =
-	// 	GetPDUSessionResourceSetupUnsucessfulTransfer()
-
-	// pDUSessionResourceFailedToSetupListSURes.List =
-	// 	append(pDUSessionResourceFailedToSetupListSURes.List, pDUSessionResourceFailedToSetupItemSURes)
-
-	// pDUSessionResourceSetupResponseIEs.List = append(pDUSessionResourceSetupResponseIEs.List, ie)
+		pDUSessionResourceSetupResponseIEs.List = append(pDUSessionResourceSetupResponseIEs.List, ie)
+	}
 	// Criticality Diagnostics (optional)
 	return pdu
 }
@@ -801,11 +845,14 @@ func BuildPDUSessionResourceReleaseResponseForReleaseTest(amfUeNgapID, ranUeNgap
 
 // BuildHandoverRequired builds an NGAP HandoverRequired PDU.
 // The source gNB sends this to the AMF to request N2 handover to targetGnbRanId.
-// pduSessionIds is the list of PDU session IDs to be handed over.
+// pduSessionIds is the list of PDU session IDs to be handed over. sourceToTargetContainer is the
+// content of the Source to Target Transparent Container, which the AMF forwards to the target
+// unchanged; if it is empty a single placeholder byte is used, as the AMF rejects a zero-length one.
 func BuildHandoverRequired(amfUeNgapID, ranUeNgapID int64,
 	targetGnbRanId ngapType.GlobalRANNodeID,
 	targetTai ngapType.TAI,
 	pduSessionIds []int64,
+	sourceToTargetContainer []byte,
 ) (pdu ngapType.NGAPPDU) {
 	pdu.Present = ngapType.NGAPPDUPresentInitiatingMessage
 	pdu.InitiatingMessage = new(ngapType.InitiatingMessage)
@@ -889,14 +936,16 @@ func BuildHandoverRequired(amfUeNgapID, ranUeNgapID int64,
 	}
 
 	// Source to Target Transparent Container (opaque RRC container forwarded by AMF to target gNB).
-	// The AMF rejects a zero-length value (SendHandoverRequest guard), so use a single placeholder
-	// byte; the content is irrelevant for simulation purposes.
+	// The AMF rejects a zero-length value (SendHandoverRequest guard).
+	if len(sourceToTargetContainer) == 0 {
+		sourceToTargetContainer = []byte{0x00}
+	}
 	ie = ngapType.HandoverRequiredIEs{}
 	ie.Id.Value = ngapType.ProtocolIEIDSourceToTargetTransparentContainer
 	ie.Criticality.Value = ngapType.CriticalityPresentReject
 	ie.Value.Present = ngapType.HandoverRequiredIEsPresentSourceToTargetTransparentContainer
 	ie.Value.SourceToTargetTransparentContainer = new(ngapType.SourceToTargetTransparentContainer)
-	ie.Value.SourceToTargetTransparentContainer.Value = aper.OctetString{0x00}
+	ie.Value.SourceToTargetTransparentContainer.Value = aper.OctetString(sourceToTargetContainer)
 	ies.List = append(ies.List, ie)
 
 	return pdu

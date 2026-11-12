@@ -76,5 +76,24 @@ func SendToGnbUe(gnbue *gnbctx.GnbCpUe, event common.EventType, ngapPdu *ngapTyp
 	amfmsg.Event = event
 	amfmsg.NgapPdu = ngapPdu
 	amfmsg.Id = id
-	gnbue.ReadChan <- &amfmsg
+	// This runs on the receive loop that serves every UE. A context that has terminated reads its
+	// queue no more, so a full queue must not hold up the others: delivery gives way to Done.
+	//
+	// Once the context has been asked to quit nothing new is queued for it either. Its loop handles
+	// what is already queued before it quits, and traffic that kept arriving would keep the queue
+	// from ever running empty.
+	quit := gnbue.QuitRequested()
+	select {
+	case <-quit:
+		gnbue.Log.Debugln("dropped", event, "for a UE context that is quitting")
+		return
+	default:
+	}
+	select {
+	case gnbue.ReadChan <- &amfmsg:
+	case <-quit:
+		gnbue.Log.Debugln("dropped", event, "for a UE context that is quitting")
+	case <-gnbue.Done:
+		gnbue.Log.Debugln("dropped", event, "for a terminated UE context")
+	}
 }

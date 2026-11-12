@@ -5,11 +5,13 @@ package realue
 
 import (
 	"testing"
+	"time"
 
 	"github.com/omec-project/gnbsim/common"
 	realuectx "github.com/omec-project/gnbsim/realue/context"
 	"github.com/omec-project/nas/v2"
 	"github.com/omec-project/nas/v2/nasMessage"
+	"github.com/omec-project/nas/v2/security"
 	"go.uber.org/zap"
 )
 
@@ -289,5 +291,35 @@ func TestNetworkCommandAbortsTheUesOwnModification(t *testing.T) {
 	if err := forwardDlNasToSimUe(ue, newRejectMessage(pduSessID, modificationRequestPTI),
 		nas.MsgTypePDUSessionModificationReject); err == nil {
 		t.Error("a reject for the aborted request was accepted; it would pass the network's procedure")
+	}
+}
+
+// The session workers send their results to the RealUe's queue, which only the RealUe reads. A
+// worker blocked on a full queue must still receive its quit when the RealUe quits.
+func TestRealUeQuitDrainsResultsOfBlockedSessionWorker(t *testing.T) {
+	ue := realuectx.NewRealUe("imsi-208930100007487", security.AlgCiphering128NEA0, security.AlgIntegrity128NIA2,
+		nil, nil, "", "", "", "", nil)
+	sess := &realuectx.PduSession{ReadCmdChan: make(chan common.InterfaceMessage)} // read by the worker only
+	ue.PduSessions[1] = sess
+
+	for len(ue.ReadChan) < cap(ue.ReadChan) {
+		ue.ReadChan <- &common.UeMessage{} // the queue is full
+	}
+	ue.WaitGrp.Go(func() { // stands in for the session worker
+		ue.ReadChan <- &common.UeMessage{} // blocks until the RealUe reads
+		<-sess.ReadCmdChan                 // and only then takes its quit
+	})
+
+	done := make(chan struct{})
+	go func() {
+		if err := HandleQuitEvent(ue, &common.UeMessage{}); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("the quit deadlocked against a session worker blocked on the full queue")
 	}
 }

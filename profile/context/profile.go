@@ -7,7 +7,11 @@ package context
 
 import (
 	"fmt"
+	"net"
 	"slices"
+	"strconv"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/omec-project/gnbsim/common"
@@ -44,7 +48,26 @@ type ProcedureEventsDetails struct {
 var (
 	ProceduresMap map[common.ProcedureType]*ProcedureEventsDetails
 	ProfileMap    map[string]*Profile
+	// ProfileMapMu guards ProfileMap, which is written by profile initialisation and
+	// read by the REST handlers on different goroutines.
+	ProfileMapMu sync.RWMutex
 )
+
+// Publish makes the profile reachable by name (REST step and add-calls requests). It must be
+// called once the profile is fully initialised, i.e. after its UE contexts have been created.
+func (p *Profile) Publish() {
+	ProfileMapMu.Lock()
+	ProfileMap[p.Name] = p
+	ProfileMapMu.Unlock()
+}
+
+// GetProfile returns the registered profile with the given name.
+func GetProfile(name string) (*Profile, bool) {
+	ProfileMapMu.RLock()
+	defer ProfileMapMu.RUnlock()
+	p, ok := ProfileMap[name]
+	return p, ok
+}
 
 type PIterations struct {
 	Name    string
@@ -70,7 +93,12 @@ type Iterations struct {
 type ProfileUeContext struct {
 	TrigEventsChan chan *common.ProfileMessage  // Receiving Events from the REST interface
 	WriteSimChan   chan common.InterfaceMessage // Sending events to SIMUE -  start proc and proc parameters
-	ReadChan       chan *common.ProfileMessage  // Sending events to profile
+	// Quit asks the SimUe to tear down. It does not depend on the capacity of WriteSimChan, and
+	// calling it more than once is harmless.
+	Quit func()
+	// Terminated is closed once the SimUe has finished tearing down and its SUPI is free.
+	Terminated <-chan struct{}
+	ReadChan   chan *common.ProfileMessage // Sending events to profile
 
 	Log *zap.SugaredLogger
 
@@ -81,57 +109,38 @@ type ProfileUeContext struct {
 }
 
 type Profile struct {
-	ProfileType    string         `yaml:"profileType" json:"profileType"`
-	Name           string         `yaml:"profileName" json:"profileName"`
-	GnbName        string         `yaml:"gnbName" json:"gnbName"`
-	TargetGnbName  string         `yaml:"targetGnbName" json:"targetGnbName"`
-	StartImsi      string         `yaml:"startImsi" json:"startImsi"`
-	DefaultAs      string         `yaml:"defaultAs" json:"defaultAs"`
-	Key            string         `yaml:"key" json:"key"`
-	Opc            string         `yaml:"opc" json:"opc"`
-	SeqNum         string         `yaml:"sequenceNumber" json:"sequenceNumber"`
-	Dnn            string         `yaml:"dnn" json:"dnn"`
-	StartIteration string         `yaml:"startiteration" json:"startiteration"`
-	Plmn           *models.PlmnId `yaml:"plmnId" json:"plmnId"`
-	SNssai         *models.Snssai `yaml:"sNssai" json:"sNssai"`
-	Log            *zap.SugaredLogger
-
-	// Profile routine reads messages from other entities on this channel
-	// Entities can be SimUe, Main routine.
-	ReadChan chan *common.ProfileMessage
-
-	Iterations  []*Iterations `yaml:"iterations"`
-	PIterations map[string]*PIterations
-	PSimUe      map[string]*ProfileUeContext
-	Procedures  []common.ProcedureType
-
-	Imsi           int    // StartImsi in int
-	UeCount        int    `yaml:"ueCount" json:"ueCount"`
-	DataPktCount   int    `yaml:"dataPktCount" json:"dataPktCount"`
-	DataPktInt     int    `yaml:"dataPktInterval" json:"dataPktInterval"`
-	PerUserTimeout uint32 `yaml:"perUserTimeout" json:"perUserTimeout"`
-	Enable         bool   `yaml:"enable" json:"enable"`
-	ExecInParallel bool   `yaml:"execInParallel" json:"execInParallel"`
-	StepTrigger    bool   `yaml:"stepTrigger" json:"stepTrigger"`
-	RetransMsg     bool   `yaml:"retransMsg" json:"retransMsg"`
-
-	// WithholdModificationComplete makes the UE receive a PDU SESSION MODIFICATION COMMAND and
-	// deliberately not answer it. That is the only way to reach the network's retransmission and
-	// abandonment behaviour from a cluster rather than from a unit test, and on a satellite link it
-	// is an ordinary outcome rather than a fault.
-	WithholdModificationComplete bool `yaml:"withholdModificationComplete" json:"withholdModificationComplete"`
-
-	// ModificationRequestType is the Request type IE value the UE puts on a
-	// PDU SESSION MODIFICATION REQUEST. 5 is "modification request" and correct; 1 is
-	// "initial request", which makes the AMF read the message as an attempt to establish a session
-	// that already exists. Unset means 5. Configurable because the failure it guards against is
-	// the AMF releasing a working session.
-	ModificationRequestType uint8 `yaml:"modificationRequestType" json:"modificationRequestType"`
-
-	// OmitModificationRequestType leaves the Request type IE out of the UL NAS TRANSPORT
-	// entirely, which is the third thing a UE may do and a third way the AMF has to cope. It
-	// overrides ModificationRequestType rather than combining with it.
-	OmitModificationRequestType bool `yaml:"omitModificationRequestType" json:"omitModificationRequestType"`
+	Plmn                         *models.PlmnId `yaml:"plmnId" json:"plmnId"`
+	PSimUe                       map[string]*ProfileUeContext
+	PIterations                  map[string]*PIterations
+	ReadChan                     chan *common.ProfileMessage
+	Log                          *zap.SugaredLogger
+	SNssai                       *models.Snssai `yaml:"sNssai" json:"sNssai"`
+	SeqNum                       string         `yaml:"sequenceNumber" json:"sequenceNumber"`
+	Name                         string         `yaml:"profileName" json:"profileName"`
+	ProfileType                  string         `yaml:"profileType" json:"profileType"`
+	Dnn                          string         `yaml:"dnn" json:"dnn"`
+	StartIteration               string         `yaml:"startiteration" json:"startiteration"`
+	Key                          string         `yaml:"key" json:"key"`
+	DefaultAs                    string         `yaml:"defaultAs" json:"defaultAs"`
+	StartImsi                    string         `yaml:"startImsi" json:"startImsi"`
+	TargetGnbName                string         `yaml:"targetGnbName" json:"targetGnbName"`
+	Opc                          string         `yaml:"opc" json:"opc"`
+	GnbName                      string         `yaml:"gnbName" json:"gnbName"`
+	Procedures                   []common.ProcedureType
+	Iterations                   []*Iterations `yaml:"iterations"`
+	Imsi                         int
+	UeCount                      int          `yaml:"ueCount" json:"ueCount"`
+	DataPktCount                 int          `yaml:"dataPktCount" json:"dataPktCount"`
+	DataPktInt                   int          `yaml:"dataPktInterval" json:"dataPktInterval"`
+	PSimUeMu                     sync.RWMutex `yaml:"-" json:"-"`
+	PerUserTimeout               uint32       `yaml:"perUserTimeout" json:"perUserTimeout"`
+	Enable                       bool         `yaml:"enable" json:"enable"`
+	ExecInParallel               bool         `yaml:"execInParallel" json:"execInParallel"`
+	StepTrigger                  bool         `yaml:"stepTrigger" json:"stepTrigger"`
+	RetransMsg                   bool         `yaml:"retransMsg" json:"retransMsg"`
+	WithholdModificationComplete bool         `yaml:"withholdModificationComplete" json:"withholdModificationComplete"`
+	ModificationRequestType      uint8        `yaml:"modificationRequestType" json:"modificationRequestType"`
+	OmitModificationRequestType  bool         `yaml:"omitModificationRequestType" json:"omitModificationRequestType"`
 }
 
 func init() {
@@ -248,6 +257,137 @@ func initProcedureEventMap() {
 	ProceduresMap[common.N2_HANDOVER_PROCEDURE] = &proc10
 }
 
+// BuildIterations converts the iteration definitions of a custom profile into PIterations and
+// checks that every reference (start iteration, next iteration) resolves. It is a no-op for
+// profiles without iterations. It runs for profiles from the configuration file and from the
+// REST API alike, since both are executed through GetNextProcedure.
+func (p *Profile) BuildIterations() error {
+	if len(p.Iterations) == 0 {
+		return nil
+	}
+	p.PIterations = make(map[string]*PIterations)
+	for _, it := range p.Iterations {
+		if it == nil {
+			return fmt.Errorf("profile %q: empty iteration definition", p.Name)
+		}
+		if len(it.Next) == 0 {
+			it.Next = quit // default value
+		}
+		pIter := &PIterations{Name: it.Name, NextItr: it.Next, Repeat: it.Repeat}
+		pIter.ProcMap = make(map[int]common.ProcedureType)
+		pIter.WaitMap = make(map[int]int)
+		pIter.WaitMap[0] = 0
+		steps := []string{it.First, it.Second, it.Third, it.Fourth, it.Fifth, it.Sixth, it.Seventh}
+		for i, step := range steps {
+			if len(step) == 0 {
+				continue
+			}
+			proc, wait, err := parseIterationStep(step)
+			if err != nil {
+				return fmt.Errorf("iteration %q step %d: %v", it.Name, i+1, err)
+			}
+			pIter.ProcMap[i+1] = proc
+			pIter.WaitMap[i+1] = wait
+		}
+		p.PIterations[it.Name] = pIter
+	}
+	// every reference must resolve, otherwise the profile dereferences a nil iteration at run time
+	if _, ok := p.PIterations[p.StartIteration]; !ok {
+		return fmt.Errorf("custom profile %q: startiteration %q is not a defined iteration", p.Name, p.StartIteration)
+	}
+	for _, pit := range p.PIterations {
+		if pit.NextItr == quit {
+			continue
+		}
+		if _, ok := p.PIterations[pit.NextItr]; !ok {
+			return fmt.Errorf("custom profile %q: iteration %q has unknown next iteration %q", p.Name, pit.Name, pit.NextItr)
+		}
+	}
+	return nil
+}
+
+// parseIterationStep parses a custom profile step of the form "<PROCEDURE-NAME> <wait-ms>".
+func parseIterationStep(step string) (common.ProcedureType, int, error) {
+	fields := strings.Fields(step)
+	if len(fields) != 2 {
+		return common.UNKNOWN_PROCEDURE, 0, fmt.Errorf("expected \"<procedure> <wait>\", got %q", step)
+	}
+	proc := common.GetProcId(fields[0])
+	if proc == common.UNKNOWN_PROCEDURE {
+		return common.UNKNOWN_PROCEDURE, 0, fmt.Errorf("unknown procedure %q", fields[0])
+	}
+	wait, err := strconv.Atoi(fields[1])
+	if err != nil {
+		return common.UNKNOWN_PROCEDURE, 0, fmt.Errorf("value is not converted to integer: %v", err)
+	}
+	if wait < 0 {
+		return common.UNKNOWN_PROCEDURE, 0, fmt.Errorf("wait must not be negative, got %d", wait)
+	}
+	return proc, wait, nil
+}
+
+// maxImsiDigits is the longest IMSI there is: "The number of digits in IMSI shall not exceed 15"
+// (TS 23.003 clause 2.3).
+const maxImsiDigits = 15
+
+// validateStartImsi checks that the IMSIs of the profile, from startImsi on, are IMSIs: decimal
+// digits only (TS 23.003 clause 2.3), at most 15 of them even for the last UE. An empty startImsi
+// is left to InitProfile, which reports it.
+func validateStartImsi(profile *Profile) error {
+	if profile.StartImsi == "" {
+		return nil
+	}
+	if len(profile.StartImsi) > maxImsiDigits {
+		return fmt.Errorf("startImsi has %d digits, an IMSI has at most %d", len(profile.StartImsi), maxImsiDigits)
+	}
+	for _, r := range profile.StartImsi {
+		if r < '0' || r > '9' {
+			return fmt.Errorf("startImsi %q must consist of decimal digits only", profile.StartImsi)
+		}
+	}
+	start, err := strconv.Atoi(profile.StartImsi) // at most 15 digits, so it fits
+	if err != nil {
+		return fmt.Errorf("startImsi %q: %v", profile.StartImsi, err)
+	}
+	if last := start + max(profile.UeCount, 1) - 1; len(strconv.Itoa(last)) > maxImsiDigits {
+		return fmt.Errorf("startImsi %q and ueCount %d run past %d digits", profile.StartImsi, profile.UeCount, maxImsiDigits)
+	}
+	return nil
+}
+
+// SetUe registers the context of a UE.
+func (p *Profile) SetUe(imsi string, ctx *ProfileUeContext) {
+	p.PSimUeMu.Lock()
+	p.PSimUe[imsi] = ctx
+	p.PSimUeMu.Unlock()
+}
+
+// DeleteUe forgets the context of a UE.
+func (p *Profile) DeleteUe(imsi string) {
+	p.PSimUeMu.Lock()
+	delete(p.PSimUe, imsi)
+	p.PSimUeMu.Unlock()
+}
+
+// GetUe returns the context of a UE, or nil if there is none.
+func (p *Profile) GetUe(imsi string) *ProfileUeContext {
+	p.PSimUeMu.RLock()
+	defer p.PSimUeMu.RUnlock()
+	return p.PSimUe[imsi]
+}
+
+// Ues returns a snapshot of the UE contexts, safe to iterate while UEs are being added.
+func (p *Profile) Ues() []*ProfileUeContext {
+	p.PSimUeMu.RLock()
+	defer p.PSimUeMu.RUnlock()
+	ues := make([]*ProfileUeContext, 0, len(p.PSimUe))
+	for _, ctx := range p.PSimUe {
+		ues = append(ues, ctx)
+	}
+	return ues
+}
+
+// Init prepares the profile for execution. It does not publish it; see Publish.
 func (profile *Profile) Init() error {
 	profile.ReadChan = make(chan *common.ProfileMessage)
 	profile.PSimUe = make(map[string]*ProfileUeContext)
@@ -258,13 +398,34 @@ func (profile *Profile) Init() error {
 	if profile.DefaultAs == "" {
 		profile.DefaultAs = "192.168.250.1" // default destination for AIAB
 	}
+	// the ICMP echo request that is sent after PDU session establishment is IPv4 only, and an
+	// address that does not parse makes the packet builder panic
+	if net.ParseIP(profile.DefaultAs).To4() == nil {
+		return fmt.Errorf("defaultAs must be an IPv4 address, got %q", profile.DefaultAs)
+	}
 
 	if profile.PerUserTimeout == 0 {
 		profile.PerUserTimeout = PER_USER_TIMEOUT
 	}
 
+	if profile.UeCount < 0 {
+		return fmt.Errorf("ueCount must not be negative, got %d", profile.UeCount)
+	}
+	// a negative interval fires every timer at once, which turns the packet generator into a flood
+	if profile.DataPktCount < 0 || profile.DataPktInt < 0 {
+		return fmt.Errorf("dataPktCount and dataPktInterval must not be negative, got %d and %d",
+			profile.DataPktCount, profile.DataPktInt)
+	}
+	if err := validateStartImsi(profile); err != nil {
+		return err
+	}
+
 	err := initProcedureList(profile)
 	if err != nil {
+		return err
+	}
+
+	if err = profile.BuildIterations(); err != nil {
 		return err
 	}
 
@@ -281,7 +442,6 @@ func (profile *Profile) Init() error {
 		}
 	}
 
-	ProfileMap[profile.Name] = profile
 	profile.Log.Debugln("profile initialized", profile.Name, ", Enable", profile.Enable)
 	return nil
 }
@@ -407,14 +567,17 @@ func (p *Profile) CheckCurrentEvent(Procedure common.ProcedureType, triggerEvent
 	return err
 }
 
+// GetFirstProcedure returns the first procedure of a predefined profile, or
+// UNKNOWN_PROCEDURE if the list is empty, which callers treat as "nothing to execute".
 func (p *Profile) GetFirstProcedure() common.ProcedureType {
 	if len(p.Procedures) == 0 {
-		p.Log.Fatalln("Procedure List Empty")
+		p.Log.Errorln("Procedure List Empty")
+		return common.UNKNOWN_PROCEDURE
 	}
 	return p.Procedures[0]
 }
 
-func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure common.ProcedureType) common.ProcedureType {
+func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure common.ProcedureType) (common.ProcedureType, error) {
 	length := len(p.Procedures)
 	var nextProcedure common.ProcedureType
 
@@ -422,8 +585,7 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 	if len(p.Iterations) == 0 {
 		if currentProcedure == 0 {
 			pCtx.CurrentProcIndex = 0
-			proc := p.GetFirstProcedure()
-			return proc
+			return p.GetFirstProcedure(), nil
 		}
 		// Use CurrentProcIndex to find the exact position we are at so that
 		// duplicate procedure types (e.g. two USER_DATA entries) are handled
@@ -437,14 +599,17 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 		} else {
 			p.Log.Infoln("no more procedures left")
 		}
-		return nextProcedure
+		return nextProcedure, nil
 	}
 
 	// check if custom Profile
 	if len(p.Iterations) > 0 {
 		pCtx.Log.Infoln("Current UE iteration", pCtx.CurrentItr)
 		pCtx.Log.Infoln("Current UE procedure index", pCtx.CurrentProcIndex)
-		itp := p.PIterations[pCtx.CurrentItr]
+		itp, ok := p.PIterations[pCtx.CurrentItr]
+		if !ok {
+			return common.UNKNOWN_PROCEDURE, fmt.Errorf("unknown iteration %q", pCtx.CurrentItr)
+		}
 		pCtx.Log.Infoln("Current Iteration map - ", itp)
 		if itp.WaitMap[pCtx.CurrentProcIndex] != 0 {
 			time.Sleep(time.Millisecond * time.Duration(itp.WaitMap[pCtx.CurrentProcIndex]))
@@ -457,7 +622,7 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 			pCtx.Procedure = nextProcedure
 			pCtx.CurrentProcIndex = nextProcIndex
 			pCtx.Log.Infoln("Updated procedure to", nextProcedure)
-			return nextProcedure
+			return nextProcedure, nil
 		}
 		if pCtx.Repeat > 0 {
 			pCtx.Repeat = pCtx.Repeat - 1
@@ -465,21 +630,24 @@ func (p *Profile) GetNextProcedure(pCtx *ProfileUeContext, currentProcedure comm
 			pCtx.CurrentProcIndex = 1
 			nextProcedure = itp.ProcMap[1]
 			pCtx.Procedure = nextProcedure
-			return nextProcedure
+			return nextProcedure, nil
 		}
 		pCtx.Log.Infoln("Iteration Complete", pCtx.CurrentItr)
 		nextItr := itp.NextItr
 		if nextItr != quit {
-			nItr := p.PIterations[nextItr]
+			nItr, ok := p.PIterations[nextItr]
+			if !ok {
+				return common.UNKNOWN_PROCEDURE, fmt.Errorf("unknown next iteration %q", nextItr)
+			}
 			pCtx.Log.Infoln("Going to next iteration", nItr.Name)
 			pCtx.CurrentItr = nItr.Name
 			pCtx.CurrentProcIndex = 1
 			pCtx.Repeat = nItr.Repeat
 			nextProcedure = nItr.ProcMap[1]
 			pCtx.Procedure = nextProcedure
-			return nextProcedure
+			return nextProcedure, nil
 		}
 	}
 	pCtx.Log.Infoln("nothing more to execute for UE")
-	return nextProcedure
+	return nextProcedure, nil
 }

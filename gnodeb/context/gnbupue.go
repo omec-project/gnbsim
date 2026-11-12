@@ -6,6 +6,7 @@ package context
 
 import (
 	"sync"
+	"sync/atomic"
 
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/logger"
@@ -15,32 +16,42 @@ import (
 )
 
 type GnbUpUe struct {
-	Snssai models.Snssai
-	// GnbUpUe reads up link data packets from UE on this channel
-	ReadUlChan chan common.InterfaceMessage
-	Log        *zap.SugaredLogger
-	// QosFlows is reached through AddQosFlow, RemoveQosFlow, GetQosFlow and AnyQfi, which hold
-	// qosFlowsMu.
-	// The control plane records an admitted flow on its own goroutine, and from the moment a
-	// PDU session resource modify request can arrive that is concurrent with this session's
-	// user plane worker reading the map for every uplink packet.
-	QosFlows map[int64]*ngapType.QosFlowSetupRequestItem
-	// GnbUpUe writes downlink packets to UE on this channel
-	WriteUeChan chan common.InterfaceMessage
-	Upf         *GnbUpf
-	// GnbUpUe reads down link data packets from UPF Worker on this channel
-	ReadDlChan chan common.InterfaceMessage
-	// GnbUpUe reads commands from GnbCpUe on this channel
-	ReadCmdChan chan common.InterfaceMessage
-	Gnb         *GNodeB
-	PduSessType models.PduSessionType
-	// qosFlowsMu guards QosFlows. It sits down here, away from the map, because fieldalignment
-	// wants the pointer-bearing fields together at the top.
-	qosFlowsMu       sync.RWMutex
+	Snssai           models.Snssai
+	Gnb              *GNodeB
+	ReadCmdChan      chan common.InterfaceMessage
+	QosFlows         map[int64]*ngapType.QosFlowSetupRequestItem
+	WriteUeChan      chan common.InterfaceMessage
+	Upf              *GnbUpf
+	ReadDlChan       chan common.InterfaceMessage
+	Log              *zap.SugaredLogger
+	quit             chan struct{}
+	ReadUlChan       chan common.InterfaceMessage
+	PduSessType      models.PduSessionType
 	PduSessId        int64
+	qosFlowsMu       sync.RWMutex
+	quitOnce         sync.Once
 	DlTeid           uint32
 	UlTeid           uint32
 	LastDataPktRecvd bool
+
+	// WorkerStarted is set once the user plane worker of this context has been started. Until then
+	// nothing reads its command channel, so teardown has to release the context itself.
+	WorkerStarted atomic.Bool
+}
+
+// QuitRequested returns a channel that is closed once RequestQuit has been called. It is nil, and
+// so never ready, for a context that was not made by NewGnbUpUe.
+func (ue *GnbUpUe) QuitRequested() <-chan struct{} {
+	return ue.quit
+}
+
+// RequestQuit tells blocking sends of this context to give way, so that the worker gets to the QUIT
+// command that follows. A send to a UE that has stopped reading would otherwise keep it from ever
+// terminating. It is idempotent.
+func (ue *GnbUpUe) RequestQuit() {
+	if ue.quit != nil {
+		ue.quitOnce.Do(func() { close(ue.quit) })
+	}
 }
 
 func NewGnbUpUe(dlTeid, ulTeid uint32, gnb *GNodeB) *GnbUpUe {
@@ -52,6 +63,7 @@ func NewGnbUpUe(dlTeid, ulTeid uint32, gnb *GNodeB) *GnbUpUe {
 	gnbue.ReadUlChan = make(chan common.InterfaceMessage, 10)
 	gnbue.ReadDlChan = make(chan common.InterfaceMessage, 10)
 	gnbue.ReadCmdChan = make(chan common.InterfaceMessage, 5)
+	gnbue.quit = make(chan struct{})
 	gnbue.Log = logger.GNodeBLog.With("subcategory", "GnbUpUe", logger.FieldDlTeid, dlTeid)
 	gnbue.Log.Debugln("context created")
 	return &gnbue

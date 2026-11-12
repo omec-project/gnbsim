@@ -6,6 +6,8 @@ package gnbcpueworker
 
 import (
 	"encoding/binary"
+	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -101,6 +103,12 @@ func HandleDownlinkNasTransport(gnbue *gnbctx.GnbCpUe,
 		}
 	}
 
+	// the decoder does not enforce mandatory IEs
+	if amfUeNgapId == nil || nasPdu == nil {
+		gnbue.Log.Errorln("DownlinkNASTransport is missing AMFUENGAPID or NASPDU")
+		return
+	}
+
 	// TODO: check what needs to be done with AmfUeNgapId on every DownlinkNasTransport message
 	gnbue.AmfUeNgapId = amfUeNgapId.Value
 	var pdus common.NasPduList
@@ -164,7 +172,26 @@ func HandleInitialContextSetupRequest(gnbue *gnbctx.GnbCpUe,
 		}
 	}
 
-	if nasPdu.Value != nil {
+	// Said first, so the SimUe knows before any NAS message arrives that the procedure includes the
+	// restoration of the user plane. The NAS-PDU is optional, so this cannot ride on it.
+	if pduSessResourceSetupReqList != nil {
+		// the NAS-PDU, if there is one, is the Service Accept: the SimUe is told whether to expect it
+		var carried common.NasPduList
+		if nasPdu != nil && nasPdu.Value != nil {
+			carried = append(carried, nasPdu.Value)
+		}
+		pendingMsg := &common.UuMessage{
+			DefaultMessage: common.DefaultMessage{Event: common.BEARER_SETUP_PENDING_EVENT},
+			NasPdus:        carried,
+			Id:             msg.Id,
+			CtxGeneration:  gnbue.Generation,
+		}
+		gnbue.Log.Debugln("sending event", pendingMsg.Event, "to SimUe. Id:", msg.Id)
+		sendToSimUe(gnbue, pendingMsg)
+	}
+
+	// NAS-PDU is optional in the Initial Context Setup Request (TS 38.413 clause 9.2.2.1)
+	if nasPdu != nil && nasPdu.Value != nil {
 		var pdus common.NasPduList
 		pdus = append(pdus, nasPdu.Value)
 		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, pdus, msg.Id)
@@ -236,6 +263,11 @@ func HandlePduSessResourceSetupRequest(gnbue *gnbctx.GnbCpUe,
 		}
 	}
 
+	if pduSessResourceSetupReqList == nil {
+		gnbue.Log.Errorln("PDUSessionResourceSetupListSUReq is missing")
+		return
+	}
+
 	var list []pduSessResourceSetupItem
 	for _, v := range pduSessResourceSetupReqList.List {
 		dst := pduSessResourceSetupItem{}
@@ -286,6 +318,11 @@ func HandlePduSessResourceReleaseCommand(gnbue *gnbctx.GnbCpUe,
 		}
 	}
 
+	if pduSessResourceToReleaseList == nil {
+		gnbue.Log.Errorln("PDUSessionResourceToReleaseListRelCmd is missing")
+		return
+	}
+
 	for _, item := range pduSessResourceToReleaseList.List {
 		resourceReleaseCmdTransfer := ngapType.PDUSessionResourceReleaseCommandTransfer{}
 		err := aper.UnmarshalWithParams(item.PDUSessionResourceReleaseCommandTransfer,
@@ -310,7 +347,8 @@ func HandlePduSessResourceReleaseCommand(gnbue *gnbctx.GnbCpUe,
 		gnbue.RemoveGnbUpUe(pduSessId)
 	}
 
-	if nasPdu.Value != nil {
+	// NAS-PDU is optional in the PDU Session Resource Release Command (TS 38.413 clause 9.2.1.3)
+	if nasPdu != nil && nasPdu.Value != nil {
 		var pdus common.NasPduList
 		pdus = append(pdus, nasPdu.Value)
 		SendToUe(gnbue, common.DL_INFO_TRANSFER_EVENT, pdus, msg.Id)
@@ -334,30 +372,64 @@ func HandlePduSessResourceReleaseCommand(gnbue *gnbctx.GnbCpUe,
 	SendToUe(gnbue, common.DATA_BEARER_RELEASE_REQUEST_EVENT, nil, msg.Id)
 }
 
+// HandleDataBearerSetupResponse answers the AMF for the sessions of a PDU Session Resource Setup
+// Request, Initial Context Setup Request or Handover, and then tells the SimUe how that ended. The
+// SimUe only completes the procedure on that report, since only the gNB knows whether the sessions
+// really are in place and whether the AMF could be answered.
 func HandleDataBearerSetupResponse(gnbue *gnbctx.GnbCpUe,
 	intfcMsg common.InterfaceMessage,
 ) {
 	msg := intfcMsg.(*common.UuMessage)
+	err := setupDataBearers(gnbue, msg)
+	if err != nil {
+		gnbue.Log.Errorln("data bearer setup failed:", err)
+	}
+	if gnbue.WriteUeChan == nil {
+		return
+	}
+	result := &common.UuMessage{
+		DefaultMessage:  common.DefaultMessage{Event: common.DATA_BEARER_SETUP_RESULT_EVENT, Error: err},
+		Id:              msg.Id,
+		TriggeringEvent: msg.TriggeringEvent,
+		CtxGeneration:   gnbue.Generation,
+	}
+	sendToSimUe(gnbue, result)
+}
+
+func setupDataBearers(gnbue *gnbctx.GnbCpUe, msg *common.UuMessage) error {
+	var setupErr error
 	var pduSessions []*ngapTestpacket.PduSession
 	for _, item := range msg.DBParams {
 		pduSess := item.PduSess
+		if pduSess == nil {
+			gnbue.Log.Errorln("data bearer params without PDU session, skipping")
+			continue
+		}
 		if !pduSess.Success {
+			// the context was created when the request was handled and no worker was started for it
+			if upCtx, err := gnbue.GetGnbUpUe(pduSess.PduSessId); err == nil {
+				releaseUnstartedUpUe(upCtx)
+			}
 			gnbue.RemoveGnbUpUe(pduSess.PduSessId)
 		} else {
 			gnbUpUe, err := gnbue.GetGnbUpUe(pduSess.PduSessId)
 			if err != nil {
 				gnbue.Log.Errorln("failed to fetch PDU session context:", err)
+				// there is no user plane context to attach to, so the session cannot be reported as set up
+				pduSess.Success = false
+				pduSessions = append(pduSessions, pduSess)
+				setupErr = fmt.Errorf("PDU session %d has no user plane context: %w", pduSess.PduSessId, err)
+				continue
 			}
 			// TODO: Addition to this map should only be through GnbUpfWorker
 			// routine. This will help in replacing sync map with normal map
 			// Thus will help avoid lock unlock operation on per downlink message
 			gnbUpUe.Upf.GnbUpUes.AddGnbUpUe(gnbUpUe.DlTeid, true, gnbUpUe)
 			gnbUpUe.WriteUeChan = item.CommChan
-			gnbue.WaitGrp.Add(1)
-			go func() {
-				defer gnbue.WaitGrp.Done()
+			gnbUpUe.WorkerStarted.Store(true)
+			gnbue.WaitGrp.Go(func() {
 				gnbupueworker.Init(gnbUpUe)
-			}()
+			})
 		}
 		pduSessions = append(pduSessions, pduSess)
 	}
@@ -370,50 +442,29 @@ func HandleDataBearerSetupResponse(gnbue *gnbctx.GnbCpUe,
 		ngapPdu, err = test.GetPDUSessionResourceSetupResponse(pduSessions,
 			gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, gnbue.Gnb.GnbN3Ip)
 		if err != nil {
-			gnbue.Log.Errorln("failed to create PDU Session Resource Setup Response:", err)
-			return
+			return fmt.Errorf("failed to create PDU Session Resource Setup Response: %w", err)
 		}
 	case common.INITIAL_CTX_SETUP_REQUEST_EVENT:
 		ngapPdu, err = test.GetInitialContextSetupResponseForServiceRequest(pduSessions,
 			gnbue.AmfUeNgapId, gnbue.GnbUeNgapId, gnbue.Gnb.GnbN3Ip)
 		if err != nil {
-			gnbue.Log.Errorln("failed to create Initial Context Setup Response:", err)
-			return
+			return fmt.Errorf("failed to create Initial Context Setup Response: %w", err)
 		}
 	case common.HO_NOTIFY_EVENT:
-		// Target gNB: start UP workers now that RealUE channels are wired up,
-		// then send HandoverNotify to AMF.
-		for _, item := range msg.DBParams {
-			if !item.PduSess.Success {
-				continue
-			}
-			var gnbUpUe *gnbctx.GnbUpUe
-			gnbUpUe, err = gnbue.GetGnbUpUe(item.PduSess.PduSessId)
-			if err != nil {
-				gnbue.Log.Errorln("failed to fetch GnbUpUe for HO:", err)
-				continue
-			}
-			gnbUpUe.Upf.GnbUpUes.AddGnbUpUe(gnbUpUe.DlTeid, true, gnbUpUe)
-			gnbUpUe.WriteUeChan = item.CommChan
-			gnbue.WaitGrp.Add(1)
-			go func() {
-				defer gnbue.WaitGrp.Done()
-				gnbupueworker.Init(gnbUpUe)
-			}()
-		}
+		// Target gNB: the user plane workers were started by the loop above, now that the RealUE
+		// channels are wired up. Send HandoverNotify to the AMF.
 		ngapPdu, err = ngap.GetHandoverNotify(gnbue)
 		if err != nil {
-			gnbue.Log.Errorln("GetHandoverNotify failed:", err)
-			return
+			return fmt.Errorf("GetHandoverNotify failed: %w", err)
 		}
 	}
 
 	err = gnbue.Gnb.CpTransport.SendToPeer(gnbue.Amf, ngapPdu, msg.Id)
 	if err != nil {
-		gnbue.Log.Errorln("SendToPeer failed:", err)
-		return
+		return fmt.Errorf("SendToPeer failed: %w", err)
 	}
 	gnbue.Log.Debugln("sent PDU Session Resource Setup Response Message to AMF")
+	return setupErr
 }
 
 func HandleUeCtxReleaseCommand(gnbue *gnbctx.GnbCpUe,
@@ -446,9 +497,14 @@ func HandleUeCtxReleaseCommand(gnbue *gnbctx.GnbCpUe,
 		}
 	}
 
+	if ueNgapIds == nil || cause == nil {
+		gnbue.Log.Errorln("UEContextReleaseCommand is missing UENGAPIDs or Cause")
+		return
+	}
+
 	_, causeNum := test.PrintAndGetCause(cause)
 
-	if ueNgapIds.Present == ngapType.UENGAPIDsPresentUENGAPIDPair {
+	if ueNgapIds.Present == ngapType.UENGAPIDsPresentUENGAPIDPair && ueNgapIds.UENGAPIDPair != nil {
 		amfUeNgapId = ueNgapIds.UENGAPIDPair.AMFUENGAPID
 		if gnbue.AmfUeNgapId != amfUeNgapId.Value {
 			gnbue.Log.Errorln("AmfUeNgapId mismatch")
@@ -479,8 +535,7 @@ func HandleUeCtxReleaseCommand(gnbue *gnbctx.GnbCpUe,
 	req.Event = common.CONNECTION_RELEASE_REQUEST_EVENT
 	if causeNum == ngapType.CauseNasPresentDeregister {
 		req.TriggeringEvent = common.DEREG_REQUEST_UE_ORIG_EVENT
-	} else if cause != nil &&
-		cause.Present == ngapType.CausePresentRadioNetwork &&
+	} else if cause.Present == ngapType.CausePresentRadioNetwork &&
 		cause.RadioNetwork != nil &&
 		cause.RadioNetwork.Value == ngapType.CauseRadioNetworkPresentSuccessfulHandover {
 		// Released because of successful N2 handover: SimUe must not tear down
@@ -490,7 +545,7 @@ func HandleUeCtxReleaseCommand(gnbue *gnbctx.GnbCpUe,
 		req.TriggeringEvent = common.TRIGGER_AN_RELEASE_EVENT
 	}
 
-	gnbue.WriteUeChan <- req
+	sendToSimUe(gnbue, req)
 }
 
 func HandleRanConnectionRelease(gnbue *gnbctx.GnbCpUe,
@@ -531,112 +586,19 @@ func ProcessPduSessResourceSetupList(gnbue *gnbctx.GnbCpUe,
 	var nasPdus common.NasPduList
 
 	for _, item := range lst {
-		resourceSetupRequestTransfer := ngapType.PDUSessionResourceSetupRequestTransfer{}
-		err := aper.UnmarshalWithParams(item.PDUSessionResourceSetupRequestTransfer,
-			&resourceSetupRequestTransfer, "valueExt")
+		dbParam, err := setupPduSession(gnbue, item)
 		if err != nil {
-			gnbue.Log.Errorln("UnmarshalWithParams returned:", err)
-			return
+			// a session that cannot be set up is reported as failed (TS 38.413 clause 8.2.1.2)
+			// without affecting the others, and its NAS PDU is not passed to the UE
+			gnbue.Log.Errorf("failed to set up PDU session %d: %v", item.PDUSessionID.Value, err)
+			dbParamSet = append(dbParamSet, &common.DataBearerParams{
+				PduSess: &ngapTestpacket.PduSession{PduSessId: item.PDUSessionID.Value},
+			})
+			continue
 		}
-
-		var gtpTunnel *ngapType.GTPTunnel
-		var pduSessType *ngapType.PDUSessionType
-		var qosFlowSetupReqList *ngapType.QosFlowSetupRequestList
-		for _, ie := range resourceSetupRequestTransfer.ProtocolIEs.List {
-			switch ie.Id.Value {
-			case ngapType.ProtocolIEIDULNGUUPTNLInformation:
-				gtpTunnel = ie.Value.ULNGUUPTNLInformation.GTPTunnel
-				if gtpTunnel == nil {
-					gnbue.Log.Errorln("GTPTunnel is nil")
-					return
-				}
-			case ngapType.ProtocolIEIDPDUSessionType:
-				pduSessType = ie.Value.PDUSessionType
-				if pduSessType == nil {
-					gnbue.Log.Errorln("PDUSessionType is nil")
-					return
-				}
-			case ngapType.ProtocolIEIDQosFlowSetupRequestList:
-				qosFlowSetupReqList = ie.Value.QosFlowSetupRequestList
-				if qosFlowSetupReqList == nil || len(qosFlowSetupReqList.List) == 0 {
-					gnbue.Log.Errorln("QosFlowSetupRequestList is empty")
-					return
-				}
-			}
-		}
-
-		ulteid := binary.BigEndian.Uint32(gtpTunnel.GTPTEID.Value)
-		dlteid, err := gnbue.Gnb.DlTeidGenerator.Allocate()
-		if err != nil {
-			gnbue.Log.Errorln("ID Generator Allocate() returned:", err)
-			return
-		}
-		upfIp, _ := ngapconv.IPAddressToString(gtpTunnel.TransportLayerAddress)
-
-		gnbupue := gnbctx.NewGnbUpUe(uint32(dlteid), ulteid, gnbue.Gnb)
-		snssai, err := ngapconv.SNssaiToModels(item.SNSSAI)
-		if err != nil {
-			gnbue.Gnb.DlTeidGenerator.FreeID(dlteid)
-			gnbue.Log.Errorln("SNssaiToModels returned:", err)
-			return
-		}
-		gnbupue.Snssai = snssai
-		gnbupue.PduSessId = item.PDUSessionID.Value
-		gnbupue.PduSessType = test.PDUSessionTypeToModels(*pduSessType)
-		pduSess := &ngapTestpacket.PduSession{}
-		pduSess.PduSessId = gnbupue.PduSessId
-		pduSess.Teid = gnbupue.DlTeid
-
-		gnbue.Log.Infoln("PDU Session ID:", gnbupue.PduSessId)
-		gnbue.Log.Infoln("S-NSSAI - SST: ", gnbupue.Snssai.GetSst())
-		gnbue.Log.Infoln("S-NSSAI - SD: ", gnbupue.Snssai.GetSd())
-		gnbue.Log.Infoln("UL GTP-TEID: ", ulteid)
-		gnbue.Log.Infoln("DL GTP-TEID: ", dlteid)
-		gnbue.Log.Infoln("UPF Endpoint IP: ", upfIp)
-		gnbue.Log.Infoln("PDU Session Type: ", gnbupue.PduSessType)
-
-		var qosFlowId int64
-		var qosChar ngapType.QosCharacteristics
-		var arp ngapType.AllocationAndRetentionPriority
-		var nonDynamic5QI *ngapType.NonDynamic5QIDescriptor
-		for _, qosFlowSetupReqItem := range qosFlowSetupReqList.List {
-			qosFlowId = qosFlowSetupReqItem.QosFlowIdentifier.Value
-			qosChar = qosFlowSetupReqItem.QosFlowLevelQosParameters.QosCharacteristics
-			arp = qosFlowSetupReqItem.QosFlowLevelQosParameters.AllocationAndRetentionPriority
-
-			gnbue.Log.Infoln("QoS Flow Id:", qosFlowId)
-			if qosChar.Present == ngapType.QosCharacteristicsPresentNonDynamic5QI {
-				nonDynamic5QI = qosChar.NonDynamic5QI
-				if nonDynamic5QI == nil {
-					gnbue.Log.Errorln("NonDynamic5QI is nil")
-					return
-				}
-				gnbue.Log.Infoln("Non Dynamic 5QI:", nonDynamic5QI.FiveQI.Value)
-			}
-			gnbue.Log.Infoln("ARP Priority Level:", arp.PriorityLevelARP.Value)
-			gnbue.Log.Infoln("Pre-emption Capability:", arp.PreEmptionCapability.Value)
-			gnbue.Log.Infoln("Pre-emption Vulnerability:", arp.PreEmptionVulnerability.Value)
-
-			pduSess.SuccessQfiList = append(pduSess.SuccessQfiList, qosFlowId)
-			gnbupue.AddQosFlow(qosFlowId, &qosFlowSetupReqItem)
-		}
-
-		pduSess.Success = true
 		if item.NASPDU != nil {
 			nasPdus = append(nasPdus, item.NASPDU.Value)
 		}
-
-		gnbupf, created := gnbue.Gnb.GnbPeers.GetOrAddGnbUpf(upfIp)
-		if created {
-			go gnbupfworker.Init(gnbupf)
-		}
-		gnbupue.Upf = gnbupf
-		gnbue.AddGnbUpUe(gnbupue.PduSessId, gnbupue)
-
-		// pduSessions = append(pduSessions, pduSess)
-		dbParam := &common.DataBearerParams{}
-		dbParam.CommChan = gnbupue.ReadUlChan
-		dbParam.PduSess = pduSess
 		dbParamSet = append(dbParamSet, dbParam)
 	}
 
@@ -649,15 +611,18 @@ func ProcessPduSessResourceSetupList(gnbue *gnbctx.GnbCpUe,
 	 * before the pdu sessions are established on the UE side
 	 */
 	time.Sleep(500 * time.Millisecond)
-	uemsg := common.UuMessage{}
-	uemsg.Event = common.DATA_BEARER_SETUP_REQUEST_EVENT
-	uemsg.DBParams = dbParamSet
-	uemsg.TriggeringEvent = event
-	gnbue.WriteUeChan <- &uemsg
+	uemsg := common.UuMessage{
+		DefaultMessage:  common.DefaultMessage{Event: common.DATA_BEARER_SETUP_REQUEST_EVENT},
+		DBParams:        dbParamSet,
+		TriggeringEvent: event,
+	}
+	sendToSimUe(gnbue, &uemsg)
 }
 
 func HandleQuitEvent(gnbue *gnbctx.GnbCpUe, intfcMsg common.InterfaceMessage) {
 	terminateUpUeContexts(gnbue)
+	// unregister before the ID can be handed out again, so AMF messages for it find nobody
+	gnbue.Gnb.GnbUes.RemoveGnbCpUe(gnbue.GnbUeNgapId)
 	gnbue.Gnb.RanUeNGAPIDGenerator.FreeID(gnbue.GnbUeNgapId)
 	gnbue.WaitGrp.Wait()
 	gnbue.Log.Infoln("gNB Control-Plane UE context terminated")
@@ -679,7 +644,16 @@ func HandleTriggerHandover(gnbue *gnbctx.GnbCpUe, intfcMsg common.InterfaceMessa
 		return
 	}
 
-	sendMsg, err := ngap.GetHandoverRequired(gnbue, targetGnb)
+	// The pre-registered target of this UE shares its SimUe channel. Its identity goes into the
+	// container that the AMF forwards, so the target gNB can match the HandoverRequest to it.
+	var container []byte
+	if targetGnb.GnbUes != nil {
+		if c := targetGnb.GnbUes.GetGnbCpUeByUeChan(gnbue.WriteUeChan); c != nil && c != gnbue {
+			container = gnbctx.HandoverTargetToken(c.GnbUeNgapId, c.HandoverNonce)
+		}
+	}
+
+	sendMsg, err := ngap.GetHandoverRequired(gnbue, targetGnb, container)
 	if err != nil {
 		gnbue.Log.Errorln("GetHandoverRequired failed:", err)
 		return
@@ -809,7 +783,7 @@ func HandleHandoverCommand(gnbue *gnbctx.GnbCpUe, intfcMsg common.InterfaceMessa
 	uemsg := &common.UuMessage{}
 	uemsg.Event = common.HO_COMMAND_EVENT
 	uemsg.Id = msg.Id
-	gnbue.WriteUeChan <- uemsg
+	sendToSimUe(gnbue, uemsg)
 }
 
 // HandleHandoverNotify is called on the TARGET gNB to trigger the data bearer
@@ -840,11 +814,12 @@ func HandleHandoverNotify(gnbue *gnbctx.GnbCpUe, intfcMsg common.InterfaceMessag
 	// session setup response in HandleDataBearerSetupResponse.
 	// TODO: replace sleep with proper synchronization once the ICS race (line 651) is resolved.
 	time.Sleep(500 * time.Millisecond)
-	uemsg := common.UuMessage{}
-	uemsg.Event = common.DATA_BEARER_SETUP_REQUEST_EVENT
-	uemsg.DBParams = dbParamSet
-	uemsg.TriggeringEvent = common.HO_NOTIFY_EVENT
-	gnbue.WriteUeChan <- &uemsg
+	uemsg := common.UuMessage{
+		DefaultMessage:  common.DefaultMessage{Event: common.DATA_BEARER_SETUP_REQUEST_EVENT},
+		DBParams:        dbParamSet,
+		TriggeringEvent: common.HO_NOTIFY_EVENT,
+	}
+	sendToSimUe(gnbue, &uemsg)
 }
 
 func terminateUpUeContexts(gnbue *gnbctx.GnbCpUe) {
@@ -856,9 +831,144 @@ func terminateUpUeContexts(gnbue *gnbctx.GnbCpUe) {
 	gnbue.GnbUpUes = sync.Map{}
 }
 
+// releaseUnstartedUpUe frees a user plane context whose worker was never started: its downlink
+// tunnel ID is otherwise only freed by the worker's quit, which nothing would run.
+func releaseUnstartedUpUe(upCtx *gnbctx.GnbUpUe) {
+	if upCtx.WorkerStarted.Load() {
+		return
+	}
+	if upCtx.Gnb != nil && upCtx.Gnb.DlTeidGenerator != nil {
+		upCtx.Gnb.DlTeidGenerator.FreeID(int64(upCtx.DlTeid))
+	}
+	if upCtx.Upf != nil {
+		upCtx.Upf.GnbUpUes.RemoveGnbUpUe(upCtx.DlTeid, true)
+	}
+}
+
 func terminateUpUeContext(upCtx *gnbctx.GnbUpUe) {
+	if !upCtx.WorkerStarted.Load() {
+		releaseUnstartedUpUe(upCtx)
+		return
+	}
 	msg := &common.DefaultMessage{}
 	msg.Event = common.QUIT_EVENT
+	upCtx.RequestQuit() // frees a worker that is blocked sending to the UE, so it reads the command
 	upCtx.ReadCmdChan <- msg
 	upCtx.Upf.GnbUpUes.RemoveGnbUpUe(upCtx.DlTeid, true)
+}
+
+// setupPduSession creates the user plane context of one item of a PDU Session Resource Setup
+// Request or Initial Context Setup Request. On error nothing is left allocated, so the caller can
+// report the session as failed and carry on with the others.
+func setupPduSession(gnbue *gnbctx.GnbCpUe, item pduSessResourceSetupItem) (dbParam *common.DataBearerParams, err error) {
+	resourceSetupRequestTransfer := ngapType.PDUSessionResourceSetupRequestTransfer{}
+	err = aper.UnmarshalWithParams(item.PDUSessionResourceSetupRequestTransfer,
+		&resourceSetupRequestTransfer, "valueExt")
+	if err != nil {
+		return nil, fmt.Errorf("UnmarshalWithParams returned: %w", err)
+	}
+
+	var gtpTunnel *ngapType.GTPTunnel
+	var pduSessType *ngapType.PDUSessionType
+	var qosFlowSetupReqList *ngapType.QosFlowSetupRequestList
+	for _, ie := range resourceSetupRequestTransfer.ProtocolIEs.List {
+		switch ie.Id.Value {
+		case ngapType.ProtocolIEIDULNGUUPTNLInformation:
+			gtpTunnel = ie.Value.ULNGUUPTNLInformation.GTPTunnel
+			if gtpTunnel == nil {
+				return nil, errors.New("GTPTunnel is nil")
+			}
+		case ngapType.ProtocolIEIDPDUSessionType:
+			pduSessType = ie.Value.PDUSessionType
+			if pduSessType == nil {
+				return nil, errors.New("PDUSessionType is nil")
+			}
+		case ngapType.ProtocolIEIDQosFlowSetupRequestList:
+			qosFlowSetupReqList = ie.Value.QosFlowSetupRequestList
+			if qosFlowSetupReqList == nil || len(qosFlowSetupReqList.List) == 0 {
+				return nil, errors.New("QosFlowSetupRequestList is empty")
+			}
+		}
+	}
+
+	// the decoder does not enforce mandatory IEs
+	if gtpTunnel == nil || pduSessType == nil || qosFlowSetupReqList == nil {
+		return nil, errors.New("PDUSessionResourceSetupRequestTransfer is missing a mandatory IE")
+	}
+	if len(gtpTunnel.GTPTEID.Value) != 4 {
+		return nil, fmt.Errorf("unexpected GTPTEID length %d", len(gtpTunnel.GTPTEID.Value))
+	}
+	upfIp, _ := ngapconv.IPAddressToString(gtpTunnel.TransportLayerAddress)
+	if upfIp == "" {
+		return nil, errors.New("failed to resolve UPF IP address")
+	}
+	ulteid := binary.BigEndian.Uint32(gtpTunnel.GTPTEID.Value)
+	dlteid, err := gnbue.Gnb.DlTeidGenerator.Allocate()
+	if err != nil {
+		return nil, fmt.Errorf("ID Generator Allocate() returned: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			gnbue.Gnb.DlTeidGenerator.FreeID(dlteid)
+		}
+	}()
+
+	gnbupue := gnbctx.NewGnbUpUe(uint32(dlteid), ulteid, gnbue.Gnb)
+	snssai, err := ngapconv.SNssaiToModels(item.SNSSAI)
+	if err != nil {
+		return nil, fmt.Errorf("SNssaiToModels returned: %w", err)
+	}
+	gnbupue.Snssai = snssai
+	gnbupue.PduSessId = item.PDUSessionID.Value
+	gnbupue.PduSessType = test.PDUSessionTypeToModels(*pduSessType)
+	pduSess := &ngapTestpacket.PduSession{}
+	pduSess.PduSessId = gnbupue.PduSessId
+	pduSess.Teid = gnbupue.DlTeid
+
+	gnbue.Log.Infoln("PDU Session ID:", gnbupue.PduSessId)
+	gnbue.Log.Infoln("S-NSSAI - SST: ", gnbupue.Snssai.GetSst())
+	gnbue.Log.Infoln("S-NSSAI - SD: ", gnbupue.Snssai.GetSd())
+	gnbue.Log.Infoln("UL GTP-TEID: ", ulteid)
+	gnbue.Log.Infoln("DL GTP-TEID: ", dlteid)
+	gnbue.Log.Infoln("UPF Endpoint IP: ", upfIp)
+	gnbue.Log.Infoln("PDU Session Type: ", gnbupue.PduSessType)
+
+	var qosFlowId int64
+	var qosChar ngapType.QosCharacteristics
+	var arp ngapType.AllocationAndRetentionPriority
+	var nonDynamic5QI *ngapType.NonDynamic5QIDescriptor
+	for _, qosFlowSetupReqItem := range qosFlowSetupReqList.List {
+		qosFlowId = qosFlowSetupReqItem.QosFlowIdentifier.Value
+		qosChar = qosFlowSetupReqItem.QosFlowLevelQosParameters.QosCharacteristics
+		arp = qosFlowSetupReqItem.QosFlowLevelQosParameters.AllocationAndRetentionPriority
+
+		gnbue.Log.Infoln("QoS Flow Id:", qosFlowId)
+		if qosChar.Present == ngapType.QosCharacteristicsPresentNonDynamic5QI {
+			nonDynamic5QI = qosChar.NonDynamic5QI
+			if nonDynamic5QI == nil {
+				return nil, errors.New("NonDynamic5QI is nil")
+			}
+			gnbue.Log.Infoln("Non Dynamic 5QI:", nonDynamic5QI.FiveQI.Value)
+		}
+		gnbue.Log.Infoln("ARP Priority Level:", arp.PriorityLevelARP.Value)
+		gnbue.Log.Infoln("Pre-emption Capability:", arp.PreEmptionCapability.Value)
+		gnbue.Log.Infoln("Pre-emption Vulnerability:", arp.PreEmptionVulnerability.Value)
+
+		pduSess.SuccessQfiList = append(pduSess.SuccessQfiList, qosFlowId)
+		gnbupue.AddQosFlow(qosFlowId, &qosFlowSetupReqItem)
+	}
+
+	pduSess.Success = true
+
+	gnbupf, created := gnbue.Gnb.GnbPeers.GetOrAddGnbUpf(upfIp)
+	if created {
+		go gnbupfworker.Init(gnbupf)
+	}
+	gnbupue.Upf = gnbupf
+	gnbue.AddGnbUpUe(gnbupue.PduSessId, gnbupue)
+
+	dbParam = &common.DataBearerParams{}
+	dbParam.CommChan = gnbupue.ReadUlChan
+	dbParam.PduSess = pduSess
+	return dbParam, nil
 }

@@ -194,7 +194,7 @@ func updateUserLocationInformation(gnb *gnbctx.GNodeB, uli *ngapType.UserLocatio
 
 // GetHandoverRequired builds and encodes a HandoverRequired NGAP message for the source gNB.
 // targetGnb is the target gNodeB context; pduSessionIds are the active PDU sessions to hand over.
-func GetHandoverRequired(gnbue *gnbctx.GnbCpUe, targetGnb *gnbctx.GNodeB) ([]byte, error) {
+func GetHandoverRequired(gnbue *gnbctx.GnbCpUe, targetGnb *gnbctx.GNodeB, sourceToTargetContainer []byte) ([]byte, error) {
 	targetRanId := ngapconv.RanIDToNgap(targetGnb.RanId)
 
 	if len(targetGnb.SupportedTaList) == 0 {
@@ -219,7 +219,7 @@ func GetHandoverRequired(gnbue *gnbctx.GnbCpUe, targetGnb *gnbctx.GNodeB) ([]byt
 
 	message := ngapTestpacket.BuildHandoverRequired(
 		gnbue.AmfUeNgapId, gnbue.GnbUeNgapId,
-		targetRanId, targetTai, pduSessionIds,
+		targetRanId, targetTai, pduSessionIds, sourceToTargetContainer,
 	)
 	return ngap.Encoder(message)
 }

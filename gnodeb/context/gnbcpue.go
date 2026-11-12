@@ -7,6 +7,7 @@ package context
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/logger"
@@ -14,32 +15,68 @@ import (
 )
 
 type GnbCpUe struct {
-	Supi string
-	Amf  *GnbAmf
-	Gnb  *GNodeB
-	Log  *zap.SugaredLogger
-
-	// GnbCpUe writes messages to UE on this channel
+	quit        chan struct{}
+	Gnb         *GNodeB
+	Log         *zap.SugaredLogger
 	WriteUeChan chan common.InterfaceMessage
-
-	// GnbCpUe reads messages from all other workers and UE on this channel
-	ReadChan chan common.InterfaceMessage
-
-	// TODO: Sync map is not needed as it is handled single threaded
-	GnbUpUes sync.Map
-
-	WaitGrp sync.WaitGroup
-
+	ReadChan    chan common.InterfaceMessage
+	Done        chan struct{}
+	Amf         *GnbAmf
+	GnbUpUes    sync.Map
+	Supi        string
+	WaitGrp     sync.WaitGroup
 	GnbUeNgapId int64
 	AmfUeNgapId int64
+	quitMu      sync.Mutex
+	quitClosed  bool
+
+	// HandoverNonce tells apart the registrations of a pre-registered handover target that happen
+	// to get the same RAN UE NGAP ID one after the other. It is part of the token that names the
+	// target in a HandoverRequest, and 0 for a context that is not a handover target.
+	HandoverNonce uint64
+
+	// Generation is unique among all the contexts this process ever created. The RAN UE NGAP ID is
+	// handed out again once a context quits, so it cannot tell an old context from a new one; this
+	// can, which is what a message that must be matched to the context it came from needs.
+	Generation uint64
+}
+
+// cpUeGeneration numbers the contexts, see GnbCpUe.Generation.
+var cpUeGeneration atomic.Uint64
+
+// QuitRequested returns a channel that is closed once RequestQuit has been called.
+func (ctx *GnbCpUe) QuitRequested() <-chan struct{} {
+	ctx.quitMu.Lock()
+	defer ctx.quitMu.Unlock()
+	if ctx.quit == nil {
+		ctx.quit = make(chan struct{})
+	}
+	return ctx.quit
+}
+
+// RequestQuit asks the event loop of this context to tear it down once the events already queued
+// have been handled. Unlike a QUIT_EVENT on ReadChan it cannot be dropped when the queue is full.
+// It is idempotent.
+func (ctx *GnbCpUe) RequestQuit() {
+	ctx.quitMu.Lock()
+	defer ctx.quitMu.Unlock()
+	if ctx.quit == nil {
+		ctx.quit = make(chan struct{})
+	}
+	if !ctx.quitClosed {
+		ctx.quitClosed = true
+		close(ctx.quit)
+	}
 }
 
 func NewGnbCpUe(ngapId int64, gnb *GNodeB, amf *GnbAmf) *GnbCpUe {
 	gnbue := GnbCpUe{}
 	gnbue.GnbUeNgapId = ngapId
+	gnbue.Generation = cpUeGeneration.Add(1)
 	gnbue.Amf = amf
 	gnbue.Gnb = gnb
 	gnbue.ReadChan = make(chan common.InterfaceMessage, 5)
+	gnbue.Done = make(chan struct{})
 	gnbue.Log = logger.GNodeBLog.With("subcategory", "GnbCpUe", logger.FieldGnbUeNgapId, ngapId)
 	gnbue.Log.Debugln("context created")
 	return &gnbue
