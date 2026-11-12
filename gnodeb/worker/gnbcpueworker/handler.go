@@ -180,7 +180,14 @@ func HandleInitialContextSetupRequest(gnbue *gnbctx.GnbCpUe,
 		if nasPdu != nil && nasPdu.Value != nil {
 			carried = append(carried, nasPdu.Value)
 		}
-		SendToUe(gnbue, common.BEARER_SETUP_PENDING_EVENT, carried, msg.Id)
+		pendingMsg := &common.UuMessage{
+			DefaultMessage: common.DefaultMessage{Event: common.BEARER_SETUP_PENDING_EVENT},
+			NasPdus:        carried,
+			Id:             msg.Id,
+			RanUeNgapId:    gnbue.GnbUeNgapId,
+		}
+		gnbue.Log.Debugln("sending event", pendingMsg.Event, "to SimUe. Id:", msg.Id)
+		sendToSimUe(gnbue, pendingMsg)
 	}
 
 	// NAS-PDU is optional in the Initial Context Setup Request (TS 38.413 clause 9.2.2.1)
@@ -384,6 +391,7 @@ func HandleDataBearerSetupResponse(gnbue *gnbctx.GnbCpUe,
 		DefaultMessage:  common.DefaultMessage{Event: common.DATA_BEARER_SETUP_RESULT_EVENT, Error: err},
 		Id:              msg.Id,
 		TriggeringEvent: msg.TriggeringEvent,
+		RanUeNgapId:     gnbue.GnbUeNgapId,
 	}
 	sendToSimUe(gnbue, result)
 }

@@ -800,3 +800,59 @@ func TestStopRetransmissionJoinsWorker(t *testing.T) {
 		t.Errorf("%d requests were enqueued around the stop", len(gnb))
 	}
 }
+
+// The restoration that follows an Accept-completed service request can be announced after the next
+// procedure has started. It still belongs to the old request: its bearer result must not pass the
+// procedure that is running, and a restoration of another context must not be taken for it.
+func TestLateBearerNoticeAfterNextProcedureStartedDoesNotPassIt(t *testing.T) {
+	results := make(chan *common.ProfileMessage, 4)
+	ue := &simuectx.SimUe{
+		Supi:             testSupi,
+		Procedure:        common.UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE,
+		WriteProfileChan: results,
+		WriteRealUeChan:  make(chan common.InterfaceMessage, 2),
+		Log:              zap.NewNop().Sugar(),
+		ProfileCtx:       &profctx.Profile{RetransMsg: false},
+	}
+	// the context of this request is the last one recorded, and the accept completes the request
+	ctx := gnbctx.NewGnbCpUe(42, &gnbctx.GNodeB{}, nil)
+	ue.AddGnbContext(ctx)
+	accept := &common.UeMessage{}
+	accept.Event = common.SERVICE_ACCEPT_EVENT
+	if err := HandleServiceAcceptEvent(ue, accept); err != nil {
+		t.Fatalf("accept: %v", err)
+	}
+
+	// the next procedure starts before the gNB's notice arrives
+	start := &common.ProfileMessage{}
+	start.Event = common.PROC_START_EVENT
+	start.Proc = common.REGISTRATION_PROCEDURE
+	if err := HandleProcedureEvent(ue, start); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+
+	pending := &common.UuMessage{RanUeNgapId: 42}
+	pending.Event = common.BEARER_SETUP_PENDING_EVENT
+	if err := HandleBearerSetupPendingEvent(ue, pending); err != nil {
+		t.Fatalf("pending: %v", err)
+	}
+	result := &common.UuMessage{RanUeNgapId: 42}
+	result.Event = common.DATA_BEARER_SETUP_RESULT_EVENT
+	if err := HandleDataBearerSetupResultEvent(ue, result); err != nil {
+		t.Fatalf("result: %v", err)
+	}
+	if len(results) != 1 {
+		t.Errorf("got %d results, want only the one of the service request", len(results))
+	}
+
+	// the same notice from a context that is not that request's is not swallowed
+	ue.PassedByAccept, ue.PassedByAcceptId = true, 42
+	other := &common.UuMessage{RanUeNgapId: 43}
+	other.Event = common.BEARER_SETUP_PENDING_EVENT
+	if err := HandleBearerSetupPendingEvent(ue, other); err != nil {
+		t.Fatalf("other pending: %v", err)
+	}
+	if ue.IgnoreBearerResult {
+		t.Error("a notice of another gNB context was taken for the old request's")
+	}
+}

@@ -51,6 +51,11 @@ type UuMessage struct {
 	DBParams        []*DataBearerParams
 	Id              uint64
 	TriggeringEvent EventType
+
+	// RanUeNgapId names the gNB control-plane context that sent the message. The SimUe uses it to
+	// tell which request a bearer notice or result belongs to, whatever procedure is running when
+	// it arrives.
+	RanUeNgapId int64
 }
 
 // ProfileMessage is used to carry information between the Profile and SimUe

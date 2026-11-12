@@ -32,8 +32,8 @@ func HandleProcedureEvent(ue *simuectx.SimUe,
 	if ue.Procedure == common.UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE {
 		ue.ServiceCompleted = false
 		ue.IgnoreBearerResult = false
+		ue.PassedByAccept = false
 	}
-	ue.PassedByAccept = false
 	ue.Log.Infoln("start new procedure:", ue.Procedure)
 	HandleProcedure(ue)
 	return nil
@@ -392,9 +392,11 @@ func HandleBearerSetupPendingEvent(ue *simuectx.SimUe,
 ) (err error) {
 	// The Service Accept came first and completed the procedure, which is now past undoing. What
 	// follows from this restoration is not part of any procedure that is waiting for it.
-	if ue.PassedByAccept {
+	// Whichever procedure is running now: the notice is matched to the request by its gNB context.
+	if uemsg, ok := msg.(*common.UuMessage); ok && ue.PassedByAccept && uemsg.RanUeNgapId == ue.PassedByAcceptId {
 		ue.PassedByAccept = false
 		ue.IgnoreBearerResult = true
+		ue.IgnoreResultId = uemsg.RanUeNgapId
 		ue.Log.Warnln("bearers are being restored for a service request that is already complete")
 		return nil
 	}
@@ -489,7 +491,7 @@ func HandleDataBearerSetupResultEvent(ue *simuectx.SimUe,
 		return fmt.Errorf("gNB failed to set up the data bearers: %w", gnbErr)
 	}
 
-	if ue.IgnoreBearerResult {
+	if uemsg, ok := msg.(*common.UuMessage); ok && ue.IgnoreBearerResult && uemsg.RanUeNgapId == ue.IgnoreResultId {
 		ue.IgnoreBearerResult = false
 		ue.Log.Infoln("bearers restored for a service request that was already complete")
 		return nil
@@ -652,6 +654,11 @@ func HandleServiceAcceptEvent(ue *simuectx.SimUe,
 	}
 	// the gNB has not said anything about bearers, so the Accept completes it on its own
 	ue.PassedByAccept = true
+	ue.PassedByAcceptId = 0
+	if ctxs := ue.GnbContexts(); len(ctxs) > 0 {
+		// the context created for this service request is the last one that was recorded
+		ue.PassedByAcceptId = ctxs[len(ctxs)-1].GnbUeNgapId
+	}
 	SendProcedureResult(ue)
 
 	return nil
