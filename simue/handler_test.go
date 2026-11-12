@@ -739,3 +739,64 @@ func TestRegistrationWithBearersCompletesOnceBothAreDone(t *testing.T) {
 		}
 	}
 }
+
+// A Service Accept can arrive before the gNB has said that bearers are being restored. It completes
+// the procedure then, and the restoration that is announced afterwards must not be reported as a
+// second pass: the profile would take it for the result of the next procedure.
+func TestServiceAcceptBeforeBearerSetupPendingPassesOnce(t *testing.T) {
+	results := make(chan *common.ProfileMessage, 4)
+	ue := &simuectx.SimUe{
+		Supi:             testSupi,
+		Procedure:        common.UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE,
+		WriteProfileChan: results,
+		Log:              zap.NewNop().Sugar(),
+		ProfileCtx:       &profctx.Profile{RetransMsg: false},
+	}
+	accept := &common.UeMessage{}
+	accept.Event = common.SERVICE_ACCEPT_EVENT
+	if err := HandleServiceAcceptEvent(ue, accept); err != nil {
+		t.Fatalf("accept: %v", err)
+	}
+	pending := &common.UuMessage{}
+	pending.Event = common.BEARER_SETUP_PENDING_EVENT
+	if err := HandleBearerSetupPendingEvent(ue, pending); err != nil {
+		t.Fatalf("pending: %v", err)
+	}
+	result := &common.UuMessage{}
+	result.Event = common.DATA_BEARER_SETUP_RESULT_EVENT
+	if err := HandleDataBearerSetupResultEvent(ue, result); err != nil {
+		t.Fatalf("result: %v", err)
+	}
+	if len(results) != 1 {
+		t.Errorf("got %d results for accept, pending and bearer result, want exactly 1", len(results))
+	}
+	if ue.BearerRestorePending || ue.IgnoreBearerResult {
+		t.Error("state was left behind")
+	}
+}
+
+// Stopping the retransmission waits for the worker, so nothing it enqueues can follow the stop.
+func TestStopRetransmissionJoinsWorker(t *testing.T) {
+	gnb := make(chan common.InterfaceMessage, 8)
+	ue := &simuectx.SimUe{Supi: testSupi, Log: zap.NewNop().Sugar(), WriteGnbUeChan: gnb}
+	msg := &common.UeMessage{}
+	msg.Event = common.SERVICE_REQUEST_EVENT
+
+	startRetransmission(ue, msg, 2)
+	stopRetransmission(ue)
+	// the worker has returned, so waiting for it again is immediate, and nothing more can arrive
+	done := make(chan struct{})
+	go func() {
+		ue.RetransmitWg.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("the retransmission worker was still running after it was stopped")
+	}
+	time.Sleep(50 * time.Millisecond)
+	if len(gnb) != 0 {
+		t.Errorf("%d requests were enqueued around the stop", len(gnb))
+	}
+}

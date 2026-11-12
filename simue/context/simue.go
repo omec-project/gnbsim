@@ -50,6 +50,16 @@ type SimUe struct {
 	quitClosed           bool
 	ServiceCompleted     bool
 	Procedure            common.ProcedureType
+	// PassedByAccept is set when a Service Accept completed the service request on its own, before
+	// the gNB had said that bearers are being restored. If that notice comes afterwards the
+	// procedure cannot be undone, so IgnoreBearerResult makes the bearer result that follows it
+	// count for nothing, instead of being reported as a second pass.
+	PassedByAccept     bool
+	IgnoreBearerResult bool
+
+	// RetransmitWg tracks the worker that resends the Service Request, so that stopping it can
+	// wait until it has returned and cannot enqueue a stale request afterwards.
+	RetransmitWg sync.WaitGroup
 }
 
 // AddGnbContext records a gNB control-plane context that was created for this UE. The SimUe keeps

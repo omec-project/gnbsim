@@ -31,7 +31,9 @@ func HandleProcedureEvent(ue *simuectx.SimUe,
 	// A new service request is the exception: an Accept for that one must not be swallowed.
 	if ue.Procedure == common.UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE {
 		ue.ServiceCompleted = false
+		ue.IgnoreBearerResult = false
 	}
+	ue.PassedByAccept = false
 	ue.Log.Infoln("start new procedure:", ue.Procedure)
 	HandleProcedure(ue)
 	return nil
@@ -388,6 +390,14 @@ func HandleDlInfoTransferEvent(ue *simuectx.SimUe,
 func HandleBearerSetupPendingEvent(ue *simuectx.SimUe,
 	msg common.InterfaceMessage,
 ) (err error) {
+	// The Service Accept came first and completed the procedure, which is now past undoing. What
+	// follows from this restoration is not part of any procedure that is waiting for it.
+	if ue.PassedByAccept {
+		ue.PassedByAccept = false
+		ue.IgnoreBearerResult = true
+		ue.Log.Warnln("bearers are being restored for a service request that is already complete")
+		return nil
+	}
 	// Only a service request and a registration have a NAS half that this waits for. Any other
 	// procedure is completed by its own messages, and waiting here would never end.
 	nasHalfExpected := false
@@ -479,6 +489,11 @@ func HandleDataBearerSetupResultEvent(ue *simuectx.SimUe,
 		return fmt.Errorf("gNB failed to set up the data bearers: %w", gnbErr)
 	}
 
+	if ue.IgnoreBearerResult {
+		ue.IgnoreBearerResult = false
+		ue.Log.Infoln("bearers restored for a service request that was already complete")
+		return nil
+	}
 	if ue.BearerRestorePending {
 		// part of a service request: it is done once the service has also been accepted
 		ue.BearersRestored = true
@@ -572,15 +587,19 @@ func startRetransmission(ue *simuectx.SimUe, intfcMsg common.InterfaceMessage, c
 	stopRetransmission(ue)
 	stop := make(chan struct{})
 	ue.RetransmitStop = stop
-	go retransmitMsg(ue, intfcMsg, count, retransmitInterval, stop)
+	ue.RetransmitWg.Go(func() { retransmitMsg(ue, intfcMsg, count, retransmitInterval, stop) })
 }
 
-// stopRetransmission stops the worker that resends the request, if there is one.
+// stopRetransmission stops the worker that resends the request, if there is one, and waits until
+// it has returned. Its send can still win against the closed stop channel when the queue has room,
+// so without the wait a request could be enqueued after the event loop had moved on. The worker's
+// blocking points all give way to stop, so the wait is short.
 func stopRetransmission(ue *simuectx.SimUe) {
 	if ue.RetransmitStop != nil {
 		close(ue.RetransmitStop)
 		ue.RetransmitStop = nil
 	}
+	ue.RetransmitWg.Wait()
 }
 
 func HandleServiceRequestEvent(ue *simuectx.SimUe,
@@ -631,6 +650,8 @@ func HandleServiceAcceptEvent(ue *simuectx.SimUe,
 		completeRestoration(ue)
 		return nil
 	}
+	// the gNB has not said anything about bearers, so the Accept completes it on its own
+	ue.PassedByAccept = true
 	SendProcedureResult(ue)
 
 	return nil
