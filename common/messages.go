@@ -52,10 +52,10 @@ type UuMessage struct {
 	Id              uint64
 	TriggeringEvent EventType
 
-	// RanUeNgapId names the gNB control-plane context that sent the message. The SimUe uses it to
-	// tell which request a bearer notice or result belongs to, whatever procedure is running when
-	// it arrives.
-	RanUeNgapId int64
+	// CtxGeneration identifies the gNB control-plane context that sent the message, for good: unlike
+	// its RAN UE NGAP ID it is never given to another context. The SimUe uses it to tell which
+	// request a bearer notice or result belongs to, whatever procedure is running when it arrives.
+	CtxGeneration uint64
 }
 
 // ProfileMessage is used to carry information between the Profile and SimUe

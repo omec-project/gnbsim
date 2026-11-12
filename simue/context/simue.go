@@ -55,12 +55,12 @@ type SimUe struct {
 	// procedure cannot be undone, so IgnoreBearerResult makes the bearer result that follows it
 	// count for nothing, instead of being reported as a second pass.
 	//
-	// Both name the gNB context of the request (its RAN UE NGAP ID), so that they apply to that
+	// Both name the gNB context of the request (its generation, which is never reused), so that they apply to that
 	// request's notice and result only, and stay in force across the start of other procedures.
 	PassedByAccept     bool
 	IgnoreBearerResult bool
-	PassedByAcceptId   int64
-	IgnoreResultId     int64
+	PassedByAcceptId   uint64
+	IgnoreResultId     uint64
 
 	// RetransmitWg tracks the worker that resends the Service Request, so that stopping it can
 	// wait until it has returned and cannot enqueue a stale request afterwards.

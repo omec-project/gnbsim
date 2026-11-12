@@ -7,6 +7,7 @@ package context
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 
 	"github.com/omec-project/gnbsim/common"
 	"github.com/omec-project/gnbsim/logger"
@@ -33,7 +34,15 @@ type GnbCpUe struct {
 	// to get the same RAN UE NGAP ID one after the other. It is part of the token that names the
 	// target in a HandoverRequest, and 0 for a context that is not a handover target.
 	HandoverNonce uint64
+
+	// Generation is unique among all the contexts this process ever created. The RAN UE NGAP ID is
+	// handed out again once a context quits, so it cannot tell an old context from a new one; this
+	// can, which is what a message that must be matched to the context it came from needs.
+	Generation uint64
 }
+
+// cpUeGeneration numbers the contexts, see GnbCpUe.Generation.
+var cpUeGeneration atomic.Uint64
 
 // QuitRequested returns a channel that is closed once RequestQuit has been called.
 func (ctx *GnbCpUe) QuitRequested() <-chan struct{} {
@@ -63,6 +72,7 @@ func (ctx *GnbCpUe) RequestQuit() {
 func NewGnbCpUe(ngapId int64, gnb *GNodeB, amf *GnbAmf) *GnbCpUe {
 	gnbue := GnbCpUe{}
 	gnbue.GnbUeNgapId = ngapId
+	gnbue.Generation = cpUeGeneration.Add(1)
 	gnbue.Amf = amf
 	gnbue.Gnb = gnb
 	gnbue.ReadChan = make(chan common.InterfaceMessage, 5)

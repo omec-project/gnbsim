@@ -831,12 +831,12 @@ func TestLateBearerNoticeAfterNextProcedureStartedDoesNotPassIt(t *testing.T) {
 		t.Fatalf("start: %v", err)
 	}
 
-	pending := &common.UuMessage{RanUeNgapId: 42}
+	pending := &common.UuMessage{CtxGeneration: ctx.Generation}
 	pending.Event = common.BEARER_SETUP_PENDING_EVENT
 	if err := HandleBearerSetupPendingEvent(ue, pending); err != nil {
 		t.Fatalf("pending: %v", err)
 	}
-	result := &common.UuMessage{RanUeNgapId: 42}
+	result := &common.UuMessage{CtxGeneration: ctx.Generation}
 	result.Event = common.DATA_BEARER_SETUP_RESULT_EVENT
 	if err := HandleDataBearerSetupResultEvent(ue, result); err != nil {
 		t.Fatalf("result: %v", err)
@@ -846,8 +846,11 @@ func TestLateBearerNoticeAfterNextProcedureStartedDoesNotPassIt(t *testing.T) {
 	}
 
 	// the same notice from a context that is not that request's is not swallowed
-	ue.PassedByAccept, ue.PassedByAcceptId = true, 42
-	other := &common.UuMessage{RanUeNgapId: 43}
+	ue.PassedByAccept, ue.PassedByAcceptId = true, ctx.Generation
+	// including one that reuses the RAN UE NGAP ID of the old request's context, which is what a
+	// later registration's context can get
+	reused := gnbctx.NewGnbCpUe(ctx.GnbUeNgapId, &gnbctx.GNodeB{}, nil)
+	other := &common.UuMessage{CtxGeneration: reused.Generation}
 	other.Event = common.BEARER_SETUP_PENDING_EVENT
 	if err := HandleBearerSetupPendingEvent(ue, other); err != nil {
 		t.Fatalf("other pending: %v", err)

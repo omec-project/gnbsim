@@ -184,7 +184,7 @@ func HandleInitialContextSetupRequest(gnbue *gnbctx.GnbCpUe,
 			DefaultMessage: common.DefaultMessage{Event: common.BEARER_SETUP_PENDING_EVENT},
 			NasPdus:        carried,
 			Id:             msg.Id,
-			RanUeNgapId:    gnbue.GnbUeNgapId,
+			CtxGeneration:  gnbue.Generation,
 		}
 		gnbue.Log.Debugln("sending event", pendingMsg.Event, "to SimUe. Id:", msg.Id)
 		sendToSimUe(gnbue, pendingMsg)
@@ -391,7 +391,7 @@ func HandleDataBearerSetupResponse(gnbue *gnbctx.GnbCpUe,
 		DefaultMessage:  common.DefaultMessage{Event: common.DATA_BEARER_SETUP_RESULT_EVENT, Error: err},
 		Id:              msg.Id,
 		TriggeringEvent: msg.TriggeringEvent,
-		RanUeNgapId:     gnbue.GnbUeNgapId,
+		CtxGeneration:   gnbue.Generation,
 	}
 	sendToSimUe(gnbue, result)
 }
