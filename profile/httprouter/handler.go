@@ -7,6 +7,9 @@
 package httprouter
 
 import (
+	"encoding/hex"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -26,7 +29,58 @@ const (
 	maxRequestBodyBytes = 1 << 20
 	// maxAddNewCalls bounds the "number" query parameter of addNewCalls.
 	maxAddNewCalls = 10000
+	// maxUeCount bounds the ueCount of a profile received over REST.
+	maxUeCount = 10000
+	// maxDataPktCount, maxDataPktInterval (seconds) and maxPerUserTimeout (seconds) bound what a
+	// REST profile can ask of the packet generator and of a UE's time.
+	maxDataPktCount    = 100000
+	maxDataPktInterval = 3600
+	maxPerUserTimeout  = 86400
+	// subscriberKeyHexLen is the length of K and OPc (128 bits) in hexadecimal characters.
+	subscriberKeyHexLen = 32
 )
+
+// validateRestProfile rejects profile values that would otherwise terminate the process once the
+// UEs start (nil PLMN, non-hexadecimal K or OPc) or exhaust memory (unbounded ueCount). Profiles
+// from the configuration file are trusted and not checked here.
+func validateRestProfile(prof *profCtx.Profile) error {
+	if prof.UeCount < 1 || prof.UeCount > maxUeCount {
+		return fmt.Errorf("ueCount must be an integer in [1, %d]", maxUeCount)
+	}
+	if prof.DataPktCount > maxDataPktCount || prof.DataPktInt > maxDataPktInterval {
+		return fmt.Errorf("dataPktCount must be at most %d and dataPktInterval at most %d", maxDataPktCount, maxDataPktInterval)
+	}
+	if prof.PerUserTimeout > maxPerUserTimeout {
+		return fmt.Errorf("perUserTimeout must be at most %d", maxPerUserTimeout)
+	}
+	if prof.Plmn == nil {
+		return errors.New("plmnId is required")
+	}
+	if !isDigits(prof.Plmn.Mcc, 3, 3) {
+		return errors.New("plmnId.mcc must be 3 digits")
+	}
+	if !isDigits(prof.Plmn.Mnc, 2, 3) {
+		return errors.New("plmnId.mnc must be 2 or 3 digits")
+	}
+	for name, v := range map[string]string{"key": prof.Key, "opc": prof.Opc} {
+		if b, err := hex.DecodeString(v); err != nil || len(b)*2 != subscriberKeyHexLen {
+			return fmt.Errorf("%s must be %d hexadecimal characters", name, subscriberKeyHexLen)
+		}
+	}
+	return nil
+}
+
+func isDigits(s string, minLen, maxLen int) bool {
+	if len(s) < minLen || len(s) > maxLen {
+		return false
+	}
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
 
 func HTTPStepProfile(c *gin.Context) {
 	logger.HttpLog.Infoln("HTTPStepProfile")
@@ -121,6 +175,12 @@ func HTTPExecuteProfile(c *gin.Context) {
 	requestBody, err := c.GetRawData()
 	if err != nil {
 		logger.HttpLog.Errorf("get Request Body error: %+v", err)
+		var tooLarge *http.MaxBytesError
+		if errors.As(err, &tooLarge) {
+			c.JSON(http.StatusRequestEntityTooLarge,
+				utils.ProblemDetailsMalformedRequestSyntax(fmt.Sprintf("request body exceeds %d bytes", maxRequestBodyBytes)))
+			return
+		}
 		problemDetail := utils.ProblemDetailsSystemFailure(err.Error())
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
@@ -136,13 +196,20 @@ func HTTPExecuteProfile(c *gin.Context) {
 	}
 	// the profile carries the subscriber key and OPc, so it is deliberately not logged
 
+	if err = validateRestProfile(&prof); err != nil {
+		logger.HttpLog.Errorln("invalid profile:", err)
+		c.JSON(http.StatusBadRequest, utils.ProblemDetailsMalformedRequestSyntax("[Profile] "+err.Error()))
+		return
+	}
+
 	err = prof.Init()
 	if err != nil {
 		logger.HttpLog.Errorln("failed to initialize profile:", err)
 		c.JSON(http.StatusBadRequest, utils.ProblemDetailsMalformedRequestSyntax("[Profile] "+err.Error()))
 		return
 	}
-	// create the SimUe contexts; ExecuteProfile has nothing to run without them
+	// create the SimUe contexts; ExecuteProfile has nothing to run without them. This also
+	// publishes the profile, so step and add-calls requests only see it once it is complete.
 	if err = profile.InitProfile(&prof, profCtx.SummaryChan); err != nil {
 		logger.HttpLog.Errorln("failed to create profile UEs:", err)
 		c.JSON(http.StatusBadRequest, utils.ProblemDetailsMalformedRequestSyntax("[Profile] "+err.Error()))

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"time"
 
 	"github.com/omec-project/gnbsim/common"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
@@ -89,6 +90,9 @@ func (upTprt *GnbUpTransport) SendToPeer(peer transportcommon.TransportPeer,
 
 // ReceiveFromPeer continuously waits for an incoming message from the UPF
 // It then routes the message to the GnbUpfWorker
+// readErrorBackoff is how long the receive loop waits after a read error before trying again.
+const readErrorBackoff = 10 * time.Millisecond
+
 func (upTprt *GnbUpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer) {
 	for {
 		recvMsg := make([]byte, MAX_UDP_PKT_LEN)
@@ -100,6 +104,8 @@ func (upTprt *GnbUpTransport) ReceiveFromPeer(peer transportcommon.TransportPeer
 				// the socket is gone, nothing more can be received
 				return
 			}
+			// a persistent error would otherwise spin and flood the log
+			time.Sleep(readErrorBackoff)
 			continue
 		}
 		if srcAddr == nil {

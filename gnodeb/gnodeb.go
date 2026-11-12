@@ -110,11 +110,11 @@ func PerformNgSetup(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf) (bool, error) {
 }
 
 // RequestConnection should be called by UE that is willing to connect to this GNodeB
-func RequestConnection(gnb *gnbctx.GNodeB, uemsg *common.UuMessage) (chan common.InterfaceMessage, error) {
+func RequestConnection(gnb *gnbctx.GNodeB, uemsg *common.UuMessage) (chan common.InterfaceMessage, *gnbctx.GnbCpUe, error) {
 	ranUeNgapID, err := gnb.AllocateRanUeNgapID()
 	if err != nil {
 		gnb.Log.Errorln("AllocateRanUeNgapID returned:", err)
-		return nil, fmt.Errorf("failed to allocate ran ue ngap id")
+		return nil, nil, fmt.Errorf("failed to allocate ran ue ngap id")
 	}
 
 	gnbUe := gnbctx.NewGnbCpUe(ranUeNgapID, gnb, gnb.DefaultAmf)
@@ -131,28 +131,30 @@ func RequestConnection(gnb *gnbctx.GNodeB, uemsg *common.UuMessage) (chan common
 	// be reading.
 	ch := gnbUe.ReadChan
 	ch <- uemsg
-	return ch, nil
+	return ch, gnbUe, nil
 }
 
 // RegisterHandoverTarget pre-registers a GnbCpUe on the target gNB before the AMF sends
 // HandoverRequest. The GnbCpUe is stored by RAN UE NGAP ID (for normal routing after handover)
 // and also enqueued so gnbamfworker can route the next incoming HandoverRequest.
 //
-// Returns the channel on which SimUe can send messages to the new target GnbCpUe.
-func RegisterHandoverTarget(targetGnb *gnbctx.GNodeB, amfUeNgapId int64, simUeReadChan chan common.InterfaceMessage) (chan common.InterfaceMessage, error) {
+// Returns the channel on which SimUe can send messages to the new target GnbCpUe, and the context
+// itself, which the SimUe keeps so that it can be torn down whatever happens to the connection.
+func RegisterHandoverTarget(targetGnb *gnbctx.GNodeB, amfUeNgapId int64, simUeReadChan chan common.InterfaceMessage) (chan common.InterfaceMessage, *gnbctx.GnbCpUe, error) {
 	ranUeNgapID, err := targetGnb.AllocateRanUeNgapID()
 	if err != nil {
-		return nil, fmt.Errorf("failed to allocate target RAN UE NGAP ID: %w", err)
+		return nil, nil, fmt.Errorf("failed to allocate target RAN UE NGAP ID: %w", err)
 	}
 
 	gnbUe := gnbctx.NewGnbCpUe(ranUeNgapID, targetGnb, targetGnb.DefaultAmf)
 	gnbUe.AmfUeNgapId = amfUeNgapId
 	gnbUe.WriteUeChan = simUeReadChan
+	gnbUe.HandoverNonce = targetGnb.GnbUes.NextHandoverNonce()
 
 	targetGnb.GnbUes.AddGnbCpUe(ranUeNgapID, gnbUe)
 	targetGnb.GnbUes.EnqueueHandoverTarget(gnbUe)
 
 	go gnbcpueworker.Init(gnbUe)
 
-	return gnbUe.ReadChan, nil
+	return gnbUe.ReadChan, gnbUe, nil
 }

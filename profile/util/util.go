@@ -13,5 +13,9 @@ func SendToSimUe(simUe *simueCtx.SimUe, event common.EventType, proc common.Proc
 	msg := &common.ProfileMessage{}
 	msg.Event = event
 	msg.Proc = proc
-	simUe.ReadChan <- msg
+	// a SimUe that is quitting reads no more, and nobody is waiting for this any longer
+	select {
+	case simUe.ReadChan <- msg:
+	case <-simUe.QuitRequested():
+	}
 }

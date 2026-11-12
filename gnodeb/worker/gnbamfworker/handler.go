@@ -631,17 +631,40 @@ func HandleHandoverRequest(gnb *gnbctx.GNodeB, amf *gnbctx.GnbAmf,
 	}
 
 	// The OMEC AMF allocates a fresh AMF-UE-NGAP-ID for the target-side RanUe
-	// (see NewRanUe → AllocateAmfUeNgapID in the AMF), so we cannot key the
-	// lookup by the source UE's AMF-UE-NGAP-ID.  A FIFO queue is used instead.
-	gnbue := gnb.GnbUes.DequeueHandoverTarget()
-	if gnbue == nil {
-		amf.Log.Errorln("no pre-registered target GnbCpUe found for HandoverRequest")
-		return
+	// (see NewRanUe → AllocateAmfUeNgapID in the AMF), so we cannot key the lookup by the source
+	// UE's AMF-UE-NGAP-ID. The Source to Target Transparent Container is forwarded unchanged,
+	// though, and the source gNB puts the identity of the target in it. A request without such a
+	// container can only be matched to the pre-registered targets in order.
+	var gnbue *gnbctx.GnbCpUe
+	if targetId, nonce, ok := hoContainerTarget(hoReq); ok {
+		gnbue = gnb.GnbUes.TakePendingHandoverTarget(targetId, nonce)
+		if gnbue == nil {
+			amf.Log.Errorln("the target named by the HandoverRequest is gone, its UE quit")
+			return
+		}
+	} else {
+		gnbue = gnb.GnbUes.DequeueHandoverTarget()
+		if gnbue == nil {
+			amf.Log.Errorln("no pre-registered target GnbCpUe found for HandoverRequest")
+			return
+		}
 	}
 	// Record the AMF-UE-NGAP-ID assigned for the target side.
 	gnbue.AmfUeNgapId = amfUeNgapId.Value
 
 	SendToGnbUe(gnbue, common.HO_REQUEST_EVENT, pdu, id)
+}
+
+// hoContainerTarget returns the pre-registered target that the Source to Target Transparent
+// Container of the HandoverRequest names, if it names one.
+func hoContainerTarget(hoReq *ngapType.HandoverRequest) (int64, uint64, bool) {
+	for _, ie := range hoReq.ProtocolIEs.List {
+		if ie.Id.Value == ngapType.ProtocolIEIDSourceToTargetTransparentContainer &&
+			ie.Value.SourceToTargetTransparentContainer != nil {
+			return gnbctx.ParseHandoverTargetToken(ie.Value.SourceToTargetTransparentContainer.Value)
+		}
+	}
+	return 0, 0, false
 }
 
 // HandleHandoverCommand processes a HandoverCommand received by the source gNB from AMF.

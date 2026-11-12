@@ -81,6 +81,15 @@ const (
 
 	// SimUe commands target gNB to send HandoverNotify to AMF after UE arrives
 	HO_NOTIFY_EVENT
+
+	// gNB tells SimUe how the setup of the data bearers ended, after it has answered the AMF. The
+	// procedure is only complete once this arrives, and it failed if the event carries an error.
+	DATA_BEARER_SETUP_RESULT_EVENT
+
+	// gNB tells SimUe, before anything else of an Initial Context Setup Request, that it carries
+	// PDU session resources. The Service Accept may arrive separately from them, with or without a
+	// NAS-PDU in the request, and the procedure only completes when both are done.
+	BEARER_SETUP_PENDING_EVENT
 )
 
 /* Events betweem UE and AMF (N1)
@@ -264,6 +273,8 @@ var evtStrMap map[EventType]string = map[EventType]string{
 	DL_UE_DATA_TRANSPORT_EVENT:              "DL-UE-DATA-TRANSPORT-EVENT",
 	TRIGGER_HO_EVENT:                        "TRIGGER-HANDOVER-EVENT",
 	HO_NOTIFY_EVENT:                         "HANDOVER-NOTIFY-EVENT",
+	DATA_BEARER_SETUP_RESULT_EVENT:          "DATA-BEARER-SETUP-RESULT-EVENT",
+	BEARER_SETUP_PENDING_EVENT:              "BEARER-SETUP-PENDING-EVENT",
 	PROC_START_EVENT:                        "PROC-START-EVENT",
 	PROC_PASS_EVENT:                         "PROC-PASS-EVENT",
 	PROC_FAIL_EVENT:                         "PROC-FAIL-EVENT",

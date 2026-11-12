@@ -5,7 +5,9 @@
 package gnbupueworker
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/omec-project/gnbsim/common"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
@@ -75,26 +77,65 @@ func HandleDlMessage(gnbue *gnbctx.GnbUpUe, intfcMsg common.InterfaceMessage) (e
 	}
 
 	ueDataMsg.Event = common.DL_UE_DATA_TRANSFER_EVENT
-	gnbue.WriteUeChan <- ueDataMsg
-	gnbue.Log.Infoln("sent DL user data packet to UE")
+	// A UE that has stopped reading must not keep this worker from reaching its QUIT command.
+	select {
+	case gnbue.WriteUeChan <- ueDataMsg:
+		gnbue.Log.Infoln("sent DL user data packet to UE")
+	case <-gnbue.QuitRequested():
+		gnbue.Log.Debugln("dropped a DL user data packet, the context is quitting")
+	}
 
 	return nil
 }
 
+// lastPktWaitTimeout bounds how long a quitting worker spends on the last data packets: handing its
+// own to the UE and waiting for the UE's.
+const lastPktWaitTimeout = 10 * time.Second
+
 func HandleQuitEvent(gnbue *gnbctx.GnbUpUe, intfcMsg common.InterfaceMessage) (err error) {
-	userDataMsg := &common.UserDataMessage{}
-	userDataMsg.Event = common.LAST_DATA_PKT_EVENT
-	gnbue.WriteUeChan <- userDataMsg
-	gnbue.WriteUeChan = nil
+	// The UE may have moved to another gNB (N2 handover) and not been able to hand over its last
+	// packet, and it may not be reading either. Nothing is sent to this worker after that, so
+	// everything here is bounded and the worker terminates either way.
+	ctx, cancel := context.WithTimeout(context.Background(), lastPktWaitTimeout)
+	defer cancel()
+
+	// Uplink packets are read while the marker is handed over: the UE may be blocked sending them
+	// and so unable to read the marker.
+	if gnbue.WriteUeChan != nil {
+		userDataMsg := &common.UserDataMessage{}
+		userDataMsg.Event = common.LAST_DATA_PKT_EVENT
+	send:
+		for {
+			select {
+			case gnbue.WriteUeChan <- userDataMsg:
+				break send
+			case pkt := <-gnbue.ReadUlChan:
+				if pkt.GetEventType() == common.LAST_DATA_PKT_EVENT {
+					gnbue.LastDataPktRecvd = true
+				}
+			case <-ctx.Done():
+				gnbue.Log.Warnln("could not hand the last downlink data packet to the UE")
+				break send
+			}
+		}
+		gnbue.WriteUeChan = nil
+	}
 
 	// Drain all the messages until END MARKER is received.
 	// This ensures that the transmitting go routine is not blocked while
 	// sending data on this channel
 	if !gnbue.LastDataPktRecvd {
-		for pkt := range gnbue.ReadUlChan {
-			if pkt.GetEventType() == common.LAST_DATA_PKT_EVENT {
-				gnbue.Log.Debugln("received last uplink data packet")
-				break
+	drain:
+		for {
+			select {
+			case pkt := <-gnbue.ReadUlChan:
+				if pkt.GetEventType() == common.LAST_DATA_PKT_EVENT {
+					gnbue.Log.Debugln("received last uplink data packet")
+					break drain
+				}
+			case <-ctx.Done():
+				gnbue.Log.Warnln("no last uplink data packet was received, terminating without it")
+				break drain
 			}
 		}
 	}

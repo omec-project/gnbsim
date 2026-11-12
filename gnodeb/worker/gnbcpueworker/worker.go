@@ -16,16 +16,44 @@ func Init(gnbue *gnbctx.GnbCpUe) {
 	}
 }
 
+// nextEvent returns the next event for the context. Queued events come first, so that a response
+// that was already handed over is still processed before the context is torn down; a quit
+// request is returned as a QUIT_EVENT once the queue is empty.
+func nextEvent(gnbue *gnbctx.GnbCpUe) (common.InterfaceMessage, bool) {
+	select {
+	case msg, ok := <-gnbue.ReadChan:
+		return msg, ok
+	default:
+	}
+	select {
+	case msg, ok := <-gnbue.ReadChan:
+		return msg, ok
+	case <-gnbue.QuitRequested():
+		return &common.DefaultMessage{Event: common.QUIT_EVENT}, true
+	}
+}
+
 func HandleEvents(gnbue *gnbctx.GnbCpUe) (err error) {
-	for msg := range gnbue.ReadChan {
+	if gnbue.Done != nil {
+		defer close(gnbue.Done)
+	}
+	for {
+		msg, ok := nextEvent(gnbue)
+		if !ok {
+			return nil
+		}
 		evt := msg.GetEventType()
 		gnbue.Log.Infoln("Handling event:", evt)
 
 		handleEvent(gnbue, msg, evt)
 
+		// the context has been torn down and unregistered, there is nothing left to serve
+		if evt == common.QUIT_EVENT {
+			return nil
+		}
+
 		// TODO: Need to return and handle errors from handlers
 	}
-	return nil
 }
 
 // handleEvent dispatches one event. A panic caused by a malformed message (the NGAP decoder
@@ -76,11 +104,29 @@ func handleEvent(gnbue *gnbctx.GnbCpUe, msg common.InterfaceMessage, evt common.
 	}
 }
 
+// sendToSimUe delivers a message to the SimUe. A SimUe that has stopped reading, for instance
+// because it gave up on a timeout, must not keep this context from seeing its quit request and
+// terminating, so the send gives way to it.
+func sendToSimUe(gnbue *gnbctx.GnbCpUe, msg common.InterfaceMessage) {
+	// delivered if it can be, whether or not a quit has been requested: the choice below between
+	// two ready cases is random, and a message that could have gone out would be lost by chance
+	select {
+	case gnbue.WriteUeChan <- msg:
+		return
+	default:
+	}
+	select {
+	case gnbue.WriteUeChan <- msg:
+	case <-gnbue.QuitRequested():
+		gnbue.Log.Debugln("dropped", msg.GetEventType(), "for the SimUe, the context is quitting")
+	}
+}
+
 func SendToUe(gnbue *gnbctx.GnbCpUe, event common.EventType, nasPdus common.NasPduList, id uint64) {
 	gnbue.Log.Debugln("sending event", event, "to SimUe. Id:", id)
 	uemsg := common.UuMessage{}
 	uemsg.Id = id
 	uemsg.Event = event
 	uemsg.NasPdus = nasPdus
-	gnbue.WriteUeChan <- &uemsg
+	sendToSimUe(gnbue, &uemsg)
 }

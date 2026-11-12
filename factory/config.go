@@ -13,10 +13,7 @@ package factory
 import (
 	"fmt"
 	"os"
-	"strconv"
-	"strings"
 
-	"github.com/omec-project/gnbsim/common"
 	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	profctx "github.com/omec-project/gnbsim/profile/context"
 )
@@ -111,43 +108,8 @@ func (c *Config) Validate() (err error) {
 
 	if len(c.Configuration.CustomProfiles) != 0 {
 		for _, v := range c.Configuration.CustomProfiles {
-			it := v.Iterations
-			v.PIterations = make(map[string]*profctx.PIterations)
-			for _, v1 := range it {
-				if len(v1.Next) == 0 {
-					v1.Next = "quit" // default value
-				}
-				PIter := &profctx.PIterations{Name: v1.Name, NextItr: v1.Next, Repeat: v1.Repeat}
-				PIter.ProcMap = make(map[int]common.ProcedureType)
-				PIter.WaitMap = make(map[int]int)
-				PIter.WaitMap[0] = 0
-				steps := []string{v1.First, v1.Second, v1.Third, v1.Fourth, v1.Fifth, v1.Sixth, v1.Seventh}
-				for i, step := range steps {
-					if len(step) == 0 {
-						continue
-					}
-					proc, wait, perr := parseIterationStep(step)
-					if perr != nil {
-						return fmt.Errorf("iteration %q step %d: %v", v1.Name, i+1, perr)
-					}
-					PIter.ProcMap[i+1] = proc
-					PIter.WaitMap[i+1] = wait
-				}
-				v.PIterations[v1.Name] = PIter // add iterations in the custom profile
-			}
-			// every reference must resolve, otherwise the profile dereferences a nil iteration at run time
-			if len(v.PIterations) > 0 {
-				if _, ok := v.PIterations[v.StartIteration]; !ok {
-					return fmt.Errorf("custom profile %q: startiteration %q is not a defined iteration", v.Name, v.StartIteration)
-				}
-			}
-			for _, pit := range v.PIterations {
-				if pit.NextItr == "quit" {
-					continue
-				}
-				if _, ok := v.PIterations[pit.NextItr]; !ok {
-					return fmt.Errorf("custom profile %q: iteration %q has unknown next iteration %q", v.Name, pit.Name, pit.NextItr)
-				}
+			if err := v.BuildIterations(); err != nil {
+				return err
 			}
 		}
 
@@ -157,26 +119,6 @@ func (c *Config) Validate() (err error) {
 	}
 
 	return nil
-}
-
-// parseIterationStep parses a custom profile step of the form "<PROCEDURE-NAME> <wait-ms>".
-func parseIterationStep(step string) (common.ProcedureType, int, error) {
-	fields := strings.Fields(step)
-	if len(fields) != 2 {
-		return common.UNKNOWN_PROCEDURE, 0, fmt.Errorf("expected \"<procedure> <wait>\", got %q", step)
-	}
-	proc := common.GetProcId(fields[0])
-	if proc == common.UNKNOWN_PROCEDURE {
-		return common.UNKNOWN_PROCEDURE, 0, fmt.Errorf("unknown procedure %q", fields[0])
-	}
-	wait, err := strconv.Atoi(fields[1])
-	if err != nil {
-		return common.UNKNOWN_PROCEDURE, 0, fmt.Errorf("value is not converted to integer: %v", err)
-	}
-	if wait < 0 {
-		return common.UNKNOWN_PROCEDURE, 0, fmt.Errorf("wait must not be negative, got %d", wait)
-	}
-	return proc, wait, nil
 }
 
 func (c *Configuration) GetGNodeB(name string) (*gnbctx.GNodeB, error) {

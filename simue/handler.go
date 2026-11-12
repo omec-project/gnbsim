@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/omec-project/gnbsim/common"
+	gnbctx "github.com/omec-project/gnbsim/gnodeb/context"
 	simuectx "github.com/omec-project/gnbsim/simue/context"
 	"github.com/omec-project/gnbsim/stats"
 )
@@ -18,6 +19,19 @@ func HandleProcedureEvent(ue *simuectx.SimUe,
 ) (err error) {
 	msg := intfcMsg.(*common.ProfileMessage)
 	ue.Procedure = msg.Proc
+	// nothing is left over from the previous procedure
+	ue.BearerRestorePending = false
+	ue.ServiceAccepted = false
+	ue.BearersRestored = false
+	ue.AcceptExpected = false
+	// a request that was not answered must not be resent during another procedure
+	stopRetransmission(ue)
+	// A Service Accept that arrives late, after the bearers completed the previous service request,
+	// still has to be recognised during the procedure that follows, so ServiceCompleted survives.
+	// A new service request is the exception: an Accept for that one must not be swallowed.
+	if ue.Procedure == common.UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE {
+		ue.ServiceCompleted = false
+	}
 	ue.Log.Infoln("start new procedure:", ue.Procedure)
 	HandleProcedure(ue)
 	return nil
@@ -154,6 +168,15 @@ func HandleRegCompleteEvent(ue *simuectx.SimUe,
 	msg.Event = common.UL_INFO_TRANSFER_EVENT
 	SendToGnbUe(ue, msg)
 	ue.Log.Debugln("sent Registration Complete to the network")
+
+	// The Initial Context Setup that carried the Registration Accept may also have restored
+	// bearers. The procedure is then done only when they are in place as well, as stopping the UE
+	// before that would leave the AMF without its Initial Context Setup Response.
+	if ue.BearerRestorePending {
+		ue.ServiceAccepted = true
+		completeRestoration(ue)
+		return nil
+	}
 
 	// Current Procedure is complete. Move to next one
 	SendProcedureResult(ue)
@@ -359,6 +382,51 @@ func HandleDlInfoTransferEvent(ue *simuectx.SimUe,
 	return nil
 }
 
+// HandleBearerSetupPendingEvent notes that the procedure in progress also restores the user plane.
+// It then completes only when the service has been accepted and the gNB has reported the bearers,
+// whichever comes first, and exactly once.
+func HandleBearerSetupPendingEvent(ue *simuectx.SimUe,
+	msg common.InterfaceMessage,
+) (err error) {
+	// Only a service request and a registration have a NAS half that this waits for. Any other
+	// procedure is completed by its own messages, and waiting here would never end.
+	nasHalfExpected := false
+	switch ue.Procedure {
+	case common.UE_TRIGGERED_SERVICE_REQUEST_PROCEDURE:
+		// the gNB says whether the request carries the Service Accept; if it does not, the AMF may
+		// send it separately or not at all, and the restored bearers complete the procedure
+		if uemsg, ok := msg.(*common.UuMessage); ok {
+			nasHalfExpected = len(uemsg.NasPdus) > 0
+		}
+	case common.REGISTRATION_PROCEDURE:
+		// the Registration Complete is always sent, and ends the NAS half
+		nasHalfExpected = true
+	default:
+		return nil
+	}
+	ue.BearerRestorePending = true
+	ue.ServiceAccepted = false // "the NAS half is done": the Service Accept, or the Registration Complete
+	ue.BearersRestored = false
+	ue.ServiceCompleted = false
+	ue.AcceptExpected = nasHalfExpected
+	return nil
+}
+
+// completeRestoration reports the procedure as done if it is: the bearers are restored and, if the
+// request carried the Service Accept, the service has been accepted too.
+func completeRestoration(ue *simuectx.SimUe) {
+	if !ue.BearersRestored || (ue.AcceptExpected && !ue.ServiceAccepted) {
+		return
+	}
+	// done by the bearers alone: an Accept that comes later is not a second completion
+	ue.ServiceCompleted = !ue.ServiceAccepted
+	stopRetransmission(ue) // the procedure is done, whether or not an Accept ever came
+	ue.BearerRestorePending = false
+	ue.ServiceAccepted = false
+	ue.BearersRestored = false
+	SendProcedureResult(ue)
+}
+
 func HandleDataBearerSetupRequestEvent(ue *simuectx.SimUe,
 	msg common.InterfaceMessage,
 ) (err error) {
@@ -366,10 +434,57 @@ func HandleDataBearerSetupRequestEvent(ue *simuectx.SimUe,
 	return nil
 }
 
+// failedPduSessions returns the IDs of the sessions that the RealUe reports as not established.
+func failedPduSessions(msg common.InterfaceMessage) []int64 {
+	uemsg, ok := msg.(*common.UuMessage)
+	if !ok {
+		return nil
+	}
+	var failed []int64
+	for _, item := range uemsg.DBParams {
+		if item != nil && item.PduSess != nil && !item.PduSess.Success {
+			failed = append(failed, item.PduSess.PduSessId)
+		}
+	}
+	return failed
+}
+
+// HandleDataBearerSetupResponseEvent receives the RealUe's answer to a data bearer setup request.
+// It hands the answer to the gNB, which responds to the AMF, but does not complete the procedure
+// yet: that depends on the gNB's own result (HandleDataBearerSetupResultEvent).
 func HandleDataBearerSetupResponseEvent(ue *simuectx.SimUe,
 	msg common.InterfaceMessage,
 ) (err error) {
+	// evaluated before the message is handed over, as the gNB updates the session entries
+	failed := failedPduSessions(msg)
+
+	// the gNB still reports the failed sessions to the AMF (TS 38.413 clause 8.2.1.2)
 	SendToGnbUe(ue, msg)
+
+	if len(failed) > 0 {
+		// The procedure asked for these sessions, so it did not complete. Returning the error
+		// makes HandleEvents report the failure to the profile and tear the UE down, which also
+		// stops the sessions that were established.
+		return fmt.Errorf("PDU session setup failed for session(s) %v", failed)
+	}
+	return nil
+}
+
+// HandleDataBearerSetupResultEvent completes the procedure once the gNB has answered the AMF and
+// has the user plane in place. An error from the gNB fails it, and the event loop tears the UE down.
+func HandleDataBearerSetupResultEvent(ue *simuectx.SimUe,
+	msg common.InterfaceMessage,
+) (err error) {
+	if gnbErr := msg.GetErrorMsg(); gnbErr != nil {
+		return fmt.Errorf("gNB failed to set up the data bearers: %w", gnbErr)
+	}
+
+	if ue.BearerRestorePending {
+		// part of a service request: it is done once the service has also been accepted
+		ue.BearersRestored = true
+		completeRestoration(ue)
+		return nil
+	}
 
 	// Current Procedure is complete. Move to next one
 	SendProcedureResult(ue)
@@ -401,26 +516,70 @@ func HandleDataPktGenFailureEvent(ue *simuectx.SimUe,
 	msg common.InterfaceMessage,
 ) (err error) {
 	ue.Log.Debugln("handleDataPktGenFailureEvent")
-	SendToProfile(ue, common.PROC_FAIL_EVENT, msg.GetErrorMsg())
-	return nil
+	// returned to HandleEvents, which reports the failure to the profile and tears the UE down
+	return fmt.Errorf("data packet generation failed: %v", msg.GetErrorMsg())
 }
 
-func retransmitMsg(ue *simuectx.SimUe, intfcMsg common.InterfaceMessage, count int) {
+// retransmitInterval is how long the Service Request waits for an answer before it is resent.
+const retransmitInterval = 5 * time.Second
+
+// retransmitMsg resends the request every few seconds, a limited number of times, until stop is
+// closed, which is what an answer to this request, the end of its procedure and a quit all do.
+func retransmitMsg(ue *simuectx.SimUe, intfcMsg common.InterfaceMessage, count int, interval time.Duration, stop <-chan struct{}) {
 	// TBD: Profile should give timeout and number of retransmission as input
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
 	for {
 		select {
-		case <-ue.MsgRspReceived:
-			ue.Log.Debugln("received Service Accept Message")
-			ticker.Stop()
+		case <-stop:
+			ue.Log.Debugln("stopped resending the Service Request")
+			return
+		case <-ue.QuitRequested():
 			return
 		case <-ticker.C:
-			if count > 0 {
-				ue.Log.Debugln("resend Service Request count", count)
-				SendToGnbUe(ue, intfcMsg)
-				count = count - 1
+			if count == 0 {
+				return // nothing left to resend, and no reason to keep waiting
 			}
+			// An answer, the end of the procedure or a quit may have come while the ticker fired, and
+			// then the request is no longer wanted: the select below picks at random between ready
+			// cases, so this is looked at first.
+			select {
+			case <-stop:
+				return
+			case <-ue.QuitRequested():
+				return
+			default:
+			}
+			ue.Log.Debugln("resend Service Request count", count)
+			// The send itself gives way to the stop and quit signals, not only to the quit of
+			// SendToGnbUe: a worker that stayed blocked on a full queue after its request had been
+			// answered could enqueue the old request during the next procedure.
+			select {
+			case ue.WriteGnbUeChan <- intfcMsg:
+			case <-stop:
+				return
+			case <-ue.QuitRequested():
+				return
+			}
+			count--
 		}
+	}
+}
+
+// startRetransmission resends the request until stopRetransmission, replacing a worker that is
+// still running for an earlier one.
+func startRetransmission(ue *simuectx.SimUe, intfcMsg common.InterfaceMessage, count int) {
+	stopRetransmission(ue)
+	stop := make(chan struct{})
+	ue.RetransmitStop = stop
+	go retransmitMsg(ue, intfcMsg, count, retransmitInterval, stop)
+}
+
+// stopRetransmission stops the worker that resends the request, if there is one.
+func stopRetransmission(ue *simuectx.SimUe) {
+	if ue.RetransmitStop != nil {
+		close(ue.RetransmitStop)
+		ue.RetransmitStop = nil
 	}
 }
 
@@ -434,7 +593,7 @@ func HandleServiceRequestEvent(ue *simuectx.SimUe,
 
 	SendToGnbUe(ue, intfcMsg)
 	if ue.ProfileCtx.RetransMsg {
-		go retransmitMsg(ue, intfcMsg, 2)
+		startRetransmission(ue, intfcMsg, 2)
 	}
 
 	ue.Log.Debugln("sent Service Request Event to the network")
@@ -444,9 +603,15 @@ func HandleServiceRequestEvent(ue *simuectx.SimUe,
 func HandleServiceAcceptEvent(ue *simuectx.SimUe,
 	intfcMsg common.InterfaceMessage,
 ) (err error) {
-	if ue.ProfileCtx.RetransMsg {
-		ue.MsgRspReceived <- true // feedback loop
+	// An Accept for a service request that the bearers already completed is neither an answer to a
+	// request that is in progress nor an event of the procedure that is now running, so it is
+	// consumed before either is looked at.
+	if ue.ServiceCompleted {
+		ue.ServiceCompleted = false
+		ue.Log.Infoln("service accepted after the bearers had already completed the procedure")
+		return nil
 	}
+	stopRetransmission(ue) // the answer to this request has come
 	err = ue.ProfileCtx.CheckCurrentEvent(ue.Procedure, common.SERVICE_REQUEST_EVENT,
 		intfcMsg.GetEventType())
 	if err != nil {
@@ -458,7 +623,14 @@ func HandleServiceAcceptEvent(ue *simuectx.SimUe,
 	e := &stats.StatisticsEvent{Supi: ue.Supi, EType: stats.SVC_ACCEPT_IN, Id: msg.Id}
 	stats.LogStats(e)
 
-	// Service Accept completes the UE-triggered service request procedure.
+	// Service Accept completes the UE-triggered service request procedure, unless the gNB is still
+	// restoring the user plane: that is part of the procedure, and stopping the UE before it is
+	// done would leave the AMF without its Initial Context Setup Response.
+	if ue.BearerRestorePending {
+		ue.ServiceAccepted = true
+		completeRestoration(ue)
+		return nil
+	}
 	SendProcedureResult(ue)
 
 	return nil
@@ -548,21 +720,88 @@ func HandleErrorEvent(ue *simuectx.SimUe,
 	return nil
 }
 
+// gnbTeardownWarnInterval is how often a SimUe that waits for a gNB context to terminate says so.
+const gnbTeardownWarnInterval = 30 * time.Second
+
+func waitForGnbContext(ue *simuectx.SimUe, c *gnbctx.GnbCpUe) {
+	ticker := time.NewTicker(gnbTeardownWarnInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-c.Done:
+			return
+		case <-ticker.C:
+			ue.Log.Warnln("still waiting for the gNB UE context to terminate")
+		}
+	}
+}
+
+// The RealUe sends to ReadChan without being able to give up, and this goroutine is the only one
+// that reads it. While the SimUe quits it must keep reading, and discard what it reads, or a
+// RealUe that is blocked on a full queue can neither receive its quit nor terminate.
+
+func sendToRealUeWhileDraining(ue *simuectx.SimUe, msg common.InterfaceMessage) {
+	for {
+		select {
+		case ue.WriteRealUeChan <- msg:
+			return
+		case dropped := <-ue.ReadChan:
+			ue.Log.Debugln("discarding", dropped.GetEventType(), "while quitting")
+		}
+	}
+}
+
+func waitForRealUe(ue *simuectx.SimUe) {
+	done := make(chan struct{})
+	go func() {
+		ue.WaitGrp.Wait()
+		close(done)
+	}()
+	for {
+		select {
+		case <-done:
+			return
+		case dropped := <-ue.ReadChan:
+			ue.Log.Debugln("discarding", dropped.GetEventType(), "while quitting")
+		}
+	}
+}
+
 func HandleQuitEvent(ue *simuectx.SimUe,
 	msg common.InterfaceMessage,
 ) (err error) {
+	// Every gNB context created for the UE is asked directly, which cannot be dropped, and which
+	// covers a target that the UE has not moved to and a source that it has left. Each handles the
+	// events already queued for it first, then terminates; one that already quit ignores this.
+	stopRetransmission(ue)
+	gnbCtxs := ue.GnbContexts()
+	for _, c := range gnbCtxs {
+		c.RequestQuit()
+	}
+	// Also queue a quit for the current gNB context, but never block on it: that queue may be full
+	// because its owner is waiting for this SimUe, which has stopped reading.
 	if ue.WriteGnbUeChan != nil {
-		SendToGnbUe(ue, msg)
+		select {
+		case ue.WriteGnbUeChan <- msg:
+		default:
+			ue.Log.Warnln("the gNB UE queue is full, relying on the quit request")
+		}
 	}
 	// Guarded like the channel above it, and for the reason this function itself creates: the
 	// line below nils the channel, so a second quit for the same UE would send on a nil channel
 	// and block its goroutine for good. Nothing reaches here twice today; the guard costs a line
 	// and the deadlock costs a hung worker with no log to say why.
 	if ue.WriteRealUeChan != nil {
-		SendToRealUe(ue, msg)
+		sendToRealUeWhileDraining(ue, msg)
 	}
 	ue.WriteRealUeChan = nil
-	ue.WaitGrp.Wait()
+	waitForRealUe(ue)
+
+	// The SUPI is freed when this SimUe's event loop ends, so wait for the gNB side as well. There
+	// is no timeout: giving up would free the SUPI while gNB workers are still live.
+	for _, c := range gnbCtxs {
+		waitForGnbContext(ue, c)
+	}
 	ue.Log.Infoln("Sim UE terminated")
 	return nil
 }
