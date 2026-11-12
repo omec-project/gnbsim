@@ -52,6 +52,9 @@ type RealUe struct {
 	IntegrityAlg uint8
 	KnasEnc      [16]uint8
 	KnasInt      [16]uint8
+	// NasSecurityEstablished is set once a downlink NAS message has passed the integrity check,
+	// i.e. the network has established the secure exchange of NAS messages (TS 24.501 4.4.4.2).
+	NasSecurityEstablished bool
 	// ModificationRequestType is the Request type IE value to put on a UE-requested modification,
 	// and OmitModificationRequestType leaves the IE out altogether. Both come from the profile; see
 	// the profile context for why they are configurable.
