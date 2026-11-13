@@ -55,6 +55,26 @@ type RealUe struct {
 	// NasSecurityEstablished is set once a downlink NAS message has passed the integrity check,
 	// i.e. the network has established the secure exchange of NAS messages (TS 24.501 4.4.4.2).
 	NasSecurityEstablished bool
+	// NasKeysDerived is set once KnasEnc and KnasInt have been derived from a KAMF. Until then they
+	// are all zero, a value everyone knows, so nothing can be verified with them.
+	NasKeysDerived bool
+	// nasContexts keeps the COUNT state of the security contexts the UE has moved away from, by
+	// their keys, so that deriving the keys of one of them again (a replayed AUTHENTICATION REQUEST,
+	// which is not checked for freshness) does not hand its recorded messages a clean slate.
+	nasContexts map[nasKeys]nasContextState
+	// NewNasSecurityContextPending is set when new NAS keys have been derived, i.e. a SECURITY MODE
+	// COMMAND that takes them into use is expected, and cleared once one has passed the integrity
+	// check. Only such a message may reset the downlink NAS COUNT (TS 24.501 5.4.2.2, 9.3.1).
+	NewNasSecurityContextPending bool
+	// DLCountInUse is set once a downlink message has passed the integrity check in the current
+	// security context, so that DLCount is the COUNT of that message. COUNT 0 is a valid value for
+	// the first message, which this tells apart from one that was already accepted: a COUNT is
+	// accepted at most once (TS 24.501 4.4.3.2).
+	DLCountInUse bool
+	// NonSwitchOffDeregPending is set while a UE-initiated DEREGISTRATION REQUEST without "switch
+	// off" is outstanding. Only then is a DEREGISTRATION ACCEPT expected, so only then may it be
+	// accepted without integrity protection (TS 24.501 4.4.4.2 f), 5.5.2.2.2).
+	NonSwitchOffDeregPending bool
 	// ModificationRequestType is the Request type IE value to put on a UE-requested modification,
 	// and OmitModificationRequestType leaves the IE out altogether. Both come from the profile; see
 	// the profile context for why they are configurable.
@@ -219,6 +239,18 @@ func (ue *RealUe) DerivateKamf(key []byte, snName string, SQN, AK []byte) {
 	}
 }
 
+// nasKeys identifies a 5G NAS security context by its NAS keys.
+type nasKeys struct {
+	enc, integrity [16]uint8
+}
+
+// nasContextState is what is remembered of a security context while another one is in use.
+type nasContextState struct {
+	dlCount, ulCount security.Count
+	dlCountInUse     bool
+	pending          bool
+}
+
 // Algorithm key Derivation function defined in TS 33.501 Annex A.9
 func (ue *RealUe) DerivateAlgKey() {
 	// Security Key
@@ -231,7 +263,8 @@ func (ue *RealUe) DerivateAlgKey() {
 	if err != nil {
 		ue.Log.Fatalf("error getting KDF value: %+v", err)
 	}
-	copy(ue.KnasEnc[:], kenc[16:32])
+	var newKnasEnc, newKnasInt [16]uint8
+	copy(newKnasEnc[:], kenc[16:32])
 
 	// Integrity Key
 	P0 = []byte{security.NNASIntAlg}
@@ -243,7 +276,36 @@ func (ue *RealUe) DerivateAlgKey() {
 	if err != nil {
 		ue.Log.Fatalf("error getting KDF value: %+v", err)
 	}
-	copy(ue.KnasInt[:], kint[16:32])
+	copy(newKnasInt[:], kint[16:32])
+
+	// Deriving the keys again from the same KAMF (a repeated AUTHENTICATION REQUEST, which is not
+	// checked for freshness) yields the keys already in use. That is not a new security context, so
+	// it must not re-arm the COUNT reset or forget which COUNTs were accepted: a recorded SECURITY
+	// MODE COMMAND would verify again. The same goes for the keys of a context that was in use
+	// before another one: its state is put back, not started over.
+	current := nasKeys{enc: ue.KnasEnc, integrity: ue.KnasInt}
+	derived := nasKeys{enc: newKnasEnc, integrity: newKnasInt}
+	if ue.NasKeysDerived && derived == current {
+		return
+	}
+	if ue.NasKeysDerived {
+		if ue.nasContexts == nil {
+			ue.nasContexts = make(map[nasKeys]nasContextState)
+		}
+		ue.nasContexts[current] = nasContextState{
+			dlCount: ue.DLCount, ulCount: ue.ULCount,
+			dlCountInUse: ue.DLCountInUse, pending: ue.NewNasSecurityContextPending,
+		}
+	}
+	ue.KnasEnc, ue.KnasInt = newKnasEnc, newKnasInt
+	ue.NasKeysDerived = true
+	if state, ok := ue.nasContexts[derived]; ok {
+		ue.DLCount, ue.ULCount = state.dlCount, state.ulCount
+		ue.DLCountInUse, ue.NewNasSecurityContextPending = state.dlCountInUse, state.pending
+		return
+	}
+	ue.NewNasSecurityContextPending = true
+	ue.DLCountInUse = false
 }
 
 func (ue *RealUe) Get5GMMCapability() (capability5GMM *nasType.Capability5GMM) {
