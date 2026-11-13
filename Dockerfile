@@ -39,6 +39,12 @@ RUN apk add --no-cache bash tcpdump && \
     fi
 
 WORKDIR /gnbsim
+RUN chown 1000:1000 /gnbsim
+
+# Run as an unprivileged user
+RUN addgroup -S -g 1000 aether && adduser -S -u 1000 -G aether aether
 
 # Copy executable
-COPY --from=builder /go/src/gnbsim/bin/* /usr/local/bin/.
+COPY --chmod=755 --from=builder /go/src/gnbsim/bin/* /usr/local/bin/.
+
+USER 1000:1000
