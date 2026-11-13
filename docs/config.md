@@ -89,7 +89,7 @@ SPDX-License-Identifier: Apache-2.0
          gnbsim:
            goProfile:
              enable: true #enable/disable golang profile in gnbsim
-             port: 5000
+             port: 5000 # the profile server listens on 127.0.0.1 only; use port-forwarding to reach it remotely
 
 - **Run gNBSim with single Interface or multi interface**
 
