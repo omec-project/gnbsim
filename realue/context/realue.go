@@ -24,62 +24,37 @@ import (
 
 // RealUe represents a Real UE
 type RealUe struct {
-	Supi               string
-	Guti               string
-	Key                string
-	Opc                string
-	SeqNum             string
-	Dnn                string
-	SNssai             *models.Snssai
-	AuthenticationSubs *models.AuthenticationSubscription
-	Plmn               *models.PlmnId
-	Log                *zap.SugaredLogger
-
-	// RealUe writes messages to SimUE on this channel
-	WriteSimUeChan chan common.InterfaceMessage
-
-	// RealUe reads messages from SimUE on this channel
-	ReadChan chan common.InterfaceMessage
-
-	PduSessions  map[int64]*PduSession
-	Kamf         []uint8
-	Suci         []uint8
-	NgKsi        models.NgKsi
-	WaitGrp      sync.WaitGroup
-	ULCount      security.Count
-	DLCount      security.Count
-	CipheringAlg uint8
-	IntegrityAlg uint8
-	KnasEnc      [16]uint8
-	KnasInt      [16]uint8
-	// NasSecurityEstablished is set once a downlink NAS message has passed the integrity check,
-	// i.e. the network has established the secure exchange of NAS messages (TS 24.501 4.4.4.2).
-	NasSecurityEstablished bool
-	// NasKeysDerived is set once KnasEnc and KnasInt have been derived from a KAMF. Until then they
-	// are all zero, a value everyone knows, so nothing can be verified with them.
-	NasKeysDerived bool
-	// nasContexts keeps the COUNT state of the security contexts the UE has moved away from, by
-	// their keys, so that deriving the keys of one of them again (a replayed AUTHENTICATION REQUEST,
-	// which is not checked for freshness) does not hand its recorded messages a clean slate.
-	nasContexts map[nasKeys]nasContextState
-	// NewNasSecurityContextPending is set when new NAS keys have been derived, i.e. a SECURITY MODE
-	// COMMAND that takes them into use is expected, and cleared once one has passed the integrity
-	// check. Only such a message may reset the downlink NAS COUNT (TS 24.501 5.4.2.2, 9.3.1).
+	Log                          *zap.SugaredLogger
+	WriteSimUeChan               chan common.InterfaceMessage
+	nasContexts                  map[nasKeys]nasContextState
+	AuthenticationSubs           *models.AuthenticationSubscription
+	ReadChan                     chan common.InterfaceMessage
+	SNssai                       *models.Snssai
+	Plmn                         *models.PlmnId
+	PduSessions                  map[int64]*PduSession
+	Guti                         string
+	Supi                         string
+	Dnn                          string
+	SeqNum                       string
+	Opc                          string
+	Key                          string
+	Suci                         []uint8
+	Kamf                         []uint8
+	NgKsi                        models.NgKsi
+	WaitGrp                      sync.WaitGroup
+	ULCount                      security.Count
+	DLCount                      security.Count
+	KnasInt                      [16]uint8
+	KnasEnc                      [16]uint8
+	NasSecurityEstablished       bool
+	IntegrityAlg                 uint8
+	NasKeysDerived               bool
+	CipheringAlg                 uint8
 	NewNasSecurityContextPending bool
-	// DLCountInUse is set once a downlink message has passed the integrity check in the current
-	// security context, so that DLCount is the COUNT of that message. COUNT 0 is a valid value for
-	// the first message, which this tells apart from one that was already accepted: a COUNT is
-	// accepted at most once (TS 24.501 4.4.3.2).
-	DLCountInUse bool
-	// NonSwitchOffDeregPending is set while a UE-initiated DEREGISTRATION REQUEST without "switch
-	// off" is outstanding. Only then is a DEREGISTRATION ACCEPT expected, so only then may it be
-	// accepted without integrity protection (TS 24.501 4.4.4.2 f), 5.5.2.2.2).
-	NonSwitchOffDeregPending bool
-	// ModificationRequestType is the Request type IE value to put on a UE-requested modification,
-	// and OmitModificationRequestType leaves the IE out altogether. Both come from the profile; see
-	// the profile context for why they are configurable.
-	ModificationRequestType     uint8
-	OmitModificationRequestType bool
+	DLCountInUse                 bool
+	NonSwitchOffDeregPending     bool
+	ModificationRequestType      uint8
+	OmitModificationRequestType  bool
 }
 
 func NewRealUe(supi string, cipheringAlg, integrityAlg uint8,
