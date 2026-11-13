@@ -7,8 +7,11 @@ package httpserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -19,11 +22,20 @@ import (
 	utilLogger "github.com/omec-project/util/logger"
 )
 
-var server *http.Server
+var (
+	server   *http.Server
+	serverMu sync.Mutex
+)
 
 const (
 	logFile     string        = "http2.log"
 	CTX_TIMEOUT time.Duration = 5
+
+	// defaultBindAddr is used when no address is configured, so that the unauthenticated
+	// control API is never exposed on every interface by omission.
+	defaultBindAddr = "127.0.0.1"
+	// readHeaderTimeout bounds how long a client may take to send request headers (slowloris).
+	readHeaderTimeout = 10 * time.Second
 )
 
 func StartHttpServer() (err error) {
@@ -34,8 +46,9 @@ func StartHttpServer() (err error) {
 			"Origin", "Content-Length", "Content-Type", "User-Agent", "Referrer", "Host",
 			"Token", "X-Requested-With",
 		},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
+		ExposeHeaders: []string{"Content-Length"},
+		// The API has no cookie or session based authentication, so credentials are not allowed.
+		AllowCredentials: false,
 		AllowAllOrigins:  true,
 		MaxAge:           86400,
 	}))
@@ -44,10 +57,15 @@ func StartHttpServer() (err error) {
 	profilerouter.AddService(router)
 
 	config := factory.AppConfig.Configuration
-	serverAddr := config.Server.IpAddr + ":" + config.Server.Port
-	server, err = http2_util.NewServer(serverAddr, logFile, router)
+	bindAddr := config.Server.IpAddr
+	if bindAddr == "" {
+		logger.AppLog.Warnf("httpServer.ipAddr not set, listening on %s only", defaultBindAddr)
+		bindAddr = defaultBindAddr
+	}
+	serverAddr := net.JoinHostPort(bindAddr, config.Server.Port)
+	srv, err := http2_util.NewServer(serverAddr, logFile, router)
 
-	if server == nil {
+	if srv == nil {
 		logger.AppLog.Errorf("initialize HTTP server failed: %+v", err)
 		return fmt.Errorf("failed to initialize http server, err: %v", err)
 	}
@@ -57,12 +75,13 @@ func StartHttpServer() (err error) {
 		return fmt.Errorf("failed to initialize http server, err: %v", err)
 	}
 
-	serverScheme := "http"
-	if serverScheme == "http" {
-		err = server.ListenAndServe()
-	}
+	srv.ReadHeaderTimeout = readHeaderTimeout
+	serverMu.Lock()
+	server = srv
+	serverMu.Unlock()
 
-	if err != nil {
+	err = srv.ListenAndServe()
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.AppLog.Errorln("HTTP server setup failed:", err)
 	}
 
@@ -77,7 +96,15 @@ func StopHttpServer() {
 		cancel()
 	}()
 
-	if err := server.Shutdown(ctx); err != nil {
-		logger.HttpLog.Fatalf("server shutdown failed:%+v", err)
+	serverMu.Lock()
+	srv := server
+	serverMu.Unlock()
+	if srv == nil {
+		logger.HttpLog.Warnln("HTTP server was not started, nothing to shut down")
+		return
+	}
+
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.HttpLog.Errorf("server shutdown failed:%+v", err)
 	}
 }
