@@ -323,3 +323,34 @@ func TestRealUeQuitDrainsResultsOfBlockedSessionWorker(t *testing.T) {
 		t.Fatal("the quit deadlocked against a session worker blocked on the full queue")
 	}
 }
+
+// A downlink NAS message that has to be discarded (TS 24.501 clause 4.4.4.2) must not fail the
+// procedure: the PDU is skipped and the next one in the same message is still processed.
+func TestHandleDlInfoTransferSkipsDiscardedPdu(t *testing.T) {
+	simUeChan := make(chan common.InterfaceMessage, 5)
+	ue := realuectx.NewRealUe("imsi-208930100007487", security.AlgCiphering128NEA0, security.AlgIntegrity128NIA2,
+		simUeChan, nil, "", "", "", "", nil)
+	ue.NasSecurityEstablished = true
+
+	// a plain message that is not on the list of those accepted without integrity protection,
+	// followed by one that is
+	discarded := []byte{0x7e, 0x00, nas.MsgTypeConfigurationUpdateCommand}
+	allowed := []byte{0x7e, 0x00, nas.MsgTypeAuthenticationReject}
+	msg := &common.UuMessage{NasPdus: common.NasPduList{discarded, allowed}}
+	if err := HandleDlInfoTransferEvent(ue, msg); err != nil {
+		t.Fatalf("a discarded NAS message must not fail the procedure, got %v", err)
+	}
+	if len(simUeChan) != 1 {
+		t.Fatalf("expected only the allowed message to be forwarded to the SimUe, got %d messages", len(simUeChan))
+	}
+	m := (<-simUeChan).(*common.UeMessage)
+	if got := m.NasMsg.GmmHeader.GetMessageType(); got != nas.MsgTypeAuthenticationReject {
+		t.Errorf("forwarded message type = %d, want %d", got, nas.MsgTypeAuthenticationReject)
+	}
+
+	// a message that cannot be decoded at all still is an error
+	msg = &common.UuMessage{NasPdus: common.NasPduList{{0x7e}}}
+	if err := HandleDlInfoTransferEvent(ue, msg); err == nil {
+		t.Error("expected an error for a truncated NAS message")
+	}
+}

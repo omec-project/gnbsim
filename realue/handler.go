@@ -5,6 +5,7 @@
 package realue
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -74,8 +75,6 @@ func HandleAuthResponseEvent(ue *realuectx.RealUe,
 	// First process the corresponding Auth Request
 	ue.Log.Debugln("processing corresponding Authentication Request Message")
 	authReq := msg.NasMsg.AuthenticationRequest
-
-	ue.NgKsi = nasconv.SpareHalfOctetAndNgksiToModels(authReq.SpareHalfOctetAndNgksi)
 
 	mcc, err := strconv.Atoi(ue.Plmn.Mcc)
 	if err != nil {
@@ -195,6 +194,8 @@ func HandleDeregRequestEvent(ue *realuectx.RealUe,
 		return fmt.Errorf("failed to encrypt deregistration request message")
 	}
 
+	// the network answers with a DEREGISTRATION ACCEPT unless "switch off" was indicated
+	ue.NonSwitchOffDeregPending = SWITCH_OFF == 0
 	m := formUuMessage(common.DEREG_REQUEST_UE_ORIG_EVENT, nasPdu, id)
 	SendToSimUe(ue, m)
 	ue.Log.Debugln("sent UE Initiated Deregistration Request message to SimUe")
@@ -635,13 +636,25 @@ func HandleDlInfoTransferEvent(ue *realuectx.RealUe,
 ) (err error) {
 	msg := intfcMsg.(*common.UuMessage)
 	for _, pdu := range msg.NasPdus {
+		// the security header type is the second octet, so it can only be read from a PDU that has one
+		if len(pdu) < 2 {
+			ue.Log.Errorln("failed to decode dowlink NAS Message: too short:", len(pdu), "bytes")
+			return fmt.Errorf("downlink NAS message too short: %d bytes", len(pdu))
+		}
 		nasMsg, err := realue_nas.NASDecode(ue, nas.GetSecurityHeaderType(pdu), pdu)
+		if errors.Is(err, realue_nas.ErrNasDiscarded) {
+			ue.Log.Warnln("ignoring downlink NAS message:", err)
+			continue
+		}
 		if err != nil {
 			ue.Log.Errorln("failed to decode dowlink NAS Message due to", err)
 			return err
 		}
 		msgType := nasMsg.GmmHeader.GetMessageType()
 		ue.Log.Infoln("Received Message Type:", msgType)
+		if msgType == nas.MsgTypeDeregistrationAcceptUEOriginatingDeregistration {
+			ue.NonSwitchOffDeregPending = false // answered; a further accept is unsolicited
+		}
 
 		if msgType == nas.MsgTypeDLNASTransport {
 			ue.Log.Info("Payload contaner type:",

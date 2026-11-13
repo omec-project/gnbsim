@@ -6,6 +6,7 @@
 package context
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"regexp"
@@ -24,37 +25,38 @@ import (
 
 // RealUe represents a Real UE
 type RealUe struct {
-	Supi               string
-	Guti               string
-	Key                string
-	Opc                string
-	SeqNum             string
-	Dnn                string
-	SNssai             *models.Snssai
-	AuthenticationSubs *models.AuthenticationSubscription
-	Plmn               *models.PlmnId
-	Log                *zap.SugaredLogger
-
-	// RealUe writes messages to SimUE on this channel
-	WriteSimUeChan chan common.InterfaceMessage
-
-	// RealUe reads messages from SimUE on this channel
-	ReadChan chan common.InterfaceMessage
-
-	PduSessions  map[int64]*PduSession
-	Kamf         []uint8
-	Suci         []uint8
-	NgKsi        models.NgKsi
-	WaitGrp      sync.WaitGroup
-	ULCount      security.Count
-	DLCount      security.Count
-	CipheringAlg uint8
-	IntegrityAlg uint8
-	KnasEnc      [16]uint8
-	KnasInt      [16]uint8
-	// ModificationRequestType is the Request type IE value to put on a UE-requested modification,
-	// and OmitModificationRequestType leaves the IE out altogether. Both come from the profile; see
-	// the profile context for why they are configurable.
+	Log                         *zap.SugaredLogger
+	WriteSimUeChan              chan common.InterfaceMessage
+	pendingNas                  *nasContext
+	nasContexts                 map[nasKeys]nasContext
+	nasRetired                  map[[sha256.Size]byte]struct{}
+	nasRetiredOrder             [][sha256.Size]byte
+	AuthenticationSubs          *models.AuthenticationSubscription
+	ReadChan                    chan common.InterfaceMessage
+	SNssai                      *models.Snssai
+	Plmn                        *models.PlmnId
+	PduSessions                 map[int64]*PduSession
+	Guti                        string
+	Supi                        string
+	Dnn                         string
+	SeqNum                      string
+	Opc                         string
+	Key                         string
+	Suci                        []uint8
+	Kamf                        []uint8
+	NgKsi                       models.NgKsi
+	WaitGrp                     sync.WaitGroup
+	nasContextSeq               uint64
+	ULCount                     security.Count
+	DLCount                     security.Count
+	KnasInt                     [16]uint8
+	KnasEnc                     [16]uint8
+	NasSecurityEstablished      bool
+	IntegrityAlg                uint8
+	NasKeysDerived              bool
+	CipheringAlg                uint8
+	DLCountInUse                bool
+	NonSwitchOffDeregPending    bool
 	ModificationRequestType     uint8
 	OmitModificationRequestType bool
 }
@@ -216,7 +218,113 @@ func (ue *RealUe) DerivateKamf(key []byte, snName string, SQN, AK []byte) {
 	}
 }
 
-// Algorithm key Derivation function defined in TS 33.501 Annex A.9
+// nasKeys identifies a 5G NAS security context by its NAS keys.
+type nasKeys struct {
+	enc, integrity [16]uint8
+}
+
+// maxRetainedNasContexts bounds the security contexts remembered besides the one in use, so that
+// repeated authentications cannot grow what a UE keeps. When it is exceeded the context that was
+// put aside longest ago is retired: its keys are never taken into use again, as they would come
+// back with a COUNT of zero (TS 33.501 clause 6.4.5), and only a fingerprint of them is kept. At
+// most maxRetiredNasKeys fingerprints are kept, oldest dropped first, which is what bounds the
+// memory; a context that old can only come back through an authentication that is that stale.
+const (
+	maxRetainedNasContexts = 16
+	maxRetiredNasKeys      = 1024
+)
+
+// nasContext is a 5G NAS security context that is not in use: either keys that wait for the
+// SECURITY MODE COMMAND that takes them into use, or a context that was in use before another one.
+type nasContext struct {
+	ngKsi            models.NgKsi
+	keys             nasKeys
+	dlCount, ulCount security.Count
+	dlCountInUse     bool
+	seq              uint64 // when the context was put aside, to retire the oldest first
+}
+
+// NewNasSecurityContextPending reports whether derived keys wait for the SECURITY MODE COMMAND
+// that takes them into use.
+func (ue *RealUe) NewNasSecurityContextPending() bool {
+	return ue.pendingNas != nil
+}
+
+// PendingNasKeys returns the integrity key of the pending security context, and the downlink COUNT
+// state a SECURITY MODE COMMAND for it is checked against: the COUNT last accepted in it and
+// whether one was. A context that has never been in use starts with no COUNT accepted.
+func (ue *RealUe) PendingNasKeys() (integrity [16]uint8, dlCount security.Count, dlCountInUse, ok bool) {
+	if ue.pendingNas == nil {
+		return integrity, dlCount, false, false
+	}
+	return ue.pendingNas.keys.integrity, ue.pendingNas.dlCount, ue.pendingNas.dlCountInUse, true
+}
+
+// ActivatePendingNasContext takes the pending security context into use, once the SECURITY MODE
+// COMMAND for it has passed its integrity check at dlCount. The context that was in use is kept, so
+// that it can be put back with its COUNTs if the network moves back to it. The uplink COUNT starts
+// over for a context that has never been in use (TS 24.501 clause 5.4.2.3), and is otherwise the
+// one the context had reached. ngKsi is the key set identifier of the new context as given by the
+// authenticated SECURITY MODE COMMAND; it changes with the keys, not before: until then requests
+// keep naming the context that protects them. Without a pending context it does nothing.
+func (ue *RealUe) ActivatePendingNasContext(dlCount security.Count, ngKsi models.NgKsi) {
+	next := ue.pendingNas
+	if next == nil {
+		return
+	}
+	if ue.NasKeysDerived {
+		if ue.nasContexts == nil {
+			ue.nasContexts = make(map[nasKeys]nasContext)
+		}
+		current := nasKeys{enc: ue.KnasEnc, integrity: ue.KnasInt}
+		ue.nasContextSeq++
+		ue.nasContexts[current] = nasContext{
+			keys: current, ngKsi: ue.NgKsi, dlCount: ue.DLCount, ulCount: ue.ULCount, dlCountInUse: ue.DLCountInUse,
+			seq: ue.nasContextSeq,
+		}
+		ue.retireOldestNasContexts()
+	}
+	delete(ue.nasContexts, next.keys)
+	ue.KnasEnc, ue.KnasInt = next.keys.enc, next.keys.integrity
+	ue.NgKsi = ngKsi
+	ue.NasKeysDerived = true
+	ue.DLCount, ue.ULCount = dlCount, next.ulCount
+	ue.DLCountInUse = true
+	ue.pendingNas = nil
+}
+
+func fingerprint(k nasKeys) [sha256.Size]byte {
+	return sha256.Sum256(append(append([]byte(nil), k.enc[:]...), k.integrity[:]...))
+}
+
+// retireOldestNasContexts drops the contexts beyond maxRetainedNasContexts, oldest first, keeping a
+// fingerprint of their keys so that they cannot be staged again.
+func (ue *RealUe) retireOldestNasContexts() {
+	for len(ue.nasContexts) > maxRetainedNasContexts {
+		var oldest nasContext
+		first := true
+		for _, c := range ue.nasContexts {
+			if first || c.seq < oldest.seq {
+				oldest, first = c, false
+			}
+		}
+		delete(ue.nasContexts, oldest.keys)
+		if ue.nasRetired == nil {
+			ue.nasRetired = make(map[[sha256.Size]byte]struct{})
+		}
+		fp := fingerprint(oldest.keys)
+		ue.nasRetired[fp] = struct{}{}
+		ue.nasRetiredOrder = append(ue.nasRetiredOrder, fp)
+		if len(ue.nasRetiredOrder) > maxRetiredNasKeys {
+			delete(ue.nasRetired, ue.nasRetiredOrder[0])
+			ue.nasRetiredOrder = ue.nasRetiredOrder[1:]
+		}
+	}
+}
+
+// Algorithm key Derivation function defined in TS 33.501 Annex A.9. The keys are staged, not
+// taken into use. The key set identifier is not kept with them: the AUTHENTICATION REQUEST that
+// carries it is not integrity protected, so it is taken from the SECURITY MODE COMMAND instead.
 func (ue *RealUe) DerivateAlgKey() {
 	// Security Key
 	P0 := []byte{security.NNASEncAlg}
@@ -228,7 +336,8 @@ func (ue *RealUe) DerivateAlgKey() {
 	if err != nil {
 		ue.Log.Fatalf("error getting KDF value: %+v", err)
 	}
-	copy(ue.KnasEnc[:], kenc[16:32])
+	var newKnasEnc, newKnasInt [16]uint8
+	copy(newKnasEnc[:], kenc[16:32])
 
 	// Integrity Key
 	P0 = []byte{security.NNASIntAlg}
@@ -240,7 +349,37 @@ func (ue *RealUe) DerivateAlgKey() {
 	if err != nil {
 		ue.Log.Fatalf("error getting KDF value: %+v", err)
 	}
-	copy(ue.KnasInt[:], kint[16:32])
+	copy(newKnasInt[:], kint[16:32])
+
+	// The keys are not taken into use here: that takes a SECURITY MODE COMMAND that passes its
+	// integrity check under them (TS 24.501 clause 5.4.2.3). AUTHENTICATION REQUEST is not
+	// integrity protected, so until then the context in use keeps verifying and protecting
+	// messages, and a single pending context is kept so that a stream of requests cannot grow
+	// what is remembered.
+	derived := nasKeys{enc: newKnasEnc, integrity: newKnasInt}
+	if ue.NasKeysDerived && derived == (nasKeys{enc: ue.KnasEnc, integrity: ue.KnasInt}) {
+		// a repeated request for the context in use is not a new context. It is the latest
+		// authentication, though, so keys staged by an earlier one are stale and not kept.
+		ue.pendingNas = nil
+		return
+	}
+	if ue.pendingNas != nil && ue.pendingNas.keys == derived {
+		return
+	}
+	// The keys of a context that was in use before come back with its COUNT state, or a recorded
+	// SECURITY MODE COMMAND of it would verify again at its original COUNT.
+	if state, ok := ue.nasContexts[derived]; ok {
+		ue.pendingNas = &state
+		return
+	}
+	// Keys of a retired context would restart their COUNTs. This authentication is the latest, so
+	// keys staged by an earlier one are stale and not kept either.
+	if _, retired := ue.nasRetired[fingerprint(derived)]; retired {
+		ue.Log.Warnln("ignoring the keys of a retired NAS security context")
+		ue.pendingNas = nil
+		return
+	}
+	ue.pendingNas = &nasContext{keys: derived}
 }
 
 func (ue *RealUe) Get5GMMCapability() (capability5GMM *nasType.Capability5GMM) {
