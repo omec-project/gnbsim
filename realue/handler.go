@@ -76,8 +76,6 @@ func HandleAuthResponseEvent(ue *realuectx.RealUe,
 	ue.Log.Debugln("processing corresponding Authentication Request Message")
 	authReq := msg.NasMsg.AuthenticationRequest
 
-	ue.NgKsi = nasconv.SpareHalfOctetAndNgksiToModels(authReq.SpareHalfOctetAndNgksi)
-
 	mcc, err := strconv.Atoi(ue.Plmn.Mcc)
 	if err != nil {
 		ue.Log.Infoln("failed to convert mcc to int", err)
