@@ -3,7 +3,7 @@ module github.com/omec-project/gnbsim
 go 1.27.0
 
 require (
-	github.com/gin-contrib/cors v1.7.10
+	github.com/gin-contrib/cors v1.7.11
 	github.com/gin-gonic/gin v1.12.0
 	github.com/ishidawataru/sctp v0.0.0-20251114114122-19ddcbc6aae2
 	github.com/omec-project/nas/v2 v2.2.7
