@@ -8,8 +8,8 @@ require (
 	github.com/ishidawataru/sctp v0.0.0-20251114114122-19ddcbc6aae2
 	github.com/omec-project/nas/v2 v2.2.8
 	github.com/omec-project/ngap/v2 v2.1.11
-	github.com/omec-project/openapi/v2 v2.5.1
-	github.com/omec-project/util v1.10.2
+	github.com/omec-project/openapi/v2 v2.8.0
+	github.com/omec-project/util v1.10.3
 	github.com/urfave/cli/v3 v3.14.0
 	go.uber.org/zap v1.28.0
 	go.yaml.in/yaml/v4 v4.0.0
@@ -40,7 +40,7 @@ require (
 	github.com/quic-go/quic-go v0.65.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.2 // indirect
-	go.mongodb.org/mongo-driver/v2 v2.10.0 // indirect
+	go.mongodb.org/mongo-driver/v2 v2.10.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.33.0 // indirect
 	golang.org/x/crypto v0.59.0 // indirect
